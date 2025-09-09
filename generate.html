@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Генерация изображений — {AI}-шница</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="generate.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <nav class="main-nav" aria-label="Главная навигация">
+        <a href="index.html" class="nav-link">Главная</a>
+        <a href="#about" class="nav-link">О проекте</a>
+        <a href="#team" class="nav-link">Команда</a>
+        <a href="#deck" class="nav-link">Презентация</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-label="Генерация изображений">
+      <div class="container">
+        <h1 class="hero-title">Генерация <span class="accent">изображений</span></h1>
+        <p class="hero-subtitle">Создайте уникальные изображения с помощью ИИ</p>
+      </div>
+    </section>
+
+    <section class="generator" aria-label="Генератор изображений">
+      <div class="container">
+        <div class="generator-content">
+          <div class="model-selector">
+            <h2>Выберите модель</h2>
+            <div class="model-cards" id="model-cards">
+              <!-- Модели будут загружены динамически -->
+            </div>
+          </div>
+
+          <div class="generation-panel">
+            <div class="prompt-section">
+              <label for="prompt-input" class="prompt-label">Опишите желаемое изображение</label>
+              <textarea 
+                id="prompt-input" 
+                class="prompt-input" 
+                placeholder="Например: красивая девушка с длинными волосами, стоящая на фоне заката..."
+                rows="4"
+              ></textarea>
+            </div>
+
+            <div class="image-upload">
+              <label for="image-upload" class="upload-label">Загрузите исходное изображение (опционально)</label>
+              <div class="upload-area" id="upload-area">
+                <input type="file" id="image-upload" accept="image/*" hidden>
+                <div class="upload-content">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7,10 12,15 17,10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <p>Перетащите изображение сюда или нажмите для выбора</p>
+                </div>
+              </div>
+              <div class="uploaded-image" id="uploaded-image" style="display: none;">
+                <img id="preview-image" src="" alt="Предварительный просмотр">
+                <button class="remove-image" id="remove-image">×</button>
+              </div>
+            </div>
+
+            <div class="generation-controls">
+              <button class="btn btn-primary" id="generate-btn">
+                <span class="btn-text">Сгенерировать изображение</span>
+                <span class="btn-loading" style="display: none;">
+                  <svg class="spinner" width="20" height="20" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity="0.25"/>
+                    <path d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 0 1 4 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"/>
+                  </svg>
+                  Генерация...
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div class="result-section" id="result-section" style="display: none;">
+            <h3>Результат</h3>
+            <div class="result-image" id="result-image">
+              <!-- Сгенерированное изображение появится здесь -->
+            </div>
+            <div class="result-actions">
+              <button class="btn btn-ghost" id="download-btn">Скачать</button>
+              <button class="btn btn-ghost" id="regenerate-btn">Сгенерировать заново</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <small>© 2025 {AI}-шница</small>
+    </div>
+  </footer>
+
+  <script src="generate.js"></script>
+</body>
+</html>
