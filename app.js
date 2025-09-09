@@ -32,6 +32,7 @@ function getPlaceholder(model) {
 function createCard(model) {
   const article = document.createElement("article");
   article.className = "card";
+  article.style.cursor = "pointer";
 
   const media = document.createElement("div");
   media.className = "card-media";
@@ -72,6 +73,15 @@ function createCard(model) {
 
   article.appendChild(media);
   article.appendChild(body);
+  
+  // Добавляем обработчик клика для перехода на страницу генерации
+  article.addEventListener('click', () => {
+    // Сохраняем данные модели в localStorage
+    localStorage.setItem('selectedModel', JSON.stringify(model));
+    // Переходим на страницу генерации
+    window.location.href = 'generate.html';
+  });
+  
   return article;
 }
 
