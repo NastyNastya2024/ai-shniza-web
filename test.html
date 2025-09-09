@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест загрузки изображений</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+        .model-card { display: inline-block; margin: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; width: 200px; }
+        .model-card img { width: 100%; height: 150px; object-fit: cover; border-radius: 4px; }
+        .model-title { font-weight: bold; margin: 10px 0 5px 0; }
+        .model-tags { font-size: 12px; color: #666; }
+        .tag { display: inline-block; background: #e0e0e0; padding: 2px 6px; margin: 2px; border-radius: 12px; font-size: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Тест загрузки изображений нейросетей</h1>
+    
+    <div class="test-section">
+        <h2>API Теги</h2>
+        <div id="tags-container">Загрузка...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>API Модели</h2>
+        <div id="models-container">Загрузка...</div>
+    </div>
+
+    <script>
+        const API_BASE = "http://127.0.0.1:5000/api";
+        
+        async function fetchJSON(url) {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        }
+        
+        async function loadTags() {
+            try {
+                const tags = await fetchJSON(`${API_BASE}/tags`);
+                const container = document.getElementById('tags-container');
+                container.innerHTML = tags.map(tag => 
+                    `<span class="tag">${tag.name}</span>`
+                ).join(' ');
+            } catch (error) {
+                document.getElementById('tags-container').innerHTML = `Ошибка: ${error.message}`;
+            }
+        }
+        
+        async function loadModels() {
+            try {
+                const data = await fetchJSON(`${API_BASE}/models`);
+                const container = document.getElementById('models-container');
+                container.innerHTML = data.items.map(model => `
+                    <div class="model-card">
+                        <img src="${model.image_url}" alt="${model.title}" 
+                             onerror="this.src='https://via.placeholder.com/200x150?text=No+Image'">
+                        <div class="model-title">${model.title}</div>
+                        <div class="model-tags">
+                            ${model.tags.map(tag => `<span class="tag">#${tag}</span>`).join(' ')}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('models-container').innerHTML = `Ошибка: ${error.message}`;
+            }
+        }
+        
+        // Загружаем данные при загрузке страницы
+        loadTags();
+        loadModels();
+    </script>
+</body>
+</html>
