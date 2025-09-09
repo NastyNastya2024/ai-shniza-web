@@ -1,1 +1,71 @@
- с тегом generationjij 
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{AI}-шница — Маркетплейс нейросетей</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <nav class="main-nav" aria-label="Главная навигация">
+        <a href="#about" class="nav-link">О проекте</a>
+        <a href="#team" class="nav-link">Команда</a>
+        <a href="#deck" class="nav-link">Презентация</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-label="Заставка">
+      <div class="container">
+        <h1 class="hero-title"><span class="accent">{AI}</span>-шница</h1>
+        <p class="hero-subtitle">Маркетплейс нейросетей для создания мультимедиа</p>
+      </div>
+    </section>
+
+    <section class="catalog" aria-label="Каталог моделей">
+      <div class="container catalog-inner">
+        <aside class="filters" aria-label="Фильтры">
+          <h2 class="filters-title">Фильтры</h2>
+          <div class="tags">
+            <!-- Теги будут загружены динамически через JavaScript -->
+          </div>
+        </aside>
+
+        <div class="catalog-content">
+          <form class="search-bar" role="search" aria-label="Поиск по моделям" action="#" method="get">
+            <input class="search-input" type="search" name="q" placeholder="Поиск моделей, тегов, авторов…" aria-label="Поиск" />
+            <button class="search-btn" type="submit" aria-label="Найти">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                <path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5Zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14Z"/>
+              </svg>
+            </button>
+          </form>
+          <div class="cards-grid">
+            <!-- Карточки будут загружены динамически через JavaScript -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta" aria-label="Действия">
+      <div class="container cta-inner">
+        <a href="#mvp" class="btn btn-ghost">MVP проекта</a>
+        <a href="#request" class="btn btn-primary">Запросить презентацию</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <small>© 2025 {AI}-шница</small>
+    </div>
+  </footer>
+</body>
+</html>
