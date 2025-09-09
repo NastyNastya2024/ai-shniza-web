@@ -1,0 +1,94 @@
+[
+  {
+    "id": 3,
+    "name": "1080p"
+  },
+  {
+    "id": 23,
+    "name": "3d"
+  },
+  {
+    "id": 19,
+    "name": "anime"
+  },
+  {
+    "id": 6,
+    "name": "audio"
+  },
+  {
+    "id": 21,
+    "name": "cartoon"
+  },
+  {
+    "id": 18,
+    "name": "characters"
+  },
+  {
+    "id": 13,
+    "name": "design"
+  },
+  {
+    "id": 7,
+    "name": "game-world-creation"
+  },
+  {
+    "id": 10,
+    "name": "image-generation"
+  },
+  {
+    "id": 2,
+    "name": "image-to-video"
+  },
+  {
+    "id": 11,
+    "name": "inpainting"
+  },
+  {
+    "id": 8,
+    "name": "lip-sync"
+  },
+  {
+    "id": 4,
+    "name": "multi-shot"
+  },
+  {
+    "id": 16,
+    "name": "music-generation"
+  },
+  {
+    "id": 14,
+    "name": "official"
+  },
+  {
+    "id": 17,
+    "name": "photoreal"
+  },
+  {
+    "id": 20,
+    "name": "portrait"
+  },
+  {
+    "id": 22,
+    "name": "style"
+  },
+  {
+    "id": 12,
+    "name": "text-rendering"
+  },
+  {
+    "id": 9,
+    "name": "text-to-image"
+  },
+  {
+    "id": 1,
+    "name": "text-to-video"
+  },
+  {
+    "id": 15,
+    "name": "upscaler"
+  },
+  {
+    "id": 5,
+    "name": "video-generation"
+  }
+]

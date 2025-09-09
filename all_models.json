@@ -1,0 +1,770 @@
+[
+  {
+    "description": "Image super-resolution model based on SEESR, designed to reconstruct low-resolution images with sharper details and accurate colors.",
+    "id": 190,
+    "image_url": "https://replicate.delivery/xezq/rBDm740LsiYyNxz2w5JfX5cZQrA7SQbowBaumqMPQWgWxeJVA/upscaled.png",
+    "name": "seesr-upscale-and-stable-diffusion-turbo",
+    "tags": [
+      "image-generation",
+      "official"
+    ],
+    "title": "alexgenovese/seesr-upscale-and-stable-diffusion-turbo",
+    "vendor": "alexgenovese"
+  },
+  {
+    "description": "Mahmood Farshchian Paint Style Image Generation with AI",
+    "id": 293,
+    "image_url": "https://tjzk.replicate.delivery/models_models_cover_image/10b87337-cddf-4756-b6cd-78a48c9d970d/Implore.jpg",
+    "name": "farshchian_lora",
+    "tags": [
+      "image-generation",
+      "official",
+      "style"
+    ],
+    "title": "alipyth/farshchian_lora",
+    "vendor": "alipyth"
+  },
+  {
+    "description": "Make images in Studio Ghibli art style",
+    "id": 100,
+    "image_url": "https://tjzk.replicate.delivery/models_models_cover_image/b8e3d1ea-235e-41da-94f1-d1e87c49f08f/glowing_creatures_ghibli.webp",
+    "name": "easycontrol-ghibli",
+    "tags": [
+      "image-generation",
+      "official",
+      "style"
+    ],
+    "title": "astramlco/easycontrol-ghibli",
+    "vendor": "astramlco"
+  },
+  {
+    "description": "Practicing Model Scaling for Photo-Realistic Image Restoration In the Wild, using tiled VAE and Juggernaut XL to eliminate plastic skin and smooth textures.",
+    "id": 96,
+    "image_url": "https://tjzk.replicate.delivery/models_models_cover_image/fb8d793f-d478-47a1-b324-bcf7e3239b1c/supir_cover.jpg",
+    "name": "supir",
+    "tags": [
+      "image-generation",
+      "text-rendering",
+      "official",
+      "photoreal"
+    ],
+    "title": "astramlco/supir",
+    "vendor": "astramlco"
+  },
+  {
+    "description": "Professional edge-guided image generation. Control structure and composition using Canny edge detection",
+    "id": 22,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/4c07cacc-d206-4587-9357-8e4e81cd761a/https___replicate.deli_lsMxQWe.jpg",
+    "name": "flux-canny-pro",
+    "tags": [
+      "image-generation",
+      "official"
+    ],
+    "title": "black-forest-labs/flux-canny-pro",
+    "vendor": "black-forest-labs"
+  },
+  {
+    "description": "A state-of-the-art text-based image editing model that delivers high-quality outputs with excellent prompt following and consistent results for transforming images through natural language",
+    "id": 19,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/e74eecd6-daf1-4050-9f04-36313bd6f007/two-people-cropped.webp",
+    "name": "flux-kontext-pro",
+    "tags": [
+      "image-generation",
+      "text-rendering",
+      "official"
+    ],
+    "title": "black-forest-labs/flux-kontext-pro",
+    "vendor": "black-forest-labs"
+  },
+  {
+    "description": "4MP text-to-image generation with enhanced cinematic-quality image generation with precise style control, improved text rendering, and commercial design optimization.",
+    "id": 105,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/31e750f2-01d1-4f76-92e2-2f3f1627113f/replicate-prediction-0c2ppf3cn.png",
+    "name": "dreamina-3.1",
+    "tags": [
+      "image-generation",
+      "text-rendering",
+      "official",
+      "style"
+    ],
+    "title": "bytedance/dreamina-3.1",
+    "vendor": "bytedance"
+  },
+  {
+    "description": "Turns your audio/video/images into professional-quality animated videos",
+    "id": 254,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/980eb6f7-0acd-4739-986e-37c0ce8c8660/replicate-prediction-hp67b527v.mp4",
+    "name": "omni-human",
+    "tags": [
+      "video-generation",
+      "audio",
+      "image-generation",
+      "official",
+      "music-generation"
+    ],
+    "title": "bytedance/omni-human",
+    "vendor": "bytedance"
+  },
+  {
+    "description": "A pro version of Seedance that offers text-to-video and image-to-video support for 5s or 10s videos, at 480p and 1080p resolution",
+    "id": 2,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/961a33d5-e27a-4b15-8cdd-3e37d5375297/replicate-seedance-1-lite.webp",
+    "name": "seedance-1-lite",
+    "tags": [
+      "text-to-video",
+      "image-to-video",
+      "video-generation",
+      "image-generation",
+      "text-rendering",
+      "official"
+    ],
+    "title": "bytedance/seedance-1-lite",
+    "vendor": "bytedance"
+  },
+  {
+    "description": "A pro version of Seedance that offers text-to-video and image-to-video support for 5s or 10s videos, at 480p and 1080p resolution",
+    "id": 1,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/b11bb650-a993-485b-b433-f1ba1c4cb90b/replicate-seedance-1-pro.webp",
+    "name": "seedance-1-pro",
+    "tags": [
+      "text-to-video",
+      "1080p",
+      "multi-shot",
+      "video-generation",
+      "image-generation",
+      "text-rendering",
+      "official"
+    ],
+    "title": "bytedance/seedance-1-pro",
+    "vendor": "bytedance"
+  },
+  {
+    "description": "Text-guided image editing model that preserves original details while making targeted modifications like lighting changes, object removal, and style conversion",
+    "id": 262,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/7baed8f1-dce4-4f4a-8a42-83830112a621/replicate-prediction-vpcqhmcw.webp",
+    "name": "seededit-3.0",
+    "tags": [
+      "image-generation",
+      "text-rendering",
+      "official",
+      "style"
+    ],
+    "title": "bytedance/seededit-3.0",
+    "vendor": "bytedance"
+  },
+  {
+    "description": "Unified text-to-image generation and precise single-sentence editing at up to 4K resolution",
+    "id": 311,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/55be80c2-0d5c-496b-8570-8cc101268fc4/tmp4lklv3vn.jpg",
+    "name": "seedream-4",
+    "tags": [
+      "image-generation"
+    ],
+    "title": "bytedance/seedream-4",
+    "vendor": "bytedance"
+  },
+  {
+    "description": "Practicing Model Scaling for Photo-Realistic Image Restoration In the Wild, using tiled VAE and Juggernaut XL to eliminate plastic skin and smooth textures.",
+    "id": 83,
+    "image_url": "https://tjzk.replicate.delivery/models_models_cover_image/80b1fd2e-8c39-4934-85c2-755428f78264/matterhorn_x2.jpg",
+    "name": "supir-v0q",
+    "tags": [
+      "image-generation",
+      "text-rendering",
+      "official",
+      "photoreal"
+    ],
+    "title": "chuckchen/supir-v0q",
+    "vendor": "chuckchen"
+  },
+  {
+    "description": "Catholic images",
+    "id": 203,
+    "image_url": "https://replicate.delivery/xezq/LZ1CNk5AtY6tHBG3oGtpWkelGOjBEJOlcjSzv9sJMzmKrhkKA/out-3.webp",
+    "name": "catholic-images",
+    "tags": [
+      "image-generation",
+      "official"
+    ],
+    "title": "digital-prairie-labs/catholic-images",
+    "vendor": "digital-prairie-labs"
+  },
+  {
+    "description": "The image generation model tailored for local development and personal use",
+    "id": 259,
+    "image_url": "https://replicate.delivery/yhqm/10FaFbFjJ4YeYCafC22fbWQKsJI1H2CIonHjUIExdXwIa18nA/out-3.webp",
+    "name": "flux",
+    "tags": [
+      "image-generation",
+      "official"
+    ],
+    "title": "fire/flux",
+    "vendor": "fire"
+  },
+  {
+    "description": "PartCrafter is a structured 3D mesh generation model that creates multiple parts and objects from a single RGB image.",
+    "id": 257,
+    "image_url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?q=80&w=1600&auto=format&fit=crop",
+    "name": "part-crafter",
+    "tags": [
+      "image-generation",
+      "official",
+      "3d"
+    ],
+    "title": "fire/part-crafter",
+    "vendor": "fire"
+  },
+  {
+    "description": "Mediapipe Blendshape Labeler - Predicts the blend shapes of an image.",
+    "id": 260,
+    "image_url": "https://tjzk.replicate.delivery/models_models_cover_image/8aa02b8e-e125-4f4f-a45c-6e363789767a/Screenshot_2023-09-03_065500.png",
+    "name": "v-sekai.mediapipe-labeler",
+    "tags": [
+      "image-generation",
+      "official"
+    ],
+    "title": "fire/v-sekai.mediapipe-labeler",
+    "vendor": "fire"
+  },
+  {
+    "description": "Color match and white balance fixes for images",
+    "id": 163,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/c62d79ce-aa7f-4f64-952b-ccbbf563a1c3/color-match-cover.webp",
+    "name": "color-matcher",
+    "tags": [
+      "image-generation",
+      "official"
+    ],
+    "title": "fofr/color-matcher",
+    "vendor": "fofr"
+  },
+  {
+    "description": "Qwen fine-tuned on Midjourney v3 images",
+    "id": 117,
+    "image_url": "https://replicate.delivery/xezq/gTFsfIGIiqwsCKzOYSENuGZcZwCZ2bmfKrmiFJf24ais3FZqA/output.webp",
+    "name": "qwen-midjourney-v3",
+    "tags": [
+      "image-generation",
+      "official"
+    ],
+    "title": "fofr/qwen-midjourney-v3",
+    "vendor": "fofr"
+  },
+  {
+    "description": "Google's latest image generation model in Gemini 2.5",
+    "id": 43,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/52597479-7288-4501-a5eb-8f54f27a1114/tmpey3htx51.png",
+    "name": "gemini-2.5-flash-image",
+    "tags": [
+      "image-generation",
+      "official"
+    ],
+    "title": "google/gemini-2.5-flash-image",
+    "vendor": "google"
+  },
+  {
+    "description": "Use this fast version of Imagen 4 when speed and cost are more important than quality",
+    "id": 17,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/73c5af65-f578-4113-b62c-2a56971cff2f/replicate-prediction-trmpwr78.webp",
+    "name": "imagen-4-fast",
+    "tags": [
+      "image-generation",
+      "official"
+    ],
+    "title": "google/imagen-4-fast",
+    "vendor": "google"
+  },
+  {
+    "description": "Google's latest image editing model in Gemini 2.5",
+    "id": 44,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/ed879e99-71b5-4689-bed3-e7305e35a28a/this.png",
+    "name": "nano-banana",
+    "tags": [
+      "image-generation",
+      "official"
+    ],
+    "title": "google/nano-banana",
+    "vendor": "google"
+  },
+  {
+    "description": "Generate consistent characters from a single reference image. Outputs can be in many styles. You can also use inpainting to add your character to an existing image.",
+    "id": 215,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/90c43ca6-0ce1-4bd5-935b-04ac5449f3ea/replicate-prediction-f64jwbkb.webp",
+    "name": "ideogram-character",
+    "tags": [
+      "image-generation",
+      "official",
+      "characters",
+      "style"
+    ],
+    "title": "ideogram-ai/ideogram-character",
+    "vendor": "ideogram-ai"
+  },
+  {
+    "description": "An excellent image model with state of the art inpainting, prompt comprehension and text rendering",
+    "id": 229,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/71c982a3-27f0-42a6-ad6a-769f25097c08/replicate-prediction-s_VROPz1s.png",
+    "name": "ideogram-v2",
+    "tags": [
+      "image-generation",
+      "text-rendering",
+      "official"
+    ],
+    "title": "ideogram-ai/ideogram-v2",
+    "vendor": "ideogram-ai"
+  },
+  {
+    "description": "A fast image model with state of the art inpainting, prompt comprehension and text rendering.",
+    "id": 228,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/8b1df940-d741-4446-beb2-0d72c66abb91/replicate-prediction-f_iX48w8f.png",
+    "name": "ideogram-v2-turbo",
+    "tags": [
+      "image-generation",
+      "text-rendering",
+      "official"
+    ],
+    "title": "ideogram-ai/ideogram-v2-turbo",
+    "vendor": "ideogram-ai"
+  },
+  {
+    "description": "Balance speed, quality and cost. Ideogram v3 creates images with stunning realism, creative designs, and consistent styles",
+    "id": 225,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/efc494c7-8e1b-4127-9e95-9e5376f7eb78/tmphco6mpqu.webp",
+    "name": "ideogram-v3-balanced",
+    "tags": [
+      "image-generation",
+      "official",
+      "style"
+    ],
+    "title": "ideogram-ai/ideogram-v3-balanced",
+    "vendor": "ideogram-ai"
+  },
+  {
+    "description": "The highest quality Ideogram v3 model. v3 creates images with stunning realism, creative designs, and consistent styles",
+    "id": 223,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/f285d3d6-40bb-4f15-aa82-c163e33c6000/tmpx4azqibw.webp",
+    "name": "ideogram-v3-quality",
+    "tags": [
+      "image-generation",
+      "official",
+      "style"
+    ],
+    "title": "ideogram-ai/ideogram-v3-quality",
+    "vendor": "ideogram-ai"
+  },
+  {
+    "description": "Turbo is the fastest and cheapest Ideogram v3. v3 creates images with stunning realism, creative designs, and consistent styles",
+    "id": 224,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/b55e9f9e-5f43-4cf8-99c8-c33cc8486f23/tmp0s1h52uw-1.webp",
+    "name": "ideogram-v3-turbo",
+    "tags": [
+      "image-generation",
+      "official",
+      "style"
+    ],
+    "title": "ideogram-ai/ideogram-v3-turbo",
+    "vendor": "ideogram-ai"
+  },
+  {
+    "description": "AI-powered content moderation for images using MiniCPM-V-2.6 - analyzes visual content and returns structured safety scores with detailed classifications",
+    "id": 25,
+    "image_url": "https://tjzk.replicate.delivery/models_models_cover_image/3035a2a9-46ac-495e-8e19-1a9f8d3a0cb9/replicate-prediction-4jafqmyzpxr.jpeg",
+    "name": "content-moderation-vision",
+    "tags": [
+      "image-generation",
+      "official"
+    ],
+    "title": "kojott/content-moderation-vision",
+    "vendor": "kojott"
+  },
+  {
+    "description": "Use Kling v2.1 to generate 5s and 10s videos in 720p and 1080p resolution from a starting image (image-to-video)",
+    "id": 47,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/a7690882-d1d2-44fb-b487-f41bd367adcf/replicate-prediction-2epyczsz.webp",
+    "name": "kling-v2.1",
+    "tags": [
+      "video-generation",
+      "image-generation",
+      "official"
+    ],
+    "title": "kwaivgi/kling-v2.1",
+    "vendor": "kwaivgi"
+  },
+  {
+    "description": "A premium version of Kling v2.1 with superb dynamics and prompt adherence. Generate 1080p 5s and 10s videos from text or an image",
+    "id": 46,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/a7bd1bde-7a3e-4173-ad04-bf4071cb7592/replicate-kling-v21.webp",
+    "name": "kling-v2.1-master",
+    "tags": [
+      "video-generation",
+      "image-generation",
+      "text-rendering",
+      "official"
+    ],
+    "title": "kwaivgi/kling-v2.1-master",
+    "vendor": "kwaivgi"
+  },
+  {
+    "description": "MiniCPM-V 4.0 has strong image and video understanding performance",
+    "id": 189,
+    "image_url": "https://tjzk.replicate.delivery/models_models_cover_image/c902c01a-2aac-4c33-8df0-aa92d278339a/1670387859384-633fe7784b36248833.webp",
+    "name": "minicpm-v-4",
+    "tags": [
+      "video-generation",
+      "image-generation",
+      "official"
+    ],
+    "title": "lucataco/minicpm-v-4",
+    "vendor": "lucataco"
+  },
+  {
+    "description": "Qwen-image fine-tuned on Drawings by Leonardo da Vinci",
+    "id": 106,
+    "image_url": "https://tjzk.replicate.delivery/models_models_cover_image/78708d42-9211-49ab-a2ae-eee1da3d3837/replicate-prediction-rdgxhedpz5r.webp",
+    "name": "qwen-davinci",
+    "tags": [
+      "image-generation",
+      "official"
+    ],
+    "title": "lucataco/qwen-davinci",
+    "vendor": "lucataco"
+  },
+  {
+    "description": "Generates photorealistic images of mah2025 while preserving identity and style.",
+    "id": 122,
+    "image_url": "https://replicate.delivery/xezq/YeUJD7NHkxUoDamHKvo9BURkPYc6dApFv7CrZbJs6JYi9KmKA/out-0.webp",
+    "name": "criador-de-celas",
+    "tags": [
+      "image-generation",
+      "official",
+      "photoreal",
+      "style"
+    ],
+    "title": "marcelarocerie/criador-de-celas",
+    "vendor": "marcelarocerie"
+  },
+  {
+    "description": "Advanced color extraction API. Extract dominant colors from images using multiple methods including K-means clustering, ColorThief, and adaptive algorithms. Get beautiful visual summaries with insights and suggestions.",
+    "id": 95,
+    "image_url": "https://tjzk.replicate.delivery/models_models_cover_image/e15dc0e9-16ae-4b18-9e4d-ff08c56396d7/cover.png",
+    "name": "color-extraction-v4",
+    "tags": [
+      "image-generation",
+      "official"
+    ],
+    "title": "merahburam/color-extraction-v4",
+    "vendor": "merahburam"
+  },
+  {
+    "description": "A high-performance AI background removal API built with multiple state-of-the-art models. Remove backgrounds from images with professional quality results in seconds.",
+    "id": 92,
+    "image_url": "https://tjzk.replicate.delivery/models_models_cover_image/302b8b12-fc17-4e7b-be77-c9388749f897/cover.png",
+    "name": "remove-bg",
+    "tags": [
+      "image-generation",
+      "official"
+    ],
+    "title": "merahburam/remove-bg",
+    "vendor": "merahburam"
+  },
+  {
+    "description": "Hailuo 2 is a text-to-video and image-to-video model that can make 6s or 10s videos at 768p (standard) or 1080p (pro). It excels at real world physics.",
+    "id": 61,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/e2953b9d-ef83-4a4a-b90f-1ef168223bf2/tmpbufkswx1.mp4",
+    "name": "hailuo-02",
+    "tags": [
+      "video-generation",
+      "image-generation",
+      "text-rendering",
+      "official"
+    ],
+    "title": "minimax/hailuo-02",
+    "vendor": "minimax"
+  },
+  {
+    "description": "Generate 6s videos with prompts or images. (Also known as Hailuo). Use a subject reference to make a video with a character and the S2V-01 model.",
+    "id": 276,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/b56c831c-4c68-4443-b69e-b71b105afe7f/minimax.webp",
+    "name": "video-01",
+    "tags": [
+      "video-generation",
+      "image-generation",
+      "official",
+      "characters"
+    ],
+    "title": "minimax/video-01",
+    "vendor": "minimax"
+  },
+  {
+    "description": "A pro version of Seedance that offers text-to-video and image-to-video support for 5s or 10s videos, at 480p and 1080p resolution",
+    "id": 7,
+    "image_url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?q=80&w=1600&auto=format&fit=crop",
+    "name": "omni-v",
+    "tags": [
+      "game-world-creation",
+      "image-generation"
+    ],
+    "title": "nvidia/omni-v",
+    "vendor": "nvidia"
+  },
+  {
+    "description": "Official CLIP models, generate CLIP (clip-vit-large-patch14) text & image embeddings",
+    "id": 263,
+    "image_url": "https://tjzk.replicate.delivery/models_models_cover_image/bdd3834d-6c07-44e0-8c1b-423f69b177a9/clip_cover.webp",
+    "name": "clip",
+    "tags": [
+      "image-generation",
+      "text-rendering",
+      "official"
+    ],
+    "title": "openai/clip",
+    "vendor": "openai"
+  },
+  {
+    "description": "An image generation foundation model in the Qwen series that achieves significant advances in complex text rendering.",
+    "id": 38,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/62e062a1-f4e4-4192-9f0c-56408f092fec/replicate-prediction-97qabd8z.webp",
+    "name": "qwen-image",
+    "tags": [
+      "image-generation",
+      "text-rendering",
+      "official"
+    ],
+    "title": "qwen/qwen-image",
+    "vendor": "qwen"
+  },
+  {
+    "description": "Edit images using a prompt. This model extends Qwen-Image’s unique text rendering capabilities to image editing tasks, enabling precise text editing",
+    "id": 114,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/29bbf095-fce5-4328-8117-9d79a41149c2/replicate-prediction-f28b7ty1.webp",
+    "name": "qwen-image-edit",
+    "tags": [
+      "image-generation",
+      "text-rendering",
+      "official"
+    ],
+    "title": "qwen/qwen-image-edit",
+    "vendor": "qwen"
+  },
+  {
+    "description": "Fine-tunable Qwen Image model with exceptional composition abilities - train custom LoRAs for any style or subject",
+    "id": 107,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/e8b05e2a-cf21-4d62-ab2d-884d288b5f09/qwen-image-lora-traine_-cover.jpg",
+    "name": "qwen-image-lora-trainer",
+    "tags": [
+      "image-generation",
+      "official",
+      "style"
+    ],
+    "title": "qwen/qwen-image-lora-trainer",
+    "vendor": "qwen"
+  },
+  {
+    "description": "Automated background removal for images. Tuned for AI-generated content, product photos, portraits, and design workflows",
+    "id": 72,
+    "image_url": "https://tjzk.replicate.delivery/models_models_cover_image/1c42e347-470d-4764-a3bf-b2ae3f1495d5/replicate-prediction-qm52wq88vdr.webp",
+    "name": "recraft-remove-background",
+    "tags": [
+      "image-generation",
+      "official",
+      "photoreal",
+      "portrait"
+    ],
+    "title": "recraft-ai/recraft-remove-background",
+    "vendor": "recraft-ai"
+  },
+  {
+    "description": "Convert raster images to high-quality SVG format with precision and clean vector paths, perfect for logos, icons, and scalable graphics.",
+    "id": 73,
+    "image_url": "https://tjzk.replicate.delivery/models_models_cover_image/f6c09c15-3f70-4576-9d90-f3d3522982c0/svg-recraft.webp",
+    "name": "recraft-vectorize",
+    "tags": [
+      "image-generation",
+      "official"
+    ],
+    "title": "recraft-ai/recraft-vectorize",
+    "vendor": "recraft-ai"
+  },
+  {
+    "description": "Gen-4 Image Turbo is cheaper and 2.5x faster than Gen-4 Image. An image model with references, use up to 3 reference images to create the exact image you need. Capture every angle.",
+    "id": 195,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/47b0c1c6-d76f-49cd-80dd-ef057354df6a/stitched-three.webp",
+    "name": "gen4-image-turbo",
+    "tags": [
+      "image-generation",
+      "official"
+    ],
+    "title": "runwayml/gen4-image-turbo",
+    "vendor": "runwayml"
+  },
+  {
+    "description": "Generate cartoonish images to be used as game backgrounds.",
+    "id": 80,
+    "image_url": "https://replicate.delivery/xezq/7JsJWVtpeGRbB6gc8SYaBna8WEJLoQ8jQfyRszEoEbABC3SVA/out-0.webp",
+    "name": "backgrounds_v1",
+    "tags": [
+      "image-generation",
+      "official",
+      "cartoon"
+    ],
+    "title": "steliosm/backgrounds_v1",
+    "vendor": "steliosm"
+  },
+  {
+    "description": "Generates images of a Flux-LoRA trained with 30 Flux-Kontext Images that came from one single photo of myself",
+    "id": 312,
+    "image_url": "https://tjzk.replicate.delivery/models_models_cover_image/98e62159-f58b-4de6-9d06-f7328b81a615/a-photo-of-topolora-110.png",
+    "name": "topolora1",
+    "tags": [
+      "image-generation"
+    ],
+    "title": "topogoogles/topolora1",
+    "vendor": "topogoogles"
+  },
+  {
+    "description": "The fastest Wan 2.2 text-to-image and image-to-video model",
+    "id": 209,
+    "image_url": "https://replicate.delivery/xezq/kItohszexaWdcCLlH9TBLXNVZb6dnmovyRuCXlrXFVfu8NIVA/output.mp4",
+    "name": "wan-2.2-5b-fast",
+    "tags": [
+      "video-generation",
+      "image-generation",
+      "text-rendering",
+      "official"
+    ],
+    "title": "wan-video/wan-2.2-5b-fast",
+    "vendor": "wan-video"
+  },
+  {
+    "description": "Image-to-video at 720p and 480p with Wan 2.2 A14B",
+    "id": 206,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/4f27b566-5a20-4910-8a7a-e5cdba610441/replicate-prediction-hd6b2q3s.webp",
+    "name": "wan-2.2-i2v-a14b",
+    "tags": [
+      "video-generation",
+      "image-generation",
+      "official"
+    ],
+    "title": "wan-video/wan-2.2-i2v-a14b",
+    "vendor": "wan-video"
+  },
+  {
+    "description": "A very fast and cheap PrunaAI optimized version of Wan 2.2 A14B image-to-video",
+    "id": 207,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/e04b60c1-dbc9-4606-8b37-6da8c7e27f5e/replicate-prediction-xd6kc1a96.mp4",
+    "name": "wan-2.2-i2v-fast",
+    "tags": [
+      "video-generation",
+      "image-generation",
+      "official"
+    ],
+    "title": "wan-video/wan-2.2-i2v-fast",
+    "vendor": "wan-video"
+  },
+  {
+    "description": "A 20B MMDiT model for next-gen text-to-image generation",
+    "id": 237,
+    "image_url": "https://replicate.delivery/xezq/YVRZWDZpKcreRC6nkFFUelHhRMIlfdDlvUJ65QHAM6xPITPqA/tmprxlz3_yd.jpg",
+    "name": "qwen-image",
+    "tags": [
+      "image-generation",
+      "text-rendering",
+      "official"
+    ],
+    "title": "wavespeedai/qwen-image",
+    "vendor": "wavespeedai"
+  },
+  {
+    "description": "Accelerated inference for Wan 2.1 14B image to video, a comprehensive and open suite of video foundation models that pushes the boundaries of video generation.",
+    "id": 240,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/75f0346d-ec4c-4078-bb40-6705578c0d21/replicate-prediction-br080xq9.webp",
+    "name": "wan-2.1-i2v-480p",
+    "tags": [
+      "video-generation",
+      "image-generation",
+      "official"
+    ],
+    "title": "wavespeedai/wan-2.1-i2v-480p",
+    "vendor": "wavespeedai"
+  },
+  {
+    "description": "Accelerated inference for Wan 2.1 14B image to video with high resolution, a comprehensive and open suite of video foundation models that pushes the boundaries of video generation.",
+    "id": 239,
+    "image_url": "https://tjzk.replicate.delivery/models_models_featured_image/cd768779-a7bf-41cd-ac59-6ab1531c1697/replicate-prediction-ce1zy3hv.webp",
+    "name": "wan-2.1-i2v-720p",
+    "tags": [
+      "video-generation",
+      "image-generation",
+      "official"
+    ],
+    "title": "wavespeedai/wan-2.1-i2v-720p",
+    "vendor": "wavespeedai"
+  },
+  {
+    "description": "This is an excellent method for converting blurry facial images into high-definition ones.",
+    "id": 34,
+    "image_url": "https://tjzk.replicate.delivery/models_models_cover_image/1a1326d8-b599-492e-b344-43b40aaf3055/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_2025-09-06_030517_695.png",
+    "name": "ultimate-face-enhance",
+    "tags": [
+      "image-generation",
+      "official"
+    ],
+    "title": "zhouyi531/ultimate-face-enhance",
+    "vendor": "zhouyi531"
+  },
+  {
+    "description": "Model from Replicate",
+    "id": 285,
+    "image_url": "https://replicate.delivery/yhqm/4IWZWJehOc37Iq5IGQk6w8CeTFiKPjgj8gZjgGQ6tuvzmlFVA/ComfyUI_00005_.png",
+    "name": "cyberrealistic-pony-semireal-v36",
+    "tags": [
+      "official"
+    ],
+    "title": "0xdino/cyberrealistic-pony-semireal-v36",
+    "vendor": "0xdino"
+  },
+  {
+    "description": "Model from Replicate",
+    "id": 286,
+    "image_url": "https://replicate.delivery/yhqm/CcBskYvxYy7HJJu8gSfflzCOTrf722r3kffMJnP6fjpGJIZRF/ComfyUI_00001_.png",
+    "name": "cyberrealistic-pony-v125",
+    "tags": [
+      "official"
+    ],
+    "title": "0xdino/cyberrealistic-pony-v125",
+    "vendor": "0xdino"
+  },
+  {
+    "description": "Model from Replicate",
+    "id": 133,
+    "image_url": "https://replicate.delivery/xezq/DP4sSEJSkeS4AiwlpEBkjbKNfFq8YwnY5UUTeFOl8PmTx1XqA/out-0.png",
+    "name": "rhillai-replica",
+    "tags": [
+      "official"
+    ],
+    "title": "703a/rhillai-replica",
+    "vendor": "703a"
+  },
+  {
+    "description": "Model from Replicate",
+    "id": 235,
+    "image_url": "https://replicate.delivery/xezq/eThkz7mOyEVLSCQRcYSGSjT3ZuOGq22phhAEGeHe3qed5zeoC/out-0.webp",
+    "name": "mnsur",
+    "tags": [
+      "official"
+    ],
+    "title": "abdushy/mnsur",
+    "vendor": "abdushy"
+  },
+  {
+    "description": "Model from Replicate",
+    "id": 273,
+    "image_url": "https://replicate.delivery/xezq/CSNM9dtwH7ItLFl0EHPFVRX1arR41FwpsEYAD8iJDY9xPjRF/out-3.webp",
+    "name": "lumi",
+    "tags": [
+      "official"
+    ],
+    "title": "adamantiamable/lumi",
+    "vendor": "adamantiamable"
+  }
+]
