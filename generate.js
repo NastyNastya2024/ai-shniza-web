@@ -1,287 +1,327 @@
-// Загружаем данные о моделях
+// @ts-nocheck
+
+// Глобальные переменные
 let models = [];
 let selectedModel = null;
+let uploadedFile = null;
+let chatHistory = [];
 
-// Элементы DOM
-const modelCardsContainer = document.getElementById('model-cards');
-const promptInput = document.getElementById('prompt-input');
-const imageUpload = document.getElementById('image-upload');
-const uploadArea = document.getElementById('upload-area');
-const uploadedImage = document.getElementById('uploaded-image');
-const previewImage = document.getElementById('preview-image');
-const removeImageBtn = document.getElementById('remove-image');
-const generateBtn = document.getElementById('generate-btn');
-const btnText = document.querySelector('.btn-text');
-const btnLoading = document.querySelector('.btn-loading');
-const resultSection = document.getElementById('result-section');
-const resultImage = document.getElementById('result-image');
-const downloadBtn = document.getElementById('download-btn');
-const regenerateBtn = document.getElementById('regenerate-btn');
-
-// Загружаем модели при загрузке страницы
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    // Загружаем все модели с API
-    const response = await fetch('http://localhost:5000/api/models?per_page=100');
-    const data = await response.json();
-    models = data.items;
-    
-    // Фильтруем только модели для генерации изображений
-    const imageModels = models.filter(model => 
-      model.tags && model.tags.includes('image-generation')
-    );
-    
-    renderModelCards(imageModels);
-    
-    // Проверяем, есть ли выбранная модель из localStorage
-    const savedModel = localStorage.getItem('selectedModel');
-    if (savedModel) {
-      try {
-        const modelData = JSON.parse(savedModel);
-        // Находим модель в списке по vendor/name
-        const modelToSelect = imageModels.find(model => 
-          model.vendor === modelData.vendor && model.name === modelData.name
-        );
-        
-        if (modelToSelect) {
-          // Сразу выбираем модель без задержки
-          selectModel(modelToSelect, null);
-        } else {
-          // Если модель не найдена среди image-generation, показываем её в списке
-          console.log('Модель не найдена среди image-generation моделей, добавляем в список');
-          imageModels.unshift(modelData);
-          renderModelCards(imageModels);
-          // Выбираем добавленную модель
-          setTimeout(() => {
-            const cards = document.querySelectorAll('.model-card');
-            const targetCard = cards[0]; // Первая карточка - это наша добавленная модель
-            selectModel(modelData, targetCard);
-          }, 50);
-        }
-        // Очищаем localStorage после использования
-        localStorage.removeItem('selectedModel');
-      } catch (error) {
-        console.error('Ошибка парсинга сохраненной модели:', error);
-      }
-    }
-  } catch (error) {
-    console.error('Ошибка загрузки моделей:', error);
-    modelCardsContainer.innerHTML = '<p>Ошибка загрузки моделей</p>';
-  }
+// Загрузка данных при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('Страница генерации загружена');
+  loadModels();
+  initializeEventListeners();
 });
 
-// Рендеринг карточек моделей
-function renderModelCards(modelsToRender) {
-  modelCardsContainer.innerHTML = '';
-  
-  modelsToRender.forEach(model => {
-    const card = document.createElement('div');
-    card.className = 'model-card';
-    card.onclick = () => selectModel(model, card);
+// Загрузка моделей
+async function loadModels() {
+  try {
+    console.log('Загружаем модели...');
+    const response = await fetch('models.json');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    models = data.items || data;
+    console.log(`Загружено ${models.length} моделей`);
     
-    card.innerHTML = `
-      <img src="${model.image_url || getPlaceholder(model)}" alt="${model.name}" class="model-card-image" onerror="this.src='${getPlaceholder(model)}'">
-      <div class="model-card-info">
-        <h3>${model.vendor}/${model.name}</h3>
+    // Загружаем выбранную модель из localStorage
+    const savedModelId = localStorage.getItem('selectedModelId');
+    if (savedModelId) {
+      selectedModel = models.find(model => model.id === savedModelId);
+      if (selectedModel) {
+        displaySelectedModel();
+      }
+    }
+    
+    displayModels();
+  } catch (error) {
+    console.error('Ошибка загрузки моделей:', error);
+    showError('Ошибка загрузки моделей');
+  }
+}
+
+// Отображение выбранной модели
+function displaySelectedModel() {
+  const modelDisplay = document.getElementById('model-display');
+  if (!selectedModel || !modelDisplay) return;
+  
+  modelDisplay.innerHTML = `
+    <img src="${selectedModel.cover_image_url || 'https://via.placeholder.com/32x32?text=AI'}" alt="${selectedModel.name}">
+    <h4>${selectedModel.name}</h4>
+    <p>${selectedModel.description || 'Описание недоступно'}</p>
+  `;
+}
+
+// Отображение списка моделей
+function displayModels(searchTerm = '') {
+  const modelsList = document.getElementById('models-list');
+  if (!modelsList) return;
+  
+  const filteredModels = models.filter(model => 
+    model.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (model.description && model.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+  
+  modelsList.innerHTML = filteredModels.map(model => `
+    <div class="model-item ${selectedModel && selectedModel.id === model.id ? 'selected' : ''}" 
+         data-model-id="${model.id}">
+      <img src="${model.cover_image_url || 'https://via.placeholder.com/32x32?text=AI'}" alt="${model.name}">
+      <div class="model-item-info">
+        <h4>${model.name}</h4>
         <p>${model.description || 'Описание недоступно'}</p>
       </div>
-    `;
-    
-    modelCardsContainer.appendChild(card);
+    </div>
+  `).join('');
+  
+  // Добавляем обработчики клика
+  modelsList.querySelectorAll('.model-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const modelId = item.dataset.modelId;
+      selectModel(modelId);
+    });
   });
 }
 
 // Выбор модели
-function selectModel(model, cardElement) {
-  // Убираем выделение с других карточек
-  document.querySelectorAll('.model-card').forEach(card => {
-    card.classList.remove('selected');
-  });
+function selectModel(modelId) {
+  selectedModel = models.find(model => model.id === modelId);
+  if (!selectedModel) return;
   
-  // Если передана карточка, выделяем её
-  if (cardElement) {
-    cardElement.classList.add('selected');
-  } else {
-    // Если карточка не передана, ищем её по модели
-    const cards = document.querySelectorAll('.model-card');
-    cards.forEach(card => {
-      const cardTitle = card.querySelector('h3').textContent;
-      if (cardTitle === `${model.vendor}/${model.name}`) {
-        card.classList.add('selected');
+  // Сохраняем выбранную модель
+  localStorage.setItem('selectedModelId', modelId);
+  
+  // Обновляем отображение
+  displaySelectedModel();
+  displayModels(document.getElementById('models-search')?.value || '');
+  
+  // Добавляем сообщение в чат
+  addMessage('assistant', `Выбрана модель: ${selectedModel.name}`);
+  
+  console.log('Выбрана модель:', selectedModel.name);
+}
+
+
+// Добавление сообщения в чат
+function addMessage(sender, content, imageUrl = null) {
+  const chatMessages = document.getElementById('chat-messages');
+  if (!chatMessages) return;
+  
+  // Убираем приветственное сообщение если есть
+  const welcomeMessage = chatMessages.querySelector('.welcome-message');
+  if (welcomeMessage) {
+    welcomeMessage.remove();
+  }
+  
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message ${sender}`;
+  
+  const avatar = sender === 'user' ? 'U' : 'AI';
+  const avatarBg = sender === 'user' ? '#8b5cf6' : '#f3f4f6';
+  
+  let imageHtml = '';
+  if (imageUrl) {
+    imageHtml = `
+      <div class="message-image">
+        <img src="${imageUrl}" alt="Сгенерированное изображение">
+      </div>
+    `;
+  }
+  
+  messageDiv.innerHTML = `
+    <div class="message-avatar">${avatar}</div>
+    <div class="message-content">
+      <div class="message-text">${content}</div>
+      ${imageHtml}
+    </div>
+  `;
+  
+  chatMessages.appendChild(messageDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  
+  // Сохраняем в историю
+  chatHistory.push({ sender, content, imageUrl, timestamp: Date.now() });
+}
+
+// Инициализация обработчиков событий
+function initializeEventListeners() {
+  // Поиск моделей
+  const searchInput = document.getElementById('models-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      displayModels(e.target.value);
+    });
+  }
+  
+  // Загрузка файлов
+  const fileInput = document.getElementById('image-upload');
+  const uploadBtn = document.getElementById('upload-btn');
+  const uploadedImage = document.getElementById('uploaded-image');
+  const previewImage = document.getElementById('preview-image');
+  const removeImage = document.getElementById('remove-image');
+  
+  if (uploadBtn && fileInput) {
+    uploadBtn.addEventListener('click', () => {
+      fileInput.click();
+    });
+  }
+  
+  if (fileInput) {
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFileUpload(e.target.files[0]);
       }
     });
   }
   
-  selectedModel = model;
+  if (removeImage) {
+    removeImage.addEventListener('click', () => {
+      uploadedFile = null;
+      fileInput.value = '';
+      uploadedImage.style.display = 'none';
+    });
+  }
   
-  // Обновляем заголовок страницы с информацией о выбранной модели
-  updatePageTitle(model);
+  // Нижняя панель ввода
+  const bottomPromptInput = document.getElementById('bottom-prompt-input');
+  const sendBtn = document.getElementById('send-btn');
+  const attachBtn = document.getElementById('attach-btn');
   
-  console.log('Выбрана модель:', model.name);
-}
-
-// Обновление заголовка страницы
-function updatePageTitle(model) {
-  const heroTitle = document.querySelector('.hero-title');
-  const heroSubtitle = document.querySelector('.hero-subtitle');
+  if (bottomPromptInput) {
+    // Автоматическое изменение высоты
+    bottomPromptInput.addEventListener('input', (e) => {
+      e.target.style.height = 'auto';
+      e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+    });
+    
+    // Enter для отправки
+    bottomPromptInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage();
+      }
+    });
+  }
   
-  if (heroTitle && heroSubtitle) {
-    heroTitle.innerHTML = `Генерация с <span class="accent">${model.vendor}/${model.name}</span>`;
-    heroSubtitle.textContent = model.description || 'Создайте уникальные изображения с помощью выбранной модели';
+  if (sendBtn) {
+    sendBtn.addEventListener('click', handleSendMessage);
+  }
+  
+  if (attachBtn) {
+    attachBtn.addEventListener('click', () => {
+      fileInput?.click();
+    });
   }
 }
 
-// Placeholder для изображений
-function getPlaceholder(model) {
-  const placeholders = [
-    'https://via.placeholder.com/60x60/6366f1/ffffff?text=AI',
-    'https://via.placeholder.com/60x60/8b5cf6/ffffff?text=AI',
-    'https://via.placeholder.com/60x60/06b6d4/ffffff?text=AI',
-    'https://via.placeholder.com/60x60/10b981/ffffff?text=AI',
-    'https://via.placeholder.com/60x60/f59e0b/ffffff?text=AI'
-  ];
-  
-  const index = (model.id || 0) % placeholders.length;
-  return placeholders[index];
-}
-
-// Обработка загрузки изображения
-imageUpload.addEventListener('change', handleImageUpload);
-
-uploadArea.addEventListener('click', () => {
-  imageUpload.click();
-});
-
-uploadArea.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  uploadArea.classList.add('dragover');
-});
-
-uploadArea.addEventListener('dragleave', () => {
-  uploadArea.classList.remove('dragover');
-});
-
-uploadArea.addEventListener('drop', (e) => {
-  e.preventDefault();
-  uploadArea.classList.remove('dragover');
-  
-  const files = e.dataTransfer.files;
-  if (files.length > 0) {
-    handleImageFile(files[0]);
-  }
-});
-
-function handleImageUpload(e) {
-  const file = e.target.files[0];
-  if (file) {
-    handleImageFile(file);
-  }
-}
-
-function handleImageFile(file) {
+// Обработка загрузки файла
+function handleFileUpload(file) {
   if (!file.type.startsWith('image/')) {
-    alert('Пожалуйста, выберите файл изображения');
+    showError('Пожалуйста, выберите изображение');
     return;
   }
+  
+  uploadedFile = file;
   
   const reader = new FileReader();
   reader.onload = (e) => {
-    previewImage.src = e.target.result;
-    uploadArea.style.display = 'none';
-    uploadedImage.style.display = 'block';
+    const previewImage = document.getElementById('preview-image');
+    const uploadedImage = document.getElementById('uploaded-image');
+    
+    if (previewImage) {
+      previewImage.src = e.target.result;
+    }
+    
+    if (uploadedImage) {
+      uploadedImage.style.display = 'block';
+    }
   };
+  
   reader.readAsDataURL(file);
 }
 
-// Удаление загруженного изображения
-removeImageBtn.addEventListener('click', () => {
-  uploadArea.style.display = 'block';
-  uploadedImage.style.display = 'none';
-  previewImage.src = '';
-  imageUpload.value = '';
-});
-
-// Генерация изображения
-generateBtn.addEventListener('click', async () => {
+// Обработка отправки сообщения
+async function handleSendMessage() {
+  const bottomPromptInput = document.getElementById('bottom-prompt-input');
+  const prompt = bottomPromptInput?.value.trim();
+  
+  if (!prompt) return;
+  
   if (!selectedModel) {
-    alert('Пожалуйста, выберите модель');
+    showError('Пожалуйста, выберите модель');
     return;
   }
   
-  const prompt = promptInput.value.trim();
-  if (!prompt) {
-    alert('Пожалуйста, введите описание изображения');
-    return;
+  // Добавляем сообщение пользователя
+  addMessage('user', prompt);
+  
+  // Очищаем поле ввода
+  if (bottomPromptInput) {
+    bottomPromptInput.value = '';
+    bottomPromptInput.style.height = 'auto';
   }
   
-  // Показываем состояние загрузки
-  btnText.style.display = 'none';
-  btnLoading.style.display = 'flex';
-  generateBtn.disabled = true;
+  // Показываем индикатор загрузки
+  const loadingMessage = addMessage('assistant', 'Генерирую изображение...');
   
   try {
-    // Здесь будет реальная генерация через API
-    // Пока что симулируем процесс
-    await simulateGeneration();
+    // Симуляция генерации (замените на реальный API)
+    const result = await simulateGeneration(prompt, selectedModel);
     
-    // Показываем результат
-    showResult();
+    // Удаляем сообщение загрузки
+    const chatMessages = document.getElementById('chat-messages');
+    const lastMessage = chatMessages.lastElementChild;
+    if (lastMessage && lastMessage.querySelector('.message-text').textContent === 'Генерирую изображение...') {
+      lastMessage.remove();
+    }
+    
+    // Добавляем результат
+    addMessage('assistant', `Изображение создано с помощью модели ${selectedModel.name}`, result.imageUrl);
+    
   } catch (error) {
     console.error('Ошибка генерации:', error);
-    alert('Произошла ошибка при генерации изображения');
-  } finally {
-    // Скрываем состояние загрузки
-    btnText.style.display = 'block';
-    btnLoading.style.display = 'none';
-    generateBtn.disabled = false;
+    
+    // Удаляем сообщение загрузки
+    const chatMessages = document.getElementById('chat-messages');
+    const lastMessage = chatMessages.lastElementChild;
+    if (lastMessage && lastMessage.querySelector('.message-text').textContent === 'Генерирую изображение...') {
+      lastMessage.remove();
+    }
+    
+    addMessage('assistant', 'Произошла ошибка при генерации изображения. Попробуйте еще раз.');
   }
-});
-
-// Симуляция генерации (замените на реальный API)
-async function simulateGeneration() {
-  return new Promise(resolve => {
-    setTimeout(resolve, 3000); // 3 секунды симуляции
-  });
 }
 
-// Показ результата
-function showResult() {
-  // Создаем placeholder изображение для демонстрации
-  const placeholderResult = 'https://via.placeholder.com/512x512/8b5cf6/ffffff?text=Generated+Image';
+// Симуляция генерации
+async function simulateGeneration(prompt, model) {
+  console.log('Генерация изображения:', { prompt, model: model.name });
   
-  resultImage.innerHTML = `<img src="${placeholderResult}" alt="Сгенерированное изображение">`;
-  resultSection.style.display = 'block';
+  // Имитируем задержку API
+  await new Promise(resolve => setTimeout(resolve, 2000));
   
-  // Прокручиваем к результату
-  resultSection.scrollIntoView({ behavior: 'smooth' });
+  // В реальном приложении здесь будет вызов API
+  return {
+    imageUrl: 'https://via.placeholder.com/512x512?text=Generated+Image',
+    prompt: prompt,
+    model: model.name
+  };
 }
 
-// Скачивание результата
-downloadBtn.addEventListener('click', () => {
-  const img = resultImage.querySelector('img');
-  if (img) {
-    const link = document.createElement('a');
-    link.href = img.src;
-    link.download = `generated-image-${Date.now()}.png`;
-    link.click();
-  }
-});
+// Показ ошибки
+function showError(message) {
+  // Простое уведомление об ошибке
+  alert(message);
+}
 
-// Регенерация
-regenerateBtn.addEventListener('click', () => {
-  generateBtn.click();
-});
-
-// Очистка формы
-function clearForm() {
-  promptInput.value = '';
-  uploadArea.style.display = 'block';
-  uploadedImage.style.display = 'none';
-  previewImage.src = '';
-  imageUpload.value = '';
-  resultSection.style.display = 'none';
-  selectedModel = null;
-  document.querySelectorAll('.model-card').forEach(card => {
-    card.classList.remove('selected');
-  });
+// Утилиты
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 }
