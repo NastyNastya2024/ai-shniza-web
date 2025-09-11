@@ -9,7 +9,6 @@ let replicateAPI = null;
 
 // Загрузка данных при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('Страница генерации загружена');
   loadModels();
   initializeEventListeners();
   initializeReplicateAPI();
@@ -18,14 +17,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // Загрузка моделей
 async function loadModels() {
   try {
-    console.log('Загружаем модели...');
     const response = await fetch('models.json');
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
     models = data.items || data;
-    console.log(`Загружено ${models.length} моделей`);
     
     // Загружаем выбранную модель из localStorage
     const savedModelId = localStorage.getItem('selectedModelId');
@@ -48,10 +45,7 @@ async function loadModels() {
 
 // Отображение выбранной модели (упрощенное)
 function displaySelectedModel() {
-  // Просто логируем выбор модели
-  if (selectedModel) {
-    console.log('Выбрана модель:', selectedModel.name);
-  }
+  // Модель выбрана
 }
 
 // Отображение списка моделей
@@ -146,8 +140,6 @@ function selectModel(modelId) {
   
   // Добавляем сообщение в чат
   addMessage('assistant', `Выбрана модель: ${selectedModel.name}`);
-  
-  console.log('Выбрана модель:', selectedModel.name);
 }
 
 
@@ -341,10 +333,6 @@ async function handleSendMessage() {
   const loadingMessage = addMessage('assistant', 'Думаю над ответом...');
   
   try {
-    console.log('Отправка сообщения...');
-    console.log('replicateAPI доступен:', !!replicateAPI);
-    console.log('CONFIG доступен:', typeof CONFIG !== 'undefined');
-    
     if (!replicateAPI) {
       // Fallback если API не загружен
       const chatMessages = document.getElementById('chat-messages');
@@ -352,7 +340,7 @@ async function handleSendMessage() {
       if (lastMessage && lastMessage.querySelector('.message-text').textContent === 'Думаю над ответом...') {
         lastMessage.remove();
       }
-      addMessage('assistant', '❌ API не загружен. Проверьте консоль браузера для диагностики.');
+      addMessage('assistant', 'Извините, сервис временно недоступен. Попробуйте позже.');
       return;
     }
     
@@ -363,23 +351,15 @@ async function handleSendMessage() {
       systemPrompt += ` Currently selected model: ${selectedModel.name}. ${selectedModel.description || ''}`;
     }
     
-    console.log('Отправляем запрос к GPT-4o-mini...');
-    console.log('Промпт:', prompt);
-    console.log('Системный промпт:', systemPrompt);
-    
     // Отправляем запрос к GPT-4o-mini
     let response;
     if (uploadedFile) {
-      console.log('Отправка с изображением...');
       // Если есть загруженное изображение, конвертируем его в base64
       const imageData = await convertFileToBase64(uploadedFile);
       response = await replicateAPI.sendMessageWithImage(prompt, imageData, systemPrompt);
     } else {
-      console.log('Отправка без изображения...');
       response = await replicateAPI.sendMessage(prompt, systemPrompt);
     }
-    
-    console.log('Получен ответ:', response);
     
     // Удаляем сообщение загрузки и добавляем ответ
     const chatMessages = document.getElementById('chat-messages');
@@ -427,30 +407,11 @@ function showError(message) {
 
 // Инициализация Replicate API
 function initializeReplicateAPI() {
-  console.log('Инициализация Replicate API...');
-  console.log('CONFIG доступен:', typeof CONFIG !== 'undefined');
-  console.log('ReplicateAPI доступен:', typeof ReplicateAPI !== 'undefined');
-  
-  if (typeof CONFIG === 'undefined') {
-    console.error('CONFIG не загружен! Проверьте подключение config.js');
-    return;
-  }
-  
-  if (typeof ReplicateAPI === 'undefined') {
-    console.error('ReplicateAPI не загружен! Проверьте подключение replicate-api.js');
-    return;
-  }
-  
-  // Проверяем токен
-  if (CONFIG.REPLICATE_API_TOKEN === 'r8_FUA**********************************') {
-    console.warn('⚠️ API токен не настроен! Замените токен в config.js');
-    addMessage('assistant', '⚠️ API токен не настроен. Пожалуйста, настройте токен в файле config.js');
+  if (typeof CONFIG === 'undefined' || typeof ReplicateAPI === 'undefined') {
     return;
   }
   
   replicateAPI = new ReplicateAPI();
-  console.log('✅ Replicate API инициализирован успешно');
-  console.log('Токен:', CONFIG.REPLICATE_API_TOKEN.substring(0, 10) + '...');
 }
 
 // Конвертация файла в base64

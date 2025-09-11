@@ -4,7 +4,7 @@
 const CONFIG = {
   // Replicate API токен
   // Получите токен на https://replicate.com/account/api-tokens
-  REPLICATE_API_TOKEN: 'r8_FUAFZLw6OQ3uQXPHHvNvffVmoogeydf2NNxLT',
+  REPLICATE_API_TOKEN: 'YOUR_REPLICATE_API_TOKEN_HERE',
   
   // Версия модели GPT-4o-mini
   MODEL_VERSION: '2c0a6a34916017ceafaaf5fdf63f9370cf9491866a9611f37d86138c8ef53fc6',
