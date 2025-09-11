@@ -1,4 +1,7 @@
-const API_BASE = "http://localhost:5000/api";
+// @ts-nocheck
+// Загружаем данные из JSON файлов
+let models = [];
+let tags = [];
 
 const state = {
   tags: [],
@@ -13,10 +16,43 @@ const state = {
 function qs(sel, root = document) { return root.querySelector(sel); }
 function qsa(sel, root = document) { return Array.from(root.querySelectorAll(sel)); }
 
-async function fetchJSON(url, options) {
-  const res = await fetch(url, options);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+// Функция для загрузки данных
+async function loadData() {
+  try {
+    console.log('Начинаем загрузку models.json...');
+    // Загружаем модели
+    const modelsResponse = await fetch('models.json');
+    console.log('Ответ models.json:', modelsResponse.status);
+    if (!modelsResponse.ok) {
+      throw new Error(`HTTP error! status: ${modelsResponse.status}`);
+    }
+    const modelsData = await modelsResponse.json();
+    models = modelsData.items || modelsData; // Поддерживаем оба формата
+    console.log('Модели загружены:', models.length);
+    
+    console.log('Начинаем загрузку tags_data.json...');
+    // Загружаем теги
+    const tagsResponse = await fetch('tags_data.json');
+    console.log('Ответ tags_data.json:', tagsResponse.status);
+    if (!tagsResponse.ok) {
+      throw new Error(`HTTP error! status: ${tagsResponse.status}`);
+    }
+    tags = await tagsResponse.json();
+    console.log('Теги загружены:', tags.length);
+    
+    console.log(`Загружено ${models.length} моделей и ${tags.length} тегов`);
+    
+    // Инициализируем приложение
+    console.log('Инициализируем приложение...');
+    initApp();
+  } catch (error) {
+    console.error('Ошибка загрузки данных:', error);
+    // Показываем сообщение об ошибке
+    const grid = document.querySelector('.cards-grid');
+    if (grid) {
+      grid.innerHTML = '<p style="text-align: center; padding: 2rem; color: #666;">Ошибка загрузки данных. Проверьте консоль для подробностей.</p>';
+    }
+  }
 }
 
 function getPlaceholder(model) {
@@ -87,6 +123,7 @@ function createCard(model) {
 
 function renderTags() {
   const wrap = qs(".filters .tags");
+  if (!wrap) return;
   wrap.innerHTML = "";
   state.tags.forEach(tag => {
     const btn = document.createElement("button");
@@ -129,28 +166,67 @@ function renderPager() {
   pager.appendChild(next);
 }
 
-async function loadTags() {
-  state.tags = await fetchJSON(`${API_BASE}/tags`);
+function loadTags() {
+  state.tags = tags;
   renderTags();
 }
 
-async function loadModels() {
-  const params = new URLSearchParams();
-  if (state.query) params.set("q", state.query);
-  if (state.activeTags.size) params.set("tags", Array.from(state.activeTags).join(","));
-  params.set("page", String(state.page));
-  params.set("per_page", String(state.per_page));
-  const data = await fetchJSON(`${API_BASE}/models?${params.toString()}`);
-  state.total = data.total; state.pages = data.pages; state.page = data.page;
+function loadModels() {
+  let filteredModels = models;
+  
+  // Фильтрация по тегам
+  if (state.activeTags.size > 0) {
+    filteredModels = filteredModels.filter(model => 
+      model.tags && model.tags.some(tag => state.activeTags.has(tag))
+    );
+  }
+  
+  // Фильтрация по поиску
+  if (state.query) {
+    const query = state.query.toLowerCase();
+    filteredModels = filteredModels.filter(model => 
+      (model.name && model.name.toLowerCase().includes(query)) ||
+      (model.vendor && model.vendor.toLowerCase().includes(query)) ||
+      (model.description && model.description.toLowerCase().includes(query)) ||
+      (model.tags && model.tags.some(tag => tag.toLowerCase().includes(query)))
+    );
+  }
+  
+  // Сортировка: сначала image-generation, потом с Replicate изображениями
+  filteredModels.sort((a, b) => {
+    const aHasImageGen = a.tags && a.tags.includes('image-generation');
+    const bHasImageGen = b.tags && b.tags.includes('image-generation');
+    const aHasReplicate = a.image_url && a.image_url.includes('replicate');
+    const bHasReplicate = b.image_url && b.image_url.includes('replicate');
+    
+    if (aHasImageGen && !bHasImageGen) return -1;
+    if (!aHasImageGen && bHasImageGen) return 1;
+    if (aHasReplicate && !bHasReplicate) return -1;
+    if (!aHasReplicate && bHasReplicate) return 1;
+    return 0;
+  });
+  
+  state.total = filteredModels.length;
+  state.pages = Math.ceil(filteredModels.length / state.per_page);
+  
+  // Пагинация
+  const start = (state.page - 1) * state.per_page;
+  const end = start + state.per_page;
+  const pageModels = filteredModels.slice(start, end);
+  
   const grid = qs(".cards-grid");
-  grid.innerHTML = "";
-  data.items.forEach(m => grid.appendChild(createCard(m)));
+  if (grid) {
+    grid.innerHTML = "";
+    pageModels.forEach(m => grid.appendChild(createCard(m)));
+  }
   renderPager();
 }
 
 function wireSearch() {
   const form = qs(".search-bar");
   const input = qs(".search-input");
+  if (!form || !input) return;
+  
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     state.query = input.value.trim();
@@ -162,10 +238,14 @@ function wireSearch() {
   });
 }
 
-async function init() {
+function initApp() {
+  loadTags();
+  loadModels();
   wireSearch();
-  await loadTags();
-  await loadModels();
 }
 
-document.addEventListener("DOMContentLoaded", init);
+// Запускаем загрузку данных при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM загружен, начинаем загрузку данных...');
+  loadData();
+});
