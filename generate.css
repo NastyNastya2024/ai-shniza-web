@@ -323,6 +323,7 @@
   max-height: 120px;
   min-height: 24px;
   line-height: 1.5;
+  text-align: center;
 }
 
 .input-actions {
