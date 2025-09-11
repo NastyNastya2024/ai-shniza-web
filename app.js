@@ -242,6 +242,19 @@ function initApp() {
   loadTags();
   loadModels();
   wireSearch();
+  wireFiltersToggle();
+}
+
+function wireFiltersToggle() {
+  const toggle = document.querySelector('.filters-toggle');
+  const content = document.querySelector('.filters-content');
+  
+  if (toggle && content) {
+    toggle.addEventListener('click', () => {
+      content.classList.toggle('show');
+      toggle.textContent = content.classList.contains('show') ? '✕' : '☰';
+    });
+  }
 }
 
 // Запускаем загрузку данных при загрузке страницы
