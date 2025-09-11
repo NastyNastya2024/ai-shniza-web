@@ -35,22 +35,21 @@ async function loadModels() {
     }
     
     displayModels();
+    
+    // Принудительно проверяем скролл после загрузки
+    setTimeout(checkScrollAndToggleButton, 100);
   } catch (error) {
     console.error('Ошибка загрузки моделей:', error);
     showError('Ошибка загрузки моделей');
   }
 }
 
-// Отображение выбранной модели
+// Отображение выбранной модели (упрощенное)
 function displaySelectedModel() {
-  const modelDisplay = document.getElementById('model-display');
-  if (!selectedModel || !modelDisplay) return;
-  
-  modelDisplay.innerHTML = `
-    <img src="${selectedModel.cover_image_url || 'https://via.placeholder.com/32x32?text=AI'}" alt="${selectedModel.name}">
-    <h4>${selectedModel.name}</h4>
-    <p>${selectedModel.description || 'Описание недоступно'}</p>
-  `;
+  // Просто логируем выбор модели
+  if (selectedModel) {
+    console.log('Выбрана модель:', selectedModel.name);
+  }
 }
 
 // Отображение списка моделей
@@ -66,7 +65,6 @@ function displayModels(searchTerm = '') {
   modelsList.innerHTML = filteredModels.map(model => `
     <div class="model-item ${selectedModel && selectedModel.id === model.id ? 'selected' : ''}" 
          data-model-id="${model.id}">
-      <img src="${model.cover_image_url || 'https://via.placeholder.com/32x32?text=AI'}" alt="${model.name}">
       <div class="model-item-info">
         <h4>${model.name}</h4>
         <p>${model.description || 'Описание недоступно'}</p>
@@ -81,6 +79,56 @@ function displayModels(searchTerm = '') {
       selectModel(modelId);
     });
   });
+  
+  // Проверяем наличие скролла и показываем/скрываем кнопку переключения
+  checkScrollAndToggleButton();
+}
+
+// Проверка наличия скролла и управление видимостью кнопки переключения
+function checkScrollAndToggleButton() {
+  const modelsList = document.getElementById('models-list');
+  const modelsToggleBtn = document.getElementById('models-toggle-btn');
+  
+  if (!modelsList || !modelsToggleBtn) return;
+  
+  // Проверяем, есть ли скролл
+  const hasScroll = modelsList.scrollHeight > modelsList.clientHeight;
+  
+  // Показываем кнопку только если нет скролла
+  if (hasScroll) {
+    modelsToggleBtn.style.display = 'none';
+  } else {
+    modelsToggleBtn.style.display = 'flex';
+  }
+}
+
+// Отображение моделей в модальном окне
+function displayModelsInModal() {
+  const modelsModalList = document.getElementById('models-modal-list');
+  if (!modelsModalList) return;
+
+  modelsModalList.innerHTML = models.map(model => `
+    <div class="model-item ${selectedModel && selectedModel.id === model.id ? 'selected' : ''}" 
+         data-model-id="${model.id}">
+      <div class="model-item-info">
+        <h4>${model.name}</h4>
+        <p>${model.description || 'Описание недоступно'}</p>
+      </div>
+    </div>
+  `).join('');
+  
+  // Добавляем обработчики клика
+  modelsModalList.querySelectorAll('.model-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const modelId = item.dataset.modelId;
+      selectModel(modelId);
+      // Закрываем модальное окно после выбора
+      const modelsModal = document.getElementById('models-modal');
+      if (modelsModal) {
+        modelsModal.classList.remove('show');
+      }
+    });
+  });
 }
 
 // Выбор модели
@@ -91,8 +139,7 @@ function selectModel(modelId) {
   // Сохраняем выбранную модель
   localStorage.setItem('selectedModelId', modelId);
   
-  // Обновляем отображение
-  displaySelectedModel();
+  // Обновляем отображение списка
   displayModels(document.getElementById('models-search')?.value || '');
   
   // Добавляем сообщение в чат
@@ -212,6 +259,36 @@ function initializeEventListeners() {
       fileInput?.click();
     });
   }
+
+  // Модальное окно для моделей на мобильных
+  const modelsToggleBtn = document.getElementById('models-toggle-btn');
+  const modelsModal = document.getElementById('models-modal');
+  const modelsModalClose = document.getElementById('models-modal-close');
+  
+  if (modelsToggleBtn && modelsModal) {
+    modelsToggleBtn.addEventListener('click', () => {
+      modelsModal.classList.add('show');
+      displayModelsInModal();
+    });
+  }
+  
+  if (modelsModalClose && modelsModal) {
+    modelsModalClose.addEventListener('click', () => {
+      modelsModal.classList.remove('show');
+    });
+  }
+  
+  // Закрытие модального окна по клику вне его
+  if (modelsModal) {
+    modelsModal.addEventListener('click', (e) => {
+      if (e.target === modelsModal) {
+        modelsModal.classList.remove('show');
+      }
+    });
+  }
+
+  // Проверка скролла при изменении размера окна
+  window.addEventListener('resize', checkScrollAndToggleButton);
 }
 
 // Обработка загрузки файла
