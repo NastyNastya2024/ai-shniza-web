@@ -26,20 +26,20 @@ body {
 /* Хедер */
 .hero {
   text-align: center;
-  padding: 100px 0 80px;
+  padding: 67px 0 33px;
   position: relative;
 }
 
 .hero-title {
   font-family: 'Unbounded', cursive;
-  font-size: 6rem;
+  font-size: 100px;
   font-weight: 400;
-  background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%);
+  background: linear-gradient(135deg, #8092F8 0%, #CBADF9 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-shadow: 0 2px 4px rgba(168, 85, 247, 0.2);
-  margin-bottom: 20px;
+  text-shadow: 10px 5px 40px rgba(133, 179, 255, 0.6);
+  margin-bottom: 7px;
   letter-spacing: -0.02em;
   position: relative;
   z-index: 1;
@@ -47,20 +47,18 @@ body {
 
 .hero-subtitle {
   font-family: 'Unbounded', cursive;
-  font-size: 1.5rem;
-  color: #8b5cf6;
+  font-size: 20px;
+  background: linear-gradient(135deg, #8092F8 0%, #CBADF9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   font-weight: 400;
-  margin-bottom: 50px;
+  margin-bottom: 13px;
   position: relative;
   z-index: 1;
 }
 
-/* Поисковая секция */
-.search-section {
-  padding: 40px 0;
-  background: white;
-}
-
+/* Поисковая строка в хедере */
 .search-bar {
   display: flex;
   justify-content: center;
@@ -389,12 +387,16 @@ body {
 }
 
 @media (max-width: 768px) {
+  .hero {
+    padding: 50px 0 27px;
+  }
+  
   .hero-title {
-    font-size: 4rem;
+    font-size: 60px;
   }
   
   .hero-subtitle {
-    font-size: 1.25rem;
+    font-size: 18px;
   }
   
   .search-bar {
@@ -432,11 +434,15 @@ body {
 
 @media (max-width: 480px) {
   .hero {
-    padding: 60px 0 40px;
+    padding: 40px 0 20px;
   }
   
   .hero-title {
-    font-size: 3rem;
+    font-size: 40px;
+  }
+  
+  .hero-subtitle {
+    font-size: 16px;
   }
   
   .filters {
