@@ -60,7 +60,7 @@ body {
   font-size: 100px;
   font-weight: 400;
   color: white;
-  text-shadow: 10px 5px 40px rgba(133, 179, 255, 0.6);
+  text-shadow: 10px 5px 40px rgba(59, 130, 246, 0.8);
   margin-bottom: 7px;
   letter-spacing: -0.02em;
   position: relative;
@@ -75,7 +75,7 @@ body {
   margin-bottom: 13px;
   position: relative;
   z-index: 1;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-shadow: 10px 5px 40px rgba(59, 130, 246, 0.8);
 }
 
 /* Поисковая строка в хедере */
@@ -105,12 +105,17 @@ body {
   color: #9ca3af;
 }
 
+.search-input:focus {
+  background: white;
+  color: #1f2937;
+}
+
 .search-btn, .filter-btn {
   padding: 8px;
-  border: none;
+  border: 1px solid #C0C0FF;
   border-radius: 50%;
-  background: #f3f4f6;
-  color: #6b7280;
+  background: #E0E0FF;
+  color: #6464C8;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -119,12 +124,16 @@ body {
   width: 36px;
   height: 36px;
   margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(100, 100, 200, 0.2);
 }
 
 .search-btn:hover, .filter-btn:hover {
-  background: #e5e7eb;
-  color: #374151;
+  background: #D0D0FF;
+  color: #5454B8;
+  border-color: #A0A0FF;
+  box-shadow: 0 4px 8px rgba(100, 100, 200, 0.3);
 }
+
 
 /* Основной контент */
 .catalog {
@@ -164,13 +173,38 @@ body {
 
 .filters-toggle {
   display: none;
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  color: #6b7280;
+  background: #E0E0FF;
+  border: 1px solid #C0C0FF;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #6464C8;
   cursor: pointer;
-  margin-bottom: 10px;
-  align-self: flex-end;
+  margin-top: 10px;
+  align-self: flex-start;
+  padding: 8px 16px;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(100, 100, 200, 0.2);
+  transition: all 0.2s ease;
+}
+
+.filters-toggle:hover {
+  background: #D0D0FF;
+  border-color: #A0A0FF;
+  box-shadow: 0 4px 8px rgba(100, 100, 200, 0.3);
+}
+
+.filters-toggle-text {
+  font-weight: 500;
+}
+
+.filters-toggle-arrow {
+  font-size: 0.8rem;
+  transition: transform 0.2s ease;
+}
+
+.filters-content.show + .filters-toggle .filters-toggle-arrow {
+  transform: rotate(180deg);
 }
 
 .filters-content {
@@ -423,7 +457,7 @@ body {
   }
   
   .filters-toggle {
-    display: block;
+    display: flex;
   }
   
   .filters-content {

@@ -25,9 +25,7 @@
             </svg>
           </button>
           <button class="filter-btn" type="button" aria-label="Фильтры">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-              <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
+            <img src="img/1.png" alt="Фильтры" width="22" height="22" />
           </button>
         </form>
       </div>
@@ -36,13 +34,16 @@
     <section class="catalog" aria-label="Каталог моделей">
       <div class="container catalog-inner">
         <aside class="filters" aria-label="Фильтры">
-          <button class="filters-toggle" aria-label="Переключить фильтры">☰</button>
           <div class="filters-content">
             <h2 class="filters-title">Фильтры</h2>
             <div class="tags">
               <!-- Теги будут загружены динамически через JavaScript -->
             </div>
           </div>
+          <button class="filters-toggle" aria-label="Переключить фильтры">
+            <span class="filters-toggle-text">Фильтры</span>
+            <span class="filters-toggle-arrow">▼</span>
+          </button>
         </aside>
 
         <div class="catalog-content">
