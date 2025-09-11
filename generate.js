@@ -5,12 +5,14 @@ let models = [];
 let selectedModel = null;
 let uploadedFile = null;
 let chatHistory = [];
+let replicateAPI = null;
 
 // Загрузка данных при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Страница генерации загружена');
   loadModels();
   initializeEventListeners();
+  initializeReplicateAPI();
 });
 
 // Загрузка моделей
@@ -324,10 +326,7 @@ async function handleSendMessage() {
   
   if (!prompt) return;
   
-  if (!selectedModel) {
-    showError('Пожалуйста, выберите модель');
-    return;
-  }
+  // Убираем проверку на выбранную модель для GPT чата
   
   // Добавляем сообщение пользователя
   addMessage('user', prompt);
@@ -339,33 +338,69 @@ async function handleSendMessage() {
   }
   
   // Показываем индикатор загрузки
-  const loadingMessage = addMessage('assistant', 'Генерирую изображение...');
+  const loadingMessage = addMessage('assistant', 'Думаю над ответом...');
   
   try {
-    // Симуляция генерации (замените на реальный API)
-    const result = await simulateGeneration(prompt, selectedModel);
+    console.log('Отправка сообщения...');
+    console.log('replicateAPI доступен:', !!replicateAPI);
+    console.log('CONFIG доступен:', typeof CONFIG !== 'undefined');
     
-    // Удаляем сообщение загрузки
+    if (!replicateAPI) {
+      // Fallback если API не загружен
+      const chatMessages = document.getElementById('chat-messages');
+      const lastMessage = chatMessages.lastElementChild;
+      if (lastMessage && lastMessage.querySelector('.message-text').textContent === 'Думаю над ответом...') {
+        lastMessage.remove();
+      }
+      addMessage('assistant', '❌ API не загружен. Проверьте консоль браузера для диагностики.');
+      return;
+    }
+    
+    // Подготавливаем системный промпт
+    let systemPrompt = "You are a helpful AI assistant for an AI marketplace called '{AI}-шница'. Help users with questions about AI models, image generation, and creative tasks. Respond in Russian.";
+    
+    if (selectedModel) {
+      systemPrompt += ` Currently selected model: ${selectedModel.name}. ${selectedModel.description || ''}`;
+    }
+    
+    console.log('Отправляем запрос к GPT-4o-mini...');
+    console.log('Промпт:', prompt);
+    console.log('Системный промпт:', systemPrompt);
+    
+    // Отправляем запрос к GPT-4o-mini
+    let response;
+    if (uploadedFile) {
+      console.log('Отправка с изображением...');
+      // Если есть загруженное изображение, конвертируем его в base64
+      const imageData = await convertFileToBase64(uploadedFile);
+      response = await replicateAPI.sendMessageWithImage(prompt, imageData, systemPrompt);
+    } else {
+      console.log('Отправка без изображения...');
+      response = await replicateAPI.sendMessage(prompt, systemPrompt);
+    }
+    
+    console.log('Получен ответ:', response);
+    
+    // Удаляем сообщение загрузки и добавляем ответ
     const chatMessages = document.getElementById('chat-messages');
     const lastMessage = chatMessages.lastElementChild;
-    if (lastMessage && lastMessage.querySelector('.message-text').textContent === 'Генерирую изображение...') {
+    if (lastMessage && lastMessage.querySelector('.message-text').textContent === 'Думаю над ответом...') {
       lastMessage.remove();
     }
     
-    // Добавляем результат
-    addMessage('assistant', `Изображение создано с помощью модели ${selectedModel.name}`, result.imageUrl);
+    addMessage('assistant', response);
     
   } catch (error) {
-    console.error('Ошибка генерации:', error);
+    console.error('Ошибка при отправке запроса:', error);
     
     // Удаляем сообщение загрузки
     const chatMessages = document.getElementById('chat-messages');
     const lastMessage = chatMessages.lastElementChild;
-    if (lastMessage && lastMessage.querySelector('.message-text').textContent === 'Генерирую изображение...') {
+    if (lastMessage && lastMessage.querySelector('.message-text').textContent === 'Думаю над ответом...') {
       lastMessage.remove();
     }
     
-    addMessage('assistant', 'Произошла ошибка при генерации изображения. Попробуйте еще раз.');
+    addMessage('assistant', 'Произошла ошибка при обработке запроса. Попробуйте еще раз.');
   }
 }
 
@@ -388,6 +423,44 @@ async function simulateGeneration(prompt, model) {
 function showError(message) {
   // Простое уведомление об ошибке
   alert(message);
+}
+
+// Инициализация Replicate API
+function initializeReplicateAPI() {
+  console.log('Инициализация Replicate API...');
+  console.log('CONFIG доступен:', typeof CONFIG !== 'undefined');
+  console.log('ReplicateAPI доступен:', typeof ReplicateAPI !== 'undefined');
+  
+  if (typeof CONFIG === 'undefined') {
+    console.error('CONFIG не загружен! Проверьте подключение config.js');
+    return;
+  }
+  
+  if (typeof ReplicateAPI === 'undefined') {
+    console.error('ReplicateAPI не загружен! Проверьте подключение replicate-api.js');
+    return;
+  }
+  
+  // Проверяем токен
+  if (CONFIG.REPLICATE_API_TOKEN === 'r8_FUA**********************************') {
+    console.warn('⚠️ API токен не настроен! Замените токен в config.js');
+    addMessage('assistant', '⚠️ API токен не настроен. Пожалуйста, настройте токен в файле config.js');
+    return;
+  }
+  
+  replicateAPI = new ReplicateAPI();
+  console.log('✅ Replicate API инициализирован успешно');
+  console.log('Токен:', CONFIG.REPLICATE_API_TOKEN.substring(0, 10) + '...');
+}
+
+// Конвертация файла в base64
+function convertFileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 // Утилиты
