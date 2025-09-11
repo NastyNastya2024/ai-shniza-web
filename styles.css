@@ -8,9 +8,9 @@
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: 
-    radial-gradient(1200px 600px at 70% 10%, rgba(255, 255, 255, 0.8) 0%, transparent 50%),
-    radial-gradient(900px 500px at 20% 70%, rgba(150, 220, 255, 0.6) 0%, transparent 50%),
-    linear-gradient(180deg, #f3f6ff 0%, #f7fbff 30%, #f4f8ff 100%);
+    radial-gradient(800px 600px at 80% 20%, rgba(255, 182, 193, 0.3) 0%, transparent 60%),
+    radial-gradient(600px 400px at 20% 80%, rgba(221, 160, 221, 0.2) 0%, transparent 60%),
+    linear-gradient(135deg, #ffffff 0%, #fefefe 50%, #fafafa 100%);
   color: #1f2937;
   line-height: 1.6;
   min-height: 100vh;
@@ -119,19 +119,25 @@ body {
 
 .catalog-inner {
   display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 0;
+  grid-template-columns: 340px 1fr;
+  gap: 20px;
   min-height: 600px;
+  padding: 0 20px;
 }
 
 /* Фильтры */
 .filters {
   background: white;
   padding: 32px 24px 32px 32px;
-  border-right: 1px solid #f1f5f9;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  margin: 20px;
+  position: sticky;
+  top: 20px;
 }
 
 .filters-title {
@@ -366,13 +372,13 @@ body {
 @media (max-width: 1024px) {
   .catalog-inner {
     grid-template-columns: 1fr;
-    gap: 0;
+    gap: 20px;
+    padding: 0 20px;
   }
   
   .filters {
-    border-right: none;
-    border-bottom: 1px solid #f1f5f9;
-    padding: 24px;
+    margin: 20px 0;
+    position: static;
   }
   
   .cards-grid {
