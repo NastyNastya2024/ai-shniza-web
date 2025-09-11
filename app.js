@@ -248,11 +248,17 @@ function initApp() {
 function wireFiltersToggle() {
   const toggle = document.querySelector('.filters-toggle');
   const content = document.querySelector('.filters-content');
+  const arrow = document.querySelector('.filters-toggle-arrow');
   
-  if (toggle && content) {
+  if (toggle && content && arrow) {
     toggle.addEventListener('click', () => {
       content.classList.toggle('show');
-      toggle.textContent = content.classList.contains('show') ? '✕' : '☰';
+      // Поворачиваем стрелку при открытии/закрытии
+      if (content.classList.contains('show')) {
+        arrow.style.transform = 'rotate(180deg)';
+      } else {
+        arrow.style.transform = 'rotate(0deg)';
+      }
     });
   }
 }
