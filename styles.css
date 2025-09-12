@@ -337,7 +337,7 @@ body {
 /* Сетка карточек - ровно 3 в ряд */
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, 1fr) !important;
   gap: 16px;
   padding: 20px;
 }
@@ -528,13 +528,13 @@ body {
 }
 
 /* Адаптивность */
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
   .catalog-inner {
     grid-template-columns: 280px 1fr;
   }
   
   .cards-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, 1fr) !important;
     gap: 24px;
     padding: 24px;
   }
@@ -560,6 +560,61 @@ body {
   
   .filters-content {
     display: none;
+  }
+  
+  .cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .card-body {
+    padding: 20px;
+  }
+  
+  .card-title {
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+  }
+  
+  .card-desc {
+    font-size: 0.75rem;
+    margin-bottom: 10px;
+    -webkit-line-clamp: 2;
+  }
+  
+  .card-tags .hash {
+    font-size: 0.6rem;
+    padding: 2px 5px;
+  }
+  }
+  
+  @media (max-width: 900px) {
+    .cards-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      padding: 16px;
+    }
+    
+    .card-body {
+      padding: 16px;
+    }
+    
+    .card-title {
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+    
+    .card-desc {
+      font-size: 0.7rem;
+      margin-bottom: 8px;
+      -webkit-line-clamp: 1;
+    }
+    
+    .card-tags .hash {
+      font-size: 0.55rem;
+      padding: 2px 4px;
+    }
   }
   
   .filters-content.show {
