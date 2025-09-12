@@ -427,9 +427,40 @@
     }
     
     .model-item {
+      padding: 12px;
+      min-height: auto;
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+    }
+    
+    .model-item-info h4 {
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+    
+    .model-item-info p {
+      font-size: 0.8rem;
+      -webkit-line-clamp: 1;
+      line-height: 1.3;
+    }
+    
+  }
+  
+  @media (max-width: 900px) {
+    .model-item {
       padding: 10px;
     }
     
+    .model-item-info h4 {
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+    }
+    
+    .model-item-info p {
+      font-size: 0.75rem;
+    }
   }
   
 @media (max-width: 768px) {
@@ -477,11 +508,12 @@
   
   /* Адаптивные стили для надписи */
   .welcome-message h2 {
-    font-size: 1.25rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 0.9rem;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
     max-width: 100%;
+    line-height: 1.2;
   }
   
   .welcome-message {
@@ -492,6 +524,28 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .welcome-message h2 {
+    font-size: 0.8rem;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    max-width: 100%;
+    line-height: 1.2;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-message h2 {
+    font-size: 0.75rem;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    max-width: 100%;
+    line-height: 1.2;
   }
 }
   
