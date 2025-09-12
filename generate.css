@@ -508,12 +508,12 @@
   
   /* Адаптивные стили для надписи */
   .welcome-message h2 {
-    font-size: 0.9rem;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: unset;
-    max-width: 100%;
-    line-height: 1.2;
+    font-size: 0.9rem !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    max-width: 100% !important;
+    line-height: 1.2 !important;
   }
   
   .welcome-message {
@@ -529,23 +529,34 @@
 
 @media (max-width: 600px) {
   .welcome-message h2 {
-    font-size: 0.8rem;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: unset;
-    max-width: 100%;
-    line-height: 1.2;
+    font-size: 0.8rem !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    max-width: 100% !important;
+    line-height: 1.2 !important;
   }
 }
 
 @media (max-width: 480px) {
   .welcome-message h2 {
-    font-size: 0.75rem;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: unset;
-    max-width: 100%;
-    line-height: 1.2;
+    font-size: 0.75rem !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    max-width: 100% !important;
+    line-height: 1.2 !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .welcome-message h2 {
+    font-size: 0.65rem !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    max-width: 100% !important;
+    line-height: 1.2 !important;
   }
 }
   
