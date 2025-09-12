@@ -47,6 +47,9 @@ body {
   letter-spacing: -0.02em;
   text-align: center;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hero-title .accent {
@@ -254,11 +257,11 @@ body {
 
 .filters-toggle {
   display: none;
-  background: #000000;
+  background: #ffffff;
   border: 2px solid #000000;
   border-radius: 8px;
   font-size: 1rem;
-  color: #ffffff;
+  color: #000000;
   cursor: pointer;
   margin-top: 10px;
   align-self: flex-start;
@@ -270,8 +273,8 @@ body {
 }
 
 .filters-toggle:hover {
-  background: #ffffff;
-  color: #000000;
+  background: #000000;
+  color: #ffffff;
   border-color: #000000;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -385,6 +388,9 @@ body {
   font-weight: 600;
   margin-bottom: 8px;
   line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .card-title .muted {
@@ -575,6 +581,9 @@ body {
   .card-title {
     font-size: 0.95rem;
     margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .card-desc {
@@ -587,6 +596,18 @@ body {
     font-size: 0.6rem;
     padding: 2px 5px;
   }
+  }
+  
+  @media (max-width: 1200px) {
+    .hero-title {
+      font-size: 64px;
+    }
+  }
+  
+  @media (max-width: 1000px) {
+    .hero-title {
+      font-size: 56px;
+    }
   }
   
   @media (max-width: 900px) {
@@ -603,6 +624,9 @@ body {
     .card-title {
       font-size: 0.9rem;
       margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     .card-desc {
@@ -639,8 +663,14 @@ body {
     gap: 20px;
     padding: 20px;
   }
-}
-
+  }
+  
+  @media (max-width: 600px) {
+    .hero-title {
+      font-size: 42px;
+    }
+  }
+  
 @media (max-width: 768px) {
   .hero {
     padding: 80px 0 60px;
@@ -653,6 +683,9 @@ body {
   .hero-title {
     font-size: 48px;
     font-weight: 300;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .hero-title .accent {
@@ -691,6 +724,12 @@ body {
     padding: 16px;
   }
   
+  .card-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
   .container {
     padding: 0 16px;
   }
@@ -714,6 +753,9 @@ body {
   .hero-title {
     font-size: 36px;
     font-weight: 300;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .hero-title .accent {
