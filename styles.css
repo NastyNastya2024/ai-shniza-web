@@ -239,8 +239,8 @@ body {
 .filters {
   background: white;
   padding: 20px;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
+  border: none;
+  border-radius: 4px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
@@ -296,6 +296,7 @@ body {
 }
 
 .filters-title {
+  font-family: 'Unbounded', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 1.5rem;
   font-weight: 700;
   color: #1f2937;
@@ -311,10 +312,10 @@ body {
 
 .tag {
   padding: 5px 9px;
-  background: #f1f5f9;
+  background: transparent;
   color: #374151;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border: 1px solid #000000;
+  border-radius: 8px;
   font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
@@ -322,14 +323,15 @@ body {
 }
 
 .tag:hover {
-  background: #e5e7eb;
-  border-color: #d1d5db;
+  background: #000000;
+  color: #ffffff;
+  border-color: #000000;
 }
 
 .tag--active {
   background: #dbeafe;
   color: #1d4ed8;
-  border-color: #3b82f6;
+  border-color: #000000;
 }
 
 /* Сетка карточек - ровно 3 в ряд */
@@ -415,9 +417,9 @@ body {
 
 .card-tags .hash {
   padding: 3px 6px;
-  background: #f1f5f9;
+  background: transparent;
   color: #374151;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #000000;
   border-radius: 8px;
   font-size: 0.625rem;
   font-weight: 500;

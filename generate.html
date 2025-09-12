@@ -18,6 +18,7 @@
       <div class="chat-area">
         <div class="chat-messages" id="chat-messages">
           <div class="welcome-message">
+            <a href="index.html" class="back-btn" title="Назад к каталогу"></a>
             <h2>Добро пожаловать в {AI}-шницу!</h2>
             <p>Выберите модель справа и начните создавать изображения с помощью ИИ.</p>
           </div>
@@ -42,13 +43,6 @@
             rows="1"
           ></textarea>
           <div class="input-actions">
-            <button class="upload-btn" type="button" id="upload-btn" title="Загрузить изображение">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7,10 12,15 17,10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-            </button>
             <button class="attach-btn" id="attach-btn" title="Прикрепить файл">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.64 16.2a2 2 0 0 1-2.83-2.83l8.49-8.49"></path>
@@ -65,7 +59,6 @@
     <!-- Правая панель - поиск моделей -->
     <div class="right-sidebar">
       <div class="sidebar-header">
-        <a href="index.html" class="back-btn">← Назад к каталогу</a>
         <h3>Поиск моделей</h3>
         <div class="search-bar">
           <input type="text" placeholder="Поиск моделей..." class="search-input" id="models-search">
