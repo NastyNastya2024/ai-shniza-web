@@ -493,6 +493,8 @@
   
   .input-area {
     padding: 8px 12px;
+    max-width: calc(100vw - 40px) !important;
+    margin: 0 20px !important;
   }
   
   .models-toggle-btn {
@@ -508,10 +510,10 @@
   
   /* Адаптивные стили для надписи */
   .welcome-message h2 {
-    font-size: 0.9rem !important;
-    white-space: normal !important;
-    overflow: visible !important;
-    text-overflow: unset !important;
+    font-size: 1.35rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
     max-width: 100% !important;
     line-height: 1.2 !important;
   }
@@ -525,40 +527,85 @@
     justify-content: center;
     align-items: center;
   }
-}
-
-@media (max-width: 600px) {
-  .welcome-message h2 {
+  
+  .welcome-message p {
     font-size: 0.8rem !important;
-    white-space: normal !important;
-    overflow: visible !important;
-    text-overflow: unset !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
     max-width: 100% !important;
-    line-height: 1.2 !important;
+  }
+  
+  .bottom-prompt-input {
+    font-size: 14px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  
+  .bottom-prompt-input::placeholder {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 }
 
-@media (max-width: 480px) {
-  .welcome-message h2 {
-    font-size: 0.75rem !important;
-    white-space: normal !important;
-    overflow: visible !important;
-    text-overflow: unset !important;
-    max-width: 100% !important;
-    line-height: 1.2 !important;
+  @media (max-width: 600px) {
+    .welcome-message h2 {
+      font-size: 1.2rem !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 100% !important;
+      line-height: 1.2 !important;
+    }
+    
+    .welcome-message p {
+      font-size: 0.75rem !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 100% !important;
+    }
   }
-}
 
-@media (max-width: 400px) {
-  .welcome-message h2 {
-    font-size: 0.65rem !important;
-    white-space: normal !important;
-    overflow: visible !important;
-    text-overflow: unset !important;
-    max-width: 100% !important;
-    line-height: 1.2 !important;
+  @media (max-width: 480px) {
+    .welcome-message h2 {
+      font-size: 1.125rem !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 100% !important;
+      line-height: 1.2 !important;
+    }
+    
+    .welcome-message p {
+      font-size: 0.7rem !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 100% !important;
+    }
   }
-}
+
+  @media (max-width: 400px) {
+    .welcome-message h2 {
+      font-size: 0.975rem !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 100% !important;
+      line-height: 1.2 !important;
+    }
+    
+    .welcome-message p {
+      font-size: 0.65rem !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 100% !important;
+    }
+  }
   
   /* Модальное окно для моделей на мобильных */
   .models-modal {

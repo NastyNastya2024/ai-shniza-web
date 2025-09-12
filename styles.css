@@ -668,11 +668,15 @@ body {
   
   @media (max-width: 600px) {
     .hero-title {
-      font-size: 28px;
+      font-size: 63px;
       white-space: normal;
       overflow: visible;
       text-overflow: unset;
       line-height: 1.2;
+    }
+    
+    .hero-subtitle {
+      font-size: 16px;
     }
   }
   
@@ -686,7 +690,7 @@ body {
   }
   
   .hero-title {
-    font-size: 32px;
+    font-size: 72px;
     font-weight: 300;
     white-space: normal;
     overflow: visible;
@@ -757,7 +761,7 @@ body {
   }
   
   .hero-title {
-    font-size: 24px;
+    font-size: 54px;
     font-weight: 300;
     white-space: normal;
     overflow: visible;
@@ -801,11 +805,15 @@ body {
   
   @media (max-width: 400px) {
     .hero-title {
-      font-size: 20px;
+      font-size: 45px;
       white-space: normal;
       overflow: visible;
       text-overflow: unset;
       line-height: 1.2;
+    }
+    
+    .hero-subtitle {
+      font-size: 14px;
     }
   }
   
