@@ -254,25 +254,26 @@ body {
 
 .filters-toggle {
   display: none;
-  background: #E0E0FF;
-  border: 1px solid #C0C0FF;
+  background: #000000;
+  border: 2px solid #000000;
   border-radius: 8px;
   font-size: 1rem;
-  color: #6464C8;
+  color: #ffffff;
   cursor: pointer;
   margin-top: 10px;
   align-self: flex-start;
   padding: 8px 16px;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 2px 4px rgba(100, 100, 200, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
 }
 
 .filters-toggle:hover {
-  background: #D0D0FF;
-  border-color: #A0A0FF;
-  box-shadow: 0 4px 8px rgba(100, 100, 200, 0.3);
+  background: #ffffff;
+  color: #000000;
+  border-color: #000000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .filters-toggle-text {
@@ -552,6 +553,7 @@ body {
   
   .filters-toggle {
     display: flex;
+    margin-top: 5px;
   }
   
   .filters-content {
