@@ -243,6 +243,17 @@ function initApp() {
   loadModels();
   wireSearch();
   wireFiltersToggle();
+  wireGenerateButton();
+}
+
+function wireGenerateButton() {
+  const generateBtn = document.querySelector('.generate-btn');
+  if (generateBtn) {
+    generateBtn.addEventListener('click', () => {
+      // Переходим на страницу генерации без выбранной модели
+      window.location.href = 'generate.html';
+    });
+  }
 }
 
 function wireFiltersToggle() {

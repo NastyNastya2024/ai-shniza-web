@@ -34,7 +34,7 @@ body {
 .hero-content {
   text-align: center;
   max-width: 600px;
-  margin: 0 auto 40px;
+  margin: 0 auto 20px;
 }
 
 .hero-title {
@@ -43,7 +43,7 @@ body {
   font-weight: 300;
   color: #0f172a;
   line-height: 1.1;
-  margin-bottom: 32px;
+  margin-bottom: 16px;
   letter-spacing: -0.02em;
   text-align: center;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -112,7 +112,7 @@ body {
   color: #64748b;
   font-weight: 400;
   line-height: 1.6;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
 }
 
 
@@ -121,24 +121,29 @@ body {
   margin: 0 auto;
 }
 
-/* Поисковая строка в стиле Jam AI */
+/* Поисковая строка в бело-черных тонах */
 .search-bar {
   display: flex;
   justify-content: center;
   align-items: center;
   max-width: 600px;
   margin: 0 auto;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border: 2px solid #000000;
   border-radius: 12px;
   padding: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
 }
 
+.search-bar:hover {
+  border-color: #000000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
 .search-bar:focus-within {
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  border-color: #000000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
 }
 
 .search-input {
@@ -161,12 +166,12 @@ body {
   color: #0f172a;
 }
 
-.search-btn, .filter-btn {
+.search-btn {
   padding: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #000000;
   border-radius: 8px;
   background: #ffffff;
-  color: #64748b;
+  color: #000000;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -175,15 +180,40 @@ body {
   width: 40px;
   height: 40px;
   margin-left: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.search-btn:hover, .filter-btn:hover {
-  background: #f8fafc;
-  color: #475569;
-  border-color: #cbd5e1;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.search-btn:hover {
+  background: #000000;
+  color: #ffffff;
+  border-color: #000000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
+
+.generate-btn {
+  padding: 8px;
+  border: 1px solid #000000;
+  border-radius: 8px;
+  background: #000000;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-left: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.generate-btn:hover {
+  background: #ec4899;
+  color: #ffffff;
+  border-color: #ec4899;
+  box-shadow: 0 2px 4px rgba(236, 72, 153, 0.3);
+}
+
 
 
 /* Основной контент */
@@ -279,12 +309,12 @@ body {
 }
 
 .tag {
-  padding: 10px 18px;
+  padding: 5px 9px;
   background: #f1f5f9;
   color: #374151;
   border: 1px solid #e5e7eb;
-  border-radius: 20px;
-  font-size: 0.875rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -383,12 +413,12 @@ body {
 }
 
 .card-tags .hash {
-  padding: 6px 12px;
+  padding: 3px 6px;
   background: #f1f5f9;
   color: #374151;
   border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  font-size: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.625rem;
   font-weight: 500;
 }
 
@@ -558,7 +588,7 @@ body {
   }
   
   .hero-content {
-    margin-bottom: 30px;
+    margin-bottom: 15px;
   }
   
   .hero-title {
@@ -589,7 +619,7 @@ body {
     min-width: 0;
   }
   
-  .search-btn, .filter-btn {
+  .search-btn, .generate-btn {
     flex-shrink: 0;
     width: 40px;
     height: 40px;
@@ -650,8 +680,8 @@ body {
   }
   
   .tag {
-    padding: 8px 16px;
-    font-size: 0.8125rem;
+    padding: 4px 8px;
+    font-size: 0.6875rem;
   }
 }
 
