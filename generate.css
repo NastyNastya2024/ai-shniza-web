@@ -203,12 +203,12 @@
   }
   
   /* Центральная область - диалог */
-  .chat-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+.chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
   
   .chat-messages {
     flex: 1;

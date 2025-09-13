@@ -8,7 +8,7 @@ const state = {
   activeTags: new Set(),
   query: "",
   page: 1,
-  per_page: 12,
+  per_page: 15,
   total: 0,
   pages: 0,
 };
@@ -213,6 +213,7 @@ function loadModels() {
   const start = (state.page - 1) * state.per_page;
   const end = start + state.per_page;
   const pageModels = filteredModels.slice(start, end);
+  
   
   const grid = qs(".cards-grid");
   if (grid) {

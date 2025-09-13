@@ -196,13 +196,13 @@ function initializeEventListeners() {
   
   // Загрузка файлов
   const fileInput = document.getElementById('image-upload');
-  const uploadBtn = document.getElementById('upload-btn');
+  const attachBtn = document.getElementById('attach-btn');
   const uploadedImage = document.getElementById('uploaded-image');
   const previewImage = document.getElementById('preview-image');
   const removeImage = document.getElementById('remove-image');
   
-  if (uploadBtn && fileInput) {
-    uploadBtn.addEventListener('click', () => {
+  if (attachBtn && fileInput) {
+    attachBtn.addEventListener('click', () => {
       fileInput.click();
     });
   }
@@ -226,7 +226,6 @@ function initializeEventListeners() {
   // Нижняя панель ввода
   const bottomPromptInput = document.getElementById('bottom-prompt-input');
   const sendBtn = document.getElementById('send-btn');
-  const attachBtn = document.getElementById('attach-btn');
   
   if (bottomPromptInput) {
     // Автоматическое изменение высоты
