@@ -3,52 +3,92 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Генерация изображений — {AI}-шница</title>
+  <title>Чат с AI — {AI}-шница</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Unbounded:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="generate.css">
+  <link rel="stylesheet" href="styles.css?v=59">
+  <link rel="stylesheet" href="generate.css?v=16">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("theme");
+        document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
 </head>
 <body>
-  <main class="chat-page">
-    <!-- Левая панель - диалоговое окно и область ввода -->
-    <div class="left-sidebar">
-      <!-- Область диалога -->
+  <button type="button" class="theme-toggle theme-toggle--float" data-theme-toggle data-i18n-aria="nav.theme" aria-label="Сменить тему" title="Тема">
+    <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12.1 2a9.8 9.8 0 0 0-1.1.06 9 9 0 1 0 10.94 10.9A8 8 0 0 1 12.1 2Z"/></svg>
+    <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm0-5a1 1 0 0 1 1 1v1.5a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1Zm0 16.5a1 1 0 0 1 1 1V21a1 1 0 1 1-2 0v-1.5a1 1 0 0 1 1-1ZM3 11a1 1 0 0 1 1-1h1.5a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1Zm15.5 0a1 1 0 0 1 1-1H21a1 1 0 1 1 0 2h-1.5a1 1 0 0 1-1-1ZM5.64 5.64a1 1 0 0 1 1.41 0l1.06 1.06a1 1 0 1 1-1.41 1.41L5.64 7.05a1 1 0 0 1 0-1.41Zm10.25 10.25a1 1 0 0 1 1.41 0l1.06 1.06a1 1 0 0 1-1.41 1.41l-1.06-1.06a1 1 0 0 1 0-1.41ZM18.36 5.64a1 1 0 0 1 0 1.41l-1.06 1.06a1 1 0 1 1-1.41-1.41l1.06-1.06a1 1 0 0 1 1.41 0ZM8.11 15.89a1 1 0 0 1 0 1.41L7.05 18.36a1 1 0 1 1-1.41-1.41l1.06-1.06a1 1 0 0 1 1.41 0Z"/></svg>
+  </button>
+
+  <main class="chat-page" id="chat-page" data-side-tab="models">
+    <div class="center-pane">
+      <div class="center-toolbar">
+        <a class="center-brand" href="index.html" aria-label="{AI}-шница">
+          <img class="history-logo" src="img/egg-logo-clear.png?v=3" alt="" width="28" height="28" />
+          <span class="history-brand-text"><span class="accent">{AI}</span>-шница</span>
+        </a>
+        <button type="button" class="panel-reopen-btn" id="side-reopen-btn" title="Панель" aria-label="Открыть панель">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+            <path d="M15 4v16"></path>
+          </svg>
+        </button>
+      </div>
+
       <div class="chat-area">
         <div class="chat-messages" id="chat-messages">
           <div class="welcome-message">
-            <a href="index.html" class="back-btn" title="Назад к каталогу"></a>
-            <h2>Добро пожаловать в {AI}-шницу!</h2>
-            <p>Выберите модель и начните создавать изображения с помощью ИИ.</p>
+            <h2>Добро пожаловать в {AI}-шницу! 🫶</h2>
+            <p>Я помогу выбрать модель под бюджет и доработать промпт. Расскажите задачу, формат и сколько готовы потратить на один генерат.</p>
           </div>
         </div>
       </div>
 
-      <!-- Нижняя панель ввода -->
       <div class="bottom-input-panel">
+        <div class="selected-model-bar" id="selected-model-bar" aria-live="polite">
+          <span class="selected-pair">
+            <span class="selected-model-label">Ассистент</span>
+            <strong id="selected-assistant-name">OmniRoute · free</strong>
+          </span>
+          <span class="selected-pair-sep" aria-hidden="true">·</span>
+          <span class="selected-pair">
+            <span class="selected-model-label">Модель</span>
+            <strong id="selected-model-name">не выбрана</strong>
+          </span>
+        </div>
+        <div class="uploaded-image" id="uploaded-image" style="display: none;">
+          <img id="preview-image" src="" alt="Предварительный просмотр" style="display: none;">
+          <span id="preview-label" class="preview-label" style="display: none;"></span>
+          <button class="remove-image" id="remove-image" type="button">×</button>
+        </div>
         <div class="input-area">
-          <button class="models-toggle-btn" id="models-toggle-btn" title="Показать модели">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="9" y1="9" x2="15" y2="9"></line>
-              <line x1="9" y1="13" x2="15" y2="13"></line>
-              <line x1="9" y1="17" x2="15" y2="17"></line>
-            </svg>
-          </button>
-          <textarea 
-            id="bottom-prompt-input" 
-            class="bottom-prompt-input" 
-            placeholder="Опишите что хотите создать..."
+          <textarea
+            id="bottom-prompt-input"
+            class="bottom-prompt-input"
+            placeholder="Напишите сообщение..."
             rows="1"
           ></textarea>
           <div class="input-actions">
-            <button class="attach-btn" id="attach-btn" title="Прикрепить файл">
+            <button class="models-toggle-btn" id="models-toggle-btn" type="button" title="Модели" aria-label="Открыть список моделей">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <rect x="3" y="4" width="7" height="7" rx="1"></rect>
+                <rect x="14" y="4" width="7" height="7" rx="1"></rect>
+                <rect x="3" y="13" width="7" height="7" rx="1"></rect>
+                <rect x="14" y="13" width="7" height="7" rx="1"></rect>
+              </svg>
+            </button>
+            <button class="attach-btn" id="attach-btn" type="button" title="Прикрепить файл">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.64 16.2a2 2 0 0 1-2.83-2.83l8.49-8.49"></path>
               </svg>
             </button>
-            <button class="send-btn" id="send-btn" title="Отправить">
+            <button class="send-btn" id="send-btn" type="button" title="Отправить">
               <img src="img/1.png" alt="Отправить" width="20" height="20" />
             </button>
           </div>
@@ -56,47 +96,75 @@
       </div>
     </div>
 
-    <!-- Правая панель - поиск моделей -->
-    <div class="right-sidebar">
-      <div class="sidebar-header">
-        <h3>Поиск моделей</h3>
-        <div class="search-bar">
-          <input type="text" placeholder="Поиск моделей..." class="search-input" id="models-search">
-          <button class="search-btn" type="button">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
-              <path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5Zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14Z"/>
+    <aside class="right-sidebar" id="side-panel" aria-label="Модели и генерации">
+      <div class="side-panel-header">
+        <div class="side-tabs" role="tablist" aria-label="Разделы панели">
+          <button type="button" class="side-tab is-active" role="tab" id="tab-models" data-side-tab="models" aria-selected="true">Модели</button>
+          <button type="button" class="side-tab" role="tab" id="tab-gens" data-side-tab="gens" aria-selected="false">Генерации</button>
+        </div>
+        <div class="models-header-actions">
+          <button type="button" class="panel-collapse-btn" id="side-collapse-btn" title="Свернуть" aria-label="Свернуть панель">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+              <path d="M15 4v16"></path>
             </svg>
           </button>
-        </div>
-        <div class="uploaded-image" id="uploaded-image" style="display: none;">
-          <img id="preview-image" src="" alt="Предварительный просмотр">
-          <button class="remove-image" id="remove-image">×</button>
+          <button type="button" class="models-close-btn" id="side-close-btn" aria-label="Закрыть">×</button>
         </div>
       </div>
-      <div class="models-list" id="models-list">
-        <!-- Модели будут загружены динамически -->
-      </div>
-    </div>
 
-    <!-- Скрытый input для загрузки файлов -->
-    <input type="file" id="image-upload" accept="image/*" hidden>
-
-    <!-- Модальное окно для моделей на мобильных -->
-    <div class="models-modal" id="models-modal">
-      <div class="models-modal-content">
-        <div class="models-modal-header">
-          <h3>Выберите модель</h3>
-          <button class="models-modal-close" id="models-modal-close">×</button>
+      <div class="side-panel-body" id="panel-models" role="tabpanel" data-panel="models">
+        <div class="models-sidebar-header">
+          <label class="models-search-wrap" for="model-search">
+            <input
+              type="search"
+              id="model-search"
+              class="models-search-input"
+              placeholder="Название или провайдер…"
+              autocomplete="off"
+            />
+          </label>
+          <div class="models-filters">
+            <div class="filter-field">
+              <label for="filter-input">Исходник</label>
+              <select id="filter-input" class="filter-select" aria-label="Фильтр по исходному материалу">
+                <option value="">Все</option>
+                <option value="text">Текст</option>
+                <option value="image">Картинка</option>
+                <option value="video">Видео</option>
+                <option value="audio">Аудио</option>
+              </select>
+            </div>
+            <div class="filter-field">
+              <label for="filter-output">Результат</label>
+              <select id="filter-output" class="filter-select" aria-label="Фильтр по типу генерации">
+                <option value="">Все</option>
+                <option value="text">Текст</option>
+                <option value="image">Картинка</option>
+                <option value="video">Видео</option>
+                <option value="audio">Аудио</option>
+                <option value="music">Музыка</option>
+              </select>
+            </div>
+          </div>
         </div>
-        <div class="models-modal-list" id="models-modal-list">
-          <!-- Модели будут загружены динамически -->
-        </div>
+        <div class="models-list" id="models-list" role="listbox" aria-label="Модели"></div>
       </div>
-    </div>
+
+      <div class="side-panel-body" id="panel-gens" role="tabpanel" data-panel="gens" hidden>
+        <button type="button" class="new-chat-btn" id="new-chat-btn">
+          <span class="new-chat-plus" aria-hidden="true">+</span>
+          Новый чат
+        </button>
+        <div class="history-list" id="history-list" role="list"></div>
+      </div>
+    </aside>
+
+    <div class="side-backdrop" id="side-backdrop" hidden></div>
+    <input type="file" id="image-upload" accept="image/*,audio/*,video/*,.mp3,.wav,.m4a,.flac,.ogg,.webm,.mp4,.mov" hidden>
   </main>
 
-  <script src="config.js"></script>
-  <script src="replicate-api.js"></script>
-  <script src="generate.js"></script>
+  <script defer src="app.js?v=36"></script>
+  <script src="generate.js?v=32"></script>
 </body>
 </html>

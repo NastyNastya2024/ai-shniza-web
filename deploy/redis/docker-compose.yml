@@ -1,0 +1,19 @@
+# Redis for ai-shniza job queues + channel health
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: ai-shniza-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - ai-shniza-redis-data:/data
+    command: redis-server --save 60 1 --loglevel warning
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  ai-shniza-redis-data:

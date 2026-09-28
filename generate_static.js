@@ -72,7 +72,7 @@ function createCard(model) {
   const body = document.createElement("div");
   body.className = "card-body";
 
-  body.innerHTML = "<h3 class=\"card-title\"><span class=\"muted\">" + model.vendor + "/</span><strong>" + model.name + "</strong></h3>";
+  body.innerHTML = "<h3 class=\"card-title\"><strong>" + model.name + "</strong></h3>";
 
   const generic = (model.description || "").trim().toLowerCase() === "model from replicate";
   if (!generic && model.description) {

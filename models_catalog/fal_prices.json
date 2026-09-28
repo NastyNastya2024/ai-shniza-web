@@ -1,0 +1,59 @@
+{
+  "alibaba/happy-horse/v1.1/text-to-video": {
+    "price_summary": "720p $0.14/s · 1080p $0.18/s"
+  },
+  "google/gemini-omni-flash": {
+    "price_summary": "$21.875 / 1M tokens · ~$0.125/s at 720p"
+  },
+  "xai/grok-imagine-video/v1.5/image-to-video": {
+    "price_summary": "480p $0.08/s · 720p $0.14/s · 1080p $0.25/s · +$0.01/ref image"
+  },
+  "bytedance/seedance-2.0/text-to-video": {
+    "price_summary": "720p $0.3034/s · 1080p $0.682/s (also token formula on page)"
+  },
+  "fal-ai/kling-video/o3/standard/image-to-video": {
+    "price_summary": "$0.084/s audio off · $0.112/s audio on"
+  },
+  "minimax/h3/reference-to-video": {
+    "price_summary": "480p $0.05/s · 768p $0.06/s · 2K $0.13/s · 4K $0.16/s · +$0.08 after 5 ref images"
+  },
+  "alibaba/wan-3.0/text-to-video": {
+    "price_summary": "480p $0.05/s · 720p $0.10/s · 1080p $0.20/s"
+  },
+  "alibaba/wan-3.0/image-to-video": {
+    "price_summary": "480p $0.05/s · 720p $0.10/s · 1080p $0.20/s"
+  },
+  "fal-ai/ltx-2.3/text-to-video": {
+    "price_summary": "1080p $0.08/s · 1440p $0.16/s · 2160p $0.32/s"
+  },
+  "fal-ai/ltx-2.3/text-to-video/fast": {
+    "price_summary": "1080p $0.06/s · 1440p $0.12/s · 2160p $0.24/s"
+  },
+  "fal-ai/ltx-2.3/image-to-video": {
+    "price_summary": "1080p $0.08/s · 1440p $0.16/s · 2160p $0.32/s"
+  },
+  "fal-ai/ltx-2.3/image-to-video/fast": {
+    "price_summary": "1080p $0.06/s · 1440p $0.12/s · 2160p $0.24/s"
+  },
+  "fal-ai/ltx-2.3/audio-to-video": {
+    "price_summary": "$0.10/s"
+  },
+  "fal-ai/pixverse/v6/text-to-video": {
+    "price_summary": "360p $0.025–0.035/s · 540p $0.035–0.045/s · 720p $0.045–0.060/s · 1080p $0.090–0.115/s (no/with audio)"
+  },
+  "fal-ai/pixverse/v6/image-to-video": {
+    "price_summary": "360p $0.025–0.035/s · 540p $0.035–0.045/s · 720p $0.045–0.060/s · 1080p $0.090–0.115/s (no/with audio)"
+  },
+  "fal-ai/bytedance/seedream/v5/lite/edit": {
+    "price_summary": "$0.035 / image"
+  },
+  "fal-ai/bytedance/seedream/v5/lite/text-to-image": {
+    "price_summary": "$0.035 / image"
+  },
+  "bytedance/seedream/v5/pro/text-to-image": {
+    "price_summary": "≤1536² $0.0675/image · ≤2048² $0.135/image (tentative)"
+  },
+  "bytedance/seedream/v5/pro/edit": {
+    "price_summary": "≤1536² $0.0675 + $0.0045×extra inputs · ≤2048² $0.135 + $0.0045×extra (tentative)"
+  }
+}
