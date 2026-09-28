@@ -1,0 +1,35 @@
+# OmniRoute as a sibling service (pre-built image — no local source build).
+# From this directory:
+#   docker compose up -d
+# Dashboard / API: http://127.0.0.1:20128
+# API base:        http://127.0.0.1:20128/v1
+
+services:
+  omniroute:
+    image: diegosouzapw/omniroute:latest
+    container_name: omniroute
+    restart: unless-stopped
+    stop_grace_period: 40s
+    ports:
+      - "127.0.0.1:20128:20128"
+    env_file:
+      - .env
+    environment:
+      PORT: "20128"
+      DASHBOARD_PORT: "20128"
+      BASE_URL: http://127.0.0.1:20128
+      NEXT_PUBLIC_BASE_URL: http://127.0.0.1:20128
+      NODE_OPTIONS: --max-old-space-size=2048
+      INITIAL_PASSWORD: ${INITIAL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    volumes:
+      - omniroute-data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "healthcheck.mjs"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+
+volumes:
+  omniroute-data:

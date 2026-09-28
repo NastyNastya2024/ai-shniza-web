@@ -22,6 +22,22 @@ env.example
 .DS_Store
 Thumbs.db
 
+.venv/
+
+# Local backups
+backups/
+
+# Worker logs
+logs/
+
+# OmniRoute local runtime (if run from source tree)
+OmniRoute-release-v3.8.51/.env
+OmniRoute-release-v3.8.51/data/
+OmniRoute-release-v3.8.51/node_modules/
+
+# OmniRoute docker env (password / JWT)
+deploy/omniroute/.env
+
 # Node modules (если будете использовать)
 node_modules/
 package-lock.json
