@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{AI}-шница — Маркетплейс нейросетей</title>
+  <title>{AI}-шница — Маркетплейс генеративных моделей</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@300;400;500;600;700;800&family=Unbounded:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=55">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=73">
   <script>
     (function () {
       try {
@@ -18,166 +18,433 @@
       }
     })();
   </script>
-  <script defer src="app.js?v=34"></script>
+  <script defer src="app.js?v=46"></script>
 </head>
 <body class="index-landing">
-  <header class="site-header">
-    <div class="header-left">
-      <a class="site-logo" href="index.html" aria-label="{AI}-шница" data-i18n-aria="nav.brand">
-        <img class="logo-egg" src="img/egg-logo-clear.png?v=3" alt="" width="44" height="44" />
-      </a>
-    </div>
+  <div class="kiko-frame" aria-hidden="true"></div>
+
+  <header class="site-header site-header--kiko">
+    <a class="site-logo" href="index.html" aria-label="{AI}-шница" data-i18n-aria="nav.brand">
+      <span class="logo-text"><span class="accent">{AI}</span>-шница</span>
+    </a>
+    <nav class="site-nav" aria-label="Разделы">
+      <a class="nav-link" href="#composer">Создать</a>
+      <a class="nav-link" href="#catalog">Модели</a>
+      <a class="nav-link" href="#faq">FAQ</a>
+    </nav>
     <div class="header-actions">
-      <button type="button" class="theme-toggle" data-theme-toggle data-i18n-aria="nav.theme" aria-label="Сменить тему" title="Тема">
-        <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12.1 2a9.8 9.8 0 0 0-1.1.06 9 9 0 1 0 10.94 10.9A8 8 0 0 1 12.1 2Z"/></svg>
-        <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm0-5a1 1 0 0 1 1 1v1.5a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1Zm0 16.5a1 1 0 0 1 1 1V21a1 1 0 1 1-2 0v-1.5a1 1 0 0 1 1-1ZM3 11a1 1 0 0 1 1-1h1.5a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1Zm15.5 0a1 1 0 0 1 1-1H21a1 1 0 1 1 0 2h-1.5a1 1 0 0 1-1-1ZM5.64 5.64a1 1 0 0 1 1.41 0l1.06 1.06a1 1 0 1 1-1.41 1.41L5.64 7.05a1 1 0 0 1 0-1.41Zm10.25 10.25a1 1 0 0 1 1.41 0l1.06 1.06a1 1 0 0 1-1.41 1.41l-1.06-1.06a1 1 0 0 1 0-1.41ZM18.36 5.64a1 1 0 0 1 0 1.41l-1.06 1.06a1 1 0 1 1-1.41-1.41l1.06-1.06a1 1 0 0 1 1.41 0ZM8.11 15.89a1 1 0 0 1 0 1.41L7.05 18.36a1 1 0 1 1-1.41-1.41l1.06-1.06a1 1 0 0 1 1.41 0Z"/></svg>
-      </button>
-      <div data-auth-actions></div>
+      <form class="header-search" role="search" action="generate.html" method="get">
+        <input class="header-search-input" type="search" name="q" placeholder="Поиск или генерация" aria-label="Поиск или генерация" data-i18n-placeholder="hero.placeholder" />
+      </form>
+      <a class="header-cta" href="generate.html">Начать <span aria-hidden="true">↗</span></a>
     </div>
   </header>
+
+  <button type="button" class="theme-toggle theme-toggle--float" data-theme-toggle data-i18n-aria="nav.theme" aria-label="Сменить тему" title="Тема" hidden>
+    <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12.1 2a9.8 9.8 0 0 0-1.1.06 9 9 0 1 0 10.94 10.9A8 8 0 0 1 12.1 2Z"/></svg>
+    <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm0-5a1 1 0 0 1 1 1v1.5a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1Zm0 16.5a1 1 0 0 1 1 1V21a1 1 0 1 1-2 0v-1.5a1 1 0 0 1 1-1ZM3 11a1 1 0 0 1 1-1h1.5a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1Zm15.5 0a1 1 0 0 1 1-1H21a1 1 0 1 1 0 2h-1.5a1 1 0 0 1-1-1ZM5.64 5.64a1 1 0 0 1 1.41 0l1.06 1.06a1 1 0 1 1-1.41 1.41L5.64 7.05a1 1 0 0 1 0-1.41Zm10.25 10.25a1 1 0 0 1 1.41 0l1.06 1.06a1 1 0 0 1-1.41 1.41l-1.06-1.06a1 1 0 0 1 0-1.41ZM18.36 5.64a1 1 0 0 1 0 1.41l-1.06 1.06a1 1 0 1 1-1.41-1.41l1.06-1.06a1 1 0 0 1 1.41 0ZM8.11 15.89a1 1 0 0 1 0 1.41L7.05 18.36a1 1 0 1 1-1.41-1.41l1.06-1.06a1 1 0 0 1 1.41 0Z"/></svg>
+  </button>
+
   <main>
-    <section class="hero" aria-label="Заставка">
-      <div class="aurora" aria-hidden="true">
-        <span class="aurora-blob aurora-blob--pink"></span>
-        <span class="aurora-blob aurora-blob--orange"></span>
-        <span class="aurora-blob aurora-blob--yellow"></span>
-        <span class="aurora-blob aurora-blob--peach"></span>
-        <span class="aurora-blob aurora-blob--coral"></span>
-      </div>
-      <div class="container">
-        <div class="hero-content">
-          <h1 class="hero-title">
-            <span class="accent">{AI}</span><span data-i18n="hero.brand">-шница</span>
-          </h1>
-          <p class="hero-subtitle" data-i18n="hero.subtitle">
-            Маркетплейс генеративных моделей
-          </p>
+    <section class="hero hero--kiko" aria-label="Заставка">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="hero-stage">
+        <div class="hero-orbit">
+          <div class="hero-copy">
+            <p class="hero-eyebrow">Маркетплейс генеративных моделей</p>
+            <h1 class="hero-title hero-title--stack">
+              <span class="hero-title-line"><span class="accent">{AI}</span>-</span>
+              <span class="hero-title-line">шница</span>
+            </h1>
+            <p class="hero-lead">
+              Все лучшие нейросети в одном месте.<br />
+              Выбирай модель под задачу — и создавай без лишней суеты.
+            </p>
+          </div>
+
+          <div class="hero-mascot" aria-hidden="true">
+            <img src="img/egg-logo-glazunya-v3.png?v=3" alt="" width="480" height="480" />
+          </div>
+
+          <article class="orbit-card orbit-card--tl">
+            <div class="orbit-card-top">
+              <span class="orbit-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.4"/><circle cx="8.5" cy="10" r="1.3"/><path d="m21 15-4.5-4.5L7.2 19.8"/></svg>
+              </span>
+              <span class="orbit-num">01</span>
+            </div>
+            <h3>Изображения</h3>
+            <p>Midjourney, Flux, Recraft</p>
+          </article>
+
+          <article class="orbit-card orbit-card--tr">
+            <div class="orbit-card-top">
+              <span class="orbit-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="12" height="12" rx="2"/><path d="m15 10.5 6-3.5v10l-6-3.5v-3Z"/></svg>
+              </span>
+              <span class="orbit-num">02</span>
+            </div>
+            <h3>Видео</h3>
+            <p>Kling, Veo, Runway</p>
+          </article>
+
+          <article class="orbit-card orbit-card--bl">
+            <div class="orbit-card-top">
+              <span class="orbit-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>
+              </span>
+              <span class="orbit-num">03</span>
+            </div>
+            <h3>Музыка</h3>
+            <p>Suno, Udio</p>
+          </article>
+
+          <article class="orbit-card orbit-card--br">
+            <div class="orbit-card-top">
+              <span class="orbit-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 14.5a3.8 3.8 0 0 1-3.8 3.8H8l-4 3V7.8A3.8 3.8 0 0 1 7.8 4h9.4A3.8 3.8 0 0 1 21 7.8z"/></svg>
+              </span>
+              <span class="orbit-num">04</span>
+            </div>
+            <h3>Тексты</h3>
+            <p>Claude, GPT, Gemini</p>
+          </article>
         </div>
-        <div class="hero-search">
-          <form class="search-bar" role="search" aria-label="Поиск или генерация" action="generate.html" method="get">
-            <input class="search-input" type="search" name="q" placeholder="Поиск или генерация" aria-label="Поиск или генерация" data-i18n-placeholder="hero.placeholder" autofocus />
-            <button class="search-btn" type="button" aria-label="Каталог" data-i18n-aria="nav.catalog" data-catalog-btn>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-                <rect x="3" y="3" width="8" height="8" rx="1.6" fill="currentColor"/>
-                <rect x="13" y="3" width="8" height="8" rx="1.6" fill="currentColor"/>
-                <rect x="3" y="13" width="8" height="8" rx="1.6" fill="currentColor"/>
-                <rect x="13" y="13" width="8" height="8" rx="1.6" fill="currentColor"/>
-              </svg>
-            </button>
-            <button class="generate-btn" type="button" aria-label="Генерация">
-              <img src="img/egg-logo.png?v=2" alt="" width="40" height="40" />
-            </button>
-          </form>
-        </div>
       </div>
+
+      <div class="hero-dock" aria-label="Инструменты">
+        <a class="dock-btn" href="generate.html" title="Генерация" aria-label="Генерация">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z"/><path d="m18.5 14.5.9 2.4 2.4.9-2.4.9-.9 2.4-.9-2.4-2.4-.9 2.4-.9.9-2.4Z"/></svg>
+        </a>
+        <a class="dock-btn" href="generate.html" title="Текст" aria-label="Текст">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h16v2M12 5v14M9 19h6"/></svg>
+        </a>
+        <a class="dock-btn" href="generate.html" title="Создать" aria-label="Создать">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </a>
+        <a class="dock-btn" href="generate.html" title="Чат" aria-label="Чат">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 14.5a3.8 3.8 0 0 1-3.8 3.8H8l-4 3V7.8A3.8 3.8 0 0 1 7.8 4h9.4A3.8 3.8 0 0 1 21 7.8z"/></svg>
+        </a>
+      </div>
+      <div class="hero-floor" aria-hidden="true"></div>
     </section>
 
     <div class="page-tail">
-    <div class="aurora" aria-hidden="true">
-      <span class="aurora-blob aurora-blob--pink"></span>
-      <span class="aurora-blob aurora-blob--orange"></span>
-      <span class="aurora-blob aurora-blob--yellow"></span>
-      <span class="aurora-blob aurora-blob--peach"></span>
-      <span class="aurora-blob aurora-blob--coral"></span>
-    </div>
-    <section class="catalog" id="catalog" aria-label="Каталог моделей">
-      <div class="container">
-        <div class="catalog-inner">
-          <div class="catalog-heading">
-            <h2 data-i18n="catalog.heading">Бесплатные генеративные модели на любой вкус</h2>
+      <!-- 1. Composer (Clico-style input) -->
+      <section class="clico-composer" id="composer" aria-label="Начать создание">
+        <div class="clico-wrap">
+          <h2 class="clico-serif">Твоя AI-студия для генераций.</h2>
+          <form class="composer-box" action="generate.html" method="get" data-composer-form>
+            <textarea
+              class="composer-input"
+              name="q"
+              rows="2"
+              placeholder="Опиши идею или принеси референс — и начни создавать."
+              aria-label="Опиши идею"
+            ></textarea>
+            <div class="composer-bar">
+              <button class="composer-plus" type="button" aria-label="Добавить файл" title="Скоро">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+              <span class="composer-model">Seedance Lite · бесплатно</span>
+              <button class="composer-go" type="submit">Начать создавать <span aria-hidden="true">↑</span></button>
+            </div>
+          </form>
+          <div class="composer-modes" role="tablist" aria-label="Тип генерации">
+            <a class="composer-mode is-active" href="generate.html?q=Создай%20изображение">Изображение</a>
+            <a class="composer-mode" href="generate.html?q=Создай%20видео%20Seedance">Видео</a>
+            <a class="composer-mode" href="generate.html?q=Создай%20музыку">Музыка</a>
+            <a class="composer-mode" href="generate.html?q=Напиши%20текст">Текст</a>
+            <a class="composer-mode" href="catalog.html">Каталог</a>
+          </div>
+          <p class="composer-note">
+            {AI}-шница — маркетплейс генеративных моделей без VPN.
+            Картинки, видео, музыка и тексты — в одном месте, через чат.
+          </p>
+        </div>
+      </section>
+
+      <!-- 2. Seedance free video — Clico card layout -->
+      <section class="clico-seedance reveal" id="seedance" aria-label="Генерация видео Seedance">
+        <div class="clico-wrap">
+          <h2 class="clico-serif">Генерируй видео бесплатно на Seedance.</h2>
+          <p class="clico-sub">
+            Опиши сцену или добавь фото — бесплатная версия Seedance оживит кадр.
+            Без VPN, прямо в браузере.
+          </p>
+
+          <div class="seedance-shell" data-seedance-demo>
+            <div class="seedance-switches" role="tablist" aria-label="Примеры">
+              <button type="button" class="seedance-switch is-active" data-seed-ex="0">Оживить</button>
+              <button type="button" class="seedance-switch" data-seed-ex="1">Из фото</button>
+              <button type="button" class="seedance-switch" data-seed-ex="2">По тексту</button>
+            </div>
+
+            <div class="seedance-panel" data-seed-panel>
+              <div class="seedance-in">
+                <div class="seedance-ref">
+                  <div class="seedance-thumb-wrap">
+                    <span class="seedance-tag" data-seed-tag>Референс</span>
+                    <img
+                      data-seed-thumb
+                      src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=480&q=80"
+                      alt=""
+                      width="160"
+                      height="120"
+                      loading="lazy"
+                    />
+                  </div>
+                  <p class="seedance-prompt" data-seed-prompt>
+                    Оживи этот морской кадр. Оставь тех же людей и дай разговору развернуться.
+                  </p>
+                </div>
+                <a class="seedance-cta" data-seed-cta href="generate.html?q=Оживи%20сцену%20у%20моря%20на%20Seedance%20Lite">
+                  Попробовать Seedance Lite →
+                </a>
+              </div>
+              <div class="seedance-out">
+                <p class="seedance-caption" data-seed-caption>Тихий момент — ожил.</p>
+                <div class="seedance-frame">
+                  <img
+                    data-seed-result
+                    src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=80"
+                    alt="Результат генерации видео"
+                    width="720"
+                    height="420"
+                    loading="lazy"
+                  />
+                  <span class="seedance-badge">Seedance Lite · free</span>
+                  <span class="seedance-play" aria-hidden="true"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Share gallery — black curved 3-row grid -->
+      <section class="clico-share" id="share" aria-label="Делись генерациями">
+        <div class="share-inner">
+          <div class="share-copy">
+            <h2 class="clico-serif clico-serif--light">Делись генерациями<br />и привлекай клиентов.</h2>
+            <p class="clico-sub clico-sub--light">
+              Собирай витрину работ, показывай процесс и находи заказчиков —
+              прямо из пространства {AI}-шницы.
+            </p>
+          </div>
+
+          <div class="share-stage" data-share-curve>
+            <div class="share-perspective" data-share-inner>
+              <div class="share-row" data-share-row data-dir="1" style="--dur:42s">
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+              </div>
+              <div class="share-row" data-share-row data-dir="-1" style="--dur:50s">
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1618005198919-d3d224b85df6?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1634017839464-5c339bbb3dc8?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+              </div>
+              <div class="share-row" data-share-row data-dir="1" style="--dur:46s">
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1614850715649-1d0106293bd1?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1465146633011-14f8e0781093?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
+              </div>
+            </div>
+          </div>
+
+          <div class="share-foot">
+            <a class="share-cta" href="generate.html">Создать первую генерацию →</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Models: three blocks at once -->
+      <section class="clico-models reveal" id="catalog" aria-label="Модели">
+        <div class="clico-wrap">
+          <h2 class="clico-serif">Много моделей. Без VPN.</h2>
+          <p class="clico-sub">
+            Изображения, музыка, тексты и видео — выбирай инструмент под задачу
+            и работай из России без обходов.
+          </p>
+
+          <div class="models-trio">
+            <article class="models-card models-card--lilac">
+              <h3 class="models-card-title">Изображения</h3>
+              <p class="models-card-note">Flux, Recraft, Ideogram, Imagen</p>
+              <div class="models-grid is-on">
+                <a class="model-chip" href="generate.html?q=Flux"><span class="model-ico" aria-hidden="true">◈</span><span>Flux</span></a>
+                <a class="model-chip" href="generate.html?q=Recraft"><span class="model-ico" aria-hidden="true">▣</span><span>Recraft</span></a>
+                <a class="model-chip" href="generate.html?q=Ideogram"><span class="model-ico" aria-hidden="true">✦</span><span>Ideogram</span></a>
+                <a class="model-chip" href="generate.html?q=Imagen"><span class="model-ico" aria-hidden="true">◎</span><span>Imagen</span></a>
+              </div>
+            </article>
+
+            <article class="models-card models-card--blue">
+              <h3 class="models-card-title models-card-title--light">Видео</h3>
+              <p class="models-card-note models-card-note--light">Seedance Lite бесплатно · Kling, Veo</p>
+              <div class="models-ui">
+                <div class="models-grid is-on">
+                  <a class="model-chip" href="generate.html?q=Seedance"><span class="model-ico" aria-hidden="true">▶</span><span>Seedance Lite</span></a>
+                  <a class="model-chip" href="generate.html?q=Kling"><span class="model-ico" aria-hidden="true">▣</span><span>Kling</span></a>
+                  <a class="model-chip" href="generate.html?q=Veo"><span class="model-ico" aria-hidden="true">✦</span><span>Veo</span></a>
+                  <a class="model-chip" href="generate.html?q=Runway"><span class="model-ico" aria-hidden="true">◎</span><span>Runway</span></a>
+                </div>
+                <p class="vpn-pill">✓ Без VPN</p>
+              </div>
+            </article>
+
+            <article class="models-card models-card--ink">
+              <h3 class="models-card-title models-card-title--light">Текст и музыка</h3>
+              <p class="models-card-note models-card-note--light">Claude, GPT, Suno, Udio</p>
+              <div class="models-ui">
+                <div class="models-grid is-on">
+                  <a class="model-chip" href="generate.html?q=Claude"><span class="model-ico" aria-hidden="true">✳</span><span>Claude</span></a>
+                  <a class="model-chip" href="generate.html?q=GPT"><span class="model-ico" aria-hidden="true">◉</span><span>GPT</span></a>
+                  <a class="model-chip" href="generate.html?q=Suno"><span class="model-ico" aria-hidden="true">♪</span><span>Suno</span></a>
+                  <a class="model-chip" href="generate.html?q=Udio"><span class="model-ico" aria-hidden="true">♫</span><span>Udio</span></a>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="catalog-heading" id="how">
+            <h3 class="catalog-mini-title">Каталог моделей</h3>
             <p data-i18n="catalog.lead">Если можешь описать — можешь сгенерировать. Выбирай модель и создавай.</p>
           </div>
           <div class="catalog-content">
             <div class="cards-grid"></div>
           </div>
         </div>
-      </div>
-    </section>
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-card">
-        <div class="footer-brand">
-          <a class="footer-logo" href="index.html" aria-label="{AI}-шница" data-i18n-aria="nav.brand">
-            <img class="logo-egg" src="img/egg-logo-clear.png?v=3" alt="" width="36" height="36" />
-          </a>
-          <button class="footer-lang" type="button" data-lang-toggle aria-label="RU">
-            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 1.6c1.6 0 3 .9 4.2 2.4H7.8C9 5.5 10.4 4.6 12 4.6Zm-5.7 4h11.4c.3.7.5 1.5.6 2.4H5.7c.1-.9.3-1.7.6-2.4Zm12.1 4H5.6c.1.9.3 1.7.6 2.4h11.4c.3-.7.5-1.5.6-2.4ZM7.8 17c1.2 1.5 2.6 2.4 4.2 2.4s3-.9 4.2-2.4H7.8Z"/></svg>
-            <span data-footer-lang-label>RU</span>
-            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M7 10l5 5 5-5H7z"/></svg>
-          </button>
+      </section>
+
+      <!-- FAQ -->
+      <section class="clico-faq reveal" id="faq" aria-label="Частые вопросы">
+        <div class="clico-wrap clico-wrap--narrow">
+          <h2 class="clico-serif">Частые вопросы</h2>
+          <div class="faq-list">
+            <details class="faq-item">
+              <summary>Нужен ли VPN, чтобы пользоваться моделями?</summary>
+              <div class="faq-body"><p>Нет. {AI}-шница собирает модели в одном месте, чтобы вы могли генерировать без обходов и отдельных аккаунтов у каждого провайдера.</p></div>
+            </details>
+            <details class="faq-item">
+              <summary>Что бесплатно на старте?</summary>
+              <div class="faq-body"><p>Доступна бесплатная генерация видео на Seedance Lite и базовые сценарии в чате. Платные модели подключаются по мере необходимости — цены в рублях.</p></div>
+            </details>
+            <details class="faq-item">
+              <summary>Можно ли делать и картинки, и видео в одном чате?</summary>
+              <div class="faq-body"><p>Да. Выберите модальность или просто опишите задачу — ассистент подскажет модель и запустит генерацию.</p></div>
+            </details>
+            <details class="faq-item">
+              <summary>Как делиться генерациями с клиентами?</summary>
+              <div class="faq-body"><p>Сохраняйте результаты в пространстве генераций и отправляйте ссылки или превью. Витрина работ помогает показывать стиль и привлекать заказчиков.</p></div>
+            </details>
+            <details class="faq-item">
+              <summary>Чем {AI}-шница отличается от отдельных сервисов?</summary>
+              <div class="faq-body"><p>Один интерфейс, единый каталог, рублевые цены и фокус на доступности из РФ — без прыжков между Midjourney, Kling, Suno и чатами.</p></div>
+            </details>
+          </div>
         </div>
-        <nav class="footer-col" aria-label="Компания">
-          <h3 data-i18n="footer.company">Компания</h3>
-          <a href="index.html" data-i18n="footer.careers">Карьера</a>
-          <a href="index.html" data-i18n="footer.press">Пресса и медиа</a>
-          <a href="prices.html" data-i18n="footer.enterprise">Для бизнеса</a>
-          <a href="index.html" data-i18n="footer.security">Безопасность</a>
-          <a href="index.html" data-i18n="footer.trust">Центр доверия</a>
-          <a href="index.html" data-i18n="footer.partners">Партнёрство</a>
-        </nav>
-        <nav class="footer-col" aria-label="Продукт">
-          <h3 data-i18n="footer.product">Продукт</h3>
-          <a href="prices.html" data-i18n="footer.pricing">Цены</a>
-          <a href="prices.html" data-i18n="footer.students">Скидка студентам</a>
-          <a href="generate.html" data-i18n="footer.work">Для работы</a>
-          <a href="generate.html" data-i18n="footer.founders">Основателям</a>
-          <a href="catalog.html" data-i18n="footer.pm">Продакт-менеджерам</a>
-          <a href="catalog.html" data-i18n="footer.designers">Дизайнерам</a>
-          <a href="catalog.html" data-i18n="footer.marketers">Маркетологам</a>
-          <a href="catalog.html" data-i18n="footer.sales">Продажам</a>
-          <a href="catalog.html" data-i18n="footer.ops">Операциям</a>
-          <a href="catalog.html" data-i18n="footer.people">HR</a>
-          <a href="generate.html" data-i18n="footer.proto">Прототипирование</a>
-          <a href="generate.html" data-i18n="footer.tools">Внутренние инструменты</a>
-          <a href="index.html" data-i18n="footer.apps">Скачать приложения</a>
-          <a href="index.html" data-i18n="footer.connections">Интеграции</a>
-          <a href="index.html" data-i18n="footer.changelog">Список изменений</a>
-          <a href="index.html" data-i18n="footer.status">Статус</a>
-        </nav>
-        <nav class="footer-col" aria-label="Ресурсы">
-          <h3 data-i18n="footer.resources">Ресурсы</h3>
-          <a href="catalog.html" data-i18n="footer.learn">Обучение</a>
-          <a href="catalog.html" data-i18n="footer.templates">Шаблоны</a>
-          <a href="index.html" data-i18n="footer.guides">Гайды</a>
-          <a href="index.html" data-i18n="footer.connectors">Коннекторы</a>
-          <a href="index.html" data-i18n="footer.mcp">MCP-сервер</a>
-          <a href="index.html" data-i18n="footer.videos">Видео</a>
-          <a href="index.html" data-i18n="footer.blog">Блог</a>
-          <a href="index.html" data-i18n="footer.support">Поддержка</a>
-          <a href="index.html" data-i18n="footer.reviews">Отзывы</a>
-          <a href="index.html" data-i18n="footer.sitemap">Карта сайта</a>
-        </nav>
-        <nav class="footer-col" aria-label="Правовая информация">
-          <h3 data-i18n="footer.legal">Правовая информация</h3>
-          <a href="index.html" data-i18n="footer.privacy">Политика конфиденциальности</a>
-          <a href="index.html" data-i18n="footer.nosell">Не продавать и не передавать мои данные</a>
-          <a href="index.html" data-i18n="footer.cookies">Настройки cookie</a>
-          <a href="index.html" data-i18n="footer.entTerms">Условия для бизнеса</a>
-          <a href="index.html" data-i18n="footer.terms">Общие условия</a>
-          <a href="index.html" data-i18n="footer.desktop">Условия десктоп-приложения</a>
-          <a href="index.html" data-i18n="footer.domain">Условия регистрации доменов</a>
-          <a href="index.html" data-i18n="footer.dmca">Политика DMCA</a>
-          <a href="index.html" data-i18n="footer.a11y">Доступность</a>
-          <a href="index.html" data-i18n="footer.rules">Правила платформы</a>
-          <a href="index.html" data-i18n="footer.abuse">Сообщить о нарушении</a>
-          <a href="index.html" data-i18n="footer.secReport">Сообщить об уязвимости</a>
-          <a href="index.html" data-i18n="footer.dpa">DPA</a>
-        </nav>
-        <nav class="footer-col" aria-label="Сообщество">
-          <h3 data-i18n="footer.community">Сообщество</h3>
-          <a href="index.html" data-i18n="footer.becomePartner">Стать партнёром</a>
-          <a href="index.html" data-i18n="footer.hire">Нанять эксперта</a>
-          <a href="index.html" data-i18n="footer.affiliates">Партнёрская программа</a>
-          <a href="index.html" data-i18n="footer.conduct">Кодекс поведения</a>
-          <a href="https://discord.com" target="_blank" rel="noreferrer">Discord</a>
-          <a href="https://www.reddit.com" target="_blank" rel="noreferrer">Reddit</a>
-          <a href="https://x.com" target="_blank" rel="noreferrer">X / Twitter</a>
-          <a href="https://youtube.com" target="_blank" rel="noreferrer">YouTube</a>
-          <a href="https://www.linkedin.com" target="_blank" rel="noreferrer">LinkedIn</a>
-        </nav>
-      </div>
-    </div>
-  </footer>
+      </section>
+
+      <footer class="site-footer" id="about">
+        <div class="container">
+          <div class="footer-card">
+            <div class="footer-brand">
+              <a class="footer-logo" href="index.html" aria-label="{AI}-шница" data-i18n-aria="nav.brand">
+                <img class="logo-egg" src="img/egg-logo-glazunya-v3.png?v=3" alt="" width="36" height="36" />
+              </a>
+              <button class="footer-lang" type="button" data-lang-toggle aria-label="RU">
+                <span data-footer-lang-label>RU</span>
+              </button>
+            </div>
+            <nav class="footer-col" aria-label="Компания">
+              <h3 data-i18n="footer.company">Компания</h3>
+              <a href="index.html" data-i18n="footer.careers">Карьера</a>
+              <a href="index.html" data-i18n="footer.press">Пресса и медиа</a>
+              <a href="prices.html" data-i18n="footer.enterprise">Для бизнеса</a>
+              <a href="legal/security.html" data-i18n="footer.security">Безопасность</a>
+              <a href="legal/privacy.html" data-i18n="footer.trust">Центр доверия</a>
+              <a href="index.html" data-i18n="footer.partners">Партнёрство</a>
+            </nav>
+            <nav class="footer-col" aria-label="Продукт">
+              <h3 data-i18n="footer.product">Продукт</h3>
+              <a href="prices.html" data-i18n="footer.pricing">Цены</a>
+              <a href="prices.html" data-i18n="footer.students">Скидка студентам</a>
+              <a href="generate.html" data-i18n="footer.work">Для работы</a>
+              <a href="generate.html" data-i18n="footer.founders">Основателям</a>
+              <a href="catalog.html" data-i18n="footer.pm">Продакт-менеджерам</a>
+              <a href="catalog.html" data-i18n="footer.designers">Дизайнерам</a>
+              <a href="catalog.html" data-i18n="footer.marketers">Маркетологам</a>
+              <a href="catalog.html" data-i18n="footer.sales">Продажам</a>
+              <a href="catalog.html" data-i18n="footer.ops">Операциям</a>
+              <a href="catalog.html" data-i18n="footer.people">HR</a>
+              <a href="generate.html" data-i18n="footer.proto">Прототипирование</a>
+              <a href="generate.html" data-i18n="footer.tools">Внутренние инструменты</a>
+              <a href="catalog.html" data-i18n="footer.apps">Скачать приложения</a>
+              <a href="catalog.html" data-i18n="footer.connections">Интеграции</a>
+              <a href="index.html#faq" data-i18n="footer.changelog">Список изменений</a>
+              <a href="index.html#faq" data-i18n="footer.status">Статус</a>
+            </nav>
+            <nav class="footer-col" aria-label="Ресурсы">
+              <h3 data-i18n="footer.resources">Ресурсы</h3>
+              <a href="catalog.html" data-i18n="footer.learn">Обучение</a>
+              <a href="catalog.html" data-i18n="footer.templates">Шаблоны</a>
+              <a href="index.html#faq" data-i18n="footer.guides">Гайды</a>
+              <a href="catalog.html" data-i18n="footer.connectors">Коннекторы</a>
+              <a href="catalog.html" data-i18n="footer.mcp">MCP-сервер</a>
+              <a href="index.html#share" data-i18n="footer.videos">Видео</a>
+              <a href="index.html" data-i18n="footer.blog">Блог</a>
+              <a href="index.html#faq" data-i18n="footer.support">Поддержка</a>
+              <a href="index.html#share" data-i18n="footer.reviews">Отзывы</a>
+              <a href="catalog.html" data-i18n="footer.sitemap">Карта сайта</a>
+            </nav>
+            <nav class="footer-col" aria-label="Правовая информация">
+              <h3 data-i18n="footer.legal">Правовая информация</h3>
+              <a href="legal/privacy.html" data-i18n="footer.privacy">Политика конфиденциальности</a>
+              <a href="legal/nosell.html" data-i18n="footer.nosell">Не продавать и не передавать мои данные</a>
+              <a href="legal/cookies.html" data-i18n="footer.cookies">Настройки cookie</a>
+              <a href="legal/enterprise-terms.html" data-i18n="footer.entTerms">Условия для бизнеса</a>
+              <a href="legal/terms.html" data-i18n="footer.terms">Общие условия</a>
+              <a href="legal/terms.html#desktop" data-i18n="footer.desktop">Условия десктоп-приложения</a>
+              <a href="legal/terms.html#domains" data-i18n="footer.domain">Условия регистрации доменов</a>
+              <a href="legal/dmca.html" data-i18n="footer.dmca">Политика DMCA</a>
+              <a href="legal/accessibility.html" data-i18n="footer.a11y">Доступность</a>
+              <a href="legal/rules.html" data-i18n="footer.rules">Правила платформы</a>
+              <a href="legal/abuse.html" data-i18n="footer.abuse">Сообщить о нарушении</a>
+              <a href="legal/security.html" data-i18n="footer.secReport">Сообщить об уязвимости</a>
+              <a href="legal/dpa.html" data-i18n="footer.dpa">DPA</a>
+            </nav>
+            <nav class="footer-col" aria-label="Сообщество">
+              <h3 data-i18n="footer.community">Сообщество</h3>
+              <a href="index.html#about" data-i18n="footer.becomePartner">Стать партнёром</a>
+              <a href="catalog.html" data-i18n="footer.hire">Нанять эксперта</a>
+              <a href="prices.html" data-i18n="footer.affiliates">Партнёрская программа</a>
+              <a href="legal/conduct.html" data-i18n="footer.conduct">Кодекс поведения</a>
+              <a href="https://discord.com" target="_blank" rel="noreferrer">Discord</a>
+              <a href="https://www.reddit.com" target="_blank" rel="noreferrer">Reddit</a>
+              <a href="https://x.com" target="_blank" rel="noreferrer">X / Twitter</a>
+              <a href="https://youtube.com" target="_blank" rel="noreferrer">YouTube</a>
+              <a href="https://www.linkedin.com" target="_blank" rel="noreferrer">LinkedIn</a>
+            </nav>
+          </div>
+        </div>
+      </footer>
     </div>
   </main>
 </body>

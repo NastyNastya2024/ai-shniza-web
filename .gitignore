@@ -41,3 +41,4 @@ deploy/omniroute/.env
 # Node modules (если будете использовать)
 node_modules/
 package-lock.json
+.venv-img/

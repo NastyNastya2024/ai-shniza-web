@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Политика конфиденциальности — {AI}-шница</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css?v=73">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("theme");
+        document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+  <script defer src="../app.js?v=46"></script>
+</head>
+<body class="page-legal">
+  <header class="site-header">
+    <div class="header-left">
+      <a class="site-logo" href="../index.html" aria-label="{AI}-шница" data-i18n-aria="nav.brand">
+        <img class="logo-egg" src="../img/egg-logo-glazunya-v3.png?v=3" alt="" width="36" height="36" />
+        <span class="logo-text"><span class="accent">{AI}</span>-шница</span>
+      </a>
+    </div>
+    <div class="header-actions">
+      <a class="nav-link" href="../index.html">На главную</a>
+      <button type="button" class="theme-toggle" data-theme-toggle data-i18n-aria="nav.theme" aria-label="Сменить тему" title="Тема">
+        <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12.1 2a9.8 9.8 0 0 0-1.1.06 9 9 0 1 0 10.94 10.9A8 8 0 0 1 12.1 2Z"/></svg>
+        <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm0-5a1 1 0 0 1 1 1v1.5a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1Zm0 16.5a1 1 0 0 1 1 1V21a1 1 0 1 1-2 0v-1.5a1 1 0 0 1 1-1ZM3 11a1 1 0 0 1 1-1h1.5a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1Zm15.5 0a1 1 0 0 1 1-1H21a1 1 0 1 1 0 2h-1.5a1 1 0 0 1-1-1Z"/></svg>
+      </button>
+      <button class="btn-lang" type="button" data-lang-toggle aria-label="RU"><span data-footer-lang-label>RU</span></button>
+    </div>
+  </header>
+  <main class="inner-page legal-page">
+    <div class="container legal-wrap">
+      <p class="legal-kicker"><a href="../index.html">← На главную</a> · Правовая информация</p>
+      <h1 class="inner-title">Политика конфиденциальности</h1>
+      <p class="legal-updated">Обновлено: 1 октября 2026</p>
+      <h2>Кто мы</h2>
+      <p>{AI}-шница («мы», «сервис») — маркетплейс генеративных моделей: изображения, видео, текст и музыка. Политика описывает, какие данные мы обрабатываем и зачем.</p>
+      <h2>Какие данные собираем</h2>
+      <p>Аккаунт: email, имя (если указали), данные входа через OAuth (Google, GitHub, Яндекс, VK — в объёме, который передаёт провайдер).</p>
+      <p>Использование: промпты, выбранные модели, параметры генерации, технические логи (IP, user-agent, время запроса) — для работы сервиса, безопасности и биллинга.</p>
+      <p>Платежи: обрабатываются платёжным провайдером; мы не храним полные данные банковских карт.</p>
+      <h2>Зачем обрабатываем</h2>
+      <p>Чтобы предоставлять генерации, поддерживать аккаунт, предотвращать злоупотребления, улучшать продукт и исполнять требования закона (в т.ч. 152-ФЗ).</p>
+      <h2>Передача третьим лицам</h2>
+      <p>Промпты и файлы могут передаваться выбранным вами провайдерам моделей для выполнения запроса. Мы не продаём персональные данные.</p>
+      <p>Также можем привлекать хостинг, аналитику и платежи — только в объёме, нужном для работы сервиса, по договорам обработки.</p>
+      <h2>Срок хранения и ваши права</h2>
+      <p>Данные аккаунта храним, пока аккаунт активен и столько, сколько требует закон/бухгалтерия. Вы можете запросить доступ, исправление, удаление или ограничение обработки: legal@ai-shniza.ru.</p>
+      <h2>Контакты</h2>
+      <p>По вопросам персональных данных: legal@ai-shniza.ru.</p>
+      <nav class="legal-nav" aria-label="Другие документы">
+        <a href="privacy.html">Конфиденциальность</a>
+        <a href="terms.html">Условия</a>
+        <a href="rules.html">Правила</a>
+        <a href="cookies.html">Cookie</a>
+        <a href="dpa.html">DPA</a>
+      </nav>
+    </div>
+  </main>
+</body>
+</html>

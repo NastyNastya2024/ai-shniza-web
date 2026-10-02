@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Unbounded:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=59">
-  <link rel="stylesheet" href="generate.css?v=16">
+  <link rel="stylesheet" href="generate.css?v=17">
   <script>
     (function () {
       try {
@@ -100,7 +100,7 @@
       <div class="side-panel-header">
         <div class="side-tabs" role="tablist" aria-label="Разделы панели">
           <button type="button" class="side-tab is-active" role="tab" id="tab-models" data-side-tab="models" aria-selected="true">Модели</button>
-          <button type="button" class="side-tab" role="tab" id="tab-gens" data-side-tab="gens" aria-selected="false">Генерации</button>
+          <button type="button" class="side-tab" role="tab" id="tab-gens" data-side-tab="gens" aria-selected="false">Мои генерации</button>
         </div>
         <div class="models-header-actions">
           <button type="button" class="panel-collapse-btn" id="side-collapse-btn" title="Свернуть" aria-label="Свернуть панель">
@@ -120,7 +120,7 @@
               type="search"
               id="model-search"
               class="models-search-input"
-              placeholder="Название или провайдер…"
+              placeholder="Название модели…"
               autocomplete="off"
             />
           </label>
@@ -152,10 +152,6 @@
       </div>
 
       <div class="side-panel-body" id="panel-gens" role="tabpanel" data-panel="gens" hidden>
-        <button type="button" class="new-chat-btn" id="new-chat-btn">
-          <span class="new-chat-plus" aria-hidden="true">+</span>
-          Новый чат
-        </button>
         <div class="history-list" id="history-list" role="list"></div>
       </div>
     </aside>
@@ -165,6 +161,6 @@
   </main>
 
   <script defer src="app.js?v=36"></script>
-  <script src="generate.js?v=32"></script>
+  <script src="generate.js?v=33"></script>
 </body>
 </html>
