@@ -419,8 +419,12 @@
   overflow: hidden;
 }
 
+.side-panel-body[hidden] {
+  display: none !important;
+}
+
 .side-panel-body[data-panel="gens"] {
-  padding-top: 12px;
+  padding-top: 4px;
 }
 
 .models-sidebar-header {

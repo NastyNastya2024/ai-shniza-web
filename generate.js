@@ -205,7 +205,10 @@ function renderModelsList() {
   for (const g of groups) {
     parts.push(`<div class="models-group-label">${escapeHtml(GROUP_LABELS[g] || g)}</div>`);
     for (const model of byGroup[g]) {
-      const providerTag = PROVIDER_LABELS[model.provider] || model.provider || "";
+      const notes = (model.notes || "").trim();
+      const notesLine = notes
+        ? `<p class="model-item-provider">${escapeHtml(notes)}</p>`
+        : "";
       const outputs = model.outputs || [];
       const typeChips = outputs
         .map((o) => `<span class="model-chip model-chip--type">${escapeHtml(modalityLabel(o))}</span>`)
@@ -220,7 +223,7 @@ function renderModelsList() {
         <button type="button" class="model-item${selected}" role="option" aria-selected="${ariaSelected}" data-model-id="${escapeHtml(model.id)}">
           <div class="model-item-info">
             <h4>${escapeHtml(model.name)}</h4>
-            <p class="model-item-provider">${escapeHtml(providerTag)}${model.notes ? ` · ${escapeHtml(model.notes)}` : ""}</p>
+            ${notesLine}
             <div class="model-meta-row">${typeChips}${priceChip}</div>
           </div>
         </button>
@@ -640,7 +643,6 @@ function initializeEventListeners() {
   const backdrop = document.getElementById("side-backdrop");
   const sideCollapse = document.getElementById("side-collapse-btn");
   const sideReopen = document.getElementById("side-reopen-btn");
-  const newChatBtn = document.getElementById("new-chat-btn");
   const historyList = document.getElementById("history-list");
   const tabModels = document.getElementById("tab-models");
   const tabGens = document.getElementById("tab-gens");
@@ -711,7 +713,6 @@ function initializeEventListeners() {
   if (sideReopen) sideReopen.addEventListener("click", () => openSidePanel());
   if (tabModels) tabModels.addEventListener("click", () => openSidePanel("models"));
   if (tabGens) tabGens.addEventListener("click", () => openSidePanel("gens"));
-  if (newChatBtn) newChatBtn.addEventListener("click", startNewChat);
   if (historyList) {
     historyList.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-gen-id]");

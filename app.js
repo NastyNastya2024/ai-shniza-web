@@ -476,6 +476,8 @@ function loginWithSocial(provider) {
 
 function wireLangToggle() {
   qsa("[data-lang-toggle]").forEach((btn) => {
+    if (btn.dataset.langWired) return;
+    btn.dataset.langWired = "1";
     btn.addEventListener("click", () => {
       applyLang(currentLang() === "ru" ? "en" : "ru");
     });
@@ -517,8 +519,8 @@ function goToGenerate(query) {
 }
 
 function wireSearch() {
-  const form = qs(".search-bar");
-  const input = qs(".search-input");
+  const form = qs(".search-bar") || qs(".header-search");
+  const input = qs(".search-input") || qs(".header-search-input");
   if (form && input) {
     form.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -541,7 +543,7 @@ function wireGenerateButton() {
   if (!generateBtn) return;
 
   generateBtn.addEventListener("click", () => {
-    const input = qs(".search-input");
+    const input = qs(".search-input") || qs(".header-search-input");
     const query = input ? input.value.trim() : "";
     const url = query
       ? `generate.html?q=${encodeURIComponent(query)}`
@@ -792,8 +794,178 @@ document.addEventListener("DOMContentLoaded", async () => {
   wireGenerateButton();
   wireFiltersToggle();
   wireCatalogSearch();
+  wireLandingExtras();
   loadCatalog();
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeAuthModal();
   });
 });
+
+function wireLandingExtras() {
+  const composer = qs("[data-composer-form]");
+  if (composer) {
+    composer.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const input = qs(".composer-input", composer);
+      goToGenerate(input ? input.value.trim() : "");
+    });
+  }
+
+  wireSeedanceDemo();
+  wireShareRows();
+  wireReveals();
+}
+
+function wireSeedanceDemo() {
+  const root = qs("[data-seedance-demo]");
+  if (!root) return;
+
+  const examples = [
+    {
+      tag: "Референс",
+      thumb: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=480&q=80",
+      prompt: "Оживи этот морской кадр. Оставь тех же людей и дай разговору развернуться.",
+      caption: "Тихий момент — ожил.",
+      result: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=80",
+      href: "generate.html?q=" + encodeURIComponent("Оживи сцену у моря на Seedance Lite"),
+    },
+    {
+      tag: "Из фото",
+      thumb: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=480&q=80",
+      prompt: "Сделай кинематографичный пролёт по комнате, сохрани свет и композицию.",
+      caption: "Комната в движении.",
+      result: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=1400&q=80",
+      href: "generate.html?q=" + encodeURIComponent("Сделай видео пролёта по комнате Seedance Lite"),
+    },
+    {
+      tag: "По тексту",
+      thumb: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=480&q=80",
+      prompt: "Туманное утро в горах, камера медленно поднимается над озером.",
+      caption: "Пейзаж ожил из текста.",
+      result: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1400&q=80",
+      href: "generate.html?q=" + encodeURIComponent("Туманное утро в горах, камера над озером Seedance Lite"),
+    },
+  ];
+
+  let idx = 0;
+  const apply = (i) => {
+    const ex = examples[i];
+    if (!ex) return;
+    qsa("[data-seed-ex]", root).forEach((b) =>
+      b.classList.toggle("is-active", Number(b.getAttribute("data-seed-ex")) === i)
+    );
+    const panel = qs("[data-seed-panel]", root);
+    if (panel) {
+      panel.classList.remove("is-swap");
+      void panel.offsetWidth;
+      panel.classList.add("is-swap");
+    }
+    const tag = qs("[data-seed-tag]", root);
+    const thumb = qs("[data-seed-thumb]", root);
+    const prompt = qs("[data-seed-prompt]", root);
+    const caption = qs("[data-seed-caption]", root);
+    const result = qs("[data-seed-result]", root);
+    const cta = qs("[data-seed-cta]", root);
+    if (tag) tag.textContent = ex.tag;
+    if (prompt) prompt.textContent = ex.prompt;
+    if (caption) caption.textContent = ex.caption;
+    if (cta) cta.setAttribute("href", ex.href);
+    if (thumb) thumb.src = ex.thumb;
+    if (result) result.src = ex.result;
+  };
+
+  qsa("[data-seed-ex]", root).forEach((btn) => {
+    btn.addEventListener("click", () => {
+      idx = Number(btn.getAttribute("data-seed-ex"));
+      apply(idx);
+    });
+  });
+
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    setInterval(() => {
+      idx = (idx + 1) % examples.length;
+      apply(idx);
+    }, 5000);
+  }
+}
+
+function wireShareRows() {
+  const root = qs("[data-share-curve]");
+  if (!root) return;
+  const inner = qs("[data-share-inner]", root);
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  qsa("[data-share-row]", root).forEach((row) => {
+    Array.from(row.children).forEach((node) => row.appendChild(node.cloneNode(true)));
+  });
+
+  const bend = () => {
+    const rect = root.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    qsa(".share-tile", root).forEach((tile) => {
+      const tr = tile.getBoundingClientRect();
+      if (tr.right < rect.left - 40 || tr.left > rect.right + 40) return;
+      const mid = tr.left + tr.width / 2;
+      const n = Math.max(-1.2, Math.min(1.2, (mid - cx) / Math.max(rect.width * 0.5, 1)));
+      tile.style.setProperty("--ry", (n * -36).toFixed(2) + "deg");
+      tile.style.setProperty("--tz", ((1 - Math.abs(n)) * 48).toFixed(1) + "px");
+    });
+  };
+
+  if (reduce) {
+    bend();
+    return;
+  }
+
+  let raf = 0;
+  const loop = () => {
+    bend();
+    raf = requestAnimationFrame(loop);
+  };
+
+  const io = new IntersectionObserver(
+    (entries) => {
+      if (entries.some((e) => e.isIntersecting)) {
+        if (!raf) raf = requestAnimationFrame(loop);
+      } else if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    },
+    { threshold: 0.05 }
+  );
+  io.observe(root);
+
+  if (inner) {
+    window.addEventListener(
+      "pointermove",
+      (e) => {
+        const y = (e.clientY / window.innerHeight - 0.5) * 5;
+        inner.style.transform = "rotateX(" + (26 + y) + "deg)";
+      },
+      { passive: true }
+    );
+  }
+}
+
+function wireReveals() {
+  const nodes = qsa(".reveal");
+  if (!nodes.length) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    nodes.forEach((n) => n.classList.add("is-in"));
+    return;
+  }
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add("is-in");
+          io.unobserve(e.target);
+        }
+      });
+    },
+    { threshold: 0.12 }
+  );
+  nodes.forEach((n) => io.observe(n));
+}
+
