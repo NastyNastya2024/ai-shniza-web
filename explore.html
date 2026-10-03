@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Витрина — {AI}-шница</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Unbounded:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="studio.css?v=2">
+</head>
+<body class="studio">
+  <div class="page-shell">
+    <a href="/">← В чат</a>
+    <h1>Витрина</h1>
+    <p style="color:var(--muted)">Опубликованные работы сообщества</p>
+    <div class="models-chips" style="margin:16px 0">
+      <button type="button" class="chip is-on" data-kind="">Все</button>
+      <button type="button" class="chip" data-kind="video">Видео</button>
+      <button type="button" class="chip" data-kind="image">Картинки</button>
+      <button type="button" class="chip" data-kind="audio">Аудио</button>
+      <select data-sort style="margin-left:8px;border-radius:999px;padding:6px 10px;border:1px solid var(--line)">
+        <option value="new">Новое</option>
+        <option value="popular">Популярное</option>
+      </select>
+    </div>
+    <div class="explore-grid" data-grid></div>
+  </div>
+  <script>
+    async function csrf() {
+      const m = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+      if (m) return decodeURIComponent(m[1]);
+      const r = await fetch('/api/csrf', { credentials: 'same-origin' });
+      const d = await r.json();
+      return d.csrf_token || '';
+    }
+    async function api(path, opts = {}) {
+      const method = (opts.method || 'GET').toUpperCase();
+      const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+      if (method !== 'GET') headers['X-CSRF-Token'] = await csrf();
+      const res = await fetch(path, { credentials: 'same-origin', ...opts, headers });
+      const data = await res.json().catch(() => ({}));
+      return { res, data };
+    }
+    let kind = '', sort = 'new';
+    async function load() {
+      const q = new URLSearchParams({ sort });
+      if (kind) q.set('kind', kind);
+      const { data } = await api('/api/explore?' + q);
+      const grid = document.querySelector('[data-grid]');
+      grid.innerHTML = '';
+      (data.items || []).forEach((w) => {
+        const card = document.createElement('article');
+        card.className = 'explore-card';
+        const media = w.kind === 'video'
+          ? `<video src="${w.media_url || w.thumb_url || ''}" muted loop playsinline data-hover></video>`
+          : `<img src="${w.thumb_url || w.media_url || ''}" alt="">`;
+        card.innerHTML = `${media}<div class="meta"><strong>${w.title || 'Без названия'}</strong><div>${w.model_key || ''}</div></div>
+          <div class="actions">
+            <a href="/w/${w.id}">Открыть</a>
+            <button type="button" data-like>♥ ${w.likes || 0}</button>
+            <a href="/?prompt=${encodeURIComponent(w.prompt || '')}&model=${encodeURIComponent(w.model_key || '')}">Повторить</a>
+            <button type="button" data-complaint>Пожаловаться</button>
+            ${w.media_url ? `<a href="${w.media_url}" download>Скачать</a>` : ''}
+          </div>`;
+        const vid = card.querySelector('video');
+        if (vid) {
+          card.addEventListener('mouseenter', () => vid.play().catch(() => {}));
+          card.addEventListener('mouseleave', () => { vid.pause(); vid.currentTime = 0; });
+        }
+        card.querySelector('[data-like]').addEventListener('click', async () => {
+          const r = await api(`/api/works/${w.id}/like`, { method: 'POST', body: '{}' });
+          card.querySelector('[data-like]').textContent = '♥ ' + (r.data.likes || 0);
+        });
+        card.querySelector('[data-complaint]').addEventListener('click', async () => {
+          const reason = prompt('Причина жалобы');
+          if (!reason) return;
+          await api(`/api/works/${w.id}/complaint`, { method: 'POST', body: JSON.stringify({ reason }) });
+          alert('Жалоба отправлена');
+        });
+        grid.appendChild(card);
+      });
+      if (!(data.items || []).length) grid.innerHTML = '<p style="color:var(--muted)">Пока пусто — опубликуйте первую работу.</p>';
+    }
+    document.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => {
+      document.querySelectorAll('[data-kind]').forEach((x) => x.classList.toggle('is-on', x === b));
+      kind = b.getAttribute('data-kind') || '';
+      load();
+    }));
+    document.querySelector('[data-sort]').addEventListener('change', (e) => { sort = e.target.value; load(); });
+    load();
+  </script>
+</body>
+</html>

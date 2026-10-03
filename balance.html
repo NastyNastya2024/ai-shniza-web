@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Баланс — {AI}-шница</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Unbounded:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="studio.css?v=2">
+</head>
+<body class="studio">
+  <div class="page-shell">
+    <a href="/">← В чат</a>
+    <h1>Баланс</h1>
+    <p>Доступно: <strong data-available>0 ₽</strong> · На удержании: <span data-held>0 ₽</span></p>
+    <div class="quick-amounts">
+      <button type="button" data-amt="199">199 ₽</button>
+      <button type="button" data-amt="499">499 ₽</button>
+      <button type="button" data-amt="999">999 ₽</button>
+      <button type="button" data-amt="2490">2490 ₽</button>
+    </div>
+    <form class="form-stack" data-topup style="max-width:280px">
+      <label>Сумма, ₽ (от 100)
+        <input type="number" name="amount" min="100" step="1" value="499" />
+      </label>
+      <button class="btn-primary" type="submit">Пополнить</button>
+      <p data-msg hidden></p>
+    </form>
+    <h2 style="font-family:var(--display);font-size:1.1rem;margin-top:32px">История</h2>
+    <table class="ledger-table">
+      <thead><tr><th>Дата</th><th>Тип</th><th>Модель</th><th>Сумма</th></tr></thead>
+      <tbody data-ledger></tbody>
+    </table>
+  </div>
+  <script>
+    async function csrf(){const m=document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);if(m)return decodeURIComponent(m[1]);const r=await fetch('/api/csrf',{credentials:'same-origin'});return (await r.json()).csrf_token||'';}
+    async function api(path,opts={}){const method=(opts.method||'GET').toUpperCase();const headers={'Content-Type':'application/json',...(opts.headers||{})};if(method!=='GET')headers['X-CSRF-Token']=await csrf();const res=await fetch(path,{credentials:'same-origin',...opts,headers});return {res,data:await res.json().catch(()=>({}))};}
+    function rub(kop){return ((Number(kop)||0)/100).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₽';}
+    async function load(){
+      const {res,data}=await api('/api/balance');
+      if(!res.ok){location.href='/?login=1';return;}
+      document.querySelector('[data-available]').textContent=rub(data.available_kop);
+      document.querySelector('[data-held]').textContent=rub(data.held_kop);
+      const tb=document.querySelector('[data-ledger]');
+      tb.innerHTML='';
+      (data.ledger||[]).forEach(e=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${(e.created_at||'').replace('T',' ').slice(0,19)}</td><td>${e.kind}</td><td>${e.model_key||'—'}</td><td>${rub(e.amount_kop)}</td>`;
+        tb.appendChild(tr);
+      });
+    }
+    async function topup(amount){
+      const msg=document.querySelector('[data-msg]');
+      const {res,data}=await api('/api/balance/topup',{method:'POST',body:JSON.stringify({amount_rub:amount})});
+      msg.hidden=false;
+      if(data.pay_url){location.href=data.pay_url;return;}
+      if(res.ok&&data.stub){msg.textContent='Зачислено (dev stub)';await load();return;}
+      msg.textContent=data.error||'Ошибка оплаты';
+    }
+    document.querySelectorAll('[data-amt]').forEach(b=>b.addEventListener('click',()=>topup(Number(b.getAttribute('data-amt')))));
+    document.querySelector('[data-topup]').addEventListener('submit',e=>{e.preventDefault();topup(Number(new FormData(e.target).get('amount')));});
+    load();
+  </script>
+</body>
+</html>

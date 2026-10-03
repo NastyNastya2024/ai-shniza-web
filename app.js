@@ -284,11 +284,29 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+async function ensureCsrf() {
+  if (window.__csrfToken) return window.__csrfToken;
+  const match = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+  if (match) {
+    window.__csrfToken = decodeURIComponent(match[1]);
+    return window.__csrfToken;
+  }
+  const res = await fetch("/api/csrf", { credentials: "same-origin" });
+  const data = await res.json().catch(() => ({}));
+  window.__csrfToken = data.csrf_token || "";
+  return window.__csrfToken;
+}
+
 async function api(path, options = {}) {
+  const method = (options.method || "GET").toUpperCase();
+  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+  if (method !== "GET" && method !== "HEAD") {
+    headers["X-CSRF-Token"] = await ensureCsrf();
+  }
   const res = await fetch(path, {
     credentials: "same-origin",
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
     ...options,
+    headers,
   });
   let data = {};
   try {

@@ -1,9 +1,16 @@
+*.db
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
 # API токены и секреты
 config.js
 .env
 .env.local
 .env.production
-env.example
 
 # Временные файлы
 *.tmp
@@ -27,18 +34,21 @@ Thumbs.db
 # Local backups
 backups/
 
+# Local media fallback (non-S3)
+media/
+
 # Worker logs
 logs/
 
-# OmniRoute local runtime (if run from source tree)
+# OmniRoute local runtime
 OmniRoute-release-v3.8.51/.env
 OmniRoute-release-v3.8.51/data/
 OmniRoute-release-v3.8.51/node_modules/
 
-# OmniRoute docker env (password / JWT)
+# OmniRoute docker env
 deploy/omniroute/.env
 
-# Node modules (если будете использовать)
+# Node modules
 node_modules/
 package-lock.json
 .venv-img/

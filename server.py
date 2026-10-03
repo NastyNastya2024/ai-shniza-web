@@ -9,10 +9,13 @@ from typing import List, Tuple
 
 import requests
 from flask import Flask, jsonify, request, send_from_directory
-from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 
 from auth import load_env, register_auth
+from security import configure_security, apply_rate_limits, ensure_csrf_token
+from pricing import list_pricing_public, price_rub_media, get_usd_rub_rate
+from assistant_rules import recommend as assistant_recommend
+from product_routes import register_product
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "app.db")
@@ -21,10 +24,7 @@ load_env(BASE_DIR)
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY") or os.urandom(32)
-app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-CORS(app, supports_credentials=True)
+configure_security(app)
 
 db = SQLAlchemy(app)
 
@@ -180,9 +180,8 @@ def add_model_record(vendor: str, name: str, tag_names: List[str], description: 
 
 
 def seed():
-    if os.path.exists(DB_PATH) and Model.query.count() > 0:
+    if Model.query.count() > 0:
         return
-    db.drop_all()
     db.create_all()
 
     for name in DEFAULT_TAGS:
@@ -202,16 +201,16 @@ def seed():
         ("bytedance", "seedance-1-mini", ["design", "text-rendering"], None, None),
         ("anthropic", "claude-vision-video", ["video-generation", "audio"], None, None),
         ("xai", "grok-video", ["text-to-video", "1080p"], None, None),
-        ("ideogram", "ideogram", ["image-generation"], "Ideogram — image generation model", IMAGE_GEN_IMAGE),
-        ("google", "imagen-4", ["image-generation"], "Imagen-4 — image generation model", IMAGE_GEN_IMAGE),
-        ("black-forest-labs", "flux-kontext", ["image-generation"], "FluxKontext — image generation model", IMAGE_GEN_IMAGE),
-        ("kling", "kling-v2.1", ["video-generation", "text-to-video"], "Kling v2.1 — video generation", VIDEO_GEN_IMAGE),
-        ("minimax", "minimax-video", ["video-generation"], "Minimax Video — video generation", VIDEO_GEN_IMAGE),
-        ("bytedance", "seedance", ["video-generation", "text-to-video"], "Seedance — video generation", VIDEO_GEN_IMAGE),
-        ("google", "veo3-8s", ["video-generation"], "Veo3 (8 секунд) — video generation", VIDEO_GEN_IMAGE),
-        ("minimax", "minimax-music", ["music-generation", "audio"], "Minimax Music — music generation", MUSIC_GEN_IMAGE),
-        ("meta", "musicgen", ["music-generation", "audio"], "MusicGen — music generation", MUSIC_GEN_IMAGE),
-        ("chatterbox", "chatterbox", ["music-generation", "audio"], "Chatterbox — music generation", MUSIC_GEN_IMAGE),
+        ("ideogram", "ideogram", ["image-generation"], "Ideogram — image generation model", IMAGE_GEN_IMAGES[0]),
+        ("google", "imagen-4", ["image-generation"], "Imagen-4 — image generation model", IMAGE_GEN_IMAGES[1]),
+        ("black-forest-labs", "flux-kontext", ["image-generation"], "FluxKontext — image generation model", IMAGE_GEN_IMAGES[2]),
+        ("kling", "kling-v2.1", ["video-generation", "text-to-video"], "Kling v2.1 — video generation", VIDEO_GEN_IMAGES[0]),
+        ("minimax", "minimax-video", ["video-generation"], "Minimax Video — video generation", VIDEO_GEN_IMAGES[1]),
+        ("bytedance", "seedance", ["video-generation", "text-to-video"], "Seedance — video generation", VIDEO_GEN_IMAGES[2]),
+        ("google", "veo3-8s", ["video-generation"], "Veo3 (8 секунд) — video generation", VIDEO_GEN_IMAGES[3]),
+        ("minimax", "minimax-music", ["music-generation", "audio"], "Minimax Music — music generation", MUSIC_GEN_IMAGES[0]),
+        ("meta", "musicgen", ["music-generation", "audio"], "MusicGen — music generation", MUSIC_GEN_IMAGES[1]),
+        ("chatterbox", "chatterbox", ["music-generation", "audio"], "Chatterbox — music generation", MUSIC_GEN_IMAGES[2]),
     ]
     for vendor, name, tag_list, desc, img in demo:
         add_model_record(vendor, name, tag_list, desc, img)
@@ -2953,20 +2952,120 @@ def api_generate():
     return jsonify({"error": "unsupported_kind", "kind": kind}), 500
 
 
+
+@app.route("/api/pricing", methods=["GET"])
+def api_pricing():
+    region = (request.args.get("region") or os.getenv("REGION") or "RU").upper()
+    items = list_pricing_public(region=region)
+    rate, stale = get_usd_rub_rate()
+    return jsonify({"items": items, "usd_rub_rate": rate, "rate_stale_penalty": stale, "region": region})
+
+
+
+@app.route("/api/assistant", methods=["POST"])
+def api_assistant():
+    """Step 3 entry: rules-first recommendations; LLM path stub when unclear."""
+    data = request.get_json(silent=True) or {}
+    messages = data.get("messages") if isinstance(data.get("messages"), list) else []
+    # last 6 turns, total <= 2000 chars
+    clipped = []
+    total = 0
+    for item in messages[-6:][::-1]:
+        if not isinstance(item, dict):
+            continue
+        role = item.get("role")
+        content = str(item.get("content") or "").strip()
+        if role not in {"user", "assistant"} or not content:
+            continue
+        room = 2000 - total
+        if room <= 0:
+            break
+        content = content[:room]
+        clipped.append({"role": role, "content": content})
+        total += len(content)
+    clipped.reverse()
+    last_user = next((m["content"] for m in reversed(clipped) if m["role"] == "user"), "")
+    has_image = bool(data.get("has_image"))
+    free_left = int(data.get("free_left") or 1)
+    region = (os.getenv("REGION") or "RU").upper()
+    result = assistant_recommend(last_user, has_image=has_image, free_left=free_left, region=region)
+    # prices already from pricing; ensure server-side
+    app.logger.info(
+        "assistant used_llm=%s tokens_in_est=%s",
+        result.get("used_llm"),
+        min(1500, total + 400),
+    )
+    return jsonify(result)
+
+
 register_auth(app, db, User)
+app.config["INTEGRATED_MODELS"] = INTEGRATED_MODELS
+register_product(app, db, User)
+apply_rate_limits(app)
 
 @app.route("/")
 def index_page():
+    ensure_csrf_token()
     return send_from_directory(BASE_DIR, "index.html")
+
+
+@app.route("/app")
+def app_page():
+    ensure_csrf_token()
+    return send_from_directory(BASE_DIR, "app.html")
+
+
+@app.route("/media/<path:filename>")
+def media_files(filename):
+    return send_from_directory(os.path.join(BASE_DIR, "media"), filename)
+
+
+@app.route("/explore")
+def explore_page():
+    ensure_csrf_token()
+    return send_from_directory(BASE_DIR, "explore.html")
+
+
+@app.route("/settings")
+def settings_page():
+    ensure_csrf_token()
+    return send_from_directory(BASE_DIR, "settings.html")
+
+
+@app.route("/balance")
+def balance_page():
+    ensure_csrf_token()
+    return send_from_directory(BASE_DIR, "balance.html")
+
+
+@app.route("/admin")
+def admin_page():
+    ensure_csrf_token()
+    return send_from_directory(BASE_DIR, "admin.html")
+
+
+@app.route("/w/<int:work_id>")
+def work_page(work_id):
+    ensure_csrf_token()
+    return send_from_directory(BASE_DIR, "work.html")
+
+
+@app.route("/@<handle>")
+def creator_page(handle):
+    ensure_csrf_token()
+    return send_from_directory(BASE_DIR, "creator.html")
 
 @app.route("/<path:filename>")
 def public_files(filename):
     if filename.startswith("api/"):
         return jsonify({"error": "not found"}), 404
+    ensure_csrf_token()
     return send_from_directory(BASE_DIR, filename)
 
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
         seed()
-    app.run(host="127.0.0.1", port=8000, debug=True)
+    debug = (os.getenv("FLASK_DEBUG") or "").strip().lower() in {"1", "true", "yes"}
+    # Production: gunicorn -c deploy/gunicorn.conf.py wsgi:app
+    app.run(host="127.0.0.1", port=int(os.getenv("PORT") or 8000), debug=debug)

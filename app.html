@@ -1,0 +1,916 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{AI}-шница — Студия</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+body{margin:0;background:#EEEAF8}
+.t-light{--bg:#EEEAF8;--ink:#1E1238;--muted:#5B4D93;--muted2:#6E62A3;--glass:rgba(255,255,255,.66);--glass-brd:rgba(255,255,255,.95);--soft:rgba(255,255,255,.6);--soft-hover:rgba(255,255,255,.95);--field:rgba(244,241,252,.85);--field-brd:rgba(80,60,160,.12);--nav-on:rgba(255,255,255,.95);--seg-bg:rgba(60,40,130,.07);--seg-on:#FFFFFF;--card:rgba(255,255,255,.6);--card-on:#FFFFFF;--accent-ink:#4B2BB8;--shadow:rgba(75,43,184,.28);--free:#B5470C;--caret:#E8691C;--bubble-tail:rgba(255,255,255,.66)}
+.t-dark{--bg:#100E1A;--ink:#F3F0FF;--muted:#B3A9DC;--muted2:#9C92C8;--glass:rgba(24,20,40,.62);--glass-brd:rgba(255,255,255,.08);--soft:rgba(255,255,255,.06);--soft-hover:rgba(255,255,255,.12);--field:rgba(255,255,255,.06);--field-brd:rgba(255,255,255,.1);--nav-on:rgba(255,255,255,.1);--seg-bg:rgba(255,255,255,.05);--seg-on:rgba(255,255,255,.14);--card:rgba(255,255,255,.05);--card-on:rgba(255,255,255,.11);--accent-ink:#C9BCFF;--shadow:rgba(0,0,0,.55);--free:#FFA35C;--caret:#FF9A3D;--bubble-tail:rgba(24,20,40,.62)}
+.bg-light{background-image:url(assets/bg-light.jpg)}
+.bg-dark{background-image:url(assets/bg-dark.jpg)}
+.page-bg{background-size:cover;background-position:center;background-attachment:fixed;background-color:var(--bg);color:var(--ink)}
+@keyframes orbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes caret{0%,49%{opacity:1}50%,100%{opacity:0}}
+.orb-float{animation:orbFloat 4.5s ease-in-out infinite}
+.eye-shape{display:block;width:100%;height:100%;border-radius:999px;background:#FFFFFF;box-shadow:0 0 8px rgba(255,255,255,.6);transition:transform .09s ease-in}
+.eye-blink .eye-shape{transform:scaleY(.08)}
+.caret{display:inline-block;width:.09em;height:.9em;margin-left:.06em;vertical-align:-.08em;background:var(--caret);border-radius:2px;animation:caret 1s steps(1) infinite}
+.glass{background:var(--glass);border:1px solid var(--glass-brd);backdrop-filter:blur(18px)}
+.nav-item{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 14px;border-radius:14px;text-decoration:none;color:var(--muted);font-weight:500;font-size:15px}
+.nav-item:hover{background:var(--soft);color:var(--ink)}
+.nav-active{background:var(--nav-on);color:var(--ink);font-weight:600;box-shadow:0 6px 18px -10px var(--shadow)}
+.seg{border:none;cursor:pointer;font-family:'Onest',sans-serif;background:transparent;color:var(--muted)}
+.seg:hover{color:var(--ink)}
+.seg-on{background:var(--seg-on)!important;color:var(--ink)!important;box-shadow:0 4px 12px -6px var(--shadow)}
+.model{width:100%;text-align:left;cursor:pointer;font-family:'Onest',sans-serif;border:1.5px solid transparent;background:var(--card);transition:background .15s ease,box-shadow .15s ease,border-color .15s ease}
+.model:hover{background:var(--soft-hover)}
+.model-on{
+  border-color:transparent;
+  background:
+    linear-gradient(var(--card-on), var(--card-on)) padding-box,
+    linear-gradient(110deg, #FFA235 0%, #FF7B2C 45%, #FF8F7E 78%, #F6AACF 100%) border-box;
+  box-shadow:0 0 0 1px rgba(255,162,53,.12), 0 8px 18px -14px rgba(240,110,130,.55);
+}
+.field{border:1px solid var(--field-brd);background:var(--field);color:var(--accent-ink)}
+.prompt-input{color:var(--ink)}
+.prompt-input::placeholder,.search::placeholder{color:var(--muted2)}
+.prompt-input:focus{outline:none}
+.composer:focus-within{box-shadow:0 0 0 4px rgba(124,77,255,.18),0 24px 60px -24px var(--shadow)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #8A63FF;outline-offset:2px}
+.search{border:1px solid var(--field-brd);background:var(--field);color:var(--ink)}
+.search:focus{outline:none;border-color:rgba(138,99,255,.55)}
+.model-toolbar{display:flex;align-items:center;gap:6px;min-height:40px;position:relative}
+.model-toolbar .search-wrap{position:relative;flex:0 0 40px;min-width:40px;transition:flex-basis .28s cubic-bezier(.4,.1,.2,1),flex-grow .28s cubic-bezier(.4,.1,.2,1),min-width .28s ease;z-index:2}
+.model-toolbar.search-on .search-wrap{flex:1 1 auto;min-width:0}
+.model-toolbar .search-wrap .search{width:100%;box-sizing:border-box;height:40px;padding:0 10px 0 36px;border-radius:12px;font-family:'Onest',sans-serif;font-size:14px;transition:padding .2s ease}
+.model-toolbar:not(.search-on) .search-wrap .search{padding:0;border-color:transparent;background:var(--seg-bg);color:transparent;caret-color:transparent;cursor:pointer}
+.model-toolbar:not(.search-on) .search-wrap .search::placeholder{color:transparent}
+.model-toolbar:not(.search-on) .search-wrap .search::-webkit-search-cancel-button{display:none}
+.model-toolbar.search-on .search-wrap .search{background:var(--seg-bg);border-color:transparent}
+.model-toolbar .search-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--accent-ink);pointer-events:none;z-index:1}
+.model-toolbar #tabs{flex:1 1 auto;min-width:0;display:flex;gap:2px;padding:3px;border-radius:12px;background:var(--seg-bg);overflow:hidden;transition:opacity .2s ease,flex-basis .28s ease,max-width .28s ease,padding .2s ease}
+.model-toolbar.search-on #tabs{flex:0 0 0;max-width:0;opacity:0;padding-left:0;padding-right:0;pointer-events:none}
+.sort-btn{flex:0 0 auto;width:40px;height:40px;border-radius:12px;border:none;background:var(--seg-bg);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.sort-btn:hover{background:var(--soft-hover);color:var(--ink)}
+.model{border-radius:14px!important;padding:9px 11px!important;gap:8px!important}
+.model .m-name{font-size:13px!important;font-weight:700}
+.model .m-kind{font-size:11px!important}
+.model .m-price{font-size:13px!important;font-weight:700}
+.model .m-unit{font-size:10px!important}
+.ttl{scrollbar-width:thin}
+.ttl{-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 26px),transparent);padding-bottom:18px!important}
+.cabinet{border-radius:16px;background:var(--card-on);border:1px solid var(--glass-brd);box-shadow:0 8px 20px -16px var(--shadow);overflow:hidden;flex:0 0 auto}
+.cab-row{display:flex;align-items:center;gap:12px;padding:10px 12px;min-height:56px;box-sizing:border-box}
+.cab-link{text-decoration:none;color:var(--ink)}
+.cab-link:hover{background:var(--soft)}
+.cab-tile{flex:0 0 auto;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.cab-end{flex:0 0 auto;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:var(--muted2)}
+
+
+.t-light{--user-bg:#1E1238;--user-ink:#FFFFFF;--purple:#5B35E0;--purple2:#7A55FF;--purple-soft:rgba(91,53,224,.1);--purple-soft-h:rgba(91,53,224,.17);--purple-brd:rgba(91,53,224,.18);--purple-ink:#4A2CC0}
+.t-dark{--user-bg:#EDE8FF;--user-ink:#1E1238;--purple:#7A55FF;--purple2:#9B7BFF;--purple-soft:rgba(155,123,255,.14);--purple-soft-h:rgba(155,123,255,.22);--purple-brd:rgba(155,123,255,.25);--purple-ink:#D2C4FF}
+.btn-purple{border:1px solid var(--purple-brd);background:var(--purple-soft);color:var(--purple-ink);font-family:'Onest',sans-serif;font-weight:700;cursor:pointer}
+.btn-purple:hover{background:var(--purple-soft-h)}
+.btn-login{border:none;background:#6758A0;color:#FFFFFF;font-family:'Onest',sans-serif;font-weight:700;cursor:pointer;box-shadow:0 8px 18px -12px rgba(103,88,160,.7)}
+.btn-login:hover{background:#5C4E93}
+.icon-btn{width:44px;height:44px;border-radius:14px;border:1px solid var(--glass-brd);background:var(--glass);backdrop-filter:blur(14px);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.icon-btn:hover{color:var(--ink)}
+.icon-on{color:var(--ink);background:var(--nav-on)}
+.icon-ghost{width:36px;height:36px;border-radius:10px;border:none;background:transparent;backdrop-filter:none;color:var(--muted)}
+.icon-ghost:hover{background:var(--soft)}
+.eye-p{position:absolute;width:8.5%;height:27%;top:34.5%;transition:transform .28s cubic-bezier(.3,.7,.4,1)}
+.eye-p.l{left:34.25%}.eye-p.r{left:57.25%}
+.hero{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px 24px;text-align:center;overflow:hidden;transition:flex-grow .55s cubic-bezier(.4,.1,.2,1),opacity .4s ease,transform .55s cubic-bezier(.4,.1,.2,1),padding .55s ease,max-height .55s ease;max-height:900px}
+.hero-off{flex-grow:0;opacity:0;transform:scale(.22) translateY(-60%);padding:0;max-height:0;pointer-events:none}
+@keyframes avLand{0%{transform:translate(160px,-220px) scale(3.6);opacity:.2}60%{opacity:1}100%{transform:none;opacity:1}}
+@keyframes msgIn{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
+@keyframes dots{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+.av-land{animation:avLand .7s cubic-bezier(.3,.7,.3,1) both}
+.msg-in{animation:msgIn .35s ease-out both}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--muted);animation:dots 1.1s ease-in-out infinite}
+.panel{transition:opacity .3s ease}
+@media (prefers-reduced-motion:reduce){.orb-float,.caret,.av-land,.msg-in,.dot,.modal-ov,.modal-card,.modal-egg,.shake{animation:none}.hero{transition:none}}
+
+.hidden{display:none!important}
+.modal-ov{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:var(--ov);backdrop-filter:blur(8px);animation:ovIn .25s ease-out both}
+.t-light{--ov:rgba(40,24,90,.22)}.t-dark{--ov:rgba(4,2,12,.6)}
+@keyframes ovIn{0%{opacity:0}100%{opacity:1}}
+@keyframes cardIn{0%{opacity:0;transform:translateY(14px) scale(.97)}100%{opacity:1;transform:none}}
+@keyframes eggPop{0%{transform:translate(-50%,10px) scale(.6);opacity:0}70%{transform:translate(-50%,-4px) scale(1.06);opacity:1}100%{transform:translate(-50%,0) scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.modal-card{position:relative;width:100%;max-width:420px;box-sizing:border-box;border-radius:28px;padding:56px 28px 24px;background:var(--modal-bg);border:1px solid var(--glass-brd);backdrop-filter:blur(24px);box-shadow:0 40px 90px -30px var(--shadow);animation:cardIn .35s cubic-bezier(.3,.7,.3,1) both}
+.t-light{--modal-bg:rgba(255,255,255,.86)}.t-dark{--modal-bg:rgba(28,22,46,.9)}
+.modal-egg{position:absolute;left:50%;top:-40px;width:80px;height:80px;transform:translateX(-50%);animation:eggPop .55s .1s cubic-bezier(.3,.7,.3,1) both}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld-lbl{font-size:13px;font-weight:600;color:var(--muted)}
+.fld-in{height:50px;border-radius:14px;border:1.5px solid var(--field-brd);background:var(--field);padding:0 16px;font-family:'Onest',sans-serif;font-size:16px;color:var(--ink);box-sizing:border-box;width:100%;transition:border-color .15s ease,box-shadow .15s ease}
+.fld-in::placeholder{color:var(--muted2)}
+.fld-in:focus{outline:none;border-color:var(--purple2);box-shadow:0 0 0 4px rgba(122,85,255,.16)}
+.fld-err .fld-in{border-color:#E0457B}
+.btn-primary{height:50px;border-radius:14px;border:none;width:100%;background:linear-gradient(135deg,var(--purple2),var(--purple));color:#FFFFFF;font-family:'Onest',sans-serif;font-weight:700;font-size:16px;cursor:pointer;box-shadow:0 12px 26px -14px rgba(91,53,224,.85)}
+.btn-primary:hover{filter:brightness(1.06)}
+.btn-primary[disabled]{opacity:.45;cursor:not-allowed;box-shadow:none}
+.link-btn{border:none;background:none;padding:0;font-family:'Onest',sans-serif;font-size:14px;font-weight:600;color:var(--accent-ink);cursor:pointer;min-height:32px}
+.link-btn:hover{text-decoration:underline}
+.chk{display:flex;align-items:flex-start;gap:10px;font-size:13px;line-height:1.45;color:var(--muted);cursor:pointer}
+.chk input{width:18px;height:18px;margin:1px 0 0;accent-color:var(--purple);flex:0 0 auto;cursor:pointer}
+.otp{position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.otp-cell{height:56px;border-radius:14px;border:1.5px solid var(--field-brd);background:var(--field);display:flex;align-items:center;justify-content:center;font-family:'Days One',sans-serif;font-size:22px;color:var(--ink)}
+.otp-on{border-color:var(--purple2);box-shadow:0 0 0 4px rgba(122,85,255,.16)}
+.otp-in{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:none;font-size:16px;cursor:text}
+.shake{animation:shake .3s ease}
+.x-btn{position:absolute;right:14px;top:14px}
+.otp-err{border-color:#E0457B}
+.otp-lock{opacity:.45}
+.err-banner{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:rgba(224,69,123,.1);border:1px solid rgba(224,69,123,.28);color:#C2305F;font-size:13px;line-height:1.45}
+.t-dark .err-banner{color:#FF8DB3;background:rgba(255,120,170,.1);border-color:rgba(255,120,170,.3)}
+.t-dark [role=alert]{color:#FF8DB3!important}
+.soc{display:flex;flex-direction:column;gap:8px}
+.soc-btn{width:100%;height:50px;border-radius:14px;border:1.5px solid var(--field-brd);background:var(--card-on);color:var(--ink);font-family:'Onest',sans-serif;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:border-color .15s ease,transform .15s ease}
+.soc-btn:hover{border-color:var(--purple2);transform:translateY(-1px)}
+.soc-btn[disabled]{opacity:.55;cursor:progress;transform:none}
+.or{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--field-brd)}
+.chk-err{color:#D63B6F}
+.soc-logo{width:20px;height:20px;display:block}
+.soc-fb{display:none}
+.soc-btn:not(:has(.soc-logo)) .soc-fb{display:flex}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<div id="root" class="page-bg t-light bg-light" style="min-height:100vh;box-sizing:border-box;display:flex;flex-wrap:wrap;gap:16px;padding:16px;font-family:'Onest',system-ui,sans-serif">
+
+  <aside id="left" class="glass panel" style="flex:1 1 260px;max-width:280px;min-width:240px;box-sizing:border-box;border-radius:28px;padding:18px 12px 14px;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 32px);overflow:hidden;box-shadow:0 20px 50px -30px var(--shadow)">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-left:10px">
+      <a href="/" aria-label="{AI}-шница — на главную" style="text-decoration:none;font-family:'Days One',sans-serif;font-size:15px;color:var(--ink)"><span style="color:#E8691C">{AI}</span>-шница</a>
+      <span style="display:flex;align-items:center;gap:2px"><a href="#" class="icon-btn icon-ghost" aria-label="Помощь" title="Помощь"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01"></path></svg></a><button type="button" id="themeBtn" class="icon-btn icon-ghost" aria-label="Тёмная тема" title="Тёмная тема"></button><button type="button" class="icon-btn icon-ghost" aria-label="Скрыть панель" data-toggle-left><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"></rect><path d="M9 4v16"></path></svg></button></span>
+    </div>
+    <nav aria-label="Разделы" style="display:flex;flex-direction:column;gap:4px">
+      <a href="/explore" class="nav-item"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect></svg>Витрина</a>
+      <a href="/settings" class="nav-item" id="cabinetNav" data-cabinet><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="8" r="3.5"></circle></svg>Личный кабинет</a>
+    </nav>
+    <div style="height:1px;background:var(--field-brd);margin:2px 4px 4px"></div>
+    <div style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:8px">
+      <div id="modelToolbar" class="model-toolbar">
+        <label class="search-wrap" for="query">
+          <span class="sr-only">Поиск модели</span>
+          <svg class="search-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input id="query" class="search" type="search" placeholder="Поиск модели" autocomplete="off">
+        </label>
+        <div id="tabs" role="tablist" aria-label="Тип модели"></div>
+        <button type="button" id="sortBtn" class="sort-btn" aria-label="Сортировка: сначала дешёвые" title="Сначала дешёвые">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M4 12h7M4 17h4M16 10l3-3 3 3M19 7v10"></path></svg>
+        </button>
+        <select id="sort" class="sr-only" tabindex="-1" aria-hidden="true">
+          <option value="cheap">Сначала дешёвые</option>
+          <option value="pricey">Сначала дорогие</option>
+          <option value="name">По названию</option>
+        </select>
+      </div>
+      <div class="ttl" style="flex:1 1 auto;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin:0 -2px;padding:2px 2px 4px">
+        <div id="models" style="display:flex;flex-direction:column;gap:6px"></div>
+        <div id="empty" class="hidden" style="padding:24px 8px;text-align:center;font-size:14px;color:var(--muted)">Ничего не нашлось. Попробуйте другое слово.</div>
+      </div>
+    </div>
+  </aside>
+
+  <main style="flex:999 1 520px;min-width:0;box-sizing:border-box;display:flex;flex-direction:column;height:calc(100vh - 32px);min-height:560px">
+    <div style="display:flex;align-items:center;gap:8px;padding:0 4px;min-height:44px">
+      <span id="leftReopen" class="hidden" style="display:flex;align-items:center;gap:6px">
+        <button type="button" class="icon-btn" aria-label="Показать панель" data-toggle-left><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"></rect><path d="M9 4v16"></path></svg></button>
+        <a href="/" style="margin-left:6px;text-decoration:none;font-family:'Days One',sans-serif;font-size:14px;color:var(--ink)"><span style="color:#E8691C">{AI}</span>-шница</a>
+      </span>
+    </div>
+
+    <div id="hero" class="hero">
+      <div style="position:relative;width:132px;height:132px;margin-bottom:18px">
+        <div id="halo" style="position:absolute;inset:-40%;border-radius:50%"></div>
+        <div class="orb-float" style="position:relative;width:100%;height:100%">
+          <img src="assets/orb-no-eyes.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;display:block">
+          <span class="eye-p l hero-eye"><span class="eye-shape"></span></span>
+          <span class="eye-p r hero-eye"><span class="eye-shape"></span></span>
+        </div>
+      </div>
+      <div class="glass" style="position:relative;border-radius:22px;padding:13px 22px 14px;box-shadow:0 16px 40px -20px var(--shadow);max-width:calc(100% - 8px);box-sizing:border-box">
+        <span aria-hidden="true" style="position:absolute;left:50%;top:-8px;width:14px;height:14px;margin-left:-7px;background:var(--bubble-tail);border-left:1px solid var(--glass-brd);border-top:1px solid var(--glass-brd);transform:rotate(45deg);border-radius:3px 0 0 0"></span>
+        <h1 id="speech" style="position:relative;margin:0;font-family:'Days One',sans-serif;font-weight:400;font-size:clamp(16px,1.5vw,20px);line-height:1.3;color:var(--ink)"><span aria-hidden="true"><span id="speechText"></span><span class="caret"></span></span></h1>
+      </div>
+    </div>
+
+    <div id="chat" class="hidden" aria-live="polite" style="flex:1 1 auto;min-height:0;overflow-y:auto;width:100%;max-width:780px;margin:0 auto;box-sizing:border-box;padding:20px 12px 16px;display:flex;flex-direction:column;gap:14px">
+      <div id="msgs" style="display:flex;flex-direction:column;gap:14px"></div>
+      <div id="typing" class="msg-in hidden" style="display:flex;align-items:flex-end;gap:10px">
+        <span style="position:relative;flex:0 0 auto;width:38px;height:38px">
+          <img src="assets/orb-no-eyes.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;display:block">
+          <span class="eye-p l"><span class="eye-shape" style="box-shadow:none"></span></span>
+          <span class="eye-p r"><span class="eye-shape" style="box-shadow:none"></span></span>
+        </span>
+        <div class="glass" aria-label="{AI}-шница печатает" style="border-radius:20px 20px 20px 6px;padding:14px 16px;display:flex;gap:5px">
+          <span class="dot"></span><span class="dot" style="animation-delay:.15s"></span><span class="dot" style="animation-delay:.3s"></span>
+        </div>
+      </div>
+    </div>
+
+    <form id="form" style="width:100%;max-width:780px;margin:0 auto;box-sizing:border-box;padding:0 12px 6px">
+      <div class="composer glass" style="border-radius:26px;padding:14px 14px 12px 18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 24px 60px -26px var(--shadow)">
+        <label for="prompt" class="sr-only">Задача для модели</label>
+        <textarea id="prompt" class="prompt-input" rows="2" placeholder="Опишите ролик, картинку или трек…" style="width:100%;box-sizing:border-box;border:none;background:transparent;resize:none;font-family:'Onest',sans-serif;font-size:17px;line-height:1.5;padding:2px 0 0"></textarea>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <button type="button" class="field" aria-label="Прикрепить файл" style="width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg>
+          </button>
+          <button type="button" class="field" aria-label="Сменить модель" data-toggle-right-open style="height:44px;padding:0 14px;border-radius:14px;font-family:'Onest',sans-serif;font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer;max-width:100%">
+            <span id="selName" style="font-weight:700;color:var(--ink)"></span>
+            <span id="selPrice" style="color:var(--muted2)"></span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+          </button>
+          <span id="selEst" style="margin-left:auto;font-size:13px;color:var(--muted2)"></span>
+          <button type="submit" style="height:46px;padding:0 20px 0 16px;border-radius:16px;border:none;background:radial-gradient(90% 130% at 12% 0%, rgba(255,214,110,0.95) 0%, rgba(255,214,110,0) 55%), linear-gradient(110deg, #FFA235 0%, #FF7B2C 42%, #FF8F7E 74%, #F6AACF 100%);color:#FFFFFF;font-family:'Onest',sans-serif;font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;cursor:pointer;text-shadow:0 1px 2px rgba(150,50,20,0.35);box-shadow:inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -3px 8px rgba(236,110,160,0.25), 0 10px 24px -10px rgba(240,110,130,0.7)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"></path></svg>
+            Сгенерировать
+          </button>
+        </div>
+      </div>
+    </form>
+  </main>
+
+</div>
+
+
+
+<div id="modal" class="modal-ov hidden">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="login-title">
+    <div class="modal-egg" aria-hidden="true">
+      <div id="mHalo" style="position:absolute;inset:-30%;border-radius:50%"></div>
+      <img src="assets/orb-no-eyes.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;display:block">
+      <span class="eye-p l m-eye" style="transform:translate(0px,5px)"><span class="eye-shape"></span></span>
+      <span class="eye-p r m-eye" style="transform:translate(0px,5px)"><span class="eye-shape"></span></span>
+    </div>
+    <button type="button" class="icon-btn icon-ghost x-btn" aria-label="Закрыть" data-close><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+    <h2 id="login-title" style="margin:0;text-align:center;font-family:'Days One',sans-serif;font-weight:400;font-size:22px;color:var(--ink)"></h2>
+    <p id="mSub" style="margin:8px 0 22px;text-align:center;font-size:14px;line-height:1.45;color:var(--muted)"></p>
+
+    <form id="stepEmail" novalidate style="display:flex;flex-direction:column;gap:14px">
+      <div id="errBanner" class="err-banner hidden" role="alert"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16.5v.01"></path></svg><span></span></div>
+      <label class="fld" id="emailFld"><span class="fld-lbl">Почта</span>
+        <input id="mEmail" class="fld-in" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com"></label>
+      <label class="fld hidden" id="pwFld"><span style="display:flex;justify-content:space-between;align-items:baseline"><span class="fld-lbl">Пароль</span><a href="#" id="mForgot" style="font-size:13px;color:var(--accent-ink);text-decoration:none">Забыли?</a></span>
+        <input id="mPw" class="fld-in" type="password" autocomplete="current-password" placeholder="Ваш пароль"></label>
+      <label class="chk" id="mChk"><input id="mConsent" type="checkbox"><span>Соглашаюсь на <a href="#" style="color:var(--accent-ink)">обработку персональных данных</a></span></label>
+      <div id="errE" role="alert" class="hidden" style="display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font-size:13px;color:#D63B6F"><span></span><button type="button" class="link-btn hidden" id="mPwCode" style="font-size:13px;min-height:0">Войти по коду</button></div>
+      <button type="submit" id="mPrimary" class="btn-primary">Получить код</button>
+      <button type="button" id="mPwToggle" class="link-btn" style="align-self:center">У меня есть пароль</button>
+      <div class="or">или</div>
+      <div class="soc" role="group" aria-label="Войти через Google">
+        <button type="button" class="soc-btn" data-soc="0" aria-label="Войти через Google"><img class="soc-logo" src="assets/logos/google.svg" alt="" width="20" height="20" onerror="this.remove()"><span aria-hidden="true" class="soc-fb" style="width:20px;height:20px;border-radius:50%;border:1.5px solid currentColor;align-items:center;justify-content:center;font-size:11px;font-weight:800;line-height:1">G</span><span>Продолжить с Google</span></button>
+      </div>
+    </form>
+
+    <div id="stepCode" class="hidden" style="flex-direction:column;gap:16px">
+      <label class="otp" id="otp" aria-label="Код из письма">
+        <span class="otp-cell"></span><span class="otp-cell"></span><span class="otp-cell"></span><span class="otp-cell"></span><span class="otp-cell"></span><span class="otp-cell"></span>
+        <input id="mCode" class="otp-in" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="Код из письма, 6 цифр">
+      </label>
+      <div id="errC" role="alert" class="hidden" style="font-size:13px;color:#D63B6F;text-align:center"></div>
+      <button type="button" id="mCodeBtn" class="btn-primary">Войти</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <button type="button" class="link-btn" id="mBack">← Другая почта</button>
+        <button type="button" class="link-btn hidden" id="mResend">Отправить снова</button>
+        <span id="mWait" style="font-size:13px;color:var(--muted2)"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* Тема по умолчанию: 'light' или 'dark'. Можно также открыть страницу с ?theme=dark */
+const DEFAULT_THEME = new URLSearchParams(location.search).get('theme') || 'light';
+const URL_PROMPT = (new URLSearchParams(location.search).get('prompt') || '').trim();
+
+async function ensureCsrf() {
+  if (window.__csrfToken) return window.__csrfToken;
+  const m = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+  if (m) { window.__csrfToken = decodeURIComponent(m[1]); return window.__csrfToken; }
+  const res = await fetch('/api/csrf', { credentials: 'same-origin' });
+  const data = await res.json().catch(() => ({}));
+  window.__csrfToken = data.csrf_token || '';
+  return window.__csrfToken;
+}
+async function api(path, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
+  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  if (method !== 'GET' && method !== 'HEAD') headers['X-CSRF-Token'] = await ensureCsrf();
+  const res = await fetch(path, { credentials: 'same-origin', ...options, headers });
+  let data = {};
+  try { data = await res.json(); } catch (_) {}
+  return { res, data };
+}
+function formatBalance(kop) {
+  const rub = (Number(kop) || 0) / 100;
+  return rub.toLocaleString('ru-RU', { maximumFractionDigits: 2 }) + ' ₽';
+}
+function rubLabel(n) { return Math.round(Number(n) || 0) + ' ₽'; }
+
+class DCLogic {
+  constructor(props) { this.props = props || {}; this.state = {}; }
+  setState(p) { Object.assign(this.state, typeof p === 'function' ? p(this.state) : p); scheduleRender(); }
+}
+
+class Component extends DCLogic {
+  init() {
+    if (this._ready) return;
+    this._ready = true;
+    this.state = Object.assign({ tab: 'all', query: '', sort: 'cheap', searchFocus: false, sel: 'seedream-5-lite', text: URL_PROMPT || '', say: '', shown: 0, blink: false, chat: false, msgs: [], typing: false, authed: false, leftOpen: true, rightOpen: true, dark: (this.props.theme || 'light') === 'dark', userName: '', userLetter: '?', balanceText: 'Баланс: 0 ₽', modal: null, social: null, email: '', password: '', pwMode: false, consent: false, code: '', err: '', errField: '', resendIn: 0, checking: false, shake: false, locked: false, attempts: 0, afterLogin: null }, this.state || {});
+    this.timers = {};
+    this.pendingPrompt = '';
+    this.pendingSel = '';
+    this.later = (n, ms, fn) => { clearTimeout(this.timers[n]); this.timers[n] = setTimeout(fn, ms); };
+    this.MODELS = [
+      { slug: 'seedance-lite', model_key: 'veo-free/seedance', name: 'Seedance Lite', kind: 'Видео со звуком', type: 'video', cost: 0, price: 'Бесплатно', unit: 'промо', short: 'бесплатно', est: '0 ₽' },
+      { slug: 'seedream-5-lite', model_key: 'fal/seedream-5-lite', name: 'Seedream 5 Lite', kind: 'Картинка', type: 'image', cost: 9, price: '9 ₽', unit: 'за картинку', short: '9 ₽', est: '9 ₽' },
+      { slug: 'ace-step', model_key: 'lucataco/ace-step', name: 'ACE-Step', kind: 'Музыка', type: 'music', cost: 11, price: '11 ₽', unit: 'за запуск', short: '11 ₽', est: '11 ₽' },
+      { slug: 'seedream-5-pro', model_key: 'fal/seedream-5-pro', name: 'Seedream 5 Pro', kind: 'Картинка', type: 'image', cost: 16, price: '16 ₽', unit: 'за картинку', short: '16 ₽', est: '16 ₽' },
+      { slug: 'kling-o3-i2v', model_key: 'fal-ai/kling-o3-i2v', name: 'Kling O3', kind: 'Фото → видео', type: 'video', cost: 100, price: '20 ₽/с', unit: '5 с — 100 ₽', short: '20 ₽/с', est: '100 ₽ за 5 с' }
+    ];
+    this.TAB_ICONS = {
+      video: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"></rect><path d="m16 10 5-3v10l-5-3z"></path></svg>',
+      image: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="9" cy="9" r="2"></circle><path d="m3 16 5-5 4 4 3-3 6 6"></path></svg>',
+      music: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12"></path><circle cx="7" cy="18" r="2.5"></circle><circle cx="17" cy="16" r="2.5"></circle></svg>'
+    };
+    this.TABS = [
+      ['video', 'Видео'],
+      ['image', 'Картинки'],
+      ['music', 'Музыка']
+    ];
+    this.speak = (line) => {
+      clearInterval(this.timers.tw);
+      this.setState({ say: line, shown: 0 });
+      this.timers.tw = setInterval(() => {
+        const n = this.state.shown + 1;
+        if (n >= this.state.say.length) { clearInterval(this.timers.tw); this.setState({ shown: this.state.say.length }); }
+        else this.setState({ shown: n });
+      }, 30);
+    };
+    this.onType = (e) => {
+      this.setState({ text: e.target.value });
+      this.later('type', 1000, () => {
+        const t = this.state.text.toLowerCase();
+        if (/звук|seedance|бесплат/.test(t)) { this.setState({ sel: 'seedance-lite' }); this.speak('Seedance со звуком — и бесплатно!'); }
+        else if (/видео|ролик|клип/.test(t)) { this.setState({ sel: 'kling-o3-i2v' }); this.speak('Для видео беру Kling O3 — цена в панели'); }
+        else if (/музык|трек|песн|бит/.test(t)) { this.setState({ sel: 'ace-step' }); this.speak('Для музыки — ACE-Step, 11 ₽ за запуск'); }
+        else if (/картин|постер|плакат|фото|арт/.test(t)) { this.setState({ sel: 'seedream-5-lite' }); this.speak('Картинку пожарит Seedream — от 9 ₽'); }
+        else if (t.trim()) this.speak('Звучит аппетитно! Жми «Сгенерировать»');
+      });
+    };
+    this.pickFor = (t) => {
+      t = t.toLowerCase();
+      if (/звук|seedance|бесплат/.test(t)) return 'seedance-lite';
+      if (/видео|ролик|клип/.test(t)) return 'kling-o3-i2v';
+      if (/музык|трек|песн|бит/.test(t)) return 'ace-step';
+      if (/картин|постер|плакат|фото|арт/.test(t)) return 'seedream-5-lite';
+      return this.state.sel;
+    };
+    this.push = (m) => this.setState({ msgs: this.state.msgs.concat([Object.assign({ id: Date.now() + Math.random() }, m)]) });
+    this.botSay = (m, ms) => { this.setState({ typing: true }); this.later('bot', ms || 900, () => { this.setState({ typing: false }); this.push(Object.assign({ role: 'bot' }, m)); }); };
+    this.patchLastBot = (patch) => {
+      const msgs = this.state.msgs.slice();
+      for (let i = msgs.length - 1; i >= 0; i--) {
+        if (msgs[i].role === 'bot') { msgs[i] = Object.assign({}, msgs[i], patch); break; }
+      }
+      this.setState({ msgs: msgs });
+      lastMsgs = -1;
+    };
+    this.cook = () => {
+      const prompt = this.pendingPrompt;
+      const sel = this.pendingSel || this.state.sel;
+      const m = this.MODELS.find((x) => x.slug === sel) || this.MODELS[1];
+      this.botSay({ text: 'Жарю… переворачиваю… не подглядывай!', job: true }, 700);
+      this.later('cook', 900, () => this.runJob(m, prompt));
+    };
+    this.runJob = async (m, prompt) => {
+      const params = m.type === 'video' ? { duration_sec: 5 } : {};
+      const est = await api('/api/jobs/estimate', { method: 'POST', body: JSON.stringify({ model_key: m.model_key, params }) });
+      if (!est.res.ok) { this.botSay({ text: 'Не удалось оценить цену. Попробуй ещё раз.' }, 200); return; }
+      const priceKop = est.data.price_kop || 0;
+      if (est.data.enough === false && priceKop > 0) {
+        const need = priceKop - (est.data.available_kop || 0);
+        this.botSay({ text: 'Не хватает ' + Math.ceil(need / 100) + ' ₽. Пополни баланс — и продолжим.', topup: true }, 200);
+        return;
+      }
+      if (priceKop > 10000 && !window.confirm('Списать ' + Math.round(priceKop / 100) + ' ₽?')) {
+        this.botSay({ text: 'Ок, отменила. Выбери другую модель или укороти задачу.' }, 200);
+        return;
+      }
+      const start = await api('/api/jobs/start', {
+        method: 'POST',
+        body: JSON.stringify({ model_key: m.model_key, prompt, params, confirm: priceKop > 10000 })
+      });
+      if (!start.res.ok) {
+        const err = start.data.error || 'error';
+        if (err === 'insufficient_funds') this.botSay({ text: 'Недостаточно средств. Пополни баланс.', topup: true }, 200);
+        else if (err === 'free_limit') this.botSay({ text: 'Лимит бесплатных на сегодня исчерпан. Завтра снова или платный вариант.' }, 200);
+        else if (err === 'free_queue_full') this.botSay({ text: 'Бесплатная очередь переполнена. Попробуй чуть позже.' }, 200);
+        else if (err === 'auth_required') this.botSay({ text: 'Чтобы жарить — войди, это пара секунд.', loginCta: true }, 200);
+        else this.botSay({ text: 'Не получилось, деньги вернулись на баланс. Попробуем ещё?' }, 200);
+        await refreshUser();
+        return;
+      }
+      const jobId = start.data.job_id;
+      const workId = start.data.work_id;
+      this.patchLastBot({ text: start.data.status === 'queued_free' ? 'В бесплатной очереди…' : 'В очереди…', jobId: jobId });
+      await refreshUser();
+      if (start.data.status === 'succeeded') { await this.finishJob(jobId, workId); return; }
+      this.watchJob(jobId, workId);
+    };
+    this.watchJob = (jobId, workId) => {
+      let done = false;
+      const finish = async (payload) => {
+        if (done) return; done = true;
+        const st = payload && payload.job && payload.job.status;
+        if (st === 'failed' || st === 'error') {
+          this.patchLastBot({ text: 'Не получилось, деньги вернулись на баланс.', result: false });
+          this.botSay({ text: 'Ещё порцию? Можно сменить модель в панели.' }, 400);
+          await refreshUser();
+          return;
+        }
+        await this.finishJob(jobId, workId, payload);
+      };
+      try {
+        const es = new EventSource('/api/jobs/stream?id=' + encodeURIComponent(jobId), { withCredentials: true });
+        es.onmessage = (ev) => {
+          try {
+            const payload = JSON.parse(ev.data);
+            const st = payload.job && payload.job.status;
+            if (st === 'queued' || st === 'queued_free') this.patchLastBot({ text: 'В очереди…' });
+            if (st === 'running') this.patchLastBot({ text: 'Жарю… почти готово!' });
+            if (st === 'succeeded' || st === 'failed' || st === 'error') { es.close(); finish(payload); }
+          } catch (_) {}
+        };
+        es.onerror = () => { es.close(); this.pollJob(jobId, workId, finish); };
+      } catch (_) { this.pollJob(jobId, workId, finish); }
+    };
+    this.pollJob = async (jobId, workId, finish) => {
+      for (let i = 0; i < 40; i++) {
+        const { data } = await api('/api/jobs/' + jobId);
+        const st = data.job && data.job.status;
+        if (st === 'running') this.patchLastBot({ text: 'Жарю… почти готово!' });
+        if (st === 'succeeded' || st === 'failed' || st === 'error' || (data.work && data.work.media_url)) { await finish(data); return; }
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+      this.patchLastBot({ text: 'Ещё генерируется — результат будет в «Мои работы»' });
+    };
+    this.finishJob = async (jobId, workId, payload) => {
+      let work = payload && payload.work;
+      if (!work) { const { data } = await api('/api/jobs/' + jobId); work = data.work; }
+      const url = (work && (work.media_url || work.thumb_url)) || (payload && payload.job && payload.job.output) || '';
+      const kind = (work && work.kind) || 'image';
+      this.patchLastBot({ text: 'Готово! С пылу с жару. Ещё порцию?', result: true, mediaUrl: url, mediaKind: kind, workId: workId || (work && work.id) });
+      await refreshUser();
+    };
+    this.onSubmit = (e) => {
+      if (e && e.preventDefault) e.preventDefault();
+      const text = this.state.text.trim();
+      if (!text) { this.speak('Сначала опиши идею — я подожду'); return; }
+      const sel = this.pickFor(text);
+      const m = this.MODELS.find((x) => x.slug === sel);
+      const first = !this.state.chat;
+      this.pendingPrompt = text;
+      this.pendingSel = sel;
+      this.setState({ chat: true, text: '', sel: sel });
+      this.push({ role: 'user', text: text });
+      const price = m.cost === 0 ? 'бесплатно' : '≈ ' + m.est;
+      if (this.state.authed) this.later('lead', first ? 650 : 0, () => { this.botSay({ text: 'Беру ' + m.name + ' — ' + price + '.', first: first }, 800); this.later('ck', 1700, this.cook); });
+      else this.later('lead', first ? 650 : 0, () => this.botSay({ text: 'Беру ' + m.name + ' — ' + price + '. Чтобы запустить, войди — это пара секунд.', loginCta: true, first: first }, 800));
+    };
+    this.login = () => { this.setState({ modal: 'email', err: '', errField: '', code: '', password: '', pwMode: false, checking: false, locked: false, attempts: 0, afterLogin: this.state.chat && !this.state.authed ? 'chat' : 'idle' }); this.speak('Давай знакомиться!'); };
+    this.closeModal = () => this.setState({ modal: null, err: '', errField: '', checking: false, social: null });
+    this.validEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v || '').trim());
+    this.onEmail = (e) => this.setState({ email: e.target.value, err: '', errField: '' });
+    this.onPassword = (e) => this.setState({ password: e.target.value, err: '', errField: '' });
+    this.onConsent = (e) => this.setState({ consent: e.target.checked, err: '', errField: '' });
+    this.togglePw = () => this.setState({ pwMode: !this.state.pwMode, err: '', errField: '' });
+    this.forgot = (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ pwMode: false, password: '', err: '', errField: '' }); this.speak('Не беда — пришлю код!'); };
+    this.tick = () => { clearInterval(this.timers.rs); this.setState({ resendIn: 45 }); this.timers.rs = setInterval(() => { const n = this.state.resendIn - 1; this.setState({ resendIn: Math.max(0, n) }); if (n <= 0) clearInterval(this.timers.rs); }, 1000); };
+    this.submitEmail = async (e) => {
+      if (e && e.preventDefault) e.preventDefault();
+      const st = this.state;
+      if (!st.email.trim()) return this.setState({ err: 'Введите почту', errField: 'email' });
+      if (!this.validEmail(st.email)) return this.setState({ err: 'Проверьте почту — кажется, в адресе опечатка', errField: 'email' });
+      if (!st.consent) return this.setState({ err: 'Нужно согласие на обработку данных', errField: 'consent' });
+      if (st.pwMode) {
+        if (!st.password) return this.setState({ err: 'Введите пароль', errField: 'password' });
+        this.setState({ checking: true, err: '', errField: '' });
+        const { res, data } = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email: st.email.trim(), password: st.password }) });
+        if (!res.ok) return this.setState({ checking: false, err: data.error === 'invalid' ? 'Неверная почта или пароль' : 'Не удалось войти', errField: 'password', password: '' });
+        this.setState({ checking: false }); await this.finishLogin();
+        return;
+      }
+      this.setState({ checking: true, err: '', errField: '' });
+      const { res, data } = await api('/api/auth/email-code/request', { method: 'POST', body: JSON.stringify({ email: st.email.trim(), consent_152: true }) });
+      if (!res.ok) return this.setState({ checking: false, err: data.error === 'consent_required' ? 'Нужно согласие на обработку данных' : 'Не удалось отправить код. Проверьте интернет и попробуйте ещё раз', errField: data.error === 'consent_required' ? 'consent' : 'send' });
+      if (data.dev_code) console.info('dev code', data.dev_code);
+      this.setState({ checking: false, modal: 'code', code: '', err: '', errField: '', attempts: 0, locked: false });
+      this.tick();
+    };
+    this.onCode = (e) => {
+      const v = e.target.value.replace(/\D/g, '').slice(0, 6);
+      this.setState({ code: v, err: '', errField: '' });
+      if (v.length === 6) this.later('auto', 250, () => this.submitCode());
+    };
+    this.submitCode = async () => {
+      if (this.state.code.length < 6 || this.state.checking || this.state.locked) return;
+      this.setState({ checking: true });
+      const { res, data } = await api('/api/auth/email-code/verify', { method: 'POST', body: JSON.stringify({ email: this.state.email.trim(), code: this.state.code }) });
+      if (!res.ok) {
+        const n = (this.state.attempts || 0) + 1;
+        if (n >= 3) { this.setState({ checking: false, attempts: n, locked: true, code: '', err: 'Слишком много попыток. Запросите новый код', errField: 'code', resendIn: 0 }); clearInterval(this.timers.rs); return; }
+        this.setState({ checking: false, attempts: n, err: 'Код не подошёл — осталось попыток: ' + (3 - n), errField: 'code', shake: true, code: '' });
+        this.later('sh', 400, () => this.setState({ shake: false }));
+        return;
+      }
+      this.setState({ checking: false }); await this.finishLogin();
+    };
+    this.social = (id, name) => () => {
+      if (!this.state.consent) return this.setState({ err: 'Отметьте согласие на обработку данных — и войдём через ' + name, errField: 'consent' });
+      this.setState({ social: id, err: '', errField: '' });
+      this.later('soc', 800, () => this.setState({ social: null, err: 'Вход через Google пока недоступен. Войдите по почте', errField: 'google' }));
+    };
+    this.backToEmail = () => this.setState({ modal: 'email', code: '', err: '', errField: '', locked: false });
+    this.resend = async () => {
+      this.setState({ checking: true, err: '', errField: '' });
+      const { res, data } = await api('/api/auth/email-code/request', { method: 'POST', body: JSON.stringify({ email: this.state.email.trim(), consent_152: true }) });
+      this.setState({ checking: false });
+      if (!res.ok) return this.setState({ err: 'Не удалось отправить код. Проверьте интернет и попробуйте ещё раз', errField: 'send' });
+      if (data.dev_code) console.info('dev code', data.dev_code);
+      this.tick(); this.setState({ locked: false, attempts: 0, code: '', err: '', errField: '' });
+    };
+    this.finishLogin = async () => {
+      const wasChat = this.state.afterLogin === 'chat';
+      this.setState({ modal: null, password: '', code: '', err: '', errField: '' });
+      await refreshUser();
+      if (wasChat && this.pendingPrompt) { this.botSay({ text: 'Ура, ты в деле! Запускаю.' }, 600); this.later('ck', 1500, this.cook); }
+      else this.speak('С возвращением! Что жарим?');
+    };
+    this.logout = async () => { await api('/api/auth/logout', { method: 'POST' }); await refreshUser(); this.speak('Вышла. Загляни снова — подскажу модель и цену'); };
+    this.afterAuth = () => {
+      if (this.state.chat && this.pendingPrompt) {
+        this.botSay({ text: 'Ура, ты в деле! Запускаю.' }, 600);
+        this.later('ck', 1500, this.cook);
+      } else this.speak('С возвращением! Что жарим?');
+    };
+    this.goHome = (e) => {
+      if (e && e.preventDefault) e.preventDefault();
+      clearTimeout(this.timers.bot); clearTimeout(this.timers.cook); clearTimeout(this.timers.lead); clearTimeout(this.timers.ck);
+      this.pendingPrompt = ''; this.pendingSel = '';
+      lastMsgs = -1;
+      this.setState({ chat: false, msgs: [], typing: false, text: '' });
+      this.speak('Что создадим? Подскажу модель и цену');
+    };
+    this.toggleTheme = () => this.setState({ dark: !this.state.dark });
+    this.openPanel = () => { if (!this.state.leftOpen) this.setState({ leftOpen: true }); };
+    this.toggleLeft = () => this.setState({ leftOpen: !this.state.leftOpen });
+    this.toggleRight = () => this.setState({ rightOpen: !this.state.rightOpen });
+    this.onQuery = (e) => this.setState({ query: e.target.value });
+    this.onSort = (e) => this.setState({ sort: e.target.value });
+    this.cycleSort = () => {
+      const order = ['cheap', 'pricey', 'name'];
+      const i = order.indexOf(this.state.sort);
+      this.setState({ sort: order[(i + 1) % order.length] });
+    };
+    this.showWorks = async () => {
+      if (!this.state.authed) { this.login(); return; }
+      this.setState({ chat: true });
+      this.botSay({ text: 'Загружаю твои работы…' }, 200);
+      const { data } = await api('/api/works/mine');
+      const items = data.items || [];
+      if (!items.length) { this.botSay({ text: 'Пока пусто — давай пожарим первую порцию!' }, 400); return; }
+      items.slice(0, 8).forEach((w) => {
+        this.push({ role: 'bot', text: w.title || w.model_key || 'Работа', result: true, mediaUrl: w.media_url || w.thumb_url || '', mediaKind: w.kind || 'image', workId: w.id });
+      });
+    };
+  }
+  componentDidMount() {
+    this.init();
+    this.speak('Что создадим? Подскажу модель и цену');
+    const blink = (cb) => { this.setState({ blink: true }); this.later('bu', 130, () => { this.setState({ blink: false }); if (cb) this.later('b2', 160, cb); }); };
+    const loop = () => this.later('bl', 2200 + Math.random() * 2600, () => { if (Math.random() < 0.3) blink(() => blink(loop)); else { blink(); loop(); } });
+    loop();
+  }
+  componentWillUnmount() { Object.values(this.timers || {}).forEach((t) => { clearTimeout(t); clearInterval(t); }); }
+  renderVals() {
+    this.init();
+    const st = this.state;
+    const dark = !!st.dark;
+    const q = st.query.trim().toLowerCase();
+    let list = this.MODELS.filter((m) => (st.tab === 'all' || m.type === st.tab) && (!q || (m.name + ' ' + m.slug + ' ' + m.kind).toLowerCase().includes(q)));
+    list = list.slice().sort((a, b) => st.sort === 'name' ? a.name.localeCompare(b.name) : st.sort === 'pricey' ? b.cost - a.cost : a.cost - b.cost);
+    const models = list.map((m) => ({
+      name: m.name, kind: m.kind, price: m.price, unit: m.unit,
+      on: m.slug === st.sel, cls: m.slug === st.sel ? 'model-on' : '',
+      priceColor: m.cost === 0 ? 'var(--free)' : 'var(--ink)',
+      pick: () => { this.setState({ sel: m.slug }); this.speak(m.cost === 0 ? m.name + ' — бесплатно, налетай!' : m.name + ': ' + m.price + ' ' + m.unit); }
+    }));
+    const s = this.MODELS.find((m) => m.slug === st.sel) || this.MODELS[1];
+    let lastBot = -1; st.msgs.forEach((m, i) => { if (m.role === 'bot') lastBot = i; });
+    const tabs = this.TABS.map(([id, label]) => ({
+      id: id, label: label, icon: this.TAB_ICONS[id], on: st.tab === id, cls: st.tab === id ? 'seg-on' : '',
+      pick: () => this.setState({ tab: st.tab === id ? 'all' : id })
+    }));
+    return {
+      themeClass: dark ? 't-dark' : 't-light', bgClass: dark ? 'bg-dark' : 'bg-light',
+      halo: dark ? 'rgba(255,150,70,0.35)' : 'rgba(255,236,236,0.85)',
+      say: st.say || ' ', shown: st.say.slice(0, st.shown), blinkClass: st.blink ? 'eye-blink' : '',
+      ey: st.text ? 6 : 0,
+      text: st.text, onType: this.onType, onSubmit: this.onSubmit,
+      sel: { name: s.name, priceShort: s.short, estimate: s.est },
+      query: st.query, onQuery: this.onQuery, sort: st.sort, onSort: this.onSort,
+      sortLabel: st.sort === 'pricey' ? 'Сначала дорогие' : st.sort === 'name' ? 'По названию' : 'Сначала дешёвые',
+      searchOn: !!st.query.trim() || !!st.searchFocus,
+      tabs: tabs, models: models, empty: models.length === 0,
+      chat: st.chat, heroCls: st.chat ? 'hero-off' : '', typing: st.typing,
+      msgs: st.msgs.map((m, i) => ({ user: m.role === 'user', bot: m.role === 'bot', text: m.text, result: !!m.result, loginCta: !!m.loginCta && !st.authed, topup: !!m.topup,
+        mediaUrl: m.mediaUrl || '', mediaKind: m.mediaKind || 'image', workId: m.workId || '',
+        avCls: m.first ? 'av-land' : '', blink: (st.blink && i === lastBot) ? 'eye-blink' : '' })),
+      authed: st.authed, guest: !st.authed, login: this.login, logout: this.logout, goHome: this.goHome,
+      userName: st.userName || 'Гость', userLetter: st.userLetter || '?', balanceText: st.balanceText || 'Баланс: 0 ₽',
+      modalOpen: !!st.modal, stepEmail: st.modal === 'email', stepCode: st.modal === 'code',
+      mTitle: st.modal === 'code' ? 'Введите код' : 'Вход в {AI}-шницу',
+      mSub: st.modal === 'code' ? ('Отправили 6 цифр на ' + st.email) : (st.pwMode ? 'Войдите с почтой и паролем.' : 'Пришлём код на почту — без пароля.'),
+      email: st.email, password: st.password, pwMode: st.pwMode, consent: st.consent, code: st.code,
+      err: st.err, hasErr: !!st.err, emailErrCls: st.err && st.errField === 'email' ? 'fld-err' : '', pwErrCls: st.err && st.errField === 'password' ? 'fld-err' : '',
+      pwWrong: st.errField === 'password' && String(st.err || '').indexOf('Неверная') === 0, isLocked: !!st.locked,
+      errIsBanner: !!(st.err && (st.errField === 'send' || st.errField === 'google')),
+      errInline: !!(st.err && st.errField !== 'send' && st.errField !== 'google'),
+      emailDisabled: !!st.checking, primaryLabel: st.checking ? (st.pwMode ? 'Проверяем…' : 'Отправляем…') : (st.pwMode ? 'Войти' : (st.errField === 'send' ? 'Попробовать снова' : 'Получить код')),
+      pwToggleLabel: st.pwMode ? 'Войти по коду из письма' : 'У меня есть пароль',
+      cells: [0,1,2,3,4,5].map((i) => ({ d: st.code[i] || '', cls: (st.locked ? 'otp-lock' : (st.errField === 'code' && st.err ? 'otp-err' : '')) + (i === Math.min(st.code.length, 5) && !st.checking && !st.locked ? ' otp-on' : '') })),
+      codeDisabled: st.code.length < 6 || st.checking || !!st.locked, codeBtn: st.checking ? 'Проверяем…' : 'Войти',
+      canResend: st.resendIn <= 0, waitResend: st.resendIn > 0, resendTxt: '0:' + String(st.resendIn).padStart(2, '0'),
+      shakeCls: st.shake ? 'shake' : '',
+      socials: [['google', 'Google']].map(([id, name]) => ({ label: st.social === id ? 'Подключаемся…' : 'Продолжить с ' + name, busy: !!st.social, go: this.social(id, name) })),
+      chkCls: st.err && st.errField === 'consent' ? 'chk-err' : '',
+      leftOpen: st.leftOpen, rightOpen: st.rightOpen, noLeft: !st.leftOpen,
+      noRight: !st.rightOpen, isDark: dark, isLight: !dark, themeLabel: dark ? 'Светлая тема' : 'Тёмная тема', toggleTheme: this.toggleTheme, openPanel: this.openPanel,
+      leftLabel: st.leftOpen ? 'Скрыть панель' : 'Показать панель', rightLabel: st.rightOpen ? 'Скрыть модели' : 'Показать модели',
+      toggleLeft: this.toggleLeft, toggleRight: this.toggleRight
+    };
+  }
+}
+
+/* ---------- монтирование без фреймворка ---------- */
+const ORB_SRC = document.querySelector('#hero img').src;
+const ICONS = { sun: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>`, moon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>` };
+const app = new Component({ theme: DEFAULT_THEME });
+const $ = (id) => document.getElementById(id);
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let raf = 0, lastMsgs = -1, lastModelsKey = '', lastTabsKey = '', lastSay = null, lastDark = null, lastModal = false, lastStepCode = false;
+function scheduleRender() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
+
+function render() {
+  const v = app.renderVals();
+  const root = $('root');
+  root.classList.toggle('t-dark', v.isDark); root.classList.toggle('t-light', !v.isDark);
+  root.classList.toggle('bg-dark', v.isDark); root.classList.toggle('bg-light', !v.isDark);
+  if (lastDark !== v.isDark) {
+    lastDark = v.isDark;
+    const tb = $('themeBtn'); tb.innerHTML = v.isDark ? ICONS.sun : ICONS.moon;
+    tb.setAttribute('aria-label', v.themeLabel); tb.title = v.themeLabel;
+    document.body.style.background = v.isDark ? '#100E1A' : '#EEEAF8';
+  }
+  $('halo').style.background = 'radial-gradient(closest-side, ' + v.halo + ', rgba(246,206,236,0) 100%)';
+  // панели
+  $('left').classList.toggle('hidden', !v.leftOpen);
+  $('leftReopen').classList.toggle('hidden', v.leftOpen);
+  // авторизация
+  // герой
+  $('hero').classList.toggle('hero-off', v.chat);
+  $('hero').setAttribute('aria-hidden', v.chat ? 'true' : 'false');
+  document.querySelectorAll('.hero-eye').forEach((e) => { e.classList.toggle('eye-blink', v.blinkClass === 'eye-blink'); e.style.transform = 'translate(0px,' + v.ey + 'px)'; });
+  $('speechText').textContent = v.shown;
+  if (lastSay !== v.say) { $('speech').setAttribute('aria-label', v.say); lastSay = v.say; }
+  // чат
+  $('chat').classList.toggle('hidden', !v.chat);
+  $('typing').classList.toggle('hidden', !v.typing);
+  if (v.msgs.length !== lastMsgs) {
+    const box = $('msgs');
+    if (v.msgs.length < lastMsgs || lastMsgs < 0) box.innerHTML = '';
+    for (let i = box.children.length; i < v.msgs.length; i++) box.appendChild(msgEl(v.msgs[i]));
+    lastMsgs = v.msgs.length;
+    requestAnimationFrame(() => { $('chat').scrollTop = $('chat').scrollHeight; });
+  }
+  document.querySelectorAll('[data-cta]').forEach((b) => b.classList.toggle('hidden', v.authed));
+  const bots = document.querySelectorAll('#msgs .bot-eye');
+  bots.forEach((e) => e.classList.remove('eye-blink'));
+  if (v.blinkClass === 'eye-blink') { const av = document.querySelectorAll('#msgs .bot-av'); const last = av[av.length - 1]; if (last) last.querySelectorAll('.bot-eye').forEach((e) => e.classList.add('eye-blink')); }
+  // композер
+  const ta = $('prompt'); if (ta.value !== v.text) ta.value = v.text;
+  $('selName').textContent = v.sel.name; $('selPrice').textContent = v.sel.priceShort; $('selEst').textContent = '≈ ' + v.sel.estimate;
+  // модели
+  const tbBar = $('modelToolbar');
+  if (tbBar) tbBar.classList.toggle('search-on', v.searchOn);
+  const sortBtn = $('sortBtn');
+  if (sortBtn) {
+    sortBtn.title = v.sortLabel;
+    sortBtn.setAttribute('aria-label', 'Сортировка: ' + v.sortLabel);
+  }
+  const tk = v.tabs.map((t) => t.id + t.on).join('|');
+  if (tk !== lastTabsKey) {
+    lastTabsKey = tk; const tabs = $('tabs'); tabs.innerHTML = '';
+    v.tabs.forEach((t) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', t.on);
+      b.setAttribute('aria-label', t.label);
+      b.title = t.label;
+      b.className = 'seg ' + t.cls;
+      b.style.cssText = 'flex:1 1 auto;min-height:34px;min-width:34px;padding:0;border-radius:9px;display:flex;align-items:center;justify-content:center';
+      b.innerHTML = t.icon;
+      b.onclick = t.pick;
+      tabs.appendChild(b);
+    });
+  }
+  const mk = v.models.map((m) => m.name + m.on).join('|');
+  if (mk !== lastModelsKey) {
+    lastModelsKey = mk; const list = $('models'); list.innerHTML = '';
+    v.models.forEach((m) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'model ' + m.cls; b.setAttribute('aria-pressed', m.on);
+      b.style.cssText = 'flex:0 0 auto;display:flex;align-items:center';
+      b.innerHTML = '<span style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="m-name" style="color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(m.name) + '</span><span class="m-kind" style="color:var(--muted2)">' + esc(m.kind) + '</span></span><span style="flex:0 0 auto;text-align:right;display:flex;flex-direction:column;gap:2px"><span class="m-price" style="color:' + m.priceColor + '">' + esc(m.price) + '</span><span class="m-unit" style="color:var(--muted2)">' + esc(m.unit) + '</span></span>';
+      b.onclick = m.pick; list.appendChild(b);
+    });
+  }
+  $('empty').classList.toggle('hidden', !v.empty);
+  
+  // окно входа
+  const mo = $('modal');
+  if (mo) {
+    mo.classList.toggle('hidden', !v.modalOpen);
+    if (v.modalOpen) {
+      $('mHalo').style.background = 'radial-gradient(closest-side, ' + v.halo + ', rgba(246,206,236,0) 100%)';
+      document.querySelectorAll('.m-eye').forEach((e) => e.classList.toggle('eye-blink', v.blinkClass === 'eye-blink'));
+      $('login-title').textContent = v.mTitle; $('mSub').textContent = v.mSub;
+      $('stepEmail').classList.toggle('hidden', !v.stepEmail);
+      $('stepCode').classList.toggle('hidden', !v.stepCode); $('stepCode').style.display = v.stepCode ? 'flex' : '';
+      if ($('mEmail').value !== v.email) $('mEmail').value = v.email;
+      if ($('mPw').value !== v.password) $('mPw').value = v.password;
+      $('mConsent').checked = v.consent;
+      $('pwFld').classList.toggle('hidden', !v.pwMode);
+      $('emailFld').classList.toggle('fld-err', v.emailErrCls === 'fld-err');
+      $('errE').classList.toggle('hidden', !v.errInline || !v.stepEmail); $('errE').querySelector('span').textContent = v.err || '';
+      $('mPwCode').classList.toggle('hidden', !v.pwWrong);
+      $('errBanner').classList.toggle('hidden', !v.errIsBanner || !v.stepEmail); $('errBanner').querySelector('span').textContent = v.err || '';
+      $('pwFld').classList.toggle('fld-err', v.pwErrCls === 'fld-err');
+      $('mCode').disabled = v.isLocked;
+      $('errC').classList.toggle('hidden', !v.hasErr || !v.stepCode); $('errC').textContent = v.err || '';
+      $('mPrimary').textContent = v.primaryLabel; $('mPrimary').disabled = v.emailDisabled;
+      $('mPwToggle').textContent = v.pwToggleLabel;
+      document.querySelectorAll('[data-soc]').forEach((b, i) => { const o = v.socials[i]; if (!o) return; b.disabled = o.busy; const lab = b.querySelector('span:last-child'); if (lab) lab.textContent = o.label; });
+      $('mChk').classList.toggle('chk-err', v.chkCls === 'chk-err');
+      const cells = document.querySelectorAll('#otp .otp-cell');
+      v.cells.forEach((c, i) => { if (cells[i]) { cells[i].textContent = c.d; cells[i].className = 'otp-cell ' + c.cls; } });
+      $('otp').classList.toggle('shake', v.shakeCls === 'shake');
+      if ($('mCode').value !== v.code) $('mCode').value = v.code;
+      $('mCodeBtn').textContent = v.codeBtn; $('mCodeBtn').disabled = v.codeDisabled;
+      $('mResend').classList.toggle('hidden', !v.canResend);
+      $('mWait').textContent = v.waitResend ? ('Снова через ' + v.resendTxt) : '';
+    }
+    if (v.modalOpen !== lastModal) {
+      lastModal = v.modalOpen;
+      if (v.modalOpen) setTimeout(() => (v.stepCode ? $('mCode') : $('mEmail')).focus(), 60);
+    }
+    if (v.stepCode !== lastStepCode) { lastStepCode = v.stepCode; if (v.stepCode) setTimeout(() => $('mCode').focus(), 60); }
+  }
+
+  if ($('sort').value !== v.sort) $('sort').value = v.sort;
+}
+
+function msgEl(m) {
+  const el = document.createElement('div');
+  if (m.user) {
+    el.className = 'msg-in';
+    el.style.cssText = 'align-self:flex-end;max-width:78%;padding:12px 16px;border-radius:20px 20px 6px 20px;background:var(--user-bg);color:var(--user-ink);font-size:15px;line-height:1.45;white-space:pre-wrap';
+    el.textContent = m.text; return el;
+  }
+  el.className = 'msg-in'; el.style.cssText = 'display:flex;align-items:flex-end;gap:10px;max-width:86%';
+  let media = '';
+  if (m.result) {
+    if (m.mediaUrl) {
+      if (m.mediaKind === 'video') media = '<video src="' + esc(m.mediaUrl) + '" controls playsinline style="width:260px;max-width:100%;border-radius:16px;background:#000"></video>';
+      else if (m.mediaKind === 'audio' || m.mediaKind === 'music') media = '<audio src="' + esc(m.mediaUrl) + '" controls style="width:260px;max-width:100%"></audio>';
+      else media = '<a href="' + (m.workId ? ('/w/' + esc(m.workId)) : esc(m.mediaUrl)) + '" target="_blank" rel="noopener"><img src="' + esc(m.mediaUrl) + '" alt="" style="width:260px;max-width:100%;border-radius:16px;display:block"></a>';
+    } else {
+      media = '<div style="width:260px;max-width:100%;aspect-ratio:4/3;border-radius:16px;border:1.5px dashed var(--field-brd);background:var(--field);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted2)">здесь будет результат</div>';
+    }
+  }
+  el.innerHTML = '<span class="bot-av ' + m.avCls + '" style="position:relative;flex:0 0 auto;width:38px;height:38px"><img src="' + ORB_SRC + '" alt="{AI}-шница" style="position:absolute;inset:0;width:100%;height:100%;display:block"><span class="eye-p l bot-eye"><span class="eye-shape" style="box-shadow:none"></span></span><span class="eye-p r bot-eye"><span class="eye-shape" style="box-shadow:none"></span></span></span>'
+    + '<div class="glass" style="border-radius:20px 20px 20px 6px;padding:12px 16px;display:flex;flex-direction:column;gap:10px;align-items:flex-start;box-shadow:0 12px 30px -20px var(--shadow)"><span style="font-size:15px;line-height:1.45;color:var(--ink)">' + esc(m.text) + '</span>'
+    + media
+    + (m.loginCta ? '<button type="button" class="btn-login" data-cta data-login style="height:40px;padding:0 18px;border-radius:12px;font-size:14px">Войти и запустить</button>' : '')
+    + (m.topup ? '<a href="/balance" class="btn-purple" style="height:40px;padding:0 18px;border-radius:12px;font-size:14px;display:inline-flex;align-items:center;text-decoration:none">К балансу</a>' : '')
+    + '</div>';
+  return el;
+}
+
+/* события */
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-home],[data-login],[data-logout],[data-toggle-left],[data-toggle-right],[data-toggle-right-open],[data-works],[data-cabinet]');
+  if (!t) return;
+  if (t.hasAttribute('data-home')) app.goHome(e);
+  else if (t.hasAttribute('data-login')) app.login();
+  else if (t.hasAttribute('data-logout')) app.logout();
+  else if (t.hasAttribute('data-toggle-left')) app.toggleLeft();
+  else if (t.hasAttribute('data-toggle-right')) app.toggleRight();
+  else if (t.hasAttribute('data-toggle-right-open')) app.openPanel();
+  else if (t.hasAttribute('data-works')) { e.preventDefault(); app.showWorks(); }
+  else if (t.hasAttribute('data-cabinet')) {
+    if (!app.state.authed) { e.preventDefault(); app.login(); }
+  }
+});
+$('themeBtn').addEventListener('click', () => app.toggleTheme());
+$('prompt').addEventListener('input', (e) => app.onType(e));
+$('prompt').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); app.onSubmit(e); } });
+$('form').addEventListener('submit', (e) => app.onSubmit(e));
+$('query').addEventListener('input', (e) => app.onQuery(e));
+$('query').addEventListener('focus', () => app.setState({ searchFocus: true }));
+$('query').addEventListener('blur', () => {
+  if (!(app.state.query || '').trim()) app.setState({ searchFocus: false });
+});
+$('sortBtn').addEventListener('click', () => app.cycleSort());
+$('sort').addEventListener('change', (e) => app.onSort(e));
+
+
+async function refreshUser() {
+  const { data } = await api('/api/auth/me');
+  const user = data.user || null;
+  const bal = data.available_kop != null ? data.available_kop : (data.balance_kop != null ? data.balance_kop : 0);
+  if (user) {
+    const name = user.name || user.email || 'Вы';
+    app.setState({
+      authed: true,
+      userName: name,
+      userLetter: String(name).slice(0, 1).toUpperCase(),
+      balanceText: 'Баланс: ' + formatBalance(bal)
+    });
+  } else {
+    app.setState({ authed: false, userName: '', userLetter: '?', balanceText: 'Баланс: 0 ₽' });
+  }
+}
+
+async function syncPricing() {
+  try {
+    const { data } = await api('/api/pricing');
+    const byKey = {};
+    (data.items || []).forEach((it) => { byKey[it.model_key] = it; });
+    app.MODELS = app.MODELS.map((m) => {
+      const it = byKey[m.model_key];
+      if (!it) return m;
+      const rub = Number(it.price_rub) || 0;
+      if (it.is_free || rub === 0) {
+        return Object.assign({}, m, { cost: 0, price: 'Бесплатно', unit: 'промо', short: 'бесплатно', est: '0 ₽' });
+      }
+      if (it.unit === 'per_second') {
+        const five = Number(it.example_rub_5s) || rub * 5;
+        return Object.assign({}, m, { cost: five, price: rub + ' ₽/с', unit: '5 с — ' + five + ' ₽', short: rub + ' ₽/с', est: five + ' ₽ за 5 с' });
+      }
+      const unit = m.type === 'image' ? 'за картинку' : 'за запуск';
+      return Object.assign({}, m, { cost: rub, price: rubLabel(rub), unit: unit, short: rubLabel(rub), est: rubLabel(rub) });
+    });
+    lastModelsKey = '';
+    scheduleRender();
+  } catch (_) {}
+}
+
+
+
+$('modal').addEventListener('click', (e) => { if (e.target === $('modal') || e.target.closest('[data-close]')) app.closeModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && app.state.modal) app.closeModal(); });
+$('mEmail').addEventListener('input', (e) => app.onEmail(e));
+$('mPw').addEventListener('input', (e) => app.onPassword(e));
+$('mConsent').addEventListener('change', (e) => app.onConsent(e));
+$('mPwToggle').addEventListener('click', () => app.togglePw());
+document.querySelectorAll('[data-soc]').forEach((b, i) => b.addEventListener('click', () => { const s = app.renderVals().socials[i]; if (s) s.go(); }));
+$('stepEmail').addEventListener('submit', (e) => app.submitEmail(e));
+$('mCode').addEventListener('input', (e) => app.onCode(e));
+$('mCodeBtn').addEventListener('click', () => app.submitCode());
+$('mBack').addEventListener('click', () => app.backToEmail());
+$('mForgot').addEventListener('click', (e) => app.forgot(e));
+$('mPwCode').addEventListener('click', (e) => app.forgot(e));
+$('mResend').addEventListener('click', () => app.resend());
+
+app.init();
+render();
+app.componentDidMount();
+refreshUser();
+syncPricing();
+
+</script>
+</body>
+</html>

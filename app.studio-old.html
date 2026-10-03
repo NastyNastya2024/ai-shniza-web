@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{AI}-шница — чат и генерация</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="studio.css?v=2">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("theme");
+        document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+  <script defer src="studio.js?v=2"></script>
+</head>
+<body class="studio">
+  <div class="studio-app">
+    <aside class="studio-rail" data-rail aria-label="Меню">
+      <a class="rail-logo" href="/" aria-label="{AI}-шница">
+        <img src="assets/orb.png" alt="" width="36" height="36" />
+        <span class="rail-brand"><span class="accent">{AI}</span>-шница</span>
+      </a>
+      <button type="button" class="rail-btn rail-btn--primary" data-new-chat>+ Новый диалог</button>
+      <nav class="rail-nav">
+        <a class="rail-link" href="/">Главная</a>
+        <a class="rail-link is-active" href="/app" data-nav="chat">Студия</a>
+        <a class="rail-link" href="#works" data-nav="works" data-nav-works>Мои работы</a>
+        <a class="rail-link" href="/explore" data-nav="explore">Витрина</a>
+      </nav>
+      <div class="rail-spacer"></div>
+      <div class="rail-balance" data-balance-box>
+        <div class="rail-balance-row">
+          <span>Баланс</span>
+          <strong data-balance>0 ₽</strong>
+        </div>
+        <button type="button" class="rail-btn" data-topup>Пополнить</button>
+      </div>
+      <div class="rail-user" data-user-menu>
+        <button type="button" class="rail-avatar" data-avatar-btn aria-haspopup="true" aria-expanded="false">
+          <span data-avatar-letter>?</span>
+        </button>
+        <div class="rail-user-pop" data-user-pop hidden>
+          <a href="/settings">Профиль и настройки</a>
+          <a href="/balance">Баланс</a>
+          <button type="button" data-login>Войти</button>
+          <button type="button" data-logout hidden>Выйти</button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="studio-main">
+      <header class="studio-top">
+        <button type="button" class="icon-btn" data-open-rail aria-label="Меню">☰</button>
+        <h1 class="studio-title">Диалог</h1>
+        <button type="button" class="icon-btn studio-models-toggle" data-open-models aria-label="Модели">Модели</button>
+      </header>
+
+      <div class="chat-scroll" data-chat-scroll>
+        <div class="chat-empty" data-chat-empty>
+          <img src="img/egg-logo-glazunya-v3.png?v=3" alt="" width="72" height="72" />
+          <h2>Что создадим?</h2>
+          <p>Опишите ролик, картинку или трек — подскажу модель и цену.</p>
+          <div class="chat-hints">
+            <button type="button" data-hint>Видео: кот-космонавт, 5 секунд</button>
+            <button type="button" data-hint>Картинка в стиле плаката, дёшево</button>
+            <button type="button" data-hint>Бесплатное видео со звуком</button>
+          </div>
+        </div>
+        <div class="chat-thread" data-chat-thread hidden></div>
+      </div>
+
+      <footer class="composer">
+        <div class="composer-selected" data-selected-chip hidden></div>
+        <div class="composer-box">
+          <button type="button" class="icon-btn" data-attach title="Прикрепить картинку" aria-label="Прикрепить">＋</button>
+          <input type="file" accept="image/*" data-file hidden />
+          <div class="composer-attach-preview" data-attach-preview hidden></div>
+          <textarea data-input rows="1" placeholder="Напишите задачу…" aria-label="Сообщение"></textarea>
+          <button type="button" class="composer-send" data-send aria-label="Отправить">↑</button>
+        </div>
+        <p class="composer-note">Неавторизованным доступен чат и цены. Генерация — после входа.</p>
+      </footer>
+    </main>
+
+    <aside class="studio-models" data-models-panel aria-label="Модели">
+      <div class="models-head">
+        <h2>Модели</h2>
+        <button type="button" class="icon-btn models-close" data-close-models aria-label="Закрыть">×</button>
+      </div>
+      <input class="models-search" type="search" data-models-search placeholder="Поиск модели" aria-label="Поиск модели" />
+      <div class="models-chips" data-filter-chips>
+        <button type="button" class="chip is-on" data-cat="all">Все</button>
+        <button type="button" class="chip" data-cat="video">Видео</button>
+        <button type="button" class="chip" data-cat="image">Картинки</button>
+        <button type="button" class="chip" data-cat="music">Музыка</button>
+        <button type="button" class="chip" data-cat="voice">Озвучка</button>
+        <button type="button" class="chip" data-cat="text">Текст</button>
+        <button type="button" class="chip" data-audio="1">Со звуком</button>
+      </div>
+      <div class="models-sort">
+        <label>
+          Сортировка
+          <select data-models-sort>
+            <option value="price">Дешевле</option>
+            <option value="quality">Лучше качество</option>
+          </select>
+        </label>
+      </div>
+      <div class="models-list" data-models-list></div>
+    </aside>
+  </div>
+
+  <div class="studio-backdrop" data-backdrop hidden></div>
+
+  <dialog class="studio-dialog" data-auth-dialog>
+    <form method="dialog" class="studio-dialog-card" data-auth-form>
+      <h3>Вход</h3>
+      <p>Код на email — основной способ. Пароль — только для старых аккаунтов.</p>
+      <input type="email" name="email" placeholder="Email" required autocomplete="email" />
+      <div data-auth-code-wrap hidden>
+        <input type="text" name="code" placeholder="Код из письма" inputmode="numeric" autocomplete="one-time-code" />
+      </div>
+      <input type="password" name="password" placeholder="Пароль (если уже есть)" autocomplete="current-password" />
+      <label class="consent"><input type="checkbox" name="consent" required /> Согласен с <a href="legal/privacy.html" target="_blank" rel="noreferrer">политикой</a> и <a href="legal/terms.html" target="_blank" rel="noreferrer">условиями</a></label>
+      <div class="dialog-actions">
+        <button type="submit" value="login" data-auth-submit>Продолжить</button>
+        <button type="button" data-auth-cancel value="cancel">Отмена</button>
+      </div>
+      <p class="dialog-error" data-auth-error hidden></p>
+    </form>
+  </dialog>
+
+  <dialog class="studio-dialog" data-publish-dialog>
+    <form method="dialog" class="studio-dialog-card" data-publish-form>
+      <h3>Опубликовать</h3>
+      <input type="text" name="title" placeholder="Название" maxlength="200" required />
+      <input type="text" name="tags" placeholder="Теги через запятую (до 5)" />
+      <label class="consent"><input type="checkbox" name="agree" required /> Согласен с правилами витрины</label>
+      <div class="dialog-actions">
+        <button type="submit">Опубликовать</button>
+        <button type="button" onclick="this.closest('dialog').close()">Отмена</button>
+      </div>
+      <p class="dialog-error" data-publish-error hidden></p>
+    </form>
+  </dialog>
+</body>
+</html>

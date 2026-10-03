@@ -1,451 +1,666 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{AI}-шница — Маркетплейс генеративных моделей</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=73">
-  <script>
-    (function () {
-      try {
-        var t = localStorage.getItem("theme");
-        document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
-      } catch (e) {
-        document.documentElement.setAttribute("data-theme", "light");
-      }
-    })();
-  </script>
-  <script defer src="app.js?v=46"></script>
-</head>
-<body class="index-landing">
-  <div class="kiko-frame" aria-hidden="true"></div>
+<meta charset="utf-8">
+<script>document.documentElement.setAttribute("data-theme","light");</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{AI}-шница — генеративные модели</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
 
-  <header class="site-header site-header--kiko">
-    <a class="site-logo" href="index.html" aria-label="{AI}-шница" data-i18n-aria="nav.brand">
-      <span class="logo-text"><span class="accent">{AI}</span>-шница</span>
+body{margin:0;background:#C9C3F3}
+:root{--ink-ui:#2E186A} /* между #221048 и #4B2BB8, ближе к первому */
+a{color:var(--ink-ui)}a:hover{color:#221048}
+.page-bg{background-image:url(assets/bg.jpg);background-size:cover;background-position:center}
+/* Liquid glass — mid white for panels, dark chips for actions */
+.glass{
+  background:linear-gradient(165deg, rgba(255,255,255,.62), rgba(245,242,255,.42) 48%, rgba(230,224,250,.34));
+  border:1px solid rgba(255,255,255,.78);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.85),
+    inset 0 -1px 0 rgba(80,50,140,.05),
+    0 16px 40px -22px rgba(75,43,184,.28);
+  backdrop-filter:blur(26px) saturate(1.45);
+  -webkit-backdrop-filter:blur(26px) saturate(1.45);
+}
+.speech.glass{
+  background:linear-gradient(165deg, rgba(255,255,255,.66), rgba(245,242,255,.46));
+}
+.speech.glass .speech-tail{
+  background:linear-gradient(135deg, rgba(255,255,255,.66), rgba(245,242,255,.46));
+  border-left:1px solid rgba(255,255,255,.78);
+  border-top:1px solid rgba(255,255,255,.78);
+}
+.speech #speech{color:var(--ink-ui);text-shadow:none}
+.prompt-box.glass{
+  background:linear-gradient(165deg, rgba(255,255,255,.64), rgba(240,236,255,.4));
+}
+.prompt-input{color:var(--ink-ui)!important;caret-color:var(--ink-ui)}
+.prompt-input::placeholder{color:#8C82B8!important}
+/* Buttons inside prompt: light glass, same ink as speech, no drop shadow */
+.tool-btn{
+  border:1px solid rgba(255,255,255,.55);
+  color:var(--ink-ui);
+  background:linear-gradient(155deg, rgba(255,255,255,.45), rgba(220,212,250,.28));
+  backdrop-filter:blur(18px) saturate(1.4);
+  -webkit-backdrop-filter:blur(18px) saturate(1.4);
+  box-shadow:none;
+  text-shadow:none;
+}
+.tool-btn svg{stroke:currentColor}
+.tool-btn:hover{
+  background:linear-gradient(155deg, rgba(255,255,255,.58), rgba(230,224,255,.38))!important;
+}
+.gen-btn{
+  background:radial-gradient(90% 130% at 12% 0%, rgba(255,214,110,0.95) 0%, rgba(255,214,110,0) 55%), linear-gradient(110deg, #FFA235 0%, #FF7B2C 42%, #FF8F7E 74%, #F6AACF 100%)!important;
+  text-shadow:0 1px 2px rgba(150,50,20,0.35);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -3px 8px rgba(236,110,160,0.25), 0 10px 24px -10px rgba(240,110,130,0.7)!important;
+}
+.prompt-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:nowrap;
+  width:100%;
+}
+.btn-label{display:inline}
+html[data-theme="dark"] body,#root[data-theme="dark"]{color:#F4EEFF}
+html[data-theme="dark"] .page-bg{filter:saturate(.85) brightness(.72)}
+html[data-theme="dark"] .glass,
+html[data-theme="dark"] .speech.glass,
+html[data-theme="dark"] .prompt-box.glass{
+  background:linear-gradient(165deg, rgba(255,255,255,.16), rgba(40,28,80,.28))!important;
+}
+html[data-theme="dark"] .hdr-tag,html[data-theme="dark"] .hdr-btn{color:#D7CCFF!important}
+@keyframes orbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes orbNod{0%,100%{transform:translateY(0) scale(1,1)}30%{transform:translateY(4px) scale(1.03,.96)}60%{transform:translateY(-3px) scale(.98,1.02)}}
+@keyframes orbCook{0%{transform:rotate(0) scale(1)}25%{transform:rotate(-8deg) scale(1.04,.97)}50%{transform:rotate(0) scale(.97,1.04)}75%{transform:rotate(8deg) scale(1.04,.97)}100%{transform:rotate(0) scale(1)}}
+@keyframes orbJump{0%{transform:translateY(0) scale(1,1)}20%{transform:translateY(6px) scale(1.08,.9)}50%{transform:translateY(-34px) scale(.95,1.06)}75%{transform:translateY(0) scale(1.06,.94)}100%{transform:translateY(0) scale(1,1)}}
+@keyframes glowPulse{0%,100%{opacity:.8;transform:scale(1)}50%{opacity:1;transform:scale(1.07)}}
+@keyframes glowFast{0%,100%{opacity:.85;transform:scale(1)}50%{opacity:1;transform:scale(1.18)}}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.08)}}
+.orb-idle{animation:orbFloat 5s ease-in-out infinite}
+.orb-listen{animation:orbFloat 3.2s ease-in-out infinite}
+.orb-type{animation:orbNod .55s ease-in-out infinite}
+.orb-cook{animation:orbCook .9s ease-in-out infinite}
+.orb-poke,.orb-done{animation:orbJump .8s cubic-bezier(.3,.7,.4,1) 1}
+.glow-idle,.glow-listen,.glow-type,.glow-poke,.glow-done,.glow-talk{animation:glowPulse 5s ease-in-out infinite}
+.glow-cook{animation:glowFast .9s ease-in-out infinite}
+.eye{position:absolute;transition:transform .28s cubic-bezier(.3,.7,.4,1)}
+.eye-shape{display:block;width:100%;height:100%;border-radius:999px;background:#FFFFFF;box-shadow:0 0 10px rgba(255,255,255,.6);transform-origin:50% 50%;transition:height .2s ease,margin-top .2s ease}
+.eye-shape{transition:transform .09s ease-in,height .2s ease,margin-top .2s ease}
+.eye-blink .eye-shape{transform:scaleY(.08)}
+.eye-squint .eye-shape{height:34%;margin-top:40%}
+.orb-btn{background:none;border:none;padding:0;cursor:pointer;display:block}
+.orb-btn:focus-visible{outline:3px solid #6A3DF0;outline-offset:8px;border-radius:50%}
+.prompt-input:focus{outline:none}
+.prompt-box:focus-within{
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.7),
+    0 0 0 3px rgba(255,255,255,.22),
+    0 24px 60px -22px rgba(75,43,184,.4);
+}
+.hdr-btn:hover{background:rgba(255,255,255,.28);backdrop-filter:blur(12px)}
+/* Lower suggestion chips: cleaner lavender glass, no white stroke */
+#replies{
+  box-sizing:border-box;
+  width:100%;
+  max-width:740px;
+  display:flex;
+  flex-wrap:nowrap;
+  gap:10px;
+  justify-content:stretch;
+  align-items:stretch;
+}
+.reply{
+  cursor:pointer;
+  font-family:'Onest',sans-serif;
+  font-weight:600;
+  color:#fff;
+  text-shadow:none;
+  background:linear-gradient(155deg, rgba(170,158,220,.62), rgba(150,136,205,.48));
+  border:none;
+  backdrop-filter:blur(20px) saturate(1.3);
+  -webkit-backdrop-filter:blur(20px) saturate(1.3);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35);
+  transition:transform .2s ease, background .25s ease, opacity .45s ease;
+  animation:replyIn .4s ease-out both;
+  flex:1 1 0;
+  min-width:0;
+  justify-content:center;
+  white-space:nowrap;
+}
+.reply--free{flex:1.45 1 0}
+.reply:hover{
+  background:linear-gradient(155deg, rgba(180,168,228,.7), rgba(160,146,212,.55))!important;
+  transform:translateY(-2px);
+}
+.reply:focus-visible{outline:2px solid rgba(106,61,240,.45);outline-offset:2px}
+.reply.is-leaving{opacity:0;transform:translateY(6px);pointer-events:none}
+.auth-glass.glass{color:#221048}
+.auth-glass.glass input{
+  background:rgba(255,255,255,.28);
+  border:1px solid rgba(255,255,255,.45);
+  color:#221048;
+  backdrop-filter:blur(12px);
+}
+@keyframes replyIn{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
+@keyframes caret{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes orbTalk{0%,100%{transform:translateY(0) scale(1,1)}50%{transform:translateY(-3px) scale(1.025,.975)}}
+.orb-talk{animation:orbTalk .32s ease-in-out infinite}
+.caret{display:inline-block;width:.09em;height:.9em;margin-left:.06em;vertical-align:-.08em;background:#E8691C;border-radius:2px;animation:caret 1s steps(1) infinite}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:760px){
+  .hdr-tag{display:none}
+  .speech h1{white-space:normal!important}
+  .prompt-box{padding:14px 12px 12px!important}
+  .prompt-actions{
+    gap:8px;
+    flex-wrap:nowrap;
+  }
+  .prompt-actions .btn-label{display:none!important}
+  #attachBtn,
+  #modelsBtn,
+  .gen-btn{
+    width:44px!important;
+    min-width:44px!important;
+    height:44px!important;
+    padding:0!important;
+    margin:0!important;
+    border-radius:14px!important;
+    display:inline-flex!important;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 44px;
+    gap:0!important;
+  }
+  .gen-btn{margin-left:auto!important}
+  /* Same horizontal width as .prompt-box (full width of main padding) */
+  #replies{
+    width:100%;
+    max-width:740px;
+    gap:5px;
+    margin-top:14px;
+    min-height:34px;
+    padding:0;
+  }
+  .reply{
+    min-height:32px!important;
+    padding:0 6px!important;
+    font-size:11px!important;
+    gap:4px!important;
+    flex:1 1 0;
+    min-width:0;
+  }
+  .reply--free{flex:1.55 1 0!important}
+  .reply-free{
+    font-size:8px!important;
+    padding:2px 5px!important;
+    flex-shrink:0;
+  }
+}
+@media (prefers-reduced-motion:reduce){.orb-idle,.orb-listen,.orb-type,.orb-cook,.orb-poke,.orb-done,.orb-talk,.caret,.reply,.glow-idle,.glow-listen,.glow-type,.glow-cook,.glow-poke,.glow-done,.eye-open .eye-shape{animation:none}}
+
+.orb-wrap{position:relative;width:var(--S);height:var(--S)}
+</style>
+</head>
+<body>
+<div id="root" class="page-bg" style="min-height: 100vh; box-sizing: border-box; position: relative; overflow: hidden; font-family: 'Onest', system-ui, sans-serif; color: #221048; background-color: #C9C3F3; display: flex; flex-direction: column">
+
+  <header style="position: relative; z-index: 2; width: 100%; max-width: 1360px; margin: 0 auto; box-sizing: border-box; display: flex; align-items: center; gap: 20px; padding: 20px 32px">
+    <a href="/" aria-label="{AI}-шница — на главную" style="display: flex; align-items: center; gap: 10px; text-decoration: none">
+      <img src="assets/orb.png" alt="" style="width: 30px; height: 30px; display: block">
     </a>
-    <nav class="site-nav" aria-label="Разделы">
-      <a class="nav-link" href="#composer">Создать</a>
-      <a class="nav-link" href="#catalog">Модели</a>
-      <a class="nav-link" href="#faq">FAQ</a>
+    <nav style="margin-left: auto; display: flex; align-items: center; gap: 6px">
+      <button type="button" class="hdr-btn" style="height: 44px; padding: 0 14px; border-radius: 999px; border: none; background: transparent; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 14px; color: #3B2380; cursor: pointer">RU</button>
+      <button type="button" id="loginBtn" style="height: 40px; margin-left: 6px; padding: 0 20px; border-radius: 14px; border: none; background: #1B0D3A; color: #FFFFFF; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer">Войти</button>
     </nav>
-    <div class="header-actions">
-      <form class="header-search" role="search" action="generate.html" method="get">
-        <input class="header-search-input" type="search" name="q" placeholder="Поиск или генерация" aria-label="Поиск или генерация" data-i18n-placeholder="hero.placeholder" />
-      </form>
-      <a class="header-cta" href="generate.html">Начать <span aria-hidden="true">↗</span></a>
-    </div>
   </header>
 
-  <button type="button" class="theme-toggle theme-toggle--float" data-theme-toggle data-i18n-aria="nav.theme" aria-label="Сменить тему" title="Тема" hidden>
-    <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12.1 2a9.8 9.8 0 0 0-1.1.06 9 9 0 1 0 10.94 10.9A8 8 0 0 1 12.1 2Z"/></svg>
-    <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm0-5a1 1 0 0 1 1 1v1.5a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1Zm0 16.5a1 1 0 0 1 1 1V21a1 1 0 1 1-2 0v-1.5a1 1 0 0 1 1-1ZM3 11a1 1 0 0 1 1-1h1.5a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1Zm15.5 0a1 1 0 0 1 1-1H21a1 1 0 1 1 0 2h-1.5a1 1 0 0 1-1-1ZM5.64 5.64a1 1 0 0 1 1.41 0l1.06 1.06a1 1 0 1 1-1.41 1.41L5.64 7.05a1 1 0 0 1 0-1.41Zm10.25 10.25a1 1 0 0 1 1.41 0l1.06 1.06a1 1 0 0 1-1.41 1.41l-1.06-1.06a1 1 0 0 1 0-1.41ZM18.36 5.64a1 1 0 0 1 0 1.41l-1.06 1.06a1 1 0 1 1-1.41-1.41l1.06-1.06a1 1 0 0 1 1.41 0ZM8.11 15.89a1 1 0 0 1 0 1.41L7.05 18.36a1 1 0 1 1-1.41-1.41l1.06-1.06a1 1 0 0 1 1.41 0Z"/></svg>
-  </button>
-
-  <main>
-    <section class="hero hero--kiko" aria-label="Заставка">
-      <div class="hero-glow" aria-hidden="true"></div>
-      <div class="hero-stage">
-        <div class="hero-orbit">
-          <div class="hero-copy">
-            <p class="hero-eyebrow">Маркетплейс генеративных моделей</p>
-            <h1 class="hero-title hero-title--stack">
-              <span class="hero-title-line"><span class="accent">{AI}</span>-</span>
-              <span class="hero-title-line">шница</span>
-            </h1>
-            <p class="hero-lead">
-              Все лучшие нейросети в одном месте.<br />
-              Выбирай модель под задачу — и создавай без лишней суеты.
-            </p>
+  <main style="position: relative; z-index: 1; flex: 1 1 auto; width: 100%; max-width: 1100px; margin: 0 auto; box-sizing: border-box; padding: 16px 20px 80px; display: flex; flex-direction: column; align-items: center; justify-content: center">
+    <div style="position: relative; display: flex; flex-direction: column; align-items: center">
+      <div class="orb-wrap" id="orbWrap">
+        <div id="glow" class="glow-idle" style="position: absolute; inset: -42%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,236,236,0.85), rgba(246,206,236,0.4) 55%, rgba(240,210,245,0) 100%)"></div>
+        <button type="button" id="orbBtn" class="orb-btn" aria-label="Пощекотать {AI}-шницу" style="position: relative; width: 100%; height: 100%">
+          <div id="orbBody" class="orb-idle" style="position: relative; width: 100%; height: 100%">
+            <img src="assets/orb-no-eyes.png" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block">
+            <span class="eye" id="eye1"><span class="eye-shape"></span></span>
+            <span class="eye" id="eye2"><span class="eye-shape"></span></span>
           </div>
-
-          <div class="hero-mascot" aria-hidden="true">
-            <img src="img/egg-logo-glazunya-v3.png?v=3" alt="" width="480" height="480" />
-          </div>
-
-          <article class="orbit-card orbit-card--tl">
-            <div class="orbit-card-top">
-              <span class="orbit-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.4"/><circle cx="8.5" cy="10" r="1.3"/><path d="m21 15-4.5-4.5L7.2 19.8"/></svg>
-              </span>
-              <span class="orbit-num">01</span>
-            </div>
-            <h3>Изображения</h3>
-            <p>Midjourney, Flux, Recraft</p>
-          </article>
-
-          <article class="orbit-card orbit-card--tr">
-            <div class="orbit-card-top">
-              <span class="orbit-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="12" height="12" rx="2"/><path d="m15 10.5 6-3.5v10l-6-3.5v-3Z"/></svg>
-              </span>
-              <span class="orbit-num">02</span>
-            </div>
-            <h3>Видео</h3>
-            <p>Kling, Veo, Runway</p>
-          </article>
-
-          <article class="orbit-card orbit-card--bl">
-            <div class="orbit-card-top">
-              <span class="orbit-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>
-              </span>
-              <span class="orbit-num">03</span>
-            </div>
-            <h3>Музыка</h3>
-            <p>Suno, Udio</p>
-          </article>
-
-          <article class="orbit-card orbit-card--br">
-            <div class="orbit-card-top">
-              <span class="orbit-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 14.5a3.8 3.8 0 0 1-3.8 3.8H8l-4 3V7.8A3.8 3.8 0 0 1 7.8 4h9.4A3.8 3.8 0 0 1 21 7.8z"/></svg>
-              </span>
-              <span class="orbit-num">04</span>
-            </div>
-            <h3>Тексты</h3>
-            <p>Claude, GPT, Gemini</p>
-          </article>
-        </div>
+        </button>
       </div>
-
-      <div class="hero-dock" aria-label="Инструменты">
-        <a class="dock-btn" href="generate.html" title="Генерация" aria-label="Генерация">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z"/><path d="m18.5 14.5.9 2.4 2.4.9-2.4.9-.9 2.4-.9-2.4-2.4-.9 2.4-.9.9-2.4Z"/></svg>
-        </a>
-        <a class="dock-btn" href="generate.html" title="Текст" aria-label="Текст">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h16v2M12 5v14M9 19h6"/></svg>
-        </a>
-        <a class="dock-btn" href="generate.html" title="Создать" aria-label="Создать">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-        </a>
-        <a class="dock-btn" href="generate.html" title="Чат" aria-label="Чат">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 14.5a3.8 3.8 0 0 1-3.8 3.8H8l-4 3V7.8A3.8 3.8 0 0 1 7.8 4h9.4A3.8 3.8 0 0 1 21 7.8z"/></svg>
-        </a>
-      </div>
-      <div class="hero-floor" aria-hidden="true"></div>
-    </section>
-
-    <div class="page-tail">
-      <!-- 1. Composer (Clico-style input) -->
-      <section class="clico-composer" id="composer" aria-label="Начать создание">
-        <div class="clico-wrap">
-          <h2 class="clico-serif">Твоя AI-студия для генераций.</h2>
-          <form class="composer-box" action="generate.html" method="get" data-composer-form>
-            <textarea
-              class="composer-input"
-              name="q"
-              rows="2"
-              placeholder="Опиши идею или принеси референс — и начни создавать."
-              aria-label="Опиши идею"
-            ></textarea>
-            <div class="composer-bar">
-              <button class="composer-plus" type="button" aria-label="Добавить файл" title="Скоро">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-              </button>
-              <span class="composer-model">Seedance Lite · бесплатно</span>
-              <button class="composer-go" type="submit">Начать создавать <span aria-hidden="true">↑</span></button>
-            </div>
-          </form>
-          <div class="composer-modes" role="tablist" aria-label="Тип генерации">
-            <a class="composer-mode is-active" href="generate.html?q=Создай%20изображение">Изображение</a>
-            <a class="composer-mode" href="generate.html?q=Создай%20видео%20Seedance">Видео</a>
-            <a class="composer-mode" href="generate.html?q=Создай%20музыку">Музыка</a>
-            <a class="composer-mode" href="generate.html?q=Напиши%20текст">Текст</a>
-            <a class="composer-mode" href="catalog.html">Каталог</a>
-          </div>
-          <p class="composer-note">
-            {AI}-шница — маркетплейс генеративных моделей без VPN.
-            Картинки, видео, музыка и тексты — в одном месте, через чат.
-          </p>
-        </div>
-      </section>
-
-      <!-- 2. Seedance free video — Clico card layout -->
-      <section class="clico-seedance reveal" id="seedance" aria-label="Генерация видео Seedance">
-        <div class="clico-wrap">
-          <h2 class="clico-serif">Генерируй видео бесплатно на Seedance.</h2>
-          <p class="clico-sub">
-            Опиши сцену или добавь фото — бесплатная версия Seedance оживит кадр.
-            Без VPN, прямо в браузере.
-          </p>
-
-          <div class="seedance-shell" data-seedance-demo>
-            <div class="seedance-switches" role="tablist" aria-label="Примеры">
-              <button type="button" class="seedance-switch is-active" data-seed-ex="0">Оживить</button>
-              <button type="button" class="seedance-switch" data-seed-ex="1">Из фото</button>
-              <button type="button" class="seedance-switch" data-seed-ex="2">По тексту</button>
-            </div>
-
-            <div class="seedance-panel" data-seed-panel>
-              <div class="seedance-in">
-                <div class="seedance-ref">
-                  <div class="seedance-thumb-wrap">
-                    <span class="seedance-tag" data-seed-tag>Референс</span>
-                    <img
-                      data-seed-thumb
-                      src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=480&q=80"
-                      alt=""
-                      width="160"
-                      height="120"
-                      loading="lazy"
-                    />
-                  </div>
-                  <p class="seedance-prompt" data-seed-prompt>
-                    Оживи этот морской кадр. Оставь тех же людей и дай разговору развернуться.
-                  </p>
-                </div>
-                <a class="seedance-cta" data-seed-cta href="generate.html?q=Оживи%20сцену%20у%20моря%20на%20Seedance%20Lite">
-                  Попробовать Seedance Lite →
-                </a>
-              </div>
-              <div class="seedance-out">
-                <p class="seedance-caption" data-seed-caption>Тихий момент — ожил.</p>
-                <div class="seedance-frame">
-                  <img
-                    data-seed-result
-                    src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=80"
-                    alt="Результат генерации видео"
-                    width="720"
-                    height="420"
-                    loading="lazy"
-                  />
-                  <span class="seedance-badge">Seedance Lite · free</span>
-                  <span class="seedance-play" aria-hidden="true"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 3. Share gallery — black curved 3-row grid -->
-      <section class="clico-share" id="share" aria-label="Делись генерациями">
-        <div class="share-inner">
-          <div class="share-copy">
-            <h2 class="clico-serif clico-serif--light">Делись генерациями<br />и привлекай клиентов.</h2>
-            <p class="clico-sub clico-sub--light">
-              Собирай витрину работ, показывай процесс и находи заказчиков —
-              прямо из пространства {AI}-шницы.
-            </p>
-          </div>
-
-          <div class="share-stage" data-share-curve>
-            <div class="share-perspective" data-share-inner>
-              <div class="share-row" data-share-row data-dir="1" style="--dur:42s">
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-              </div>
-              <div class="share-row" data-share-row data-dir="-1" style="--dur:50s">
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1618005198919-d3d224b85df6?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1634017839464-5c339bbb3dc8?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-              </div>
-              <div class="share-row" data-share-row data-dir="1" style="--dur:46s">
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1614850715649-1d0106293bd1?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1465146633011-14f8e0781093?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-                <figure class="share-tile"><img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=480&q=80" alt="" loading="lazy" /></figure>
-              </div>
-            </div>
-          </div>
-
-          <div class="share-foot">
-            <a class="share-cta" href="generate.html">Создать первую генерацию →</a>
-          </div>
-        </div>
-      </section>
-
-      <!-- Models: three blocks at once -->
-      <section class="clico-models reveal" id="catalog" aria-label="Модели">
-        <div class="clico-wrap">
-          <h2 class="clico-serif">Много моделей. Без VPN.</h2>
-          <p class="clico-sub">
-            Изображения, музыка, тексты и видео — выбирай инструмент под задачу
-            и работай из России без обходов.
-          </p>
-
-          <div class="models-trio">
-            <article class="models-card models-card--lilac">
-              <h3 class="models-card-title">Изображения</h3>
-              <p class="models-card-note">Flux, Recraft, Ideogram, Imagen</p>
-              <div class="models-grid is-on">
-                <a class="model-chip" href="generate.html?q=Flux"><span class="model-ico" aria-hidden="true">◈</span><span>Flux</span></a>
-                <a class="model-chip" href="generate.html?q=Recraft"><span class="model-ico" aria-hidden="true">▣</span><span>Recraft</span></a>
-                <a class="model-chip" href="generate.html?q=Ideogram"><span class="model-ico" aria-hidden="true">✦</span><span>Ideogram</span></a>
-                <a class="model-chip" href="generate.html?q=Imagen"><span class="model-ico" aria-hidden="true">◎</span><span>Imagen</span></a>
-              </div>
-            </article>
-
-            <article class="models-card models-card--blue">
-              <h3 class="models-card-title models-card-title--light">Видео</h3>
-              <p class="models-card-note models-card-note--light">Seedance Lite бесплатно · Kling, Veo</p>
-              <div class="models-ui">
-                <div class="models-grid is-on">
-                  <a class="model-chip" href="generate.html?q=Seedance"><span class="model-ico" aria-hidden="true">▶</span><span>Seedance Lite</span></a>
-                  <a class="model-chip" href="generate.html?q=Kling"><span class="model-ico" aria-hidden="true">▣</span><span>Kling</span></a>
-                  <a class="model-chip" href="generate.html?q=Veo"><span class="model-ico" aria-hidden="true">✦</span><span>Veo</span></a>
-                  <a class="model-chip" href="generate.html?q=Runway"><span class="model-ico" aria-hidden="true">◎</span><span>Runway</span></a>
-                </div>
-                <p class="vpn-pill">✓ Без VPN</p>
-              </div>
-            </article>
-
-            <article class="models-card models-card--ink">
-              <h3 class="models-card-title models-card-title--light">Текст и музыка</h3>
-              <p class="models-card-note models-card-note--light">Claude, GPT, Suno, Udio</p>
-              <div class="models-ui">
-                <div class="models-grid is-on">
-                  <a class="model-chip" href="generate.html?q=Claude"><span class="model-ico" aria-hidden="true">✳</span><span>Claude</span></a>
-                  <a class="model-chip" href="generate.html?q=GPT"><span class="model-ico" aria-hidden="true">◉</span><span>GPT</span></a>
-                  <a class="model-chip" href="generate.html?q=Suno"><span class="model-ico" aria-hidden="true">♪</span><span>Suno</span></a>
-                  <a class="model-chip" href="generate.html?q=Udio"><span class="model-ico" aria-hidden="true">♫</span><span>Udio</span></a>
-                </div>
-              </div>
-            </article>
-          </div>
-
-          <div class="catalog-heading" id="how">
-            <h3 class="catalog-mini-title">Каталог моделей</h3>
-            <p data-i18n="catalog.lead">Если можешь описать — можешь сгенерировать. Выбирай модель и создавай.</p>
-          </div>
-          <div class="catalog-content">
-            <div class="cards-grid"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- FAQ -->
-      <section class="clico-faq reveal" id="faq" aria-label="Частые вопросы">
-        <div class="clico-wrap clico-wrap--narrow">
-          <h2 class="clico-serif">Частые вопросы</h2>
-          <div class="faq-list">
-            <details class="faq-item">
-              <summary>Нужен ли VPN, чтобы пользоваться моделями?</summary>
-              <div class="faq-body"><p>Нет. {AI}-шница собирает модели в одном месте, чтобы вы могли генерировать без обходов и отдельных аккаунтов у каждого провайдера.</p></div>
-            </details>
-            <details class="faq-item">
-              <summary>Что бесплатно на старте?</summary>
-              <div class="faq-body"><p>Доступна бесплатная генерация видео на Seedance Lite и базовые сценарии в чате. Платные модели подключаются по мере необходимости — цены в рублях.</p></div>
-            </details>
-            <details class="faq-item">
-              <summary>Можно ли делать и картинки, и видео в одном чате?</summary>
-              <div class="faq-body"><p>Да. Выберите модальность или просто опишите задачу — ассистент подскажет модель и запустит генерацию.</p></div>
-            </details>
-            <details class="faq-item">
-              <summary>Как делиться генерациями с клиентами?</summary>
-              <div class="faq-body"><p>Сохраняйте результаты в пространстве генераций и отправляйте ссылки или превью. Витрина работ помогает показывать стиль и привлекать заказчиков.</p></div>
-            </details>
-            <details class="faq-item">
-              <summary>Чем {AI}-шница отличается от отдельных сервисов?</summary>
-              <div class="faq-body"><p>Один интерфейс, единый каталог, рублевые цены и фокус на доступности из РФ — без прыжков между Midjourney, Kling, Suno и чатами.</p></div>
-            </details>
-          </div>
-        </div>
-      </section>
-
-      <footer class="site-footer" id="about">
-        <div class="container">
-          <div class="footer-card">
-            <div class="footer-brand">
-              <a class="footer-logo" href="index.html" aria-label="{AI}-шница" data-i18n-aria="nav.brand">
-                <img class="logo-egg" src="img/egg-logo-glazunya-v3.png?v=3" alt="" width="36" height="36" />
-              </a>
-              <button class="footer-lang" type="button" data-lang-toggle aria-label="RU">
-                <span data-footer-lang-label>RU</span>
-              </button>
-            </div>
-            <nav class="footer-col" aria-label="Компания">
-              <h3 data-i18n="footer.company">Компания</h3>
-              <a href="index.html" data-i18n="footer.careers">Карьера</a>
-              <a href="index.html" data-i18n="footer.press">Пресса и медиа</a>
-              <a href="prices.html" data-i18n="footer.enterprise">Для бизнеса</a>
-              <a href="legal/security.html" data-i18n="footer.security">Безопасность</a>
-              <a href="legal/privacy.html" data-i18n="footer.trust">Центр доверия</a>
-              <a href="index.html" data-i18n="footer.partners">Партнёрство</a>
-            </nav>
-            <nav class="footer-col" aria-label="Продукт">
-              <h3 data-i18n="footer.product">Продукт</h3>
-              <a href="prices.html" data-i18n="footer.pricing">Цены</a>
-              <a href="prices.html" data-i18n="footer.students">Скидка студентам</a>
-              <a href="generate.html" data-i18n="footer.work">Для работы</a>
-              <a href="generate.html" data-i18n="footer.founders">Основателям</a>
-              <a href="catalog.html" data-i18n="footer.pm">Продакт-менеджерам</a>
-              <a href="catalog.html" data-i18n="footer.designers">Дизайнерам</a>
-              <a href="catalog.html" data-i18n="footer.marketers">Маркетологам</a>
-              <a href="catalog.html" data-i18n="footer.sales">Продажам</a>
-              <a href="catalog.html" data-i18n="footer.ops">Операциям</a>
-              <a href="catalog.html" data-i18n="footer.people">HR</a>
-              <a href="generate.html" data-i18n="footer.proto">Прототипирование</a>
-              <a href="generate.html" data-i18n="footer.tools">Внутренние инструменты</a>
-              <a href="catalog.html" data-i18n="footer.apps">Скачать приложения</a>
-              <a href="catalog.html" data-i18n="footer.connections">Интеграции</a>
-              <a href="index.html#faq" data-i18n="footer.changelog">Список изменений</a>
-              <a href="index.html#faq" data-i18n="footer.status">Статус</a>
-            </nav>
-            <nav class="footer-col" aria-label="Ресурсы">
-              <h3 data-i18n="footer.resources">Ресурсы</h3>
-              <a href="catalog.html" data-i18n="footer.learn">Обучение</a>
-              <a href="catalog.html" data-i18n="footer.templates">Шаблоны</a>
-              <a href="index.html#faq" data-i18n="footer.guides">Гайды</a>
-              <a href="catalog.html" data-i18n="footer.connectors">Коннекторы</a>
-              <a href="catalog.html" data-i18n="footer.mcp">MCP-сервер</a>
-              <a href="index.html#share" data-i18n="footer.videos">Видео</a>
-              <a href="index.html" data-i18n="footer.blog">Блог</a>
-              <a href="index.html#faq" data-i18n="footer.support">Поддержка</a>
-              <a href="index.html#share" data-i18n="footer.reviews">Отзывы</a>
-              <a href="catalog.html" data-i18n="footer.sitemap">Карта сайта</a>
-            </nav>
-            <nav class="footer-col" aria-label="Правовая информация">
-              <h3 data-i18n="footer.legal">Правовая информация</h3>
-              <a href="legal/privacy.html" data-i18n="footer.privacy">Политика конфиденциальности</a>
-              <a href="legal/nosell.html" data-i18n="footer.nosell">Не продавать и не передавать мои данные</a>
-              <a href="legal/cookies.html" data-i18n="footer.cookies">Настройки cookie</a>
-              <a href="legal/enterprise-terms.html" data-i18n="footer.entTerms">Условия для бизнеса</a>
-              <a href="legal/terms.html" data-i18n="footer.terms">Общие условия</a>
-              <a href="legal/terms.html#desktop" data-i18n="footer.desktop">Условия десктоп-приложения</a>
-              <a href="legal/terms.html#domains" data-i18n="footer.domain">Условия регистрации доменов</a>
-              <a href="legal/dmca.html" data-i18n="footer.dmca">Политика DMCA</a>
-              <a href="legal/accessibility.html" data-i18n="footer.a11y">Доступность</a>
-              <a href="legal/rules.html" data-i18n="footer.rules">Правила платформы</a>
-              <a href="legal/abuse.html" data-i18n="footer.abuse">Сообщить о нарушении</a>
-              <a href="legal/security.html" data-i18n="footer.secReport">Сообщить об уязвимости</a>
-              <a href="legal/dpa.html" data-i18n="footer.dpa">DPA</a>
-            </nav>
-            <nav class="footer-col" aria-label="Сообщество">
-              <h3 data-i18n="footer.community">Сообщество</h3>
-              <a href="index.html#about" data-i18n="footer.becomePartner">Стать партнёром</a>
-              <a href="catalog.html" data-i18n="footer.hire">Нанять эксперта</a>
-              <a href="prices.html" data-i18n="footer.affiliates">Партнёрская программа</a>
-              <a href="legal/conduct.html" data-i18n="footer.conduct">Кодекс поведения</a>
-              <a href="https://discord.com" target="_blank" rel="noreferrer">Discord</a>
-              <a href="https://www.reddit.com" target="_blank" rel="noreferrer">Reddit</a>
-              <a href="https://x.com" target="_blank" rel="noreferrer">X / Twitter</a>
-              <a href="https://youtube.com" target="_blank" rel="noreferrer">YouTube</a>
-              <a href="https://www.linkedin.com" target="_blank" rel="noreferrer">LinkedIn</a>
-            </nav>
-          </div>
-        </div>
-      </footer>
+      <div style="width: 110px; height: 12px; border-radius: 50%; background: radial-gradient(closest-side, rgba(75,43,184,0.22), rgba(75,43,184,0)); margin: 10px 0 18px"></div>
     </div>
+
+    <div class="speech glass" style="position: relative; margin: 0 0 26px; max-width: calc(100vw - 40px); box-sizing: border-box; padding: 15px 26px 16px; border-radius: 14px">
+      <span class="speech-tail" aria-hidden="true" style="position: absolute; left: 50%; top: -8px; width: 16px; height: 16px; margin-left: -8px; transform: rotate(45deg); border-radius: 3px 0 0 0"></span>
+      <h1 id="speech" style="position: relative; margin: 0; min-height: 1.3em; text-align: center; font-family: 'Days One', sans-serif; font-weight: 400; font-size: clamp(16px, 1.6vw, 21px); line-height: 1.3; letter-spacing: -0.01em; white-space: nowrap">
+        <span aria-hidden="true"><span id="speechText"></span><span class="caret"></span></span>
+      </h1>
+    </div>
+    <p class="sr-only" aria-live="polite" id="speechLive"></p>
+
+    <form id="promptForm" class="prompt-box glass" style="width: 100%; max-width: 740px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; padding: 18px 16px 14px 22px; border-radius: 14px">
+      <label for="prompt" class="sr-only">Промпт</label>
+      <textarea id="prompt" class="prompt-input" rows="2" placeholder="Напишите яишенке свою идею…" style="width: 100%; box-sizing: border-box; border: none; background: transparent; resize: none; font-family: 'Onest', sans-serif; font-size: 18px; line-height: 1.5; padding: 4px 0 0"></textarea>
+      <div class="prompt-actions">
+        <button type="button" id="attachBtn" class="tool-btn" aria-label="Прикрепить файл" style="width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg>
+        </button>
+        <input type="file" id="attachFile" accept="image/*" hidden>
+        <button type="button" id="modelsBtn" class="tool-btn" aria-label="Все модели" style="height: 44px; padding: 0 16px; border-radius: 14px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; cursor: pointer">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
+          <span class="btn-label">Все модели</span>
+        </button>
+        <button type="submit" class="gen-btn" aria-label="Сгенерировать" style="margin-left: auto; height: 48px; padding: 0 22px 0 18px; border-radius: 14px; border: none; color: #FFFFFF; font-family: 'Onest', sans-serif; font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; cursor: pointer">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"></path></svg>
+          <span class="btn-label">Сгенерировать</span>
+        </button>
+      </div>
+    </form>
+
+    <div id="replies" style="margin-top: 18px; min-height: 44px"></div>
   </main>
+</div>
+
+<dialog id="authDialog" style="border: none; border-radius: 14px; padding: 0; background: transparent; max-width: 420px; width: calc(100vw - 32px)">
+  <form id="authForm" class="auth-glass glass" method="dialog" style="padding: 28px 24px; border-radius: 14px; font-family: 'Onest', sans-serif">
+    <h3 style="margin: 0 0 8px; font-family: 'Days One', sans-serif; font-weight: 400; font-size: 22px">Вход</h3>
+    <p style="margin: 0 0 16px; color: #5E4BA8; font-size: 14px">Код на email — основной способ. Пароль — для старых аккаунтов.</p>
+    <input type="email" name="email" required placeholder="Email" autocomplete="email" style="width: 100%; box-sizing: border-box; margin-bottom: 10px; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(106,61,240,0.18); font: inherit">
+    <div id="authCodeWrap" hidden>
+      <input type="text" name="code" placeholder="Код из письма" inputmode="numeric" autocomplete="one-time-code" style="width: 100%; box-sizing: border-box; margin-bottom: 10px; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(106,61,240,0.18); font: inherit">
+    </div>
+    <input type="password" name="password" placeholder="Пароль (если уже есть)" autocomplete="current-password" style="width: 100%; box-sizing: border-box; margin-bottom: 12px; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(106,61,240,0.18); font: inherit">
+    <label style="display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: #5E4BA8; margin-bottom: 14px">
+      <input type="checkbox" name="consent" required style="margin-top: 3px">
+      <span>Согласен с <a href="/legal/privacy.html" target="_blank" rel="noreferrer">политикой</a> и <a href="/legal/terms.html" target="_blank" rel="noreferrer">условиями</a></span>
+    </label>
+    <div style="display: flex; gap: 8px">
+      <button type="submit" style="height: 44px; padding: 0 18px; border: none; border-radius: 14px; background: #1B0D3A; color: #fff; font: inherit; font-weight: 600; cursor: pointer">Продолжить</button>
+      <button type="button" id="authCancel" style="height: 44px; padding: 0 18px; border: none; border-radius: 14px; background: rgba(240,236,255,0.9); color: #3B2380; font: inherit; font-weight: 600; cursor: pointer">Отмена</button>
+    </div>
+    <p id="authError" hidden style="margin: 12px 0 0; color: #C94A0A; font-size: 14px"></p>
+  </form>
+</dialog>
+
+<script>
+/* Мини-обёртка: даёт классу персонажа setState/props, как в редакторе дизайна */
+class DCLogic {
+  constructor(props) { this.props = props || {}; this.state = {}; }
+  setState(patch) { Object.assign(this.state, typeof patch === 'function' ? patch(this.state) : patch); scheduleRender(); }
+}
+
+class Component extends DCLogic {
+  init() {
+    if (this._ready) return;
+    this._ready = true;
+    this.state = Object.assign({ mode: 'idle', text: '', focused: false, mx: 0, my: 0, say: '', shown: 0, step: 'start' }, this.state || {});
+    this.orbRef = { current: null };
+    this.timers = {};
+    this.later = (name, ms, fn) => { clearTimeout(this.timers[name]); this.timers[name] = setTimeout(fn, ms); };
+    this.setMode = (mode) => { if (this.state.mode !== mode) this.setState({ mode: mode }); };
+    this.restMode = () => this.state.focused ? 'listen' : 'idle';
+    this.speak = (line, step) => {
+      if (Array.isArray(line)) line = this.pick(line);
+      clearInterval(this.timers.tw);
+      const patch = { say: line, shown: 0 };
+      if (this.blinkOnce && Math.random() < 0.6) this.blinkOnce();
+      if (step) patch.step = step;
+      this.setState(patch);
+      this.timers.tw = setInterval(() => {
+        const n = this.state.shown + 1;
+        if (n >= this.state.say.length) { clearInterval(this.timers.tw); this.setState({ shown: this.state.say.length }); }
+        else this.setState({ shown: n });
+      }, 30);
+      this.scheduleIdle();
+    };
+    this.pick = (arr) => {
+      this._last = this._last || {};
+      const key = arr[0];
+      let i = Math.floor(Math.random() * arr.length);
+      if (arr.length > 1 && this._last[key] === i) i = (i + 1) % arr.length;
+      this._last[key] = i;
+      return arr[i];
+    };
+    this.P = {
+      hello: [
+        'Привет! Что приготовим сегодня?',
+        'Привет! Я {AI}-шница — горячая, с пылу с жару!',
+        'Привет! Я {AI}-шница. Сковородка уже шкворчит!',
+        'Хэй! Я {AI}-шница. Что пожарим сегодня?',
+        'Привет-привет! Я {AI}-шница, жарю идеи!'
+      ],
+      idle: [
+        'Может, видео, где кот жарит яичницу?',
+        'Или музыку для ленивого завтрака?',
+        'Я голодная до идей! Подкинь ингредиентов',
+        'Сковородка горячая — самое время для шедевра',
+        'Приготовим картинку до слюнок?',
+        'Желток стынет! Что будем жарить?',
+        'Глазунья, болтунья или блокбастер? Выбирай!',
+        'Тссс… слышишь, как шкворчат идеи?'
+      ],
+      listen: ['Слушаю внимательно, вся во внимании!', 'Ушки на макушке! Ну, то есть желток', 'Сковородка разогрета, жду ингредиенты', 'Пиши смелее — я всё съем!'],
+      typing: ['Ммм, пахнет вкусно…', 'Ага, записываю…'],
+      ready: ['Звучит аппетитно! Жми «Сгенерировать»', 'Вкуснятина! Подаём на стол?', 'О-о-о, это я бы съела! Жмём «Сгенерировать»?', 'Шеф, рецепт готов — пора на огонь!'],
+      readyPerfect: ['Идеально! Жарим или добавим специй?', 'Рецепт собран! Посолить ещё или подаём?', 'Пальчики оближешь! Жарим?'],
+      cook: ['Жарю… переворачиваю… не подглядывай!', 'Шкворчит! Подбираю лучшую модель…', 'Взбиваю пиксели до пышной пенки…', 'Минутку, добавляю щепотку магии…'],
+      done: ['Готово! С пылу с жару. Ещё порцию?', 'Тадам! Подано горяченьким. Повторим?', 'Шедевр на тарелке! Хочешь добавки?'],
+      empty: ['Пустая сковородка грустит. Напиши идею!', 'Сначала ингредиенты — потом магия!', 'Эй, без идеи даже яичницу не пожаришь!'],
+      again: ['Что жарим теперь?', 'Новая порция идей? Я в деле!', 'Сковородка свободна — что дальше?'],
+      pokes: ['Хи-хи, щекотно!', 'Аккуратно, я же глазунья, а не кнопка!', 'Ой! Ещё раз — и я перевернусь', 'Эй, не трогай желток руками!', 'Ладно-ладно, я тут, я горячая!', 'Ещё чуть-чуть — и я стану болтуньей!']
+    };
+    this.idleLines = this.P.idle;
+    this.scheduleIdle = () => this.later('idle', 8000, () => {
+      if (this.state.mode !== 'idle' || this.state.text || this.state.step !== 'start') return;
+      this.speak(this.P.idle);
+    });
+    this.append = (piece) => {
+      const t = this.state.text.trim();
+      const next = t ? t.replace(/[,.\s]+$/, '') + (t.endsWith(':') ? ' ' : ', ') + piece : piece;
+      this.setState({ text: next });
+    };
+    this.focusInput = () => { const el = document.getElementById('prompt'); if (el) el.focus(); };
+    const own = { label: 'Своя идея', go: () => { this.speak(['Слушаю! Пиши прямо в поле — я вся внимание', 'Давай свой рецепт, шеф!', 'Твой фирменный рецепт? Пиши!'], 'free'); this.focusInput(); } };
+    this.flows = {
+      start: [
+        { label: 'Seedance', free: true, go: () => { this.setState({ text: 'Видео в Seedance: ' }); this.speak(['Seedance бесплатно — угощаю! Что снимаем?', 'Seedance — бесплатная добавка! Что в кадре?'], 'video'); } },
+        { label: 'Видео', go: () => { this.setState({ text: 'Видео: ' }); this.speak(['Видео — обожаю! Про что будет ролик?', 'Кино на завтрак? Беру! Про что снимаем?', 'Мотор! Что у нас в кадре?'], 'video'); } },
+        { label: 'Картинку', go: () => { this.setState({ text: 'Картинка: ' }); this.speak(['Картинка! Что подаём на холст?', 'Нарисую так, что захочется съесть!', 'Холст горячий! Что рисуем?'], 'image'); } },
+        { label: 'Музыку', go: () => { this.setState({ text: 'Музыка: ' }); this.speak(['Музыка! Какой жанр шкворчит в душе?', 'Бит под шкворчание сковородки? Какой жанр?', 'Включаем! Какой вкус у трека?'], 'music'); } }
+      ],
+      video: [
+        { label: 'Кот-повар жарит яичницу', go: () => { this.append('кот-повар жарит яичницу'); this.speak(['Это же моя родня! Какое настроение?', 'Мяу-шедевр! Какое настроение?'], 'mood'); } },
+        { label: 'Неоновый город под дождём', go: () => { this.append('неоновый город под дождём'); this.speak(['Сочно и мокро! Какое настроение?', 'Неон — как желток в ночи! Какое настроение?'], 'mood'); } },
+        { label: 'Блинчики летят в космос', go: () => { this.append('блинчики летят в космос'); this.speak(['Космический завтрак! Какое настроение?', 'Блины на орбите — это вкусно! Настроение?'], 'mood'); } },
+        own
+      ],
+      image: [
+        { label: 'Глянцевая яичница в облаках', go: () => { this.append('глянцевая яичница в облаках, пастельные тона'); this.speak(['Это же я! Красавица! В каком стиле?', 'Автопортрет? Обожаю! В каком стиле?'], 'style'); } },
+        { label: 'Уютная кухня утром', go: () => { this.append('уютная кухня ранним утром, солнце, кофе'); this.speak(['Пахнет кофе и тостами! В каком стиле?', 'Уютно, как тёплый тост! Стиль?'], 'style'); } },
+        { label: 'Бургер-небоскрёб', go: () => { this.append('бургер высотой с небоскрёб'); this.speak(['Слюнки потекли! В каком стиле?', 'Сочно! Какой стиль подаём?'], 'style'); } },
+        own
+      ],
+      music: [
+        { label: 'Лоу-фай', go: () => { this.append('лоу-фай бит'); this.speak(['Мягко, как омлет! Для чего трек?', 'Расслабон! Для чего трек?'], 'purpose'); } },
+        { label: 'Синтвейв', go: () => { this.append('синтвейв'); this.speak(['Ретро с хрустящей корочкой! Для чего?', 'Неоновый вкус! Для чего?'], 'purpose'); } },
+        { label: 'Джаз', go: () => { this.append('джаз'); this.speak(['Джаз — как бенедикт: изысканно! Для чего?', 'Саксофон и тосты! Для чего трек?'], 'purpose'); } },
+        own
+      ],
+      mood: [
+        { label: 'Уютное', go: () => { this.append('уютное настроение'); this.ready(); } },
+        { label: 'Эпичное', go: () => { this.append('эпичное настроение'); this.ready(); } },
+        { label: 'Смешное', go: () => { this.append('смешное настроение'); this.ready(); } },
+        { label: 'Сочное', go: () => { this.append('яркое, сочное настроение'); this.ready(); } }
+      ],
+      style: [
+        { label: '3D', go: () => { this.append('3D-рендер, глянец'); this.ready(); } },
+        { label: 'Акварель', go: () => { this.append('акварель'); this.ready(); } },
+        { label: 'Фото', go: () => { this.append('фотореализм'); this.ready(); } },
+        { label: 'Аниме', go: () => { this.append('аниме-стиль'); this.ready(); } }
+      ],
+      purpose: [
+        { label: 'Для завтрака', go: () => { this.append('для неспешного завтрака'); this.ready(); } },
+        { label: 'Для работы', go: () => { this.append('для фокуса на работе'); this.ready(); } },
+        { label: 'Для вечеринки', go: () => { this.append('для вечеринки'); this.ready(); } }
+      ],
+      ready: [
+        { label: 'Сгенерировать', go: () => this.onSubmit() },
+        { label: 'Начать заново', go: () => this.reset() }
+      ],
+      done: [
+        { label: 'Ещё порцию', go: () => this.onSubmit() },
+        { label: 'Новая идея', go: () => this.reset() }
+      ],
+      free: []
+    };
+    this.ready = () => { this.speak(this.P.readyPerfect, 'ready'); this.setMode('listen'); };
+    this.reset = () => { this.setState({ text: '' }); this.setMode('idle'); this.speak(this.P.again, 'start'); };
+    this.onMove = (e) => {
+      const el = this.orbRef.current; if (!el || !el.getBoundingClientRect) return;
+      const r = el.getBoundingClientRect();
+      const dx = (e.clientX - (r.left + r.width / 2)) / 420;
+      const dy = (e.clientY - (r.top + r.height / 2)) / 320;
+      this.setState({ mx: Math.max(-1, Math.min(1, dx)), my: Math.max(-1, Math.min(1, dy)) });
+    };
+    this.onFocus = () => {
+      this.setState({ focused: true });
+      if (this.state.mode === 'idle') this.setMode('listen');
+      if (!this.state.text.trim() && this.state.step === 'start') this.speak(this.P.listen);
+    };
+    this.onBlur = () => { this.setState({ focused: false }); this.later('blur', 200, () => { if (this.state.mode === 'listen' || this.state.mode === 'type') this.setMode('idle'); }); };
+    this.onType = (e) => {
+      const v = e.target.value;
+      this.setState({ text: v });
+      if (this.state.mode !== 'cook') this.setMode('type');
+      this.later('type', 1000, () => {
+        if (this.state.mode !== 'type') return;
+        this.setMode(this.restMode());
+        const t = this.state.text.toLowerCase();
+        if (!t.trim()) { this.speak(['Не стесняйся, пиши что угодно — я всеядная!', 'Пустая сковородка… давай что-нибудь закинем!'], 'start'); return; }
+        if (this.state.step === 'ready') { this.speak(['Ага, досолила! Жми «Сгенерировать»', 'Учла, добавила в рецепт! Жарим?'], 'ready'); return; }
+        if (/видео|ролик|клип|анимац/.test(t)) this.speak(['Видео? Уже шкворчит! Какое настроение?', 'Кино на сковородке! Какое настроение?'], 'mood');
+        else if (/музык|трек|песн|бит/.test(t)) this.speak(['Звучит вкусно! Для чего трек?', 'Слышу бит! Для чего трек?'], 'purpose');
+        else if (/картин|фото|изображ|арт|постер/.test(t)) this.speak(['Нарисую — пальчики оближешь! В каком стиле?', 'Аппетитно! В каком стиле?'], 'style');
+        else this.speak(this.P.ready, 'ready');
+      });
+    };
+    this.goStudio = (extra) => {
+      const q = new URLSearchParams(extra || {});
+      const prompt = (this.state.text || '').trim();
+      if (prompt) q.set('prompt', prompt);
+      location.href = '/app?' + q.toString();
+    };
+    this.onSubmit = (e) => {
+      if (e && e.preventDefault) e.preventDefault();
+      if (!this.state.text.trim()) { this.setMode('poke'); this.speak(this.P.empty); this.later('poke', 1100, () => this.setMode(this.restMode())); return; }
+      this.setMode('cook');
+      this.speak(this.P.cook, 'cooking');
+      this.later('cook', 1600, () => {
+        this.setMode('done');
+        this.speak(this.P.done, 'done');
+        this.later('done', 700, () => this.goStudio());
+      });
+    };
+    this.onPoke = () => {
+      if (this.state.mode === 'cook') return;
+      this.setMode('poke');
+      const prev = { say: this.state.say, step: this.state.step };
+      this.speak(this.P.pokes);
+      this.later('poke', 1100, () => this.setMode(this.restMode()));
+      this.later('pokeBack', 2600, () => { if (this.state.mode !== 'cook') this.speak(prev.say, prev.step); });
+    };
+  }
+  componentDidMount() {
+    this.init();
+    this.speak(this.P.hello, 'start');
+    const blinkOnce = (cb) => { this.setState({ blink: true }); this.later('blinkUp', 130, () => { this.setState({ blink: false }); if (cb) this.later('blink2', 160, cb); }); };
+    const loop = () => this.later('blinkLoop', 2000 + Math.random() * 2600, () => {
+      if (Math.random() < 0.3) blinkOnce(() => blinkOnce(loop)); else { blinkOnce(); loop(); }
+    });
+    this.blinkOnce = blinkOnce;
+    this.later('firstBlink', 900, () => blinkOnce(loop));
+  }
+  componentWillUnmount() { Object.values(this.timers || {}).forEach((t) => { clearTimeout(t); clearInterval(t); }); }
+  renderVals() {
+    this.init();
+    const S = this.props.orbSize ?? 200;
+    const st = this.state;
+    const typing = st.shown < st.say.length;
+    let mode = st.mode;
+    if (typing && (mode === 'idle' || mode === 'listen')) mode = 'talk';
+    const eyeW = Math.round(S * 0.085), eyeH = Math.round(S * 0.27);
+    let ex, ey;
+    if (st.mode === 'listen' || st.mode === 'type') {
+      const p = Math.min(st.text.length / 70, 1);
+      ex = (-0.07 + p * 0.14) * S; ey = 0.1 * S;
+    } else if (st.mode === 'cook') { ex = 0; ey = 0.02 * S; }
+    else { ex = st.mx * 0.09 * S; ey = st.my * 0.07 * S; }
+    const squint = st.mode === 'cook' || st.mode === 'done' || st.mode === 'poke';
+    // Keep chips while speech types; hide only during cook / leaving
+    const hideChips = st.mode === 'cook';
+    const list = hideChips ? [] : (this.flows[st.step] || []);
+    const replies = list.map((r, i) => ({ label: r.label, free: !!r.free, pick: r.go, delay: i * 70 }));
+    return {
+      S: S, mode: mode, text: st.text, say: st.say || ' ', shown: st.say.slice(0, st.shown),
+      eyeW: eyeW, eyeH: eyeH, eyeT: Math.round(S * 0.5 - eyeH / 2 - S * 0.02),
+      eyeL1: Math.round(S * 0.385 - eyeW / 2), eyeL2: Math.round(S * 0.615 - eyeW / 2),
+      ex: Math.round(ex), ey: Math.round(ey),
+      eyeClass: squint ? 'eye-squint' : 'eye-open',
+      blinkClass: st.blink && !squint ? 'eye-blink' : '',
+      replies: replies,
+      orbRef: this.orbRef, onMove: this.onMove, onFocus: this.onFocus, onBlur: this.onBlur,
+      onType: this.onType, onSubmit: this.onSubmit, onPoke: this.onPoke
+    };
+  }
+}
+
+
+/* ---------- монтирование без фреймворка ---------- */
+const ORB_SIZE = 200; // размер яишенки в px (140–280)
+const app = new Component({ orbSize: ORB_SIZE });
+const $ = (id) => document.getElementById(id);
+const els = {
+  root: $('root'), wrap: $('orbWrap'), glow: $('glow'), btn: $('orbBtn'), body: $('orbBody'),
+  eye1: $('eye1'), eye2: $('eye2'), text: $('speechText'), h1: $('speech'), live: $('speechLive'),
+  input: $('prompt'), form: $('promptForm'), replies: $('replies')
+};
+let raf = 0, lastRepliesKey = '', lastSay = '';
+function scheduleRender() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
+
+function render() {
+  const v = app.renderVals();
+  v.orbRef.current = els.btn;
+  els.wrap.style.setProperty('--S', v.S + 'px');
+  els.glow.className = 'glow-' + v.mode;
+  els.body.className = 'orb-' + v.mode;
+  [[els.eye1, v.eyeL1], [els.eye2, v.eyeL2]].forEach(([el, left]) => {
+    el.className = ('eye ' + v.eyeClass + ' ' + v.blinkClass).trim();
+    el.style.cssText = `left:${left}px;top:${v.eyeT}px;width:${v.eyeW}px;height:${v.eyeH}px;transform:translate(${v.ex}px, ${v.ey}px)`;
+  });
+  els.text.textContent = v.shown;
+  els.h1.setAttribute('aria-label', v.say);
+  if (v.say !== lastSay) { els.live.textContent = v.say; lastSay = v.say; }
+  if (els.input.value !== v.text) els.input.value = v.text;
+  const key = app.state.step + '|' + v.replies.map(r => r.label).join('|');
+  if (key !== lastRepliesKey) {
+    const nextKey = key;
+    const nextReplies = v.replies.slice();
+    lastRepliesKey = nextKey; // lock so raf doesn't retrigger leave
+    const paint = () => {
+      els.replies.innerHTML = '';
+      nextReplies.forEach((r) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'reply' + (r.free ? ' reply--free' : '');
+        b.style.cssText = `min-height:44px;padding:0 18px;border-radius:14px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;animation-delay:${r.delay}ms`;
+        const label = document.createElement('span');
+        label.className = 'reply-label';
+        label.textContent = r.label;
+        b.appendChild(label);
+        if (r.free) {
+          const f = document.createElement('span');
+          f.className = 'reply-free';
+          f.textContent = 'FREE';
+          f.style.cssText = 'font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#FFFFFF;background:#7B6BB5;padding:3px 7px;border-radius:999px';
+          b.appendChild(f);
+        }
+        b.addEventListener('click', () => r.pick());
+        els.replies.appendChild(b);
+      });
+    };
+    const current = els.replies.querySelectorAll('.reply:not(.is-leaving)');
+    if (current.length) {
+      current.forEach((el) => el.classList.add('is-leaving'));
+      clearTimeout(window.__replyLeaveTimer);
+      window.__replyLeaveTimer = setTimeout(paint, nextReplies.length ? 280 : 420);
+    } else {
+      paint();
+    }
+  }
+}
+
+app.init();
+els.root.addEventListener('mousemove', (e) => app.onMove(e));
+els.input.addEventListener('input', (e) => app.onType(e));
+els.input.addEventListener('focus', () => app.onFocus());
+els.input.addEventListener('blur', () => app.onBlur());
+els.form.addEventListener('submit', (e) => app.onSubmit(e));
+els.btn.addEventListener('click', () => app.onPoke());
+render();
+app.componentDidMount();
+
+/* --- продукт: тема, вход, студия --- */
+async function ensureCsrf() {
+  const m = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+  if (m) return decodeURIComponent(m[1]);
+  const r = await fetch('/api/csrf', { credentials: 'same-origin' });
+  const d = await r.json().catch(() => ({}));
+  return d.csrf_token || '';
+}
+async function api(path, opts = {}) {
+  const method = (opts.method || 'GET').toUpperCase();
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (method !== 'GET' && method !== 'HEAD') headers['X-CSRF-Token'] = await ensureCsrf();
+  const res = await fetch(path, { credentials: 'same-origin', ...opts, headers });
+  const data = await res.json().catch(() => ({}));
+  return { res, data };
+}
+const loginBtn = document.getElementById('loginBtn');
+const authDialog = document.getElementById('authDialog');
+const authForm = document.getElementById('authForm');
+const authError = document.getElementById('authError');
+async function refreshLoginUi() {
+  const { data } = await api('/api/auth/me');
+  if (data.user) {
+    loginBtn.textContent = (data.user.name || data.user.email || 'Кабинет').split('@')[0].slice(0, 16);
+    loginBtn.onclick = () => { location.href = '/app'; };
+  } else {
+    loginBtn.textContent = 'Войти';
+    loginBtn.onclick = () => authDialog.showModal();
+  }
+}
+loginBtn.addEventListener('click', () => authDialog.showModal());
+document.getElementById('authCancel').addEventListener('click', () => authDialog.close());
+document.getElementById('modelsBtn').addEventListener('click', () => {
+  const q = new URLSearchParams({ models: '1' });
+  const prompt = (app.state.text || '').trim();
+  if (prompt) q.set('prompt', prompt);
+  location.href = '/app?' + q.toString();
+});
+document.getElementById('attachBtn').addEventListener('click', () => document.getElementById('attachFile').click());
+authForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  authError.hidden = true;
+  const fd = new FormData(authForm);
+  const email = String(fd.get('email') || '');
+  const password = String(fd.get('password') || '');
+  const code = String(fd.get('code') || '');
+  const consent = Boolean(fd.get('consent'));
+  if (code) {
+    const { res } = await api('/api/auth/email-code/verify', { method: 'POST', body: JSON.stringify({ email, code }) });
+    if (!res.ok) { authError.hidden = false; authError.textContent = 'Неверный или просроченный код'; return; }
+    authDialog.close();
+    await refreshLoginUi();
+    return;
+  }
+  if (!password) {
+    const { res, data } = await api('/api/auth/email-code/request', { method: 'POST', body: JSON.stringify({ email, consent_152: consent }) });
+    if (!res.ok) { authError.hidden = false; authError.textContent = data.error === 'consent_required' ? 'Нужно согласие' : 'Не удалось отправить код'; return; }
+    document.getElementById('authCodeWrap').hidden = false;
+    authError.hidden = false;
+    authError.textContent = data.dev_code ? ('Код (dev): ' + data.dev_code) : 'Код отправлен на email';
+    return;
+  }
+  const { res, data } = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+  if (!res.ok) { authError.hidden = false; authError.textContent = 'Неверный email или пароль'; return; }
+  authDialog.close();
+  await refreshLoginUi();
+});
+ensureCsrf().then(refreshLoginUi);
+if (location.search.includes('login=1')) authDialog.showModal();
+</script>
 </body>
 </html>

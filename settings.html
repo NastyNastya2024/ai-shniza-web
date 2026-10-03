@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Настройки — {AI}-шница</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Unbounded:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="studio.css?v=2">
+</head>
+<body class="studio">
+  <div class="page-shell">
+    <a href="/">← В чат</a>
+    <h1>Профиль и контакты</h1>
+    <form class="form-stack" data-form>
+      <label>Ник (@handle)
+        <input name="handle" pattern="[A-Za-z0-9_]{3,20}" placeholder="my_handle" />
+      </label>
+      <label>Имя
+        <input name="display_name" maxlength="120" />
+      </label>
+      <label>Био
+        <textarea name="bio" maxlength="160" rows="3"></textarea>
+      </label>
+      <label>Telegram <input name="telegram" /> <label><input type="checkbox" name="show_telegram" checked /> показывать</label></label>
+      <label>VK <input name="vk" /> <label><input type="checkbox" name="show_vk" /> показывать</label></label>
+      <label>Сайт <input name="website" /> <label><input type="checkbox" name="show_website" checked /> показывать</label></label>
+      <label><input type="checkbox" name="show_email" /> Показывать email в профиле</label>
+      <p data-referral style="color:var(--muted)"></p>
+      <button class="btn-primary" type="submit">Сохранить</button>
+      <p data-msg hidden></p>
+    </form>
+  </div>
+  <script>
+    async function csrf(){const m=document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);if(m)return decodeURIComponent(m[1]);const r=await fetch('/api/csrf',{credentials:'same-origin'});return (await r.json()).csrf_token||'';}
+    async function api(path,opts={}){const method=(opts.method||'GET').toUpperCase();const headers={'Content-Type':'application/json',...(opts.headers||{})};if(method!=='GET')headers['X-CSRF-Token']=await csrf();const res=await fetch(path,{credentials:'same-origin',...opts,headers});return {res,data:await res.json().catch(()=>({}))};}
+    (async()=>{
+      const {data}=await api('/api/auth/me');
+      if(!data.user){location.href='/?login=1';return;}
+      const p=data.profile||{};
+      const f=document.querySelector('[data-form]');
+      f.handle.value=p.handle||'';
+      f.display_name.value=p.display_name||'';
+      f.bio.value=p.bio||'';
+      f.telegram.value=p.telegram||'';
+      f.vk.value=p.vk||'';
+      f.website.value=p.website||'';
+      f.show_telegram.checked=!!p.show_telegram;
+      f.show_vk.checked=!!p.show_vk;
+      f.show_website.checked=!!p.show_website;
+      f.show_email.checked=!!p.show_email;
+      if(p.referral_code) document.querySelector('[data-referral]').textContent='Реферальная ссылка: '+location.origin+'/?ref='+p.referral_code;
+      f.addEventListener('submit',async(e)=>{
+        e.preventDefault();
+        const body={
+          handle:f.handle.value.trim(),
+          display_name:f.display_name.value,
+          bio:f.bio.value,
+          telegram:f.telegram.value,
+          vk:f.vk.value,
+          website:f.website.value,
+          show_telegram:f.show_telegram.checked,
+          show_vk:f.show_vk.checked,
+          show_website:f.show_website.checked,
+          show_email:f.show_email.checked,
+          consent_152:true
+        };
+        const {res,data}=await api('/api/settings/profile',{method:'POST',body:JSON.stringify(body)});
+        const msg=document.querySelector('[data-msg]');
+        msg.hidden=false;
+        msg.textContent=res.ok?'Сохранено':(data.error||'Ошибка');
+      });
+    })();
+  </script>
+</body>
+</html>

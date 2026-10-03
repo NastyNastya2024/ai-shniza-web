@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Работа — {AI}-шница</title>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{AI}-шница">
+  <meta name="twitter:card" content="summary_large_image">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Unbounded:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="studio.css?v=2">
+</head>
+<body class="studio">
+  <div class="page-shell" data-root>
+    <a href="/explore">← Витрина</a>
+    <h1 data-title>…</h1>
+    <p data-meta style="color:var(--muted)"></p>
+    <div data-media></div>
+    <div class="quick-amounts" style="margin-top:16px">
+      <a class="btn-primary" data-repeat href="/">Повторить этот промпт</a>
+      <button type="button" class="btn-primary" data-like style="background:var(--accent-soft);color:var(--ink)">♥</button>
+    </div>
+    <script type="application/ld+json" data-schema></script>
+  </div>
+  <script>
+    const id=location.pathname.split('/').pop();
+    (async()=>{
+      const res=await fetch('/api/works/'+id,{credentials:'same-origin'});
+      const data=await res.json();
+      if(!res.ok){document.querySelector('[data-title]').textContent='Не найдено';return;}
+      const w=data.work;
+      document.title=(w.title||'Работа')+' — {AI}-шница';
+      document.querySelector('[data-title]').textContent=w.title||'Без названия';
+      document.querySelector('[data-meta]').textContent=(w.model_key||'')+' · '+(w.prompt||'').slice(0,160);
+      const media=document.querySelector('[data-media]');
+      const url=w.media_url||w.thumb_url;
+      if(w.kind==='video') media.innerHTML=`<video src="${url||''}" controls style="max-width:100%;border-radius:16px"></video>`;
+      else if(w.kind==='audio') media.innerHTML=`<audio src="${url||''}" controls></audio>`;
+      else media.innerHTML=`<img src="${url||''}" alt="" style="max-width:100%;border-radius:16px">`;
+      document.querySelector('[data-repeat]').href=`/?prompt=${encodeURIComponent(w.prompt||'')}&model=${encodeURIComponent(w.model_key||'')}`;
+      const og=document.createElement('meta');og.setAttribute('property','og:image');og.content=w.thumb_url||url||'';document.head.appendChild(og);
+      const desc=document.createElement('meta');desc.name='description';desc.content=(w.prompt||'').slice(0,160);document.head.appendChild(desc);
+      const schema={
+        '@context':'https://schema.org',
+        '@type':w.kind==='video'?'VideoObject':'ImageObject',
+        name:w.title||'Работа',
+        description:(w.prompt||'').slice(0,200),
+        contentUrl:url,
+        thumbnailUrl:w.thumb_url||url
+      };
+      document.querySelector('[data-schema]').textContent=JSON.stringify(schema);
+    })();
+  </script>
+</body>
+</html>

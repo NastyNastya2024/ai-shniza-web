@@ -42,6 +42,27 @@ const PROVIDER_LABELS = {
   groq: "Groq",
 };
 
+async function ensureCsrf() {
+  if (window.__csrfToken) return window.__csrfToken;
+  const match = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+  if (match) {
+    window.__csrfToken = decodeURIComponent(match[1]);
+    return window.__csrfToken;
+  }
+  const res = await fetch("/api/csrf", { credentials: "same-origin" });
+  const data = await res.json().catch(() => ({}));
+  window.__csrfToken = data.csrf_token || "";
+  return window.__csrfToken;
+}
+
+async function csrfHeaders(extra = {}) {
+  return {
+    "Content-Type": "application/json",
+    "X-CSRF-Token": await ensureCsrf(),
+    ...extra,
+  };
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   restorePanelState();
   loadIntegrations();
@@ -975,7 +996,7 @@ async function sendChat(opts = {}) {
   const gen = currentGenerateModel();
   const response = await fetch("/api/chat", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: await csrfHeaders(),
     credentials: "same-origin",
     body: JSON.stringify({
       messages,
@@ -1025,7 +1046,7 @@ async function sendReplicateGenerate(model, overridePrompt) {
 
   const response = await fetch("/api/generate", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: await csrfHeaders(),
     credentials: "same-origin",
     body: JSON.stringify({
       model: model.id,

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Профиль — {AI}-шница</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Unbounded:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/studio.css?v=2">
+</head>
+<body class="studio">
+  <div class="page-shell">
+    <a href="/explore">← Витрина</a>
+    <h1 data-name>@…</h1>
+    <p data-bio style="color:var(--muted)"></p>
+    <p data-contacts></p>
+    <div class="explore-grid" data-grid></div>
+  </div>
+  <script>
+    const handle=decodeURIComponent(location.pathname.replace(/^\/@/,'').replace(/\/$/,''));
+    (async()=>{
+      const res=await fetch('/api/creators/'+encodeURIComponent(handle),{credentials:'same-origin'});
+      const data=await res.json();
+      if(!res.ok){document.querySelector('[data-name]').textContent='Профиль не найден';return;}
+      document.title='@'+data.handle+' — {AI}-шница';
+      document.querySelector('[data-name]').textContent=(data.display_name||data.handle)+' · @'+data.handle;
+      document.querySelector('[data-bio]').textContent=data.bio||'';
+      const c=data.contacts||{};
+      document.querySelector('[data-contacts]').innerHTML=[
+        c.telegram?`Telegram: ${c.telegram}`:'',
+        c.vk?`VK: ${c.vk}`:'',
+        c.website?`<a href="${c.website}">${c.website}</a>`:'',
+        c.email?c.email:''
+      ].filter(Boolean).join(' · ');
+      const grid=document.querySelector('[data-grid]');
+      (data.works||[]).forEach(w=>{
+        const card=document.createElement('article');
+        card.className='explore-card';
+        card.innerHTML=`<a href="/w/${w.id}"><img src="${w.thumb_url||w.media_url||''}" alt=""></a>
+          <div class="meta"><strong>${w.title||''}</strong></div>`;
+        grid.appendChild(card);
+      });
+    })();
+  </script>
+</body>
+</html>
