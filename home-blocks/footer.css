@@ -1,0 +1,21 @@
+/* ---- футер ---- */
+.ft{position:relative;z-index:3;margin-top:-16px;border-radius:44px 44px 0 0;background:#121113;color:#EEEEF0;font-family:'Manrope',system-ui,sans-serif;padding:84px 0 40px}
+.ft .w{max-width:1240px;margin:0 auto;padding:0 24px}
+.ft-top{display:grid;grid-template-columns:1.25fr 1fr 1fr 1.5fr;gap:40px}
+.ft-logo{height:58px;width:auto;display:block}
+.ft-about{margin:22px 0 0;max-width:300px;font-size:14.5px;line-height:1.6;font-weight:500;color:rgba(238,238,240,.6)}
+.ft-mail{margin-top:18px;display:inline-block;font-weight:700;font-size:15px;color:#EEEEF0;text-decoration:none;border-bottom:1px solid rgba(238,238,240,.3)}
+.ft-mail:hover{color:#FFB46B;border-color:#FFB46B}
+.ft h4{margin:6px 0 18px;font-size:12.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(238,238,240,.45)}
+.ft ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.ft ul a{color:rgba(238,238,240,.86);text-decoration:none;font-size:14.5px;font-weight:600;line-height:1.4}
+.ft ul a:hover{color:#FFB46B}
+.ft-cta{margin-top:56px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;padding:22px 26px;border-radius:24px;background:linear-gradient(110deg,rgba(255,162,53,.14),rgba(246,170,207,.12) 50%,rgba(138,102,255,.16));border:1px solid rgba(255,255,255,.08)}
+.ft-cta b{font-size:18px;font-weight:800;letter-spacing:-.02em}.ft-cta span{display:block;margin-top:4px;font-size:14px;font-weight:500;color:rgba(238,238,240,.6)}
+.ft-cta a{height:48px;padding:0 22px;border-radius:14px;display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:15px;text-decoration:none;color:#fff;background:radial-gradient(90% 130% at 12% 0%,rgba(255,214,110,.95),rgba(255,214,110,0) 55%),linear-gradient(110deg,#FFA235,#FF7B2C 42%,#FF8F7E 74%,#F6AACF)}
+.ft-cta a:hover{color:#fff;filter:brightness(1.05)}
+.ft-bot{margin-top:40px;padding-top:24px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;gap:14px 28px;flex-wrap:wrap;font-size:13px;font-weight:600;color:rgba(238,238,240,.45)}
+.ft-bot .rq{display:flex;gap:6px 18px;flex-wrap:wrap}
+.ft-bot a{color:rgba(238,238,240,.7);text-decoration:none}.ft-bot a:hover{color:#FFB46B}
+@media (max-width:980px){.ft-top{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.ft{padding:64px 0 32px;border-radius:32px 32px 0 0}.ft-top{grid-template-columns:1fr;gap:30px}.ft-logo{height:48px}}

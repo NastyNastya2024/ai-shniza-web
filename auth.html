@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Вход — {AI}-шница</title>
+<script src="/i18n/dict-ru.js"></script>
+<script src="/i18n/dict-en.js"></script>
+<script src="/i18n/runtime.js"></script>
+<link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/brand/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/assets/brand/png/apple-touch-icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>(function(){try{var q=new URLSearchParams(location.search).get('theme');var t=q||localStorage.getItem('aish-vitrina-theme')||localStorage.getItem('theme')||localStorage.getItem('aish-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t;}catch(e){}})();</script>
+<style>
+/* ---------- токены ---------- */
+:root{--bg:#EEEAF8;--panel:rgba(255,255,255,.78);--panel-brd:rgba(255,255,255,.95);--ink:#1E1238;--muted:#5B4D93;--muted2:#7D72AE;
+  --field:#FFFFFF;--field-brd:rgba(80,60,160,.16);--field-hover:rgba(80,60,160,.3);--focus:#7A55FF;--ring:rgba(122,85,255,.18);
+  --primary:#1E1238;--primary-ink:#fff;--soft:rgba(91,53,224,.08);--soft-h:rgba(91,53,224,.14);--accent:#4A2CC0;
+  --err:#C2305F;--err-bg:rgba(224,69,123,.08);--err-brd:rgba(224,69,123,.32);--ok:#16794C;--ok-bg:rgba(22,121,76,.1);
+  --shadow:rgba(75,43,184,.28);--bubble:#FFFFFF;--bubble-ink:#1E1238;--right-bg:url(/assets/auth/bg-light.jpg);color-scheme:light}
+:root[data-theme=dark]{--bg:#15122A;--panel:rgba(38,31,66,.9);--panel-brd:rgba(255,255,255,.14);--ink:#F6F3FF;--muted:#C9C0EE;--muted2:#A79DD6;
+  --field:rgba(255,255,255,.08);--field-brd:rgba(255,255,255,.2);--field-hover:rgba(255,255,255,.34);--focus:#9B7BFF;--ring:rgba(155,123,255,.28);
+  --primary:#F3EFFF;--primary-ink:#1E1238;--soft:rgba(255,255,255,.08);--soft-h:rgba(255,255,255,.14);--accent:#D4C8FF;
+  --err:#FF8DB3;--err-bg:rgba(255,120,170,.1);--err-brd:rgba(255,120,170,.34);--ok:#7BE3B0;--ok-bg:rgba(123,227,176,.12);
+  --shadow:rgba(0,0,0,.6);--bubble:#2E264E;--bubble-ink:#F6F3FF;--right-bg:url(/assets/auth/bg-dark.jpg);color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Onest',system-ui,sans-serif}
+button,input{font:inherit}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+[hidden]{display:none!important}
+
+/* ---------- раскладка: две половины ---------- */
+.auth{position:relative;min-height:100vh;min-height:100dvh;display:grid;grid-template-columns:minmax(440px,1fr) 1.15fr}
+.left{position:relative;display:flex;flex-direction:column;padding:28px clamp(24px,5vw,72px) 28px;background:var(--bg)}
+.right{position:relative;overflow:hidden;background:var(--right-bg) center/cover no-repeat;display:flex;align-items:center;justify-content:center;margin:14px 14px 14px 0;border-radius:32px}
+:root[data-theme=dark] .right{box-shadow:inset 0 0 0 100vmax rgba(70,48,150,.14)}
+
+.corner-tools{position:absolute;top:16px;right:max(20px,env(safe-area-inset-right));z-index:30;display:flex;align-items:center;gap:6px}
+.top{display:flex;align-items:center;gap:12px;min-height:36px}
+.top .logo{display:block;height:44px}
+.top .logo img{height:100%;display:block}
+.ibtn{width:36px;height:36px;border-radius:10px;border:1px solid var(--field-brd);background:var(--soft);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;text-decoration:none}
+.ibtn:hover{background:var(--soft-h)}
+.ibtn svg{width:16px;height:16px}
+.lang{width:auto;min-width:36px;padding:0 10px;font-weight:700;font-size:12px;letter-spacing:.02em}
+.ic-sun{display:none}:root[data-theme=dark] .ic-sun{display:block}:root[data-theme=dark] .ic-moon{display:none}
+
+.form-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 0}
+.card{width:100%;max-width:420px}
+.back{display:inline-flex;align-items:center;gap:6px;min-height:44px;margin:-8px 0 8px -6px;padding:0 6px;border:none;background:none;color:var(--accent);font-weight:700;font-size:14px;cursor:pointer;border-radius:10px}
+h1{margin:0;font-family:'Days One',sans-serif;font-weight:400;font-size:clamp(28px,3vw,36px);line-height:1.15;letter-spacing:-.01em}
+.sub{margin:10px 0 28px;font-size:16px;line-height:1.5;color:var(--muted)}
+.sub b{color:var(--ink);font-weight:600}
+
+.gbtn{width:100%;height:54px;border-radius:16px;border:1.5px solid var(--field-brd);background:var(--field);color:var(--ink);display:flex;align-items:center;justify-content:center;gap:12px;font-weight:600;font-size:16px;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s;margin-top:18px}
+.gbtn:hover{border-color:var(--field-hover);box-shadow:0 10px 24px -16px var(--shadow)}
+.gbtn[disabled]{cursor:progress;opacity:.8}
+
+/* поля */
+form{display:flex;flex-direction:column;gap:16px}
+.fld{display:flex;flex-direction:column;gap:8px}
+.lbl{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;font-weight:600;color:var(--muted)}
+.lbl a,.link{color:var(--accent);font-weight:600;text-decoration:none;font-size:14px;border:none;background:none;padding:0;cursor:pointer}
+.lbl a:hover,.link:hover{text-decoration:underline}
+.inp{position:relative}
+.inp input{width:100%;height:54px;border-radius:16px;border:1.5px solid var(--field-brd);background:var(--field);padding:0 16px;font-size:16px;color:var(--ink);transition:border-color .15s,box-shadow .15s}
+.inp input::placeholder{color:var(--muted2)}
+.inp input:hover{border-color:var(--field-hover)}
+.inp input:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 4px var(--ring)}
+.inp .eye{position:absolute;right:6px;top:5px;width:44px;height:44px;border:none;background:none;color:var(--muted2);cursor:pointer;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.inp .eye:hover{color:var(--ink)}
+.inp.pw input{padding-right:56px}
+.err .inp input{border-color:var(--err)}
+.err .inp input:focus{box-shadow:0 0 0 4px var(--err-bg)}
+.msg{display:flex;gap:6px;align-items:flex-start;font-size:13.5px;line-height:1.4;color:var(--err)}
+.msg svg{flex:0 0 auto;margin-top:1px}
+.hint{font-size:13px;color:var(--muted2);line-height:1.4}
+
+.chk{display:flex;align-items:flex-start;gap:12px;font-size:14px;line-height:1.45;color:var(--muted);cursor:pointer}
+.chk input{appearance:none;flex:0 0 auto;width:22px;height:22px;margin:0;border-radius:7px;border:1.5px solid var(--field-hover);background:var(--field);display:grid;place-content:center;cursor:pointer}
+.chk input:checked{background:var(--focus);border-color:var(--focus)}
+.chk input:checked:after{content:'';width:10px;height:6px;border:2.5px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.chk input:focus-visible{outline:3px solid var(--ring);outline-offset:2px}
+.chk a{color:var(--accent)}
+.chk.bad{color:var(--err)}.chk.bad input{border-color:var(--err)}
+
+.btn{height:54px;border-radius:16px;border:none;font-weight:700;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:filter .15s,transform .15s}
+.btn-p{background:var(--primary);color:var(--primary-ink);box-shadow:0 14px 30px -16px var(--shadow)}
+.btn-p:hover{filter:brightness(1.12)}
+.btn-p[disabled]{opacity:.45;cursor:not-allowed;box-shadow:none}
+.btn-p.busy{opacity:1;cursor:progress}
+.spin{width:18px;height:18px;border-radius:50%;border:2.5px solid currentColor;border-right-color:transparent;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.center{text-align:center}
+
+.banner{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:var(--err-bg);border:1px solid var(--err-brd);color:var(--err);font-size:14px;line-height:1.45}
+.banner.ok{background:var(--ok-bg);border-color:transparent;color:var(--ok)}
+
+/* код */
+.otp{position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.otp .c{height:62px;border-radius:16px;border:1.5px solid var(--field-brd);background:var(--field);display:flex;align-items:center;justify-content:center;font-family:'Days One',sans-serif;font-size:24px;color:var(--ink)}
+.otp .c.on{border-color:var(--focus);box-shadow:0 0 0 4px var(--ring)}
+.otp.bad .c{border-color:var(--err)}
+.otp.lock .c{opacity:.45}
+.otp input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:none;font-size:16px}
+.shake{animation:shake .32s ease}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.timer{font-size:14px;color:var(--muted2)}
+
+/* успех */
+.done{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px}
+.done .ok-ic{width:72px;height:72px;border-radius:50%;background:var(--ok-bg);color:var(--ok);display:flex;align-items:center;justify-content:center}
+
+.foot{font-size:13px;color:var(--muted2);line-height:1.5;text-align:center}
+.foot a{color:var(--muted)}
+
+/* ---------- правая половина: говорящая яишенка ---------- */
+.stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:26px;padding:40px}
+.bubble{position:relative;max-width:min(440px,80%);padding:18px 24px;border-radius:26px;background:var(--bubble);color:var(--bubble-ink);font-family:'Days One',sans-serif;font-size:clamp(18px,1.7vw,24px);line-height:1.3;text-align:center;box-shadow:0 24px 50px -24px var(--shadow);animation:pop .35s cubic-bezier(.3,.7,.3,1) both}
+.bubble:after{content:'';position:absolute;left:50%;bottom:-9px;width:18px;height:18px;margin-left:-9px;background:var(--bubble);transform:rotate(45deg);border-radius:0 0 4px 0}
+.caret{display:inline-block;width:.08em;height:.95em;margin-left:.06em;vertical-align:-.1em;background:#E8691C;border-radius:2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+.orb{position:relative;width:clamp(200px,24vw,320px);aspect-ratio:1;animation:float 5s ease-in-out infinite}
+.orb img{position:absolute;inset:0;width:100%;height:100%}
+.halo{position:absolute;inset:-35%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,236,236,.85),rgba(246,206,236,0));z-index:-1}
+:root[data-theme=dark] .halo{background:radial-gradient(closest-side,rgba(255,150,70,.35),rgba(246,206,236,0))}
+.eye{position:absolute;width:8.5%;height:27%;top:34.5%;transition:transform .28s cubic-bezier(.3,.7,.4,1)}
+.eye.l{left:34.25%}.eye.r{left:57.25%}
+.eye i{display:block;width:100%;height:100%;border-radius:999px;background:#fff;box-shadow:0 0 10px rgba(255,255,255,.6);transform-origin:50% 50%;transition:transform .12s,height .2s,margin .2s}
+.blink .eye i{transform:scaleY(.08)}
+.shut .eye i{transform:scaleY(.08)}            /* глаза закрыты — когда вводят пароль */
+.squint .eye i{height:40%;margin-top:30%}      /* щурится — ошибка */
+.happy .eye i{height:30%;margin-top:22%;border-radius:999px 999px 4px 4px}
+.orb.jump{animation:jump .7s cubic-bezier(.3,.7,.4,1) 1,float 5s 0.7s ease-in-out infinite}
+.orb.wobble{animation:wob .45s ease 1,float 5s .45s ease-in-out infinite}
+.orb.cook{animation:cook .9s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-12px)}}
+@keyframes jump{20%{transform:translateY(6px) scale(1.06,.92)}50%{transform:translateY(-34px) scale(.96,1.05)}80%{transform:translateY(0) scale(1.04,.96)}}
+@keyframes wob{25%{transform:rotate(-7deg)}75%{transform:rotate(7deg)}}
+@keyframes cook{25%{transform:rotate(-6deg) scale(1.03,.97)}75%{transform:rotate(6deg) scale(1.03,.97)}}
+.badges{position:absolute;inset:0;pointer-events:none}
+.badges span{position:absolute;display:inline-flex;align-items:center;gap:7px;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.75);backdrop-filter:blur(10px);font-weight:700;font-size:14px;color:#9A8BB8;box-shadow:0 12px 26px -16px rgba(60,30,140,.5);animation:float 6s ease-in-out infinite}
+.badges .badge-ic{flex:0 0 auto;width:16px;height:16px;color:currentColor;opacity:.92}
+:root[data-theme=dark] .badges span{background:rgba(46,38,78,.8);color:#D4CBF0;border:1px solid rgba(255,255,255,.12)}
+.badges .b1{left:9%;top:14%}.badges .b2{right:7%;top:8%;animation-delay:1s}.badges .b3{left:12%;bottom:14%;animation-delay:2s}
+
+/* ---------- планшет и телефон: сверху шапка, под ней яишенка с репликой, ниже форма ---------- */
+@media (max-width:980px){
+  .auth{display:flex;flex-direction:column}
+  .left{display:contents}
+  .corner-tools{top:max(14px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right))}
+  .top{order:0;padding:max(14px,env(safe-area-inset-top)) 128px 0 20px}
+  .top .logo{height:38px}
+  .right{order:1;margin:14px 16px 0;border-radius:26px;flex:0 0 auto}
+  .stage{flex-direction:row-reverse;align-items:center;gap:14px;padding:16px 18px;width:100%}
+  .orb{width:92px;flex:0 0 auto}
+  .halo{inset:-25%}
+  .bubble{flex:1;max-width:none;font-size:16px;padding:12px 16px;border-radius:20px 20px 6px 20px;text-align:left}
+  .bubble:after{left:auto;right:-6px;bottom:12px;margin:0;width:14px;height:14px;border-radius:0 4px 0 0}
+  .badges{display:none}
+  .form-wrap{order:2;flex:1;align-items:flex-start;padding:24px 20px 8px}
+  .foot{order:3;padding:0 20px max(18px,env(safe-area-inset-bottom))}
+}
+@media (max-width:420px){
+  .orb{width:76px}.bubble{font-size:15px}
+  .otp{gap:7px}.otp .c{height:54px;font-size:21px}
+  h1{font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){.orb,.badges span,.bubble,.spin{animation:none!important}}
+</style>
+</head>
+<body data-title-key="auth.title">
+<div class="auth" id="app">
+  <div class="corner-tools">
+    <button class="ibtn lang" type="button" aria-label="Язык: русский" data-lang-toggle>RU</button>
+    <button class="ibtn" type="button" id="themeBtn" aria-label="Тёмная тема"><svg class="ic-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="ic-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+    <a class="ibtn" href="/" id="closeBtn" aria-label="Закрыть и вернуться" data-i18n-attr="aria-label:auth.close.aria"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></a>
+  </div>
+  <section class="left" aria-label="Вход" data-i18n-attr="aria-label:auth.left.aria">
+    <div class="top">
+      <a class="logo" href="/" aria-label="{AI}-шница — на главную" data-i18n-attr="aria-label:common.home.aria"><img src="/assets/brand/svg/lockup-light.svg" alt="{AI}-шница — маркетплейс генеративных моделей" id="logoImg" data-brand="lockup" data-i18n-attr="alt:common.logo.alt"></a>
+    </div>
+    <div class="form-wrap"><div class="card" id="card" aria-live="polite"></div></div>
+    <p class="foot"><span data-i18n="auth.foot.noAccount">Нет аккаунта? Он создастся сам после первого входа.</span><br><a href="/legal/privacy.html" data-i18n="auth.foot.privacy">Политика конфиденциальности</a> · <a href="/legal/terms.html" data-i18n="auth.foot.terms">Условия сервиса</a></p>
+  </section>
+
+  <aside class="right" aria-hidden="true">
+    <div class="badges"><span class="b1" data-i18n="auth.badge.video">✦ Видео со звуком</span><span class="b2"><svg class="badge-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span data-i18n="auth.badge.image">Картинки</span></span><span class="b3" data-i18n="auth.badge.music">♫ Музыка за минуту</span></div>
+    <div class="stage">
+      <div class="bubble" id="bubble"><span id="say"></span><span class="caret"></span></div>
+      <div class="orb" id="orb"><div class="halo"></div><img src="/assets/orb-no-eyes.png" alt=""><span class="eye l"><i></i></span><span class="eye r"><i></i></span></div>
+    </div>
+  </aside>
+</div>
+
+<script>
+/* ============ ДАННЫЕ И СОСТОЯНИЕ ============
+   Демо без сервера. Подключение к API — функции api.* внизу.
+   Тестовые сценарии: почта fail@… — ошибка отправки; cancel@… — Google отменён; код 000000 — неверный; пароль короче 6 — неверный.
+   Любое состояние можно открыть ссылкой: auth.html?state=code-error&theme=dark */
+const $ = (id) => document.getElementById(id);
+const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const qs = new URLSearchParams(location.search);
+const NEXT = (() => {
+  const n = qs.get('next') || '';
+  if (!n || !n.startsWith('/') || n.startsWith('//') || n.startsWith('/\\')) return '/app';
+  return n;
+})();
+const S = { step: 'email', email: '', pw: '', pwMode: false, consent: false, err: '', errField: '', busy: false, google: false, code: '', attempts: 0, locked: false, resendIn: 0, showPw: false };
+async function ensureCsrf() {
+  if (window.__csrfToken) return window.__csrfToken;
+  const m = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+  if (m) { window.__csrfToken = decodeURIComponent(m[1]); return window.__csrfToken; }
+  const res = await fetch('/api/csrf', { credentials: 'same-origin' });
+  const data = await res.json().catch(() => ({}));
+  window.__csrfToken = data.csrf_token || '';
+  return window.__csrfToken;
+}
+async function api(path, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
+  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  if (method !== 'GET' && method !== 'HEAD') headers['X-CSRF-Token'] = await ensureCsrf();
+  const res = await fetch(path, { credentials: 'same-origin', ...options, headers });
+  let data = {};
+  try { data = await res.json(); } catch (_) {}
+  return { res, data };
+}
+const authApi = {
+  sendCode: async (email) => {
+    const { res, data } = await api('/api/auth/email-code/request', { method: 'POST', body: JSON.stringify({ email: email.trim(), consent_152: true }) });
+    if (!res.ok) { const err = new Error(data.error || 'send'); err.code = data.error; throw err; }
+    if (data.dev_code) console.info('dev code', data.dev_code);
+  },
+  checkCode: async (email, code) => {
+    const { res, data } = await api('/api/auth/email-code/verify', { method: 'POST', body: JSON.stringify({ email: email.trim(), code }) });
+    if (!res.ok) { const err = new Error(data.error || 'code'); err.code = data.error; throw err; }
+  },
+  passwordLogin: async (email, pw) => {
+    const { res, data } = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email: email.trim(), password: pw }) });
+    if (!res.ok) { const err = new Error(data.error || 'invalid'); err.code = data.error; throw err; }
+  }
+};
+const tr = (k, p) => AISH_I18N.t(k, p);
+const SAY_KEYS = ['hello', 'typing', 'badEmail', 'consent', 'sending', 'sendErr', 'code', 'codeErr', 'locked', 'resend', 'pw', 'peek', 'pwErr', 'forgot', 'google', 'googleErr', 'checking', 'done'];
+let mood = '';
+const ICON = {
+  g: '<svg width="22" height="22" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>',
+  alert: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>',
+  eye: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
+  eyeOff: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.9 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 4.4-1.1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
+  back: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
+  check: '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>'
+};
+const validEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
+const T = {};
+const later = (k, ms, fn) => { clearTimeout(T[k]); T[k] = setTimeout(fn, ms); };
+
+/* ============ ЯИШЕНКА ============ */
+let sayFull = '', sayN = 0;
+function speak(key, face, anim) {
+  const line = SAY_KEYS.indexOf(key) >= 0 ? tr('auth.say.' + key) : key;
+  if (line !== sayFull) {
+    sayFull = line; sayN = 0; clearInterval(T.tw);
+    const b = $('bubble'); b.style.animation = 'none'; void b.offsetWidth; b.style.animation = '';
+    if (matchMedia('(prefers-reduced-motion:reduce)').matches) { $('say').textContent = line; }
+    else T.tw = setInterval(() => { sayN++; $('say').textContent = sayFull.slice(0, sayN); if (sayN >= sayFull.length) clearInterval(T.tw); }, 28);
+  }
+  const o = $('orb'); o.classList.remove('shut', 'squint', 'happy', 'jump', 'wobble', 'cook'); void o.offsetWidth;
+  if (face) o.classList.add(face); if (anim) o.classList.add(anim);
+}
+// глаза следят за курсором — как на главной (index.html)
+function look(x, y) {
+  const orb = $('orb'); if (!orb) return;
+  const r = orb.getBoundingClientRect(); const S = r.width;
+  const dx = (x - (r.left + r.width / 2)) / 420;
+  const dy = (y - (r.top + r.height / 2)) / 320;
+  const mx = Math.max(-1, Math.min(1, dx));
+  const my = Math.max(-1, Math.min(1, dy));
+  const ex = mx * 0.09 * S;
+  const ey = my * 0.07 * S;
+  document.querySelectorAll('.eye').forEach((e) => { e.style.transform = 'translate(' + ex.toFixed(1) + 'px,' + ey.toFixed(1) + 'px)'; });
+}
+addEventListener('pointermove', (e) => look(e.clientX, e.clientY));
+addEventListener('focusin', (e) => { if (!e.target.matches('input,textarea,select,button')) return; const r = e.target.getBoundingClientRect(); look(r.left + r.width / 2, r.top + r.height / 2); });
+(function blinkLoop() { later('bl', 2200 + Math.random() * 2600, () => { const o = $('orb'); o.classList.add('blink'); setTimeout(() => { o.classList.remove('blink'); blinkLoop(); }, 140); }); })();
+
+/* ============ ОТРИСОВКА ШАГОВ ============ */
+function render() {
+  const c = $('card'); let h = '';
+  if (S.step === 'email') {
+    const eErr = S.err && S.errField === 'email', cErr = S.err && S.errField === 'consent', pErr = S.err && S.errField === 'password';
+    h += '<h1 id="t">' + esc(tr(S.pwMode ? 'auth.heading' : 'auth.heading.code')) + '</h1><p class="sub">' + esc(S.pwMode ? tr('auth.sub.password') : tr('auth.sub.code')) + '</p>';
+    if (S.err && (S.errField === 'send' || S.errField === 'google')) h += '<div class="banner" role="alert">' + ICON.alert + '<span>' + esc(S.err) + '</span></div><div style="height:16px"></div>';
+    h += '<form id="f" novalidate>'
+      + '<div class="fld' + (eErr ? ' err' : '') + '"><label class="lbl" for="em">' + esc(tr('auth.email.label')) + '</label><div class="inp"><input id="em" type="email" inputmode="email" autocomplete="email" placeholder="' + esc(tr('auth.email.placeholder')) + '" value="' + esc(S.email) + '"' + (eErr ? ' aria-invalid="true" aria-describedby="emE"' : '') + '></div>'
+      + (eErr ? '<div class="msg" id="emE" role="alert">' + ICON.alert + esc(S.err) + '</div>' : '') + '</div>';
+    if (S.pwMode) h += '<div class="fld' + (pErr ? ' err' : '') + '"><div class="lbl"><label for="pw">' + esc(tr('auth.password.label')) + '</label><button type="button" class="link" id="forgot">' + esc(tr('auth.password.forgot')) + '</button></div><div class="inp pw"><input id="pw" type="' + (S.showPw ? 'text' : 'password') + '" autocomplete="current-password" placeholder="' + esc(tr('auth.password.placeholder')) + '" value="' + esc(S.pw) + '"' + (pErr ? ' aria-invalid="true" aria-describedby="pwE"' : '') + '><button type="button" class="eye" id="showPw" aria-label="' + esc(S.showPw ? tr('auth.password.hide') : tr('auth.password.show')) + '">' + (S.showPw ? ICON.eyeOff : ICON.eye) + '</button></div>'
+      + (pErr ? '<div class="msg" id="pwE" role="alert">' + ICON.alert + '<span>' + esc(S.err) + ' <button type="button" class="link" id="toCode">' + esc(tr('auth.mode.toCode')) + '</button></span></div>' : '') + '</div>';
+    h += '<label class="chk' + (cErr ? ' bad' : '') + '"><input type="checkbox" id="cs"' + (S.consent ? ' checked' : '') + '><span>' + tr('auth.consent.html') + '</span></label>'
+      + (cErr ? '<div class="msg" role="alert" style="margin-top:-8px">' + ICON.alert + esc(S.err) + '</div>' : '');
+    h += '<button class="btn btn-p' + (S.busy ? ' busy' : '') + '" type="submit"' + (S.busy ? ' disabled' : '') + '>' + (S.busy ? '<span class="spin"></span>' + esc(S.pwMode ? tr('auth.submit.checking') : tr('auth.submit.sending')) : esc(S.pwMode ? tr('auth.submit.login') : S.errField === 'send' ? tr('auth.submit.retry') : tr('auth.submit.getCode'))) + '</button>'
+      + '<button type="button" class="link center" id="mode" style="min-height:44px">' + esc(S.pwMode ? tr('auth.mode.viaCode') : tr('auth.mode.havePassword')) + '</button></form>';
+    h += '<button class="gbtn" type="button" id="g"' + (S.google ? ' disabled' : '') + '>' + (S.google ? '<span class="spin" style="color:var(--muted)"></span>' + esc(tr('auth.google.busy')) : ICON.g + esc(tr('auth.google'))) + '</button>';
+  } else if (S.step === 'code') {
+    const bad = S.err && !S.locked;
+    h += '<button class="back" type="button" id="bk">' + (tr('auth.code.back').charAt(0) === '\u2190' ? '' : ICON.back) + esc(tr('auth.code.back')) + '</button><h1 id="t">' + esc(tr('auth.code.title')) + '</h1><p class="sub">' + tr('auth.code.sub.html', { email: esc(S.email) }) + '</p>';
+    h += '<label class="sr" for="cd">' + esc(tr('auth.code.aria')) + '</label><div class="otp' + (bad ? ' bad' : '') + (S.locked ? ' lock' : '') + '" id="otp">' + [0, 1, 2, 3, 4, 5].map((i) => '<span class="c' + (i === Math.min(S.code.length, 5) && !S.busy && !S.locked ? ' on' : '') + '">' + (S.code[i] || '') + '</span>').join('')
+      + '<input id="cd" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="' + esc(S.code) + '"' + (S.locked ? ' disabled' : '') + '></div>';
+    if (S.err) h += '<div class="msg" role="alert" style="margin-top:12px">' + ICON.alert + esc(S.err) + '</div>';
+    h += '<div style="height:20px"></div><button class="btn btn-p' + (S.busy ? ' busy' : '') + '" type="button" id="cdGo" style="width:100%"' + (S.code.length < 6 || S.busy || S.locked ? ' disabled' : '') + '>' + (S.busy ? '<span class="spin"></span>' + esc(tr('auth.submit.checking')) : esc(tr('auth.submit.login'))) + '</button>';
+    h += '<div class="row" style="margin-top:14px;justify-content:center">' + (S.resendIn > 0 ? '<span class="timer">' + esc(tr('auth.code.timer', { sec: String(S.resendIn).padStart(2, '0') })) + '</span>' : '<button type="button" class="link" id="rs" style="min-height:44px">' + esc(tr('auth.code.resend')) + '</button>') + '</div>';
+  } else if (S.step === 'done') {
+    h += '<div class="done"><span class="ok-ic">' + ICON.check + '</span><h1 id="t">' + esc(tr('auth.done.title')) + '</h1><p class="sub" style="margin:0">' + esc(tr('auth.done.sub')) + '</p><a class="btn btn-p" href="' + esc(NEXT) + '" style="width:100%;text-decoration:none">' + esc(tr('auth.done.continue')) + '</a></div>';
+  }
+  c.innerHTML = h; bind();
+}
+
+/* ============ СОБЫТИЯ ============ */
+function bind() {
+  const on = (id, ev, fn) => { const el = $(id); if (el) el.addEventListener(ev, fn); };
+  on('f', 'submit', submitEmail);
+  on('em', 'input', (e) => { S.email = e.target.value; if (S.errField === 'email') { S.err = ''; S.errField = ''; render(); $('em').focus(); placeEnd($('em')); } speak(S.email ? 'typing' : 'hello', '', ''); });
+  on('pw', 'input', (e) => { S.pw = e.target.value; if (S.errField === 'password') { S.err = ''; S.errField = ''; render(); $('pw').focus(); placeEnd($('pw')); } });
+  on('pw', 'focus', () => { if (!S.showPw) speak('pw', 'shut'); });
+  on('pw', 'blur', () => speak(S.email ? 'typing' : 'hello'));
+  on('showPw', 'click', () => { S.showPw = !S.showPw; render(); $('pw').focus(); speak(S.showPw ? 'peek' : 'pw', S.showPw ? 'happy' : 'shut'); });
+  on('cs', 'change', (e) => { S.consent = e.target.checked; if (S.errField === 'consent') { S.err = ''; S.errField = ''; render(); } });
+  on('mode', 'click', () => { S.pwMode = !S.pwMode; S.err = ''; S.errField = ''; render(); speak(S.pwMode ? 'pw' : 'hello', S.pwMode ? 'shut' : ''); });
+  on('forgot', 'click', toCodeMode); on('toCode', 'click', toCodeMode);
+  on('g', 'click', google);
+  on('bk', 'click', () => { Object.assign(S, { step: 'email', code: '', err: '', errField: '', locked: false, attempts: 0 }); render(); speak('hello'); $('em') && $('em').focus(); });
+  on('cd', 'input', (e) => { S.code = e.target.value.replace(/\D/g, '').slice(0, 6); if (!S.locked) S.err = ''; render(); $('cd').focus(); if (S.code.length === 6) later('auto', 250, submitCode); });
+  on('cdGo', 'click', submitCode);
+  on('rs', 'click', async () => {
+    try {
+      await authApi.sendCode(S.email);
+      Object.assign(S, { code: '', err: '', locked: false, attempts: 0 });
+      tick(); render(); speak('code', 'happy'); $('cd').focus();
+    } catch (_) { fail('send', tr('auth.err.sendFailed'), 'sendErr'); }
+  });
+}
+function placeEnd(el) { try { el.setSelectionRange(el.value.length, el.value.length); } catch (e) {} }
+function toCodeMode() { Object.assign(S, { pwMode: false, pw: '', err: '', errField: '' }); render(); speak('forgot', 'happy'); }
+function fail(field, msg, say) { Object.assign(S, { busy: false, google: false, err: msg, errField: field }); render(); speak(say, 'squint', 'wobble'); const el = field === 'email' ? $('em') : field === 'password' ? $('pw') : null; if (el) el.focus(); }
+
+async function submitEmail(e) {
+  e.preventDefault();
+  if (!S.email.trim()) return fail('email', tr('auth.err.enterEmail'), 'badEmail');
+  if (!validEmail(S.email)) return fail('email', tr('auth.err.badEmail'), 'badEmail');
+  if (!S.consent) return fail('consent', tr('auth.err.consent'), 'consent');
+  if (S.pwMode) {
+    if (!S.pw) return fail('password', tr('auth.err.enterPassword'), 'pwErr');
+    S.busy = true; S.err = ''; render(); speak('checking', '', 'cook');
+    try { await authApi.passwordLogin(S.email, S.pw); success(); }
+    catch (_) { fail('password', tr('auth.err.wrongCredentials'), 'pwErr'); }
+    return;
+  }
+  S.busy = true; S.err = ''; S.errField = ''; render(); speak('sending', '', 'cook');
+  try {
+    await authApi.sendCode(S.email);
+    Object.assign(S, { busy: false, step: 'code', code: '', attempts: 0, locked: false });
+    tick(); render(); speak('code', 'happy', 'jump'); $('cd').focus();
+  } catch (err) {
+    if (err && err.code === 'consent_required') fail('consent', tr('auth.err.consent'), 'consent');
+    else fail('send', tr('auth.err.sendFailed'), 'sendErr');
+  }
+}
+async function submitCode() {
+  if (S.code.length < 6 || S.busy || S.locked) return;
+  S.busy = true; render(); speak('checking', '', 'cook');
+  try { await authApi.checkCode(S.email, S.code); success(); }
+  catch (_) {
+    S.attempts++; S.busy = false; S.code = '';
+    if (S.attempts >= 3) { S.locked = true; S.resendIn = 0; clearInterval(T.rs); S.err = tr('auth.err.locked'); render(); speak('locked', 'squint', 'wobble'); return; }
+    S.err = tr('auth.err.wrongCode', { n: 3 - S.attempts }); render(); $('otp').classList.add('shake'); speak('codeErr', 'squint', 'wobble'); $('cd').focus();
+  }
+}
+function google() {
+  if (!S.consent) return fail('consent', tr('auth.err.consentGoogle'), 'consent');
+  S.google = true; S.err = ''; S.errField = ''; render(); speak('google', '', 'cook');
+  location.href = '/api/auth/google?next=' + encodeURIComponent(NEXT);
+}
+function success() {
+  Object.assign(S, { busy: false, google: false, step: 'done', err: '' });
+  render();
+  speak('done', 'happy', 'jump');
+  later('go', 1400, () => { location.href = NEXT; });
+}
+function tick() { clearInterval(T.rs); S.resendIn = 45; T.rs = setInterval(() => { S.resendIn = Math.max(0, S.resendIn - 1); if (S.step === 'code') { const tm = document.querySelector('.timer'); if (tm && S.resendIn > 0) tm.textContent = tr('auth.code.timer', { sec: String(S.resendIn).padStart(2, '0') }); else if (S.resendIn === 0) { render(); speak('resend'); } } if (!S.resendIn) clearInterval(T.rs); }, 1000); }
+
+/* ============ ТЕМА ============ */
+function syncTheme() {
+  const d = document.documentElement.dataset.theme === 'dark';
+  const theme = d ? 'dark' : 'light';
+  const img = $('logoImg');
+  if (window.AISH_I18N && AISH_I18N.brandSrc) img.src = AISH_I18N.brandSrc('lockup', theme);
+  else img.src = '/assets/brand/svg/lockup-' + theme + '.svg';
+  img.setAttribute('data-brand-theme', theme);
+  $('themeBtn').setAttribute('aria-label', d ? tr('common.theme.light') : tr('common.theme.dark'));
+}
+$('themeBtn').addEventListener('click', () => {
+  const n = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = n;
+  try { localStorage.setItem('aish-vitrina-theme', n); localStorage.setItem('theme', n); localStorage.setItem('aish-theme', n); } catch (e) {}
+  syncTheme();
+});
+syncTheme();
+const closeEl = $('closeBtn'); if (closeEl) closeEl.href = NEXT === '/app' ? '/' : NEXT;
+
+/* ============ ДЕМО-СОСТОЯНИЯ: /auth?state=… ============ */
+const STATES = {
+  'email':          [{}, 'hello'],
+  'email-filled':   [{ email: 'anna@example.com', consent: true }, 'typing'],
+  'email-error':    [{ email: 'anna@', consent: true, err: tr('auth.err.badEmail'), errField: 'email' }, 'badEmail', 'squint'],
+  'consent-error':  [{ email: 'anna@example.com', err: tr('auth.err.consent'), errField: 'consent' }, 'consent', 'squint'],
+  'sending':        [{ email: 'anna@example.com', consent: true, busy: true }, 'sending', '', 'cook'],
+  'send-error':     [{ email: 'anna@example.com', consent: true, err: tr('auth.err.sendFailed'), errField: 'send' }, 'sendErr', 'squint'],
+  'google-loading': [{ consent: true, google: true }, 'google', '', 'cook'],
+  'google-error':   [{ consent: true, err: tr('auth.err.googleFailed'), errField: 'google' }, 'googleErr', 'squint'],
+  'password':       [{ pwMode: true, email: 'anna@example.com', consent: true }, 'pw', 'shut'],
+  'password-error': [{ pwMode: true, email: 'anna@example.com', consent: true, pw: '12345', err: tr('auth.err.wrongCredentials'), errField: 'password' }, 'pwErr', 'squint'],
+  'code':           [{ step: 'code', email: 'anna@example.com', code: '4821', resendIn: 38 }, 'code', 'happy'],
+  'code-checking':  [{ step: 'code', email: 'anna@example.com', code: '482193', busy: true, resendIn: 31 }, 'checking', '', 'cook'],
+  'code-error':     [{ step: 'code', email: 'anna@example.com', attempts: 1, err: tr('auth.err.wrongCode', { n: 2 }), resendIn: 24 }, 'codeErr', 'squint'],
+  'code-locked':    [{ step: 'code', email: 'anna@example.com', attempts: 3, locked: true, err: tr('auth.err.locked') }, 'locked', 'squint'],
+  'code-resend':    [{ step: 'code', email: 'anna@example.com', resendIn: 0 }, 'resend'],
+  'done':           [{ step: 'done' }, 'done', 'happy']
+};
+
+/* oauth / already-authed */
+(async function boot() {
+  const authErr = qs.get('auth_error');
+  if (authErr) {
+    Object.assign(S, { err: tr('auth.err.googleFailed'), errField: 'google' });
+  }
+  try {
+    const { data } = await api('/api/auth/me');
+    if (data && data.user && !qs.get('state')) { location.replace(NEXT); return; }
+  } catch (_) {}
+  const st = qs.get('state');
+  if (st && STATES[st]) { const [p, say, face, anim] = STATES[st]; Object.assign(S, p); render(); speak(say, face || '', anim || ''); if (p.resendIn) clearInterval(T.rs); }
+  else { render(); speak(authErr ? 'googleErr' : 'hello', authErr ? 'squint' : ''); }
+})();
+</script>
+</body>
+</html>

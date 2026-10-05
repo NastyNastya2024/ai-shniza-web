@@ -100,6 +100,14 @@ def init_product_models(db: SQLAlchemy):
         status = db.Column(db.String(20), default="open")
         created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    class WorkLike(db.Model):
+        __tablename__ = "work_likes"
+        id = db.Column(db.Integer, primary_key=True)
+        work_id = db.Column(db.Integer, db.ForeignKey("works.id"), index=True, nullable=False)
+        user_id = db.Column(db.Integer, db.ForeignKey("users.id"), index=True, nullable=False)
+        created_at = db.Column(db.DateTime, default=datetime.utcnow)
+        __table_args__ = (db.UniqueConstraint("work_id", "user_id", name="uq_work_like_user"),)
+
     class AssistantMetric(db.Model):
         __tablename__ = "assistant_metrics"
         id = db.Column(db.Integer, primary_key=True)
@@ -116,5 +124,6 @@ def init_product_models(db: SQLAlchemy):
         "FxRate": FxRate,
         "LoginCode": LoginCode,
         "Complaint": Complaint,
+        "WorkLike": WorkLike,
         "AssistantMetric": AssistantMetric,
     }

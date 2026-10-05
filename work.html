@@ -4,11 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Работа — {AI}-шница</title>
-  <meta property="og:type" content="website">
+  <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/brand/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/assets/brand/png/apple-touch-icon-180.png">
+<meta property="og:type" content="website">
   <meta property="og:site_name" content="{AI}-шница">
   <meta name="twitter:card" content="summary_large_image">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Unbounded:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="studio.css?v=2">
+  <style>
+    [data-like].is-on{background:rgba(224,69,123,.16)!important;color:#E0457B!important;border:1px solid rgba(224,69,123,.35)}
+    [data-like] b{font-variant-numeric:tabular-nums}
+  </style>
 </head>
 <body class="studio">
   <div class="page-shell" data-root>
@@ -18,37 +25,65 @@
     <div data-media></div>
     <div class="quick-amounts" style="margin-top:16px">
       <a class="btn-primary" data-repeat href="/">Повторить этот промпт</a>
-      <button type="button" class="btn-primary" data-like style="background:var(--accent-soft);color:var(--ink)">♥</button>
+      <button type="button" class="btn-primary" data-like style="background:var(--accent-soft);color:var(--ink)" aria-pressed="false">♥ <b data-like-count>0</b></button>
     </div>
     <script type="application/ld+json" data-schema></script>
   </div>
   <script>
-    const id=location.pathname.split('/').pop();
-    (async()=>{
-      const res=await fetch('/api/works/'+id,{credentials:'same-origin'});
-      const data=await res.json();
-      if(!res.ok){document.querySelector('[data-title]').textContent='Не найдено';return;}
-      const w=data.work;
-      document.title=(w.title||'Работа')+' — {AI}-шница';
-      document.querySelector('[data-title]').textContent=w.title||'Без названия';
-      document.querySelector('[data-meta]').textContent=(w.model_key||'')+' · '+(w.prompt||'').slice(0,160);
-      const media=document.querySelector('[data-media]');
-      const url=w.media_url||w.thumb_url;
-      if(w.kind==='video') media.innerHTML=`<video src="${url||''}" controls style="max-width:100%;border-radius:16px"></video>`;
-      else if(w.kind==='audio') media.innerHTML=`<audio src="${url||''}" controls></audio>`;
-      else media.innerHTML=`<img src="${url||''}" alt="" style="max-width:100%;border-radius:16px">`;
-      document.querySelector('[data-repeat]').href=`/?prompt=${encodeURIComponent(w.prompt||'')}&model=${encodeURIComponent(w.model_key||'')}`;
-      const og=document.createElement('meta');og.setAttribute('property','og:image');og.content=w.thumb_url||url||'';document.head.appendChild(og);
-      const desc=document.createElement('meta');desc.name='description';desc.content=(w.prompt||'').slice(0,160);document.head.appendChild(desc);
-      const schema={
-        '@context':'https://schema.org',
-        '@type':w.kind==='video'?'VideoObject':'ImageObject',
-        name:w.title||'Работа',
-        description:(w.prompt||'').slice(0,200),
-        contentUrl:url,
-        thumbnailUrl:w.thumb_url||url
-      };
-      document.querySelector('[data-schema]').textContent=JSON.stringify(schema);
+    const id = location.pathname.split('/').pop();
+    async function csrf() {
+      const m = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+      if (m) return decodeURIComponent(m[1]);
+      const r = await fetch('/api/csrf', { credentials: 'same-origin' });
+      return (await r.json()).csrf_token || '';
+    }
+    function paintLike(btn, liked, likes) {
+      btn.classList.toggle('is-on', !!liked);
+      btn.setAttribute('aria-pressed', liked ? 'true' : 'false');
+      btn.setAttribute('aria-label', liked ? 'Убрать лайк' : 'Поставить лайк');
+      const c = btn.querySelector('[data-like-count]');
+      if (c) c.textContent = String(likes == null ? 0 : likes);
+    }
+    (async () => {
+      const res = await fetch('/api/works/' + id, { credentials: 'same-origin' });
+      const data = await res.json();
+      if (!res.ok) { document.querySelector('[data-title]').textContent = 'Не найдено'; return; }
+      const w = data.work;
+      document.title = (w.title || 'Работа') + ' — {AI}-шница';
+      document.querySelector('[data-title]').textContent = w.title || 'Без названия';
+      document.querySelector('[data-meta]').textContent = (w.model_key || '') + ' · ' + (w.prompt || '').slice(0, 160);
+      const media = document.querySelector('[data-media]');
+      const url = w.media_url || w.thumb_url;
+      if (w.kind === 'video') media.innerHTML = `<video src="${url || ''}" controls playsinline style="max-width:100%;border-radius:16px"></video>`;
+      else if (w.kind === 'audio') media.innerHTML = `<audio src="${url || ''}" controls></audio>`;
+      else media.innerHTML = `<img src="${url || ''}" alt="" style="max-width:100%;border-radius:16px">`;
+      document.querySelector('[data-repeat]').href = `/?prompt=${encodeURIComponent(w.prompt || '')}&model=${encodeURIComponent(w.model_key || '')}`;
+      const likeBtn = document.querySelector('[data-like]');
+      paintLike(likeBtn, w.liked, w.likes);
+      likeBtn.addEventListener('click', async () => {
+        likeBtn.disabled = true;
+        try {
+          const token = await csrf();
+          const r = await fetch('/api/works/' + id + '/like', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token }
+          });
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok) { alert(d.error === 'rate_limited' ? 'Слишком часто. Подождите немного.' : 'Не удалось поставить лайк'); return; }
+          paintLike(likeBtn, d.liked, d.likes);
+        } finally { likeBtn.disabled = false; }
+      });
+      const og = document.createElement('meta'); og.setAttribute('property', 'og:image'); og.content = w.thumb_url || url || ''; document.head.appendChild(og);
+      const desc = document.createElement('meta'); desc.name = 'description'; desc.content = (w.prompt || '').slice(0, 160); document.head.appendChild(desc);
+      document.querySelector('[data-schema]').textContent = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': w.kind === 'video' ? 'VideoObject' : 'ImageObject',
+        name: w.title || 'Работа',
+        description: (w.prompt || '').slice(0, 200),
+        contentUrl: url,
+        thumbnailUrl: w.thumb_url || url
+      });
     })();
   </script>
 </body>

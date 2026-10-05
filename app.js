@@ -284,6 +284,7 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+<<<<<<< HEAD
 async function ensureCsrf() {
   if (window.__csrfToken) return window.__csrfToken;
   const match = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
@@ -307,6 +308,13 @@ async function api(path, options = {}) {
     credentials: "same-origin",
     ...options,
     headers,
+=======
+async function api(path, options = {}) {
+  const res = await fetch(path, {
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    ...options,
+>>>>>>> 4404398504bd139f0127103f56fd9a4a82bda600
   });
   let data = {};
   try {
@@ -408,14 +416,7 @@ function syncAuthModal() {
 }
 
 function openAuthModal(mode) {
-  const modal = ensureAuthModal();
-  modal.dataset.mode = mode;
-  const error = qs("[data-auth-error]", modal);
-  if (error) error.textContent = "";
-  const form = qs("[data-auth-form]", modal);
-  if (form) form.reset();
-  syncAuthModal();
-  modal.classList.add("is-open");
+  location.href = "/auth?next=" + encodeURIComponent(location.pathname + location.search || "/app");
 }
 
 function closeAuthModal() {

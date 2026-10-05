@@ -624,7 +624,7 @@ function closeModels() {
   if (!qs("[data-rail]").classList.contains("is-open")) qs("[data-backdrop]").hidden = true;
 }
 function openAuth() {
-  qs("[data-auth-dialog]").showModal();
+  location.href = "/auth?next=" + encodeURIComponent(location.pathname + location.search);
 }
 
 function wire() {

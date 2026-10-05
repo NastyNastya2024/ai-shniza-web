@@ -4,7 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Баланс — {AI}-шница</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Unbounded:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/brand/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/assets/brand/png/apple-touch-icon-180.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Unbounded:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="studio.css?v=2">
 </head>
 <body class="studio">
@@ -37,7 +40,7 @@
     function rub(kop){return ((Number(kop)||0)/100).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₽';}
     async function load(){
       const {res,data}=await api('/api/balance');
-      if(!res.ok){location.href='/?login=1';return;}
+      if(!res.ok){location.href='/auth?next=/balance';return;}
       document.querySelector('[data-available]').textContent=rub(data.available_kop);
       document.querySelector('[data-held]').textContent=rub(data.held_kop);
       const tb=document.querySelector('[data-ledger]');

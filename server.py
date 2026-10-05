@@ -2952,7 +2952,6 @@ def api_generate():
     return jsonify({"error": "unsupported_kind", "kind": kind}), 500
 
 
-
 @app.route("/api/pricing", methods=["GET"])
 def api_pricing():
     region = (request.args.get("region") or os.getenv("REGION") or "RU").upper()
@@ -3015,6 +3014,12 @@ def app_page():
     return send_from_directory(BASE_DIR, "app.html")
 
 
+@app.route("/auth")
+def auth_page():
+    ensure_csrf_token()
+    return send_from_directory(BASE_DIR, "auth.html")
+
+
 @app.route("/media/<path:filename>")
 def media_files(filename):
     return send_from_directory(os.path.join(BASE_DIR, "media"), filename)
@@ -3029,7 +3034,8 @@ def explore_page():
 @app.route("/settings")
 def settings_page():
     ensure_csrf_token()
-    return send_from_directory(BASE_DIR, "settings.html")
+    # Личный кабинет креатора (демо UI из ai-shnitsa 3)
+    return send_from_directory(BASE_DIR, "creator.html")
 
 
 @app.route("/balance")
@@ -3052,6 +3058,12 @@ def work_page(work_id):
 
 @app.route("/@<handle>")
 def creator_page(handle):
+    ensure_csrf_token()
+    return send_from_directory(BASE_DIR, "creator.html")
+
+
+@app.route("/creator")
+def creator_cabinet_page():
     ensure_csrf_token()
     return send_from_directory(BASE_DIR, "creator.html")
 

@@ -5,14 +5,53 @@
 <script>document.documentElement.setAttribute("data-theme","light");</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{AI}-шница — генеративные модели</title>
+<script src="/i18n/dict-ru.js"></script>
+<script src="/i18n/dict-en.js"></script>
+<script src="/i18n/runtime.js"></script>
+<link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/brand/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/assets/brand/png/apple-touch-icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/works-block/works-block.css?v=3">
+<link rel="stylesheet" href="/home-blocks/features.css?v=3">
+<link rel="stylesheet" href="/home-blocks/footer.css?v=2">
 <style>
 
 body{margin:0;background:#C9C3F3}
 :root{--ink-ui:#2E186A} /* между #221048 и #4B2BB8, ближе к первому */
 a{color:var(--ink-ui)}a:hover{color:#221048}
-.page-bg{background-image:url(assets/bg.jpg);background-size:cover;background-position:center}
+.page-bg{background-image:url(assets/bg.jpg);background-size:cover;background-position:center;background-attachment:fixed}
+/* Блок моделей (из ai-shnitsa 6) — две медленные ленты между героем и работами */
+.models{position:relative;z-index:2;margin-top:-4px;border-radius:0;background-color:#C9C3F3;box-shadow:none;color:#1E1238;font-family:'Manrope',system-ui,sans-serif;padding:100px 0 240px;overflow:hidden}
+.mm{margin-top:0;display:flex;flex-direction:column;gap:26px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.mm-row{overflow:hidden}
+.mm-track{display:flex;gap:26px;width:max-content;animation:mmL 140s linear infinite}
+.mm-row.r .mm-track{animation-name:mmR;animation-duration:160s}
+.mm-dup{display:flex;gap:26px}
+.mm:hover .mm-track{animation-play-state:paused}
+@keyframes mmL{from{transform:translateX(0)}to{transform:translateX(calc(-50% - 13px))}}
+@keyframes mmR{from{transform:translateX(calc(-50% - 13px))}to{transform:translateX(0)}}
+.mm-card{flex:0 0 auto;width:520px;height:200px;box-sizing:border-box;display:flex;gap:22px;padding:18px;border-radius:26px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.95);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 #fff,0 20px 44px -32px rgba(75,43,184,.6);text-decoration:none;color:inherit;transition:background .25s,box-shadow .25s,transform .25s}
+.mm-card:hover{background:rgba(255,255,255,.92);color:inherit;transform:translateY(-3px);box-shadow:inset 0 1px 0 #fff,0 26px 50px -28px rgba(75,43,184,.6)}
+.mm-th{width:164px;height:164px;object-fit:cover;flex:0 0 auto;display:block;border-radius:18px;box-shadow:0 8px 18px -10px rgba(30,18,56,.45)}
+.mm-body{flex:1;min-width:0;padding:6px 8px 2px 0;display:flex;flex-direction:column;text-align:left}
+.mm-name{display:flex;align-items:center;gap:6px;font-size:15.5px;font-weight:800;white-space:nowrap;overflow:hidden}
+.mm-av{flex:0 0 auto;width:22px;height:22px;border-radius:7px;color:#fff;font:800 11px 'Manrope',sans-serif;font-style:normal;display:inline-flex;align-items:center;justify-content:center}
+.mm-prov{color:#6E62A3;font-weight:600}.mm-sl{color:#B4AAD6}.mm-model{overflow:hidden;text-overflow:ellipsis}
+.mm-desc{margin-top:8px;font-size:14px;line-height:1.45;font-weight:500;color:#5B4D93;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mm-foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;font-weight:700}
+.mm-kind{height:26px;padding:0 10px;border-radius:999px;background:rgba(255,138,43,.12);color:#C2531A;display:inline-flex;align-items:center}
+.mm-foot b{font-weight:800;color:#1E1238;font-size:13.5px}.mm-foot .mm-free{color:#B5470C}.mm-foot .mm-soon{color:#9C93C4;font-weight:700}
+@media (max-width:560px){.models{padding:64px 0 185px}.mm-card{width:350px;height:156px;padding:14px;gap:14px}.mm-th{width:126px;height:126px;border-radius:14px}}
+@media (prefers-reduced-motion:reduce){.mm-track{animation:none}.mm-row{overflow-x:auto}.mm-dup{display:none}}
+/* С моделями герой не sticky — блок моделей продолжает фон; работы наезжают на него */
+.ws-hero:has(~ #models){position:relative}
+#models + .ws{margin-top:-30px;z-index:3}
+/* overlap works → features (styles in /home-blocks/) */
+.ws + #features{margin-top:-44px}
+
+
 /* Liquid glass — mid white for panels, dark chips for actions */
 .glass{
   background:linear-gradient(165deg, rgba(255,255,255,.62), rgba(245,242,255,.42) 48%, rgba(230,224,250,.34));
@@ -34,29 +73,50 @@ a{color:var(--ink-ui)}a:hover{color:#221048}
 }
 .speech #speech{color:var(--ink-ui);text-shadow:none}
 .prompt-box.glass{
-  background:linear-gradient(165deg, rgba(255,255,255,.64), rgba(240,236,255,.4));
+  background:linear-gradient(165deg, rgba(255,255,255,.72), rgba(248,245,255,.48));
+  border:1px solid rgba(255,255,255,.9);
+  border-radius:32px!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.95),
+    0 18px 48px -26px rgba(75,43,184,.32);
+}
+.prompt-row{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+}
+.prompt-spark{
+  flex:0 0 auto;
+  width:28px;
+  height:28px;
+  margin-top:2px;
+  color:#6A3DF0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 .prompt-input{color:var(--ink-ui)!important;caret-color:var(--ink-ui)}
-.prompt-input::placeholder{color:#8C82B8!important}
-/* Buttons inside prompt: light glass, same ink as speech, no drop shadow */
+.prompt-input::placeholder{color:#9A90C4!important}
+/* Buttons inside prompt: light glass pills */
 .tool-btn{
-  border:1px solid rgba(255,255,255,.55);
+  border:1px solid rgba(255,255,255,.7);
   color:var(--ink-ui);
-  background:linear-gradient(155deg, rgba(255,255,255,.45), rgba(220,212,250,.28));
+  background:linear-gradient(155deg, rgba(255,255,255,.55), rgba(232,226,255,.38));
   backdrop-filter:blur(18px) saturate(1.4);
   -webkit-backdrop-filter:blur(18px) saturate(1.4);
-  box-shadow:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.75);
   text-shadow:none;
 }
 .tool-btn svg{stroke:currentColor}
 .tool-btn:hover{
-  background:linear-gradient(155deg, rgba(255,255,255,.58), rgba(230,224,255,.38))!important;
+  background:linear-gradient(155deg, rgba(255,255,255,.7), rgba(236,230,255,.5))!important;
 }
 .gen-btn{
-  background:radial-gradient(90% 130% at 12% 0%, rgba(255,214,110,0.95) 0%, rgba(255,214,110,0) 55%), linear-gradient(110deg, #FFA235 0%, #FF7B2C 42%, #FF8F7E 74%, #F6AACF 100%)!important;
-  text-shadow:0 1px 2px rgba(150,50,20,0.35);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -3px 8px rgba(236,110,160,0.25), 0 10px 24px -10px rgba(240,110,130,0.7)!important;
+  background:linear-gradient(100deg, #FF9A2E 0%, #FF6B4A 48%, #F06AA8 100%)!important;
+  text-shadow:0 1px 2px rgba(150,50,20,0.28);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.55), 0 10px 24px -10px rgba(240,110,130,0.65)!important;
 }
+.gen-btn:hover{filter:brightness(1.04)}
 .prompt-actions{
   display:flex;
   align-items:center;
@@ -65,6 +125,7 @@ a{color:var(--ink-ui)}a:hover{color:#221048}
   width:100%;
 }
 .btn-label{display:inline}
+.chev{opacity:.55;margin-left:2px}
 html[data-theme="dark"] body,#root[data-theme="dark"]{color:#F4EEFF}
 html[data-theme="dark"] .page-bg{filter:saturate(.85) brightness(.72)}
 html[data-theme="dark"] .glass,
@@ -97,12 +158,12 @@ html[data-theme="dark"] .hdr-tag,html[data-theme="dark"] .hdr-btn{color:#D7CCFF!
 .prompt-input:focus{outline:none}
 .prompt-box:focus-within{
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.7),
-    0 0 0 3px rgba(255,255,255,.22),
-    0 24px 60px -22px rgba(75,43,184,.4);
+    inset 0 1px 0 rgba(255,255,255,.95),
+    0 0 0 3px rgba(255,255,255,.28),
+    0 22px 56px -24px rgba(75,43,184,.38);
 }
 .hdr-btn:hover{background:rgba(255,255,255,.28);backdrop-filter:blur(12px)}
-/* Lower suggestion chips: cleaner lavender glass, no white stroke */
+/* Lower suggestion chips: light glass + dark purple bottom relief */
 #replies{
   box-sizing:border-box;
   width:100%;
@@ -117,27 +178,45 @@ html[data-theme="dark"] .hdr-tag,html[data-theme="dark"] .hdr-btn{color:#D7CCFF!
   cursor:pointer;
   font-family:'Onest',sans-serif;
   font-weight:600;
-  color:#fff;
+  color:#3B2380;
   text-shadow:none;
-  background:linear-gradient(155deg, rgba(170,158,220,.62), rgba(150,136,205,.48));
-  border:none;
-  backdrop-filter:blur(20px) saturate(1.3);
-  -webkit-backdrop-filter:blur(20px) saturate(1.3);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.35);
-  transition:transform .2s ease, background .25s ease, opacity .45s ease;
+  background:linear-gradient(165deg, rgba(255,255,255,.58), rgba(236,230,255,.38));
+  border:1px solid rgba(255,255,255,.78);
+  backdrop-filter:blur(22px) saturate(1.35);
+  -webkit-backdrop-filter:blur(22px) saturate(1.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.72),
+    inset 0 -2px 0 rgba(90,60,160,.28),
+    inset 0 -5px 12px rgba(70,45,140,.14);
+  transition:transform .2s ease, background .25s ease, box-shadow .25s ease, opacity .45s ease;
   animation:replyIn .4s ease-out both;
   flex:1 1 0;
   min-width:0;
   justify-content:center;
   white-space:nowrap;
 }
+.reply svg{flex:0 0 auto;stroke:currentColor;color:#4B2BB8}
 .reply--free{flex:1.45 1 0}
 .reply:hover{
-  background:linear-gradient(155deg, rgba(180,168,228,.7), rgba(160,146,212,.55))!important;
+  background:linear-gradient(165deg, rgba(255,255,255,.72), rgba(240,234,255,.5))!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.8),
+    inset 0 -2px 0 rgba(80,50,150,.36),
+    inset 0 -6px 14px rgba(60,38,130,.18);
   transform:translateY(-2px);
 }
 .reply:focus-visible{outline:2px solid rgba(106,61,240,.45);outline-offset:2px}
 .reply.is-leaving{opacity:0;transform:translateY(6px);pointer-events:none}
+.reply-free{
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:#fff;
+  background:linear-gradient(135deg,#7A55FF,#5B35E0);
+  padding:3px 7px;
+  border-radius:999px;
+}
 .auth-glass.glass{color:#221048}
 .auth-glass.glass input{
   background:rgba(255,255,255,.28);
@@ -153,7 +232,11 @@ html[data-theme="dark"] .hdr-tag,html[data-theme="dark"] .hdr-btn{color:#D7CCFF!
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 @media (max-width:760px){
   .hdr-tag{display:none}
-  .speech h1{white-space:normal!important}
+  .hdr-logo-lockup{display:none!important}
+  .hdr-logo-icon{display:block!important}
+  header{padding:14px 16px!important}
+  .speech h1{white-space:normal!important;font-size:14px!important;line-height:1.35!important;letter-spacing:0!important}
+  .speech.glass{padding:12px 16px 13px!important;margin-bottom:18px!important}
   .prompt-box{padding:14px 12px 12px!important}
   .prompt-actions{
     gap:8px;
@@ -168,7 +251,7 @@ html[data-theme="dark"] .hdr-tag,html[data-theme="dark"] .hdr-btn{color:#D7CCFF!
     height:44px!important;
     padding:0!important;
     margin:0!important;
-    border-radius:14px!important;
+    border-radius:999px!important;
     display:inline-flex!important;
     align-items:center;
     justify-content:center;
@@ -176,6 +259,7 @@ html[data-theme="dark"] .hdr-tag,html[data-theme="dark"] .hdr-btn{color:#D7CCFF!
     gap:0!important;
   }
   .gen-btn{margin-left:auto!important}
+  .chev{display:none!important}
   /* Same horizontal width as .prompt-box (full width of main padding) */
   #replies{
     width:100%;
@@ -186,13 +270,15 @@ html[data-theme="dark"] .hdr-tag,html[data-theme="dark"] .hdr-btn{color:#D7CCFF!
     padding:0;
   }
   .reply{
-    min-height:32px!important;
-    padding:0 6px!important;
-    font-size:11px!important;
-    gap:4px!important;
+    min-height:36px!important;
+    padding:0 10px!important;
+    font-size:12px!important;
+    gap:5px!important;
     flex:1 1 0;
     min-width:0;
+    border-radius:999px!important;
   }
+  .reply svg{width:14px;height:14px}
   .reply--free{flex:1.55 1 0!important}
   .reply-free{
     font-size:8px!important;
@@ -205,15 +291,16 @@ html[data-theme="dark"] .hdr-tag,html[data-theme="dark"] .hdr-btn{color:#D7CCFF!
 .orb-wrap{position:relative;width:var(--S);height:var(--S)}
 </style>
 </head>
-<body>
-<div id="root" class="page-bg" style="min-height: 100vh; box-sizing: border-box; position: relative; overflow: hidden; font-family: 'Onest', system-ui, sans-serif; color: #221048; background-color: #C9C3F3; display: flex; flex-direction: column">
+<body data-title-key="index.title">
+<div id="root" class="page-bg ws-hero" style="min-height: 100vh; box-sizing: border-box; position: relative; font-family: 'Onest', system-ui, sans-serif; color: #221048; background-color: #C9C3F3; display: flex; flex-direction: column">
 
   <header style="position: relative; z-index: 2; width: 100%; max-width: 1360px; margin: 0 auto; box-sizing: border-box; display: flex; align-items: center; gap: 20px; padding: 20px 32px">
-    <a href="/" aria-label="{AI}-шница — на главную" style="display: flex; align-items: center; gap: 10px; text-decoration: none">
-      <img src="assets/orb.png" alt="" style="width: 30px; height: 30px; display: block">
+    <a href="/" class="hdr-logo" aria-label="{AI}-шница — на главную" data-i18n-attr="aria-label:common.home.aria" style="display: flex; align-items: center; text-decoration: none">
+      <img class="hdr-logo-lockup" src="/assets/brand/svg/lockup-light.svg" alt="{AI}-шница — маркетплейс генеративных моделей" data-i18n-attr="alt:common.logo.alt" height="44" style="height: 44px; width: auto; display: block">
+      <img class="hdr-logo-icon" src="/assets/brand/svg/icon-light.svg" alt="{AI}-шница" data-i18n-attr="alt:common.brand.alt" width="40" height="40" style="height: 40px; width: 40px; display: none">
     </a>
     <nav style="margin-left: auto; display: flex; align-items: center; gap: 6px">
-      <button type="button" class="hdr-btn" style="height: 44px; padding: 0 14px; border-radius: 999px; border: none; background: transparent; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 14px; color: #3B2380; cursor: pointer">RU</button>
+      <button type="button" class="hdr-btn lang" data-lang-toggle aria-label="Язык: русский" style="height: 44px; padding: 0 14px; border-radius: 999px; border: none; background: transparent; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 14px; color: #3B2380; cursor: pointer">RU</button>
       <button type="button" id="loginBtn" style="height: 40px; margin-left: 6px; padding: 0 20px; border-radius: 14px; border: none; background: #1B0D3A; color: #FFFFFF; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer">Войти</button>
     </nav>
   </header>
@@ -222,7 +309,7 @@ html[data-theme="dark"] .hdr-tag,html[data-theme="dark"] .hdr-btn{color:#D7CCFF!
     <div style="position: relative; display: flex; flex-direction: column; align-items: center">
       <div class="orb-wrap" id="orbWrap">
         <div id="glow" class="glow-idle" style="position: absolute; inset: -42%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,236,236,0.85), rgba(246,206,236,0.4) 55%, rgba(240,210,245,0) 100%)"></div>
-        <button type="button" id="orbBtn" class="orb-btn" aria-label="Пощекотать {AI}-шницу" style="position: relative; width: 100%; height: 100%">
+        <button type="button" id="orbBtn" class="orb-btn" aria-label="Пощекотать {AI}-шницу" data-i18n-attr="aria-label:index.hero.orb.aria" style="position: relative; width: 100%; height: 100%">
           <div id="orbBody" class="orb-idle" style="position: relative; width: 100%; height: 100%">
             <img src="assets/orb-no-eyes.png" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block">
             <span class="eye" id="eye1"><span class="eye-shape"></span></span>
@@ -241,21 +328,27 @@ html[data-theme="dark"] .hdr-tag,html[data-theme="dark"] .hdr-btn{color:#D7CCFF!
     </div>
     <p class="sr-only" aria-live="polite" id="speechLive"></p>
 
-    <form id="promptForm" class="prompt-box glass" style="width: 100%; max-width: 740px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; padding: 18px 16px 14px 22px; border-radius: 14px">
-      <label for="prompt" class="sr-only">Промпт</label>
-      <textarea id="prompt" class="prompt-input" rows="2" placeholder="Напишите яишенке свою идею…" style="width: 100%; box-sizing: border-box; border: none; background: transparent; resize: none; font-family: 'Onest', sans-serif; font-size: 18px; line-height: 1.5; padding: 4px 0 0"></textarea>
+    <form id="promptForm" class="prompt-box glass" style="width: 100%; max-width: 740px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; padding: 20px 20px 16px 22px; border-radius: 32px">
+      <label for="prompt" class="sr-only" data-i18n="index.hero.prompt.label">Промпт</label>
+      <div class="prompt-row">
+        <span class="prompt-spark" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.4 6.6L21 11.5l-6.6 2.4L12 20.5l-2.4-6.6L3 11.5l6.6-2.4z"></path></svg>
+        </span>
+        <textarea id="prompt" class="prompt-input" rows="2" placeholder="Напишите, что хотите сгенерировать…" data-i18n-attr="placeholder:index.hero.prompt.placeholder" style="width: 100%; box-sizing: border-box; border: none; background: transparent; resize: none; font-family: 'Onest', sans-serif; font-size: 17px; line-height: 1.5; padding: 2px 0 0"></textarea>
+      </div>
       <div class="prompt-actions">
-        <button type="button" id="attachBtn" class="tool-btn" aria-label="Прикрепить файл" style="width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer">
+        <button type="button" id="attachBtn" class="tool-btn" aria-label="Прикрепить файл" data-i18n-attr="aria-label:common.attach" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; cursor: pointer">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg>
         </button>
         <input type="file" id="attachFile" accept="image/*" hidden>
-        <button type="button" id="modelsBtn" class="tool-btn" aria-label="Все модели" style="height: 44px; padding: 0 16px; border-radius: 14px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; cursor: pointer">
+        <button type="button" id="modelsBtn" class="tool-btn" aria-label="Все модели" data-i18n-attr="aria-label:index.hero.models" style="height: 44px; padding: 0 16px; border-radius: 999px; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; cursor: pointer">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
-          <span class="btn-label">Все модели</span>
+          <span class="btn-label" data-i18n="index.hero.models">Все модели</span>
+          <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
         </button>
-        <button type="submit" class="gen-btn" aria-label="Сгенерировать" style="margin-left: auto; height: 48px; padding: 0 22px 0 18px; border-radius: 14px; border: none; color: #FFFFFF; font-family: 'Onest', sans-serif; font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; cursor: pointer">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"></path></svg>
-          <span class="btn-label">Сгенерировать</span>
+        <button type="submit" class="gen-btn" aria-label="Сгенерировать" data-i18n-attr="aria-label:common.generate" style="margin-left: auto; height: 48px; padding: 0 20px 0 18px; border-radius: 999px; border: none; color: #FFFFFF; font-family: 'Onest', sans-serif; font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; cursor: pointer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"></path></svg>
+          <span class="btn-label" data-i18n="common.generate">Сгенерировать</span>
         </button>
       </div>
     </form>
@@ -264,28 +357,116 @@ html[data-theme="dark"] .hdr-tag,html[data-theme="dark"] .hdr-btn{color:#D7CCFF!
   </main>
 </div>
 
-<dialog id="authDialog" style="border: none; border-radius: 14px; padding: 0; background: transparent; max-width: 420px; width: calc(100vw - 32px)">
-  <form id="authForm" class="auth-glass glass" method="dialog" style="padding: 28px 24px; border-radius: 14px; font-family: 'Onest', sans-serif">
-    <h3 style="margin: 0 0 8px; font-family: 'Days One', sans-serif; font-weight: 400; font-size: 22px">Вход</h3>
-    <p style="margin: 0 0 16px; color: #5E4BA8; font-size: 14px">Код на email — основной способ. Пароль — для старых аккаунтов.</p>
-    <input type="email" name="email" required placeholder="Email" autocomplete="email" style="width: 100%; box-sizing: border-box; margin-bottom: 10px; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(106,61,240,0.18); font: inherit">
-    <div id="authCodeWrap" hidden>
-      <input type="text" name="code" placeholder="Код из письма" inputmode="numeric" autocomplete="one-time-code" style="width: 100%; box-sizing: border-box; margin-bottom: 10px; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(106,61,240,0.18); font: inherit">
+<section id="models" class="models page-bg" aria-label="Модели" data-i18n-attr="aria-label:index.models.aria">
+  <div class="mm" aria-label="Модели в {AI}-шнице" data-i18n-attr="aria-label:index.models.strip.aria"><div class="mm-row l"><div class="mm-track"><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m00-b9cfc7a6e5.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#FF7B2C">B</i><span class="mm-prov">bytedance</span><span class="mm-sl">/</span><span class="mm-model">seedance-1-lite</span></span><span class="mm-desc" data-i18n="index.model.seedance.desc">Видео со звуком из текста или картинки. Бесплатно по промо.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToVideo">текст → видео</span><b class="mm-free" data-i18n="common.price.free">Бесплатно</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m01-683ab31a84.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#4A7BEA">G</i><span class="mm-prov">google</span><span class="mm-sl">/</span><span class="mm-model">veo-3</span></span><span class="mm-desc" data-i18n="index.model.veo3.desc">Кинематографичное видео с речью, звуками и музыкой.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToVideo">текст → видео</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m02-9111abea05.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#F2668B">K</i><span class="mm-prov">kuaishou</span><span class="mm-sl">/</span><span class="mm-model">kling-o3</span></span><span class="mm-desc" data-i18n="index.model.kling.desc">Оживляет фото: плавное движение камеры и героев.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.imageToVideo">фото → видео</span><b class="">20 ₽/с</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m03-0648c0e62d.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#1E1238">O</i><span class="mm-prov">openai</span><span class="mm-sl">/</span><span class="mm-model">sora-2</span></span><span class="mm-desc" data-i18n="index.model.sora2.desc">Реалистичные сцены и физика движения, до 20 секунд.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToVideo">текст → видео</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m04-4b652631f0.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#8A66FF">M</i><span class="mm-prov">minimax</span><span class="mm-sl">/</span><span class="mm-model">hailuo-02</span></span><span class="mm-desc" data-i18n="index.model.hailuo.desc">Динамичные ролики 1080p с точным следованием промпту.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToVideo">текст → видео</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m05-bd4371c1cd.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#5FC8E8">R</i><span class="mm-prov">runway</span><span class="mm-sl">/</span><span class="mm-model">gen-4</span></span><span class="mm-desc" data-i18n="index.model.gen4.desc">Один персонаж в разных кадрах — для сторителлинга.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.imageToVideo">фото → видео</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m06-bf826754e1.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#5B35E0">A</i><span class="mm-prov">ace-step</span><span class="mm-sl">/</span><span class="mm-model">ace-step</span></span><span class="mm-desc" data-i18n="index.model.acestep.desc">Песня с вокалом или инструментал по описанию.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToMusic">текст → музыка</span><b class="">11 ₽</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m07-da25190c32.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#E8691C">E</i><span class="mm-prov">elevenlabs</span><span class="mm-sl">/</span><span class="mm-model">music</span></span><span class="mm-desc" data-i18n="index.model.eleven.desc">Треки для рекламы и роликов, с правами на коммерцию.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToMusic">текст → музыка</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><span class="mm-dup" aria-hidden="true"><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m00-b9cfc7a6e5.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#FF7B2C">B</i><span class="mm-prov">bytedance</span><span class="mm-sl">/</span><span class="mm-model">seedance-1-lite</span></span><span class="mm-desc" data-i18n="index.model.seedance.desc">Видео со звуком из текста или картинки. Бесплатно по промо.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToVideo">текст → видео</span><b class="mm-free" data-i18n="common.price.free">Бесплатно</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m01-683ab31a84.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#4A7BEA">G</i><span class="mm-prov">google</span><span class="mm-sl">/</span><span class="mm-model">veo-3</span></span><span class="mm-desc" data-i18n="index.model.veo3.desc">Кинематографичное видео с речью, звуками и музыкой.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToVideo">текст → видео</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m02-9111abea05.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#F2668B">K</i><span class="mm-prov">kuaishou</span><span class="mm-sl">/</span><span class="mm-model">kling-o3</span></span><span class="mm-desc" data-i18n="index.model.kling.desc">Оживляет фото: плавное движение камеры и героев.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.imageToVideo">фото → видео</span><b class="">20 ₽/с</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m03-0648c0e62d.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#1E1238">O</i><span class="mm-prov">openai</span><span class="mm-sl">/</span><span class="mm-model">sora-2</span></span><span class="mm-desc" data-i18n="index.model.sora2.desc">Реалистичные сцены и физика движения, до 20 секунд.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToVideo">текст → видео</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m04-4b652631f0.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#8A66FF">M</i><span class="mm-prov">minimax</span><span class="mm-sl">/</span><span class="mm-model">hailuo-02</span></span><span class="mm-desc" data-i18n="index.model.hailuo.desc">Динамичные ролики 1080p с точным следованием промпту.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToVideo">текст → видео</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m05-bd4371c1cd.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#5FC8E8">R</i><span class="mm-prov">runway</span><span class="mm-sl">/</span><span class="mm-model">gen-4</span></span><span class="mm-desc" data-i18n="index.model.gen4.desc">Один персонаж в разных кадрах — для сторителлинга.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.imageToVideo">фото → видео</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m06-bf826754e1.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#5B35E0">A</i><span class="mm-prov">ace-step</span><span class="mm-sl">/</span><span class="mm-model">ace-step</span></span><span class="mm-desc" data-i18n="index.model.acestep.desc">Песня с вокалом или инструментал по описанию.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToMusic">текст → музыка</span><b class="">11 ₽</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m07-da25190c32.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#E8691C">E</i><span class="mm-prov">elevenlabs</span><span class="mm-sl">/</span><span class="mm-model">music</span></span><span class="mm-desc" data-i18n="index.model.eleven.desc">Треки для рекламы и роликов, с правами на коммерцию.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToMusic">текст → музыка</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a></span></div></div><div class="mm-row r"><div class="mm-track"><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m16-bd93cf7065.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#FF7B2C">B</i><span class="mm-prov">bytedance</span><span class="mm-sl">/</span><span class="mm-model">seedream-5-lite</span></span><span class="mm-desc" data-i18n="index.model.seedreamLite.desc">Быстрые картинки до 2K — для идей и черновиков.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToImage">текст → картинка</span><b class="">9 ₽</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m17-60fb48f6c5.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#FF7B2C">B</i><span class="mm-prov">bytedance</span><span class="mm-sl">/</span><span class="mm-model">seedream-5-pro</span></span><span class="mm-desc" data-i18n="index.model.seedreamPro.desc">Картинки в 4K с точным текстом на изображении.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToImage">текст → картинка</span><b class="">16 ₽</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m18-ef5ab9f47b.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#4A7BEA">G</i><span class="mm-prov">google</span><span class="mm-sl">/</span><span class="mm-model">nano-banana</span></span><span class="mm-desc" data-i18n="index.model.nano.desc">Редактирует фото словами и смешивает несколько картинок.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.edit">редактирование</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m19-3b219a87f9.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#1E1238">B</i><span class="mm-prov">black-forest-labs</span><span class="mm-sl">/</span><span class="mm-model">flux-kontext-pro</span></span><span class="mm-desc" data-i18n="index.model.flux.desc">Меняет детали на фото и сохраняет стиль и лицо.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.edit">редактирование</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m20-659eb7f7cd.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#2A1F5C">O</i><span class="mm-prov">openai</span><span class="mm-sl">/</span><span class="mm-model">gpt-image-1</span></span><span class="mm-desc" data-i18n="index.model.gptimage.desc">Иллюстрации, инфографика и макеты по описанию.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToImage">текст → картинка</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m21-5e539dc62b.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#F2668B">I</i><span class="mm-prov">ideogram</span><span class="mm-sl">/</span><span class="mm-model">ideogram-v3</span></span><span class="mm-desc" data-i18n="index.model.ideogram.desc">Логотипы, постеры и надписи без ошибок.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToImage">текст → картинка</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m22-bda42fe576.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#8A66FF">R</i><span class="mm-prov">recraft</span><span class="mm-sl">/</span><span class="mm-model">recraft-v3</span></span><span class="mm-desc" data-i18n="index.model.recraft.desc">Векторная графика, иконки и фирменный стиль.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.vector">векторная графика</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m23-1ca0d90e95.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#5FC8E8">S</i><span class="mm-prov">stability</span><span class="mm-sl">/</span><span class="mm-model">stable-audio-2.5</span></span><span class="mm-desc" data-i18n="index.model.stableaudio.desc">Звуковые эффекты и короткие музыкальные лупы.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToAudio">текст → звук</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><span class="mm-dup" aria-hidden="true"><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m16-bd93cf7065.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#FF7B2C">B</i><span class="mm-prov">bytedance</span><span class="mm-sl">/</span><span class="mm-model">seedream-5-lite</span></span><span class="mm-desc" data-i18n="index.model.seedreamLite.desc">Быстрые картинки до 2K — для идей и черновиков.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToImage">текст → картинка</span><b class="">9 ₽</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m17-60fb48f6c5.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#FF7B2C">B</i><span class="mm-prov">bytedance</span><span class="mm-sl">/</span><span class="mm-model">seedream-5-pro</span></span><span class="mm-desc" data-i18n="index.model.seedreamPro.desc">Картинки в 4K с точным текстом на изображении.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToImage">текст → картинка</span><b class="">16 ₽</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m18-ef5ab9f47b.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#4A7BEA">G</i><span class="mm-prov">google</span><span class="mm-sl">/</span><span class="mm-model">nano-banana</span></span><span class="mm-desc" data-i18n="index.model.nano.desc">Редактирует фото словами и смешивает несколько картинок.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.edit">редактирование</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m19-3b219a87f9.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#1E1238">B</i><span class="mm-prov">black-forest-labs</span><span class="mm-sl">/</span><span class="mm-model">flux-kontext-pro</span></span><span class="mm-desc" data-i18n="index.model.flux.desc">Меняет детали на фото и сохраняет стиль и лицо.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.edit">редактирование</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m20-659eb7f7cd.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#2A1F5C">O</i><span class="mm-prov">openai</span><span class="mm-sl">/</span><span class="mm-model">gpt-image-1</span></span><span class="mm-desc" data-i18n="index.model.gptimage.desc">Иллюстрации, инфографика и макеты по описанию.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToImage">текст → картинка</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m21-5e539dc62b.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#F2668B">I</i><span class="mm-prov">ideogram</span><span class="mm-sl">/</span><span class="mm-model">ideogram-v3</span></span><span class="mm-desc" data-i18n="index.model.ideogram.desc">Логотипы, постеры и надписи без ошибок.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToImage">текст → картинка</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m22-bda42fe576.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#8A66FF">R</i><span class="mm-prov">recraft</span><span class="mm-sl">/</span><span class="mm-model">recraft-v3</span></span><span class="mm-desc" data-i18n="index.model.recraft.desc">Векторная графика, иконки и фирменный стиль.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.vector">векторная графика</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a><a class="mm-card" href="/app" tabindex="-1"><img class="mm-th" src="/assets/models/m23-1ca0d90e95.webp" alt="" loading="lazy"><span class="mm-body"><span class="mm-name"><i class="mm-av" style="background:#5FC8E8">S</i><span class="mm-prov">stability</span><span class="mm-sl">/</span><span class="mm-model">stable-audio-2.5</span></span><span class="mm-desc" data-i18n="index.model.stableaudio.desc">Звуковые эффекты и короткие музыкальные лупы.</span><span class="mm-foot"><span class="mm-kind" data-i18n="index.kind.textToAudio">текст → звук</span><b class="mm-soon" data-i18n="common.soon">скоро</b></span></span></a></span></div></div></div>
+</section>
+
+<section class="ws" aria-label="Готовые работы" data-i18n-attr="aria-label:index.works.aria">
+  <div class="ws-head">
+    <h2 class="ws-title reveal"><b style="font:inherit" data-i18n="index.works.title.line1">Создавайте картинки.</b><br><span data-i18n="index.works.title.line2">Оживляйте их.</span></h2>
+    <p class="ws-links reveal">
+      <span><a href="/app?models=1" class="ws-link" data-i18n="index.works.link.imageGen">Генерация картинок</a><span class="ws-amp">&amp;</span><a href="/app?models=1" class="ws-link" data-i18n="index.works.link.edit">редактирование</a></span>
+      <span><a href="/app?models=1" class="ws-link" data-i18n="index.works.link.videoGen">Генерация видео</a><span class="ws-amp">&amp;</span><a href="/app?models=1" class="ws-link" data-i18n="index.works.link.animate">оживление фото</a></span>
+    </p>
+  </div>
+  <div class="ws-stage">
+    <canvas id="ws-lens" class="ws-canvas" role="img" aria-label="Лента работ, сделанных в {AI}-шнице. Нажмите на работу, чтобы открыть её в витрине" data-i18n-attr="aria-label:index.works.canvas.aria"></canvas>
+    <div style="display:flex;justify-content:center;margin-top:36px">
+      <a href="/explore" style="height:52px;padding:0 26px;border-radius:999px;border:1.5px solid rgba(255,255,255,.18);display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:#EEEEF0;font-weight:800;font-size:15.5px;font-family:'Manrope',system-ui,sans-serif"><span data-i18n="index.works.openAll">Открыть всю витрину</span> <span aria-hidden="true">→</span></a>
     </div>
-    <input type="password" name="password" placeholder="Пароль (если уже есть)" autocomplete="current-password" style="width: 100%; box-sizing: border-box; margin-bottom: 12px; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(106,61,240,0.18); font: inherit">
-    <label style="display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: #5E4BA8; margin-bottom: 14px">
-      <input type="checkbox" name="consent" required style="margin-top: 3px">
-      <span>Согласен с <a href="/legal/privacy.html" target="_blank" rel="noreferrer">политикой</a> и <a href="/legal/terms.html" target="_blank" rel="noreferrer">условиями</a></span>
-    </label>
-    <div style="display: flex; gap: 8px">
-      <button type="submit" style="height: 44px; padding: 0 18px; border: none; border-radius: 14px; background: #1B0D3A; color: #fff; font: inherit; font-weight: 600; cursor: pointer">Продолжить</button>
-      <button type="button" id="authCancel" style="height: 44px; padding: 0 18px; border: none; border-radius: 14px; background: rgba(240,236,255,0.9); color: #3B2380; font: inherit; font-weight: 600; cursor: pointer">Отмена</button>
+  </div>
+</section>
+
+<section id="features" class="fb page-bg" aria-label="Как это работает" data-i18n-attr="aria-label:index.features.aria">
+  <div class="w">
+    <div class="fb-head"><h2 class="reveal" data-i18n="index.features.title">От идеи до заказа — три шага</h2><p class="reveal" data-i18n="index.features.lead">ИИ-помощник подберёт промпт и модель, вы покажете лучшие работы на витрине и можете получить заказы</p></div>
+    <div class="fb-grid">
+      <article class="fb-card reveal">
+        <div class="fb-ill g1" aria-hidden="true"><div class="i1">
+          <div class="i1-raw" data-i18n="index.features.s1.raw">котик жарит яичницу</div>
+          <div class="i1-say"><span class="i1-orb"><i></i><i></i></span><div class="i1-bub" data-i18n="index.features.s1.say">Рекомендую так:</div></div>
+          <div class="i1-out">
+            <p data-i18n="index.features.s1.out">Котик-повар жарит яичницу на рассвете, тёплый кинематографичный свет</p>
+            <div class="i1-model"><span class="i1-star" data-i18n="index.features.s1.best">★ Лучшая модель</span><div><b>Seedance Lite</b><span data-i18n="index.features.s1.meta">видео · бесплатно</span></div><span class="i1-ic">▶</span></div>
+          </div>
+        </div></div>
+        <div class="fb-txt"><span class="fb-num"><i>1</i><span data-i18n="index.features.s1.num">Идея и помощник</span></span><h3 data-i18n="index.features.s1.title">ИИ-помощник подберёт промпт и модель</h3><p data-i18n="index.features.s1.text">Опишите идею своими словами — помощник допишет промпт и подскажет лучшую модель по задаче и цене.</p></div>
+      </article>
+      <article class="fb-card reveal">
+        <div class="fb-ill g2" aria-hidden="true"><div class="i2">
+          <div class="i2-back b1"><img src="/home-blocks/img/work-1.webp" alt=""></div>
+          <div class="i2-back b2"><img src="/home-blocks/img/work-2.webp" alt=""></div>
+          <div class="i2-main"><img src="/home-blocks/img/work-3.webp" alt="">
+            <div class="i2-bar"><span data-i18n="index.features.s2.bar">На витрине</span><span class="i2-sw"><i></i></span></div>
+          </div>
+        </div></div>
+        <div class="fb-txt"><span class="fb-num"><i>2</i><span data-i18n="index.features.s2.num">Витрина</span></span><h3 data-i18n="index.features.s2.title">Покажите лучшее на витрине</h3><p data-i18n="index.features.s2.text">После генерации решите: опубликовать или оставить себе. В профиле — ваши работы и контакты, которые вы выбрали.</p></div>
+      </article>
+      <article class="fb-card reveal">
+        <div class="fb-ill g3" aria-hidden="true"><div class="i3">
+          <div class="i3-card"><div class="i3-h"><span data-i18n="index.features.s3.card">Новый заказ</span><em>3</em></div>
+            <div class="i3-top"><span class="i3-av" data-i18n="index.features.s3.avatar">А</span><div><b data-i18n="index.features.s3.name">Анна К.</b><span data-i18n="index.features.s3.what">оригинал «Галактики» в 4K</span></div></div>
+            <span class="i3-btn" data-i18n="index.features.s3.reply">Ответить на заказ →</span></div>
+        </div></div>
+        <div class="fb-txt"><span class="fb-num"><i>3</i><span data-i18n="index.features.s3.num">Заказы</span></span><h3 data-i18n="index.features.s3.title">Получайте заказы в кабинет</h3><p data-i18n="index.features.s3.text">Запросы промпта, оригинала или новой работы приходят с контактами клиента. Дальше — напрямую, без посредников.</p></div>
+      </article>
+      <span class="fb-arrow" style="left:calc(33.333% - 7px)" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      <span class="fb-arrow" style="left:calc(66.666% + 7px)" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
     </div>
-    <p id="authError" hidden style="margin: 12px 0 0; color: #C94A0A; font-size: 14px"></p>
-  </form>
-</dialog>
+  </div>
+</section>
+
+
+<footer class="ft" aria-label="Подвал сайта" data-i18n-attr="aria-label:index.footer.aria">
+  <div class="w">
+    <div class="ft-top">
+      <div><a href="/" aria-label="{AI}-шница — на главную" data-i18n-attr="aria-label:common.home.aria"><img class="ft-logo" src="/assets/brand/svg/lockup-dark.svg" alt="{AI}-шница — маркетплейс генеративных моделей" data-i18n-attr="alt:common.logo.alt" height="58"></a>
+        <p class="ft-about" data-i18n="index.footer.about">Маркетплейс генеративных моделей: создавайте видео, картинки и музыку, публикуйте работы на витрине и получайте заказы.</p>
+        <a class="ft-mail" href="mailto:anastkomarova@yandex.ru">anastkomarova@yandex.ru</a></div>
+      <div><h4 data-i18n="index.footer.col.product">Сервис</h4><ul>
+        <li><a href="/app" data-i18n="nav.studio">Студия</a></li><li><a href="/explore" data-i18n="nav.showcase">Витрина</a></li><li><a href="#models" data-i18n="nav.models">Модели</a></li>
+        <li><a href="/creator?me=1" data-i18n="nav.creatorCabinet">Кабинет креатора</a></li><li><a href="#features" data-i18n="nav.howItWorks">Как это работает</a></li></ul></div>
+      <div><h4 data-i18n="index.footer.col.legal">Документы</h4><ul><li><a href="/legal/terms.html" data-i18n="index.footer.doc.legal">Правовая информация</a></li><li><a href="/legal/enterprise-terms.html" data-i18n="index.footer.doc.offer">Публичная оферта</a></li><li><a href="/legal/terms.html" data-i18n="index.footer.doc.terms">Пользовательское соглашение</a></li><li><a href="/legal/rules.html" data-i18n="index.footer.doc.rules">Правила витрины и публикации работ</a></li><li><a href="/legal/privacy.html" data-i18n="index.footer.doc.privacy">Политика обработки персональных данных</a></li><li><a href="/legal/cookies.html" data-i18n="index.footer.doc.cookies">Политика использования cookie</a></li></ul></div>
+      <div><h4 data-i18n="index.footer.col.consents">Согласия</h4><ul><li><a href="/legal/privacy.html" data-i18n="index.footer.consent.personal">Согласие на обработку персональных данных</a></li><li><a href="/legal/nosell.html" data-i18n="index.footer.consent.thirdParty">Согласие на передачу персональных данных третьим лицам</a></li><li><a href="/legal/privacy.html" data-i18n="index.footer.consent.marketing">Согласие на рекламную рассылку</a></li><li><a href="/legal/terms.html" data-i18n="index.footer.consent.recurring">Согласие на рекуррентные платежи (автосписания)</a></li></ul></div>
+    </div>
+    <div class="ft-cta"><div><b data-i18n="index.footer.cta.title">Загляните на витрину</b><span data-i18n="index.footer.cta.text">Сотни работ креаторов — смотрите, вдохновляйтесь, запрашивайте промпты и оригиналы.</span></div><a href="/explore"><span data-i18n="index.footer.cta.button" style="display:inline;margin:0;font:inherit;color:inherit">Открыть витрину</span> <span aria-hidden="true">→</span></a></div>
+    <div class="ft-bot"><span data-i18n="index.footer.owner">© 2026 ИП Комарова А.А.</span><span class="rq"><span data-i18n="index.footer.tin">ИНН 504231947047</span><span data-i18n="index.footer.ogrnip">ОГРНИП 322508100272216</span><span data-i18n="index.footer.place">Москва / remote</span></span><a href="#" data-lang-toggle data-footer-lang-label>EN</a></div>
+  </div>
+</footer>
 
 <script>
+/* i18n: t() из /i18n/runtime.js */
+const tr = (k, p) => AISH_I18N.t(k, p);
+const GREET_STORAGE = 'aish-greeted';
+const GREET_INTRO_LAST = 6;
+const GREET_REST_FIRST = 7;
+const GREET_REST_LAST = 20;
+const GREET_INTRO_PAUSE_MS = 3200;
+
+function minImagePriceRub() {
+  let min = Infinity;
+  document.querySelectorAll('.mm-card').forEach((card) => {
+    const kind = card.querySelector('.mm-kind');
+    if (!kind || kind.getAttribute('data-i18n') !== 'index.kind.textToImage') return;
+    const b = card.querySelector('.mm-foot b:not([data-i18n])');
+    if (!b || b.classList.contains('mm-soon')) return;
+    const m = b.textContent.trim().match(/^([\d.,]+)/);
+    if (m) min = Math.min(min, parseFloat(m[1].replace(',', '.')));
+  });
+  return isFinite(min) ? min : 9;
+}
+function greetLine(n) {
+  const key = 'index.greet.' + String(n).padStart(2, '0');
+  if (n === 12) return tr(key, { price: AISH_I18N.money(minImagePriceRub()) });
+  return tr(key);
+}
+function hasGreeted() {
+  try { return window.localStorage.getItem(GREET_STORAGE) === '1'; } catch (e) { return false; }
+}
+function markGreeted() {
+  try { window.localStorage.setItem(GREET_STORAGE, '1'); } catch (e) { /* private mode */ }
+}
+
 /* Мини-обёртка: даёт классу персонажа setState/props, как в редакторе дизайна */
 class DCLogic {
   constructor(props) { this.props = props || {}; this.state = {}; }
@@ -302,17 +483,21 @@ class Component extends DCLogic {
     this.later = (name, ms, fn) => { clearTimeout(this.timers[name]); this.timers[name] = setTimeout(fn, ms); };
     this.setMode = (mode) => { if (this.state.mode !== mode) this.setState({ mode: mode }); };
     this.restMode = () => this.state.focused ? 'listen' : 'idle';
-    this.speak = (line, step) => {
-      if (Array.isArray(line)) line = this.pick(line);
+    this.speak = (line, step, onDone) => {
+      if (typeof line === 'string' && /^index\.(say|greet)\./.test(line)) line = tr(line);
       clearInterval(this.timers.tw);
+      this._speakDone = typeof onDone === 'function' ? onDone : null;
       const patch = { say: line, shown: 0 };
       if (this.blinkOnce && Math.random() < 0.6) this.blinkOnce();
-      if (step) patch.step = step;
+      if (step !== undefined) patch.step = step;
       this.setState(patch);
       this.timers.tw = setInterval(() => {
         const n = this.state.shown + 1;
-        if (n >= this.state.say.length) { clearInterval(this.timers.tw); this.setState({ shown: this.state.say.length }); }
-        else this.setState({ shown: n });
+        if (n >= this.state.say.length) {
+          clearInterval(this.timers.tw);
+          this.setState({ shown: this.state.say.length });
+          if (this._speakDone) { const cb = this._speakDone; this._speakDone = null; cb(); }
+        } else this.setState({ shown: n });
       }, 30);
       this.scheduleIdle();
     };
@@ -324,38 +509,46 @@ class Component extends DCLogic {
       this._last[key] = i;
       return arr[i];
     };
-    this.P = {
-      hello: [
-        'Привет! Что приготовим сегодня?',
-        'Привет! Я {AI}-шница — горячая, с пылу с жару!',
-        'Привет! Я {AI}-шница. Сковородка уже шкворчит!',
-        'Хэй! Я {AI}-шница. Что пожарим сегодня?',
-        'Привет-привет! Я {AI}-шница, жарю идеи!'
-      ],
-      idle: [
-        'Может, видео, где кот жарит яичницу?',
-        'Или музыку для ленивого завтрака?',
-        'Я голодная до идей! Подкинь ингредиентов',
-        'Сковородка горячая — самое время для шедевра',
-        'Приготовим картинку до слюнок?',
-        'Желток стынет! Что будем жарить?',
-        'Глазунья, болтунья или блокбастер? Выбирай!',
-        'Тссс… слышишь, как шкворчат идеи?'
-      ],
-      listen: ['Слушаю внимательно, вся во внимании!', 'Ушки на макушке! Ну, то есть желток', 'Сковородка разогрета, жду ингредиенты', 'Пиши смелее — я всё съем!'],
-      typing: ['Ммм, пахнет вкусно…', 'Ага, записываю…'],
-      ready: ['Звучит аппетитно! Жми «Сгенерировать»', 'Вкуснятина! Подаём на стол?', 'О-о-о, это я бы съела! Жмём «Сгенерировать»?', 'Шеф, рецепт готов — пора на огонь!'],
-      readyPerfect: ['Идеально! Жарим или добавим специй?', 'Рецепт собран! Посолить ещё или подаём?', 'Пальчики оближешь! Жарим?'],
-      cook: ['Жарю… переворачиваю… не подглядывай!', 'Шкворчит! Подбираю лучшую модель…', 'Взбиваю пиксели до пышной пенки…', 'Минутку, добавляю щепотку магии…'],
-      done: ['Готово! С пылу с жару. Ещё порцию?', 'Тадам! Подано горяченьким. Повторим?', 'Шедевр на тарелке! Хочешь добавки?'],
-      empty: ['Пустая сковородка грустит. Напиши идею!', 'Сначала ингредиенты — потом магия!', 'Эй, без идеи даже яичницу не пожаришь!'],
-      again: ['Что жарим теперь?', 'Новая порция идей? Я в деле!', 'Сковородка свободна — что дальше?'],
-      pokes: ['Хи-хи, щекотно!', 'Аккуратно, я же глазунья, а не кнопка!', 'Ой! Ещё раз — и я перевернусь', 'Эй, не трогай желток руками!', 'Ладно-ладно, я тут, я горячая!', 'Ещё чуть-чуть — и я стану болтуньей!']
+    this._lastGreet = null;
+    this.pickGreetRest = () => {
+      const pool = [];
+      for (let i = GREET_REST_FIRST; i <= GREET_REST_LAST; i++) pool.push(i);
+      let i = Math.floor(Math.random() * pool.length);
+      if (pool.length > 1 && this._lastGreet === pool[i]) i = (i + 1) % pool.length;
+      this._lastGreet = pool[i];
+      return greetLine(pool[i]);
     };
-    this.idleLines = this.P.idle;
+    this.canAutoGreet = () => this.state.step === 'start' && !this.state.text.trim() && !this.state.focused && this.state.mode !== 'cook';
+    this.chainIntro = () => {
+      this.later('intro', GREET_INTRO_PAUSE_MS, () => {
+        if (hasGreeted() || !this.canAutoGreet()) return;
+        const next = (this._greetStep || 1) + 1;
+        if (next <= GREET_INTRO_LAST) {
+          this._greetStep = next;
+          this.speak(greetLine(next), 'start', () => this.chainIntro());
+        } else {
+          markGreeted();
+        }
+      });
+    };
+    this.startGreet = () => {
+      clearTimeout(this.timers.intro);
+      if (hasGreeted()) {
+        this.speak(this.pickGreetRest(), 'start');
+        return;
+      }
+      this._greetStep = 1;
+      this.speak(greetLine(1), 'start', () => this.chainIntro());
+    };
+    /* реплики сценария: index.say.* (t() сам выбирает случайный вариант в массивах) */
+    this.P = {
+      hello: 'index.say.hello', listen: 'index.say.listen', typing: 'index.say.typing',
+      ready: 'index.say.ready', readyPerfect: 'index.say.readyPerfect', cook: 'index.say.cook', done: 'index.say.done',
+      empty: 'index.say.empty', again: 'index.say.again', pokes: 'index.say.pokes'
+    };
     this.scheduleIdle = () => this.later('idle', 8000, () => {
       if (this.state.mode !== 'idle' || this.state.text || this.state.step !== 'start') return;
-      this.speak(this.P.idle);
+      this.speak(this.pickGreetRest());
     });
     this.append = (piece) => {
       const t = this.state.text.trim();
@@ -363,56 +556,38 @@ class Component extends DCLogic {
       this.setState({ text: next });
     };
     this.focusInput = () => { const el = document.getElementById('prompt'); if (el) el.focus(); };
-    const own = { label: 'Своя идея', go: () => { this.speak(['Слушаю! Пиши прямо в поле — я вся внимание', 'Давай свой рецепт, шеф!', 'Твой фирменный рецепт? Пиши!'], 'free'); this.focusInput(); } };
+    const own = { icon: 'own', label: tr('index.reply.own'), go: () => { this.speak('index.say.own', 'free'); this.focusInput(); } };
+    const pick = (id, say, next) => ({ label: tr('index.chip.' + id + '.label'), go: () => { this.append(tr('index.chip.' + id + '.prompt')); this.speak('index.say.' + id, next); } });
+    const opt = (labelKey, promptKey) => ({ label: tr(labelKey), go: () => { this.append(tr(promptKey)); this.ready(); } });
     this.flows = {
       start: [
-        { label: 'Seedance', free: true, go: () => { this.setState({ text: 'Видео в Seedance: ' }); this.speak(['Seedance бесплатно — угощаю! Что снимаем?', 'Seedance — бесплатная добавка! Что в кадре?'], 'video'); } },
-        { label: 'Видео', go: () => { this.setState({ text: 'Видео: ' }); this.speak(['Видео — обожаю! Про что будет ролик?', 'Кино на завтрак? Беру! Про что снимаем?', 'Мотор! Что у нас в кадре?'], 'video'); } },
-        { label: 'Картинку', go: () => { this.setState({ text: 'Картинка: ' }); this.speak(['Картинка! Что подаём на холст?', 'Нарисую так, что захочется съесть!', 'Холст горячий! Что рисуем?'], 'image'); } },
-        { label: 'Музыку', go: () => { this.setState({ text: 'Музыка: ' }); this.speak(['Музыка! Какой жанр шкворчит в душе?', 'Бит под шкворчание сковородки? Какой жанр?', 'Включаем! Какой вкус у трека?'], 'music'); } }
+        { icon: 'seedance', label: tr('index.reply.seedance'), free: true, go: () => { this.setState({ text: tr('index.prompt.prefix.seedance') }); this.speak('index.say.seedance', 'video'); } },
+        { icon: 'video', label: tr('index.reply.video'), go: () => { this.setState({ text: tr('index.prompt.prefix.video') }); this.speak('index.say.video', 'video'); } },
+        { icon: 'image', label: tr('index.reply.image'), go: () => { this.setState({ text: tr('index.prompt.prefix.image') }); this.speak('index.say.image', 'image'); } },
+        { icon: 'music', label: tr('index.reply.music'), go: () => { this.setState({ text: tr('index.prompt.prefix.music') }); this.speak('index.say.music', 'music'); } }
       ],
-      video: [
-        { label: 'Кот-повар жарит яичницу', go: () => { this.append('кот-повар жарит яичницу'); this.speak(['Это же моя родня! Какое настроение?', 'Мяу-шедевр! Какое настроение?'], 'mood'); } },
-        { label: 'Неоновый город под дождём', go: () => { this.append('неоновый город под дождём'); this.speak(['Сочно и мокро! Какое настроение?', 'Неон — как желток в ночи! Какое настроение?'], 'mood'); } },
-        { label: 'Блинчики летят в космос', go: () => { this.append('блинчики летят в космос'); this.speak(['Космический завтрак! Какое настроение?', 'Блины на орбите — это вкусно! Настроение?'], 'mood'); } },
-        own
-      ],
-      image: [
-        { label: 'Глянцевая яичница в облаках', go: () => { this.append('глянцевая яичница в облаках, пастельные тона'); this.speak(['Это же я! Красавица! В каком стиле?', 'Автопортрет? Обожаю! В каком стиле?'], 'style'); } },
-        { label: 'Уютная кухня утром', go: () => { this.append('уютная кухня ранним утром, солнце, кофе'); this.speak(['Пахнет кофе и тостами! В каком стиле?', 'Уютно, как тёплый тост! Стиль?'], 'style'); } },
-        { label: 'Бургер-небоскрёб', go: () => { this.append('бургер высотой с небоскрёб'); this.speak(['Слюнки потекли! В каком стиле?', 'Сочно! Какой стиль подаём?'], 'style'); } },
-        own
-      ],
-      music: [
-        { label: 'Лоу-фай', go: () => { this.append('лоу-фай бит'); this.speak(['Мягко, как омлет! Для чего трек?', 'Расслабон! Для чего трек?'], 'purpose'); } },
-        { label: 'Синтвейв', go: () => { this.append('синтвейв'); this.speak(['Ретро с хрустящей корочкой! Для чего?', 'Неоновый вкус! Для чего?'], 'purpose'); } },
-        { label: 'Джаз', go: () => { this.append('джаз'); this.speak(['Джаз — как бенедикт: изысканно! Для чего?', 'Саксофон и тосты! Для чего трек?'], 'purpose'); } },
-        own
-      ],
+      video: [pick('cat', 'cat', 'mood'), pick('city', 'city', 'mood'), pick('pancakes', 'pancakes', 'mood'), own],
+      image: [pick('glossy', 'glossy', 'style'), pick('kitchen', 'kitchen', 'style'), pick('burger', 'burger', 'style'), own],
+      music: [pick('lofi', 'lofi', 'purpose'), pick('synth', 'synth', 'purpose'), pick('jazz', 'jazz', 'purpose'), own],
       mood: [
-        { label: 'Уютное', go: () => { this.append('уютное настроение'); this.ready(); } },
-        { label: 'Эпичное', go: () => { this.append('эпичное настроение'); this.ready(); } },
-        { label: 'Смешное', go: () => { this.append('смешное настроение'); this.ready(); } },
-        { label: 'Сочное', go: () => { this.append('яркое, сочное настроение'); this.ready(); } }
+        opt('index.reply.mood.cozy', 'index.prompt.mood.cozy'), opt('index.reply.mood.epic', 'index.prompt.mood.epic'),
+        opt('index.reply.mood.funny', 'index.prompt.mood.funny'), opt('index.reply.mood.juicy', 'index.prompt.mood.juicy')
       ],
       style: [
-        { label: '3D', go: () => { this.append('3D-рендер, глянец'); this.ready(); } },
-        { label: 'Акварель', go: () => { this.append('акварель'); this.ready(); } },
-        { label: 'Фото', go: () => { this.append('фотореализм'); this.ready(); } },
-        { label: 'Аниме', go: () => { this.append('аниме-стиль'); this.ready(); } }
+        opt('index.reply.style.3d', 'index.prompt.style.3d'), opt('index.reply.style.watercolor', 'index.prompt.style.watercolor'),
+        opt('index.reply.style.photo', 'index.prompt.style.photo'), opt('index.reply.style.anime', 'index.prompt.style.anime')
       ],
       purpose: [
-        { label: 'Для завтрака', go: () => { this.append('для неспешного завтрака'); this.ready(); } },
-        { label: 'Для работы', go: () => { this.append('для фокуса на работе'); this.ready(); } },
-        { label: 'Для вечеринки', go: () => { this.append('для вечеринки'); this.ready(); } }
+        opt('index.reply.purpose.breakfast', 'index.prompt.purpose.breakfast'), opt('index.reply.purpose.work', 'index.prompt.purpose.work'),
+        opt('index.reply.purpose.party', 'index.prompt.purpose.party')
       ],
       ready: [
-        { label: 'Сгенерировать', go: () => this.onSubmit() },
-        { label: 'Начать заново', go: () => this.reset() }
+        { label: tr('common.generate'), go: () => this.onSubmit() },
+        { label: tr('index.reply.restart'), go: () => this.reset() }
       ],
       done: [
-        { label: 'Ещё порцию', go: () => this.onSubmit() },
-        { label: 'Новая идея', go: () => this.reset() }
+        { label: tr('index.reply.again'), go: () => this.onSubmit() },
+        { label: tr('index.reply.newIdea'), go: () => this.reset() }
       ],
       free: []
     };
@@ -439,11 +614,11 @@ class Component extends DCLogic {
         if (this.state.mode !== 'type') return;
         this.setMode(this.restMode());
         const t = this.state.text.toLowerCase();
-        if (!t.trim()) { this.speak(['Не стесняйся, пиши что угодно — я всеядная!', 'Пустая сковородка… давай что-нибудь закинем!'], 'start'); return; }
-        if (this.state.step === 'ready') { this.speak(['Ага, досолила! Жми «Сгенерировать»', 'Учла, добавила в рецепт! Жарим?'], 'ready'); return; }
-        if (/видео|ролик|клип|анимац/.test(t)) this.speak(['Видео? Уже шкворчит! Какое настроение?', 'Кино на сковородке! Какое настроение?'], 'mood');
-        else if (/музык|трек|песн|бит/.test(t)) this.speak(['Звучит вкусно! Для чего трек?', 'Слышу бит! Для чего трек?'], 'purpose');
-        else if (/картин|фото|изображ|арт|постер/.test(t)) this.speak(['Нарисую — пальчики оближешь! В каком стиле?', 'Аппетитно! В каком стиле?'], 'style');
+        if (!t.trim()) { this.speak('index.say.typedEmpty', 'start'); return; }
+        if (this.state.step === 'ready') { this.speak('index.say.typedReady', 'ready'); return; }
+        if (new RegExp(tr('index.detect.video'), 'i').test(t)) this.speak('index.say.typedVideo', 'mood');
+        else if (new RegExp(tr('index.detect.music'), 'i').test(t)) this.speak('index.say.typedMusic', 'purpose');
+        else if (new RegExp(tr('index.detect.image'), 'i').test(t)) this.speak('index.say.typedImage', 'style');
         else this.speak(this.P.ready, 'ready');
       });
     };
@@ -475,7 +650,7 @@ class Component extends DCLogic {
   }
   componentDidMount() {
     this.init();
-    this.speak(this.P.hello, 'start');
+    this.startGreet();
     const blinkOnce = (cb) => { this.setState({ blink: true }); this.later('blinkUp', 130, () => { this.setState({ blink: false }); if (cb) this.later('blink2', 160, cb); }); };
     const loop = () => this.later('blinkLoop', 2000 + Math.random() * 2600, () => {
       if (Math.random() < 0.3) blinkOnce(() => blinkOnce(loop)); else { blinkOnce(); loop(); }
@@ -502,7 +677,7 @@ class Component extends DCLogic {
     // Keep chips while speech types; hide only during cook / leaving
     const hideChips = st.mode === 'cook';
     const list = hideChips ? [] : (this.flows[st.step] || []);
-    const replies = list.map((r, i) => ({ label: r.label, free: !!r.free, pick: r.go, delay: i * 70 }));
+    const replies = list.map((r, i) => ({ label: r.label, icon: r.icon, free: !!r.free, pick: r.go, delay: i * 70 }));
     return {
       S: S, mode: mode, text: st.text, say: st.say || ' ', shown: st.say.slice(0, st.shown),
       eyeW: eyeW, eyeH: eyeH, eyeT: Math.round(S * 0.5 - eyeH / 2 - S * 0.02),
@@ -544,18 +719,26 @@ function render() {
   els.h1.setAttribute('aria-label', v.say);
   if (v.say !== lastSay) { els.live.textContent = v.say; lastSay = v.say; }
   if (els.input.value !== v.text) els.input.value = v.text;
-  const key = app.state.step + '|' + v.replies.map(r => r.label).join('|');
+  const key = app.state.step + '|' + AISH_I18N.LANG + '|' + v.replies.map(r => r.label).join('|');
   if (key !== lastRepliesKey) {
     const nextKey = key;
     const nextReplies = v.replies.slice();
     lastRepliesKey = nextKey; // lock so raf doesn't retrigger leave
     const paint = () => {
       els.replies.innerHTML = '';
+      const ICONS = {
+        seedance: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"></rect><path d="m16 10 5-3v10l-5-3z"></path></svg>',
+        video: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="m10 9 6 3-6 3z" fill="currentColor" stroke="none"></path></svg>',
+        image: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="9" cy="9" r="2"></circle><path d="m3 16 5-5 4 4 3-3 6 6"></path></svg>',
+        music: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l10-2v12"></path><circle cx="7" cy="18" r="2.5"></circle><circle cx="17" cy="16" r="2.5"></circle></svg>',
+        own: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.2l1.7 5.4 5.6.2-4.4 3.5 1.5 5.5L12 13.8 7.6 16.8l1.5-5.5L4.7 7.8l5.6-.2L12 2.2z"></path></svg>'
+      };
       nextReplies.forEach((r) => {
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'reply' + (r.free ? ' reply--free' : '');
-        b.style.cssText = `min-height:44px;padding:0 18px;border-radius:14px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;animation-delay:${r.delay}ms`;
+        b.style.cssText = `min-height:44px;padding:0 16px;border-radius:999px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;animation-delay:${r.delay}ms`;
+        if (ICONS[r.icon]) b.insertAdjacentHTML('beforeend', ICONS[r.icon]);
         const label = document.createElement('span');
         label.className = 'reply-label';
         label.textContent = r.label;
@@ -563,8 +746,7 @@ function render() {
         if (r.free) {
           const f = document.createElement('span');
           f.className = 'reply-free';
-          f.textContent = 'FREE';
-          f.style.cssText = 'font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#FFFFFF;background:#7B6BB5;padding:3px 7px;border-radius:999px';
+          f.textContent = tr('index.reply.freeBadge');
           b.appendChild(f);
         }
         b.addEventListener('click', () => r.pick());
@@ -609,21 +791,19 @@ async function api(path, opts = {}) {
   return { res, data };
 }
 const loginBtn = document.getElementById('loginBtn');
-const authDialog = document.getElementById('authDialog');
-const authForm = document.getElementById('authForm');
-const authError = document.getElementById('authError');
+loginBtn.textContent = tr('common.login');
+const goAuth = () => { location.href = '/auth?next=' + encodeURIComponent('/'); };
 async function refreshLoginUi() {
   const { data } = await api('/api/auth/me');
   if (data.user) {
-    loginBtn.textContent = (data.user.name || data.user.email || 'Кабинет').split('@')[0].slice(0, 16);
+    loginBtn.textContent = (data.user.name || data.user.email || tr('studio.cabinet.profile')).split('@')[0].slice(0, 16);
     loginBtn.onclick = () => { location.href = '/app'; };
   } else {
-    loginBtn.textContent = 'Войти';
-    loginBtn.onclick = () => authDialog.showModal();
+    loginBtn.textContent = tr('common.login');
+    loginBtn.onclick = goAuth;
   }
 }
-loginBtn.addEventListener('click', () => authDialog.showModal());
-document.getElementById('authCancel').addEventListener('click', () => authDialog.close());
+loginBtn.addEventListener('click', goAuth);
 document.getElementById('modelsBtn').addEventListener('click', () => {
   const q = new URLSearchParams({ models: '1' });
   const prompt = (app.state.text || '').trim();
@@ -631,36 +811,18 @@ document.getElementById('modelsBtn').addEventListener('click', () => {
   location.href = '/app?' + q.toString();
 });
 document.getElementById('attachBtn').addEventListener('click', () => document.getElementById('attachFile').click());
-authForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  authError.hidden = true;
-  const fd = new FormData(authForm);
-  const email = String(fd.get('email') || '');
-  const password = String(fd.get('password') || '');
-  const code = String(fd.get('code') || '');
-  const consent = Boolean(fd.get('consent'));
-  if (code) {
-    const { res } = await api('/api/auth/email-code/verify', { method: 'POST', body: JSON.stringify({ email, code }) });
-    if (!res.ok) { authError.hidden = false; authError.textContent = 'Неверный или просроченный код'; return; }
-    authDialog.close();
-    await refreshLoginUi();
-    return;
-  }
-  if (!password) {
-    const { res, data } = await api('/api/auth/email-code/request', { method: 'POST', body: JSON.stringify({ email, consent_152: consent }) });
-    if (!res.ok) { authError.hidden = false; authError.textContent = data.error === 'consent_required' ? 'Нужно согласие' : 'Не удалось отправить код'; return; }
-    document.getElementById('authCodeWrap').hidden = false;
-    authError.hidden = false;
-    authError.textContent = data.dev_code ? ('Код (dev): ' + data.dev_code) : 'Код отправлен на email';
-    return;
-  }
-  const { res, data } = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
-  if (!res.ok) { authError.hidden = false; authError.textContent = 'Неверный email или пароль'; return; }
-  authDialog.close();
-  await refreshLoginUi();
-});
 ensureCsrf().then(refreshLoginUi);
-if (location.search.includes('login=1')) authDialog.showModal();
+/* цены в карточках моделей: «20 ₽/с», «11 ₽» → по локали */
+document.querySelectorAll('.mm-foot b:not([data-i18n])').forEach((b) => {
+  const m = b.textContent.trim().match(/^([\d.,]+)\s*₽(\/с)?$/);
+  if (!m) return;
+  const price = AISH_I18N.money(parseFloat(m[1].replace(',', '.')));
+  b.textContent = m[2] ? tr('common.price.perSec', { price: price }) : price;
+});
+if (location.search.includes('login=1')) goAuth();
 </script>
+<script src="/works-block/works-lens.js?v=3"></script>
+<script src="/works-block/works.config.js?v=3"></script>
+<script src="/works-block/works-block.js?v=3"></script>
 </body>
 </html>

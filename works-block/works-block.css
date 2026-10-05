@@ -1,0 +1,28 @@
+/* {AI}-шница — блок «Готовые работы». Шрифт: Manrope (Google Fonts). */
+.ws{position:relative;z-index:2;background:#121113;color:#EEEEF0;font-family:'Manrope',system-ui,sans-serif;
+  border-radius:44px 44px 0 0;box-shadow:0 -30px 60px -20px rgba(0,0,0,.5);padding:120px 0 64px}
+.ws a{color:#EEEEF0}
+.ws-head{max-width:1100px;margin:0 auto;padding:0 24px;text-align:center}
+.ws-title{margin:0;font-weight:700;font-size:clamp(26px,3.2vw,42px);line-height:1.08;letter-spacing:-.035em}
+.ws-title span{color:#BAA7FF}
+.ws-lead{margin:26px auto 0;max-width:640px;font-size:18px;line-height:1.6;font-weight:500;color:rgba(238,238,240,.66)}
+.ws-links{margin:34px 0 0;display:flex;flex-wrap:wrap;justify-content:center;gap:10px 40px;font-size:18px;font-weight:600}
+.ws-link{text-decoration:underline;text-decoration-color:rgba(238,238,240,.35);text-underline-offset:6px;text-decoration-thickness:1.5px;transition:color .15s,text-decoration-color .15s}
+.ws-link:hover{color:#FFB46B!important;text-decoration-color:#FFB46B}
+.ws-amp{color:rgba(238,238,240,.45);margin:0 .35em}
+.ws-stage{max-width:1760px;margin:72px auto 0;padding:0 clamp(20px,5vw,88px);box-sizing:border-box}
+.ws-canvas{display:block;width:100%;height:min(92vh,1000px);min-height:520px;background:#121113;border-radius:28px}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .9s cubic-bezier(.3,.7,.3,1),transform .9s cubic-bezier(.3,.7,.3,1)}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+@media (max-width:700px){
+  .ws{padding:64px 0 48px;border-radius:28px 28px 0 0}
+  .ws-head{padding:0 16px}
+  .ws-links{margin-top:16px;gap:8px 20px;font-size:15px}
+  .ws-stage{margin-top:20px;padding:0 12px}
+  .ws-canvas{height:min(42vh,340px);min-height:220px;border-radius:18px}
+}
+
+/* Наложение на первый экран: дайте вашему первому экрану класс .ws-hero */
+.ws-hero{position:sticky;top:0;z-index:1;transform-origin:50% 0;overflow:hidden}
+.ws-hero-dim{position:absolute;inset:0;background:#121113;opacity:0;pointer-events:none;z-index:50}

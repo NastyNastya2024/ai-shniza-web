@@ -551,6 +551,21 @@ html[data-theme="dark"] .theme-icon--sun {
   border-radius: 0;
 }
 
+.brand-logo {
+  display: block;
+  height: 36px;
+  width: auto;
+}
+.brand-logo-sm { height: 28px; }
+.brand-logo-lg { height: 44px; }
+.brand-logo-dark { display: none; }
+html[data-theme="dark"] .brand-logo-light { display: none; }
+html[data-theme="dark"] .brand-logo-dark { display: block; }
+.hero-brand { display: block; }
+.hero-brand-dark { display: none; }
+html[data-theme="dark"] .hero-brand-light { display: none; }
+html[data-theme="dark"] .hero-brand-dark { display: block; }
+
 .logo-text {
   font-family: 'Unbounded', sans-serif;
   font-size: 18px;

@@ -35,6 +35,7 @@ def register_product(app, db, User):
     FreeQuota = models["FreeQuota"]
     LoginCode = models["LoginCode"]
     Complaint = models["Complaint"]
+    WorkLike = models["WorkLike"]
     AssistantMetric = models["AssistantMetric"]
 
     def current_user():
@@ -360,12 +361,23 @@ def register_product(app, db, User):
 
         return Response(gen(), mimetype="text/event-stream")
 
+    def _viewer_liked(work_id: int, viewer_id: Optional[int] = None) -> bool:
+        if viewer_id:
+            return WorkLike.query.filter_by(work_id=work_id, user_id=viewer_id).first() is not None
+        liked_ids = session.get("liked_works") or []
+        try:
+            return int(work_id) in {int(x) for x in liked_ids}
+        except Exception:
+            return False
+
     def _work_public(work: Work, owner_view: bool = False, viewer_id: Optional[int] = None):
         if not work:
             return None
         url = work.original_url if owner_view and work.owner_id == (viewer_id or work.owner_id) else (work.watermarked_url or work.original_url)
         if owner_view:
             url = work.original_url or work.watermarked_url
+        prof = CreatorProfile.query.filter_by(user_id=work.owner_id).first()
+        owner_user = User.query.get(work.owner_id) if work.owner_id else None
         return {
             "id": work.id,
             "kind": work.kind,
@@ -377,9 +389,14 @@ def register_product(app, db, User):
             "thumb_url": work.thumb_url or work.watermarked_url or work.original_url,
             "media_url": media_store.presign(url) if url else None,
             "downloads": work.downloads,
-            "likes": work.likes,
+            "likes": int(work.likes or 0),
+            "liked": _viewer_liked(work.id, viewer_id),
             "published_at": work.published_at.isoformat() if work.published_at else None,
             "owner_id": work.owner_id,
+            "owner_handle": (prof.handle if prof else None),
+            "owner_name": (prof.display_name if prof and prof.display_name else None)
+            or (owner_user.name if owner_user and owner_user.name else None)
+            or (owner_user.email.split("@")[0] if owner_user and owner_user.email else None),
         }
 
     @app.get("/api/works/mine")
@@ -448,7 +465,7 @@ def register_product(app, db, User):
         q = Work.query.filter_by(status="published")
         if kind in {"video", "image", "audio", "text"}:
             q = q.filter_by(kind=kind)
-        if sort == "popular":
+        if sort in {"popular", "top"}:
             q = q.order_by(Work.likes.desc(), Work.downloads.desc())
         else:
             q = q.order_by(Work.published_at.desc())
@@ -472,13 +489,38 @@ def register_product(app, db, User):
         return jsonify({"work": _work_public(work, owner_view=owner_view, viewer_id=viewer.id if viewer else None)})
 
     @app.post("/api/works/<int:work_id>/like")
+    @rate_limit(40, 60, "work_like")
     def api_work_like(work_id):
+        """Toggle like for any published generation (video/image/audio/text)."""
         work = Work.query.filter_by(id=work_id, status="published").first()
         if not work:
             return jsonify({"error": "not_found"}), 404
-        work.likes = int(work.likes or 0) + 1
+        user = current_user()
+        liked = False
+        if user:
+            row = WorkLike.query.filter_by(work_id=work_id, user_id=user.id).first()
+            if row:
+                db.session.delete(row)
+                work.likes = max(0, int(work.likes or 0) - 1)
+                liked = False
+            else:
+                db.session.add(WorkLike(work_id=work_id, user_id=user.id))
+                work.likes = int(work.likes or 0) + 1
+                liked = True
+        else:
+            liked_ids = [int(x) for x in (session.get("liked_works") or []) if str(x).isdigit()]
+            if work_id in liked_ids:
+                liked_ids = [x for x in liked_ids if x != work_id]
+                work.likes = max(0, int(work.likes or 0) - 1)
+                liked = False
+            else:
+                liked_ids.append(work_id)
+                work.likes = int(work.likes or 0) + 1
+                liked = True
+            session["liked_works"] = liked_ids
+            session.modified = True
         db.session.commit()
-        return jsonify({"likes": work.likes})
+        return jsonify({"likes": int(work.likes or 0), "liked": liked})
 
     @app.post("/api/works/<int:work_id>/complaint")
     def api_work_complaint(work_id):
@@ -515,6 +557,7 @@ def register_product(app, db, User):
             contacts["website"] = prof.website
         if prof.show_email and user:
             contacts["email"] = user.email
+        viewer = current_user()
         return jsonify(
             {
                 "handle": prof.handle,
@@ -522,7 +565,10 @@ def register_product(app, db, User):
                 "bio": prof.bio,
                 "avatar_url": prof.avatar_url,
                 "contacts": contacts,
-                "works": [_work_public(w) for w in works],
+                "works": [
+                    _work_public(w, owner_view=False, viewer_id=viewer.id if viewer else None)
+                    for w in works
+                ],
             }
         )
 

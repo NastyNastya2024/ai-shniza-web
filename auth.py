@@ -198,9 +198,12 @@ def register_auth(app, db, User):
     def oauth_start(provider):
         spec, client_id, client_secret = _provider_creds(provider)
         if not spec:
-            return redirect("/?auth_error=unknown_provider")
+            return redirect("/auth?auth_error=unknown_provider")
         if not client_id or not client_secret:
-            return redirect(f"/?auth_error=oauth_not_configured&provider={quote(provider)}")
+            return redirect(f"/auth?auth_error=oauth_not_configured&provider={quote(provider)}")
+        nxt = str(request.args.get("next") or "").strip()
+        if nxt.startswith("/") and not nxt.startswith("//") and not nxt.startswith("/\\"):
+            session["auth_next"] = nxt
         state = secrets.token_urlsafe(24)
         session["oauth_state"] = state
         session["oauth_provider"] = provider
@@ -224,14 +227,14 @@ def register_auth(app, db, User):
     def oauth_callback(provider):
         spec, client_id, client_secret = _provider_creds(provider)
         if not spec or not client_id or not client_secret:
-            return redirect("/?auth_error=oauth_not_configured")
+            return redirect("/auth?auth_error=oauth_not_configured")
         if request.args.get("error"):
-            return redirect("/?auth_error=oauth_denied")
+            return redirect("/auth?auth_error=oauth_denied")
         if request.args.get("state") != session.get("oauth_state") or session.get("oauth_provider") != provider:
-            return redirect("/?auth_error=oauth_state")
+            return redirect("/auth?auth_error=oauth_state")
         code = request.args.get("code")
         if not code:
-            return redirect("/?auth_error=oauth_code")
+            return redirect("/auth?auth_error=oauth_code")
 
         redirect_uri = url_for("oauth_callback", provider=provider, _external=True)
         try:
@@ -263,10 +266,10 @@ def register_auth(app, db, User):
             token_payload = token_resp.json()
             access_token = token_payload.get("access_token")
             if not access_token:
-                return redirect("/?auth_error=oauth_token")
+                return redirect("/auth?auth_error=oauth_token")
             email, name, provider_id = _fetch_profile(provider, token_payload, access_token)
         except Exception:
-            return redirect("/?auth_error=oauth_failed")
+            return redirect("/auth?auth_error=oauth_failed")
 
         user = User.query.filter_by(provider=provider, provider_id=provider_id).first()
         if not user and email:
@@ -285,4 +288,7 @@ def register_auth(app, db, User):
         session.pop("oauth_state", None)
         session.pop("oauth_provider", None)
         session["user_id"] = user.id
-        return redirect("/")
+        nxt = session.pop("auth_next", None) or "/app"
+        if not (isinstance(nxt, str) and nxt.startswith("/") and not nxt.startswith("//")):
+            nxt = "/app"
+        return redirect(nxt)
