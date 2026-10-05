@@ -284,7 +284,6 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-<<<<<<< HEAD
 async function ensureCsrf() {
   if (window.__csrfToken) return window.__csrfToken;
   const match = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
@@ -308,13 +307,6 @@ async function api(path, options = {}) {
     credentials: "same-origin",
     ...options,
     headers,
-=======
-async function api(path, options = {}) {
-  const res = await fetch(path, {
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options,
->>>>>>> 4404398504bd139f0127103f56fd9a4a82bda600
   });
   let data = {};
   try {

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 *.db
 __pycache__/
 *.py[cod]
@@ -7,17 +6,12 @@ __pycache__/
 .coverage
 htmlcov/
 
-=======
->>>>>>> 4404398504bd139f0127103f56fd9a4a82bda600
 # API токены и секреты
 config.js
 .env
 .env.local
 .env.production
-<<<<<<< HEAD
-=======
 env.example
->>>>>>> 4404398504bd139f0127103f56fd9a4a82bda600
 
 # Временные файлы
 *.tmp
@@ -41,7 +35,6 @@ Thumbs.db
 # Local backups
 backups/
 
-<<<<<<< HEAD
 # Local media fallback (non-S3)
 media/
 
@@ -49,27 +42,14 @@ media/
 logs/
 
 # OmniRoute local runtime
-=======
-# Worker logs
-logs/
-
-# OmniRoute local runtime (if run from source tree)
->>>>>>> 4404398504bd139f0127103f56fd9a4a82bda600
 OmniRoute-release-v3.8.51/.env
 OmniRoute-release-v3.8.51/data/
 OmniRoute-release-v3.8.51/node_modules/
 
-<<<<<<< HEAD
 # OmniRoute docker env
 deploy/omniroute/.env
 
 # Node modules
-=======
-# OmniRoute docker env (password / JWT)
-deploy/omniroute/.env
-
-# Node modules (если будете использовать)
->>>>>>> 4404398504bd139f0127103f56fd9a4a82bda600
 node_modules/
 package-lock.json
 .venv-img/

@@ -41,25 +41,19 @@ def _run_omniroute() -> None:
     run_channel_worker("omniroute")
 
 
-<<<<<<< HEAD
 def _run_free() -> None:
     from queue_runtime.free_dispatcher import run_free_dispatcher
 
     run_free_dispatcher()
 
 
-=======
->>>>>>> 4404398504bd139f0127103f56fd9a4a82bda600
 def main() -> None:
     roles = [
         ("dispatcher", _run_dispatcher),
         ("replicate", _run_replicate),
         ("fal", _run_fal),
         ("omniroute", _run_omniroute),
-<<<<<<< HEAD
         ("free", _run_free),
-=======
->>>>>>> 4404398504bd139f0127103f56fd9a4a82bda600
     ]
     procs: list[mp.Process] = []
     for name, target in roles:

@@ -38,11 +38,12 @@
         <div class="admin-card">Ассистент без LLM<strong>${(d.assistant_metrics||[]).map(m=>m.day+': '+(m.without_llm||0)+'/'+(m.total||0)).join(' · ')||'—'}</strong></div>`;
       const c=await api('/api/admin/complaints');
       const root=document.querySelector('[data-complaints]');
+      const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
       (c.data.items||[]).forEach(item=>{
         const el=document.createElement('div');
         el.className='admin-card';
         el.style.marginBottom='8px';
-        el.innerHTML=`#${item.id} work ${item.work_id}: ${item.reason}
+        el.innerHTML=`#${esc(item.id)} work ${esc(item.work_id)}: ${esc(item.reason)}
           <div class="quick-amounts" style="margin-top:8px">
             <button type="button" data-hide>Скрыть</button>
             <button type="button" data-restore>Вернуть</button>

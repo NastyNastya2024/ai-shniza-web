@@ -42,7 +42,6 @@ const PROVIDER_LABELS = {
   groq: "Groq",
 };
 
-<<<<<<< HEAD
 async function ensureCsrf() {
   if (window.__csrfToken) return window.__csrfToken;
   const match = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
@@ -64,8 +63,6 @@ async function csrfHeaders(extra = {}) {
   };
 }
 
-=======
->>>>>>> 4404398504bd139f0127103f56fd9a4a82bda600
 document.addEventListener("DOMContentLoaded", () => {
   restorePanelState();
   loadIntegrations();
@@ -999,11 +996,7 @@ async function sendChat(opts = {}) {
   const gen = currentGenerateModel();
   const response = await fetch("/api/chat", {
     method: "POST",
-<<<<<<< HEAD
     headers: await csrfHeaders(),
-=======
-    headers: { "Content-Type": "application/json" },
->>>>>>> 4404398504bd139f0127103f56fd9a4a82bda600
     credentials: "same-origin",
     body: JSON.stringify({
       messages,
@@ -1053,11 +1046,7 @@ async function sendReplicateGenerate(model, overridePrompt) {
 
   const response = await fetch("/api/generate", {
     method: "POST",
-<<<<<<< HEAD
     headers: await csrfHeaders(),
-=======
-    headers: { "Content-Type": "application/json" },
->>>>>>> 4404398504bd139f0127103f56fd9a4a82bda600
     credentials: "same-origin",
     body: JSON.stringify({
       model: model.id,
