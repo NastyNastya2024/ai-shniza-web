@@ -21,7 +21,8 @@ window.AISHNITSA_WORKS = [
   'works/nanobanana2.jpg',
   'works/ideogramv3turbo.jpg',
   'works/acestep.jpg',
-  'works/elevenlabsmusic.jpg'
+  'works/elevenlabsmusic.jpg',
+  'works/stableaudio25.jpg'
 ];
 
 window.AISHNITSA_WORK_IDS = [
@@ -42,7 +43,8 @@ window.AISHNITSA_WORK_IDS = [
   'ex-nano-banana-2',
   'ex-ideogram-v3-turbo',
   'ex-ace-step',
-  'ex-elevenlabs-music'
+  'ex-elevenlabs-music',
+  'ex-stable-audio-2-5'
 ];
 
 window.AISHNITSA_LENS = {

@@ -327,6 +327,19 @@
       "notes": "text→music · vocals/instrumental · up to 5 min"
     },
     {
+      "id": "stable-audio-2-5",
+      "name": "Stable Audio 2.5",
+      "provider": "replicate",
+      "upstream": "stability-ai/stable-audio-2.5",
+      "category": "audio",
+      "inputs": "text",
+      "outputs": "audio",
+      "price": "$0.20 per output audio file",
+      "price_source": "replicate.com page",
+      "url": "https://replicate.com/stability-ai/stable-audio-2.5",
+      "notes": "text→music/SFX · up to 190s"
+    },
+    {
       "id": "lyria-2",
       "name": "Lyria 2",
       "provider": "replicate",

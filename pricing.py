@@ -136,6 +136,7 @@ PRICING_SEED: list[PricingRow] = [
     PricingRow("lucataco/ace-step", "replicate", "lucataco/ace-step", "music", "per_run_approx", 0.022, markup=3.0, description_ru="ACE-Step — музыка из тегов", quality_score=78, enabled=True),
     PricingRow("minimax/music-2.5", "replicate", "minimax/music-2.5", "music", "per_item", 0.15, description_ru="MiniMax Music 2.5", quality_score=80, enabled=True),
     PricingRow("elevenlabs/music", "replicate", "elevenlabs/music", "music", "per_second", 0.0083, max_duration_sec=300, description_ru="ElevenLabs Music — text→music", quality_score=88, enabled=True),
+    PricingRow("stability-ai/stable-audio-2.5", "replicate", "stability-ai/stable-audio-2.5", "music", "per_item", 0.20, max_duration_sec=190, description_ru="Stable Audio 2.5 — music/SFX", quality_score=86, enabled=True),
     PricingRow("elevenlabs/v3", "replicate", "elevenlabs/v3", "voice", "per_1k_chars", 0.10, description_ru="ElevenLabs озвучка v3", quality_score=88, enabled=True),
     PricingRow("jaaari/kokoro-82m", "replicate", "jaaari/kokoro-82m", "voice", "per_run_approx", 0.00022, markup=3.0, description_ru="Kokoro TTS", quality_score=60, enabled=True),
     PricingRow("openai/whisper", "replicate", "openai/whisper", "voice", "per_run_approx", 0.0011, markup=3.0, description_ru="Whisper — речь в текст", quality_score=70, enabled=True),

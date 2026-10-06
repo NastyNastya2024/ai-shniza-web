@@ -988,6 +988,7 @@ INTEGRATED_MODELS = {
         "replicate_model": "deepseek-ai/deepseek-v3.1",
         "inputs": ["text"],
         "outputs": ["text"],
+        "notes": "hybrid thinking · $0.672/1M in · $2.016/1M out",
     },
     "deepseek-v3": {
         "id": "deepseek-v3",
@@ -1230,6 +1231,17 @@ INTEGRATED_MODELS = {
         "inputs": ["text"],
         "outputs": ["audio"],
         "notes": "text→music · до 5 мин · vocals/instrumental",
+    },
+    "stable-audio-2-5": {
+        "id": "stable-audio-2-5",
+        "name": "Stable Audio 2.5",
+        "provider": "replicate",
+        "kind": "audio",
+        "group": "audio",
+        "replicate_model": "stability-ai/stable-audio-2.5",
+        "inputs": ["text"],
+        "outputs": ["audio"],
+        "notes": "text→music/SFX · до 190 с · $0.20/трек",
     },
     "lyria-2": {
         "id": "lyria-2",
@@ -1784,6 +1796,7 @@ STUDIO_ONBOARD_IDS = frozenset({
     "ideogram-v3-turbo",
     "ace-step",
     "elevenlabs-music",
+    "stable-audio-2-5",
 })
 
 
@@ -1968,6 +1981,14 @@ def _build_replicate_input(
             "music_length_ms": 30000,
             "force_instrumental": False,
             "output_format": "mp3_standard",
+        }
+
+    if model_id == "stable-audio-2-5":
+        return {
+            "prompt": prompt,
+            "duration": 30,
+            "steps": 8,
+            "cfg_scale": 7,
         }
 
     if model_id == "lyria-2":
@@ -3702,9 +3723,26 @@ def api_generate():
                 "fal_model": spec.get("fal_model"),
                 "input_payload": input_payload,
             })
-            result = wait_for_result(job_id)
         except Exception as exc:  # noqa: BLE001
             return jsonify({"error": "queue_unavailable", "detail": str(exc)}), 503
+
+        # Default: async — return immediately so gunicorn workers stay free.
+        # Opt-in sync wait for debugging: GENERATE_SYNC_WAIT=1
+        sync_wait = (os.getenv("GENERATE_SYNC_WAIT") or "").strip().lower() in {"1", "true", "yes"}
+        if not sync_wait:
+            return jsonify({
+                "job_id": job_id,
+                "status": "queued",
+                "model": model_id,
+                "provider": provider,
+                "kind": spec["kind"],
+                "upstream_model": upstream_model,
+            }), 202
+
+        try:
+            result = wait_for_result(job_id)
+        except Exception as exc:  # noqa: BLE001
+            return jsonify({"error": "queue_unavailable", "detail": str(exc), "job_id": job_id}), 503
 
         if not result.get("ok"):
             code = int(result.get("status") or 502)

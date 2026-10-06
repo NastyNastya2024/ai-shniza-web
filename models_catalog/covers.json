@@ -131,5 +131,14 @@
   "elevenlabs-music__example": "/assets/models/examples/elevenlabs-music.jpg",
   "elevenlabs/music__example": "/assets/models/examples/elevenlabs-music.jpg",
   "elevenlabs-music__example_audio": "/assets/models/examples/elevenlabs-music.wav",
-  "elevenlabs/music__example_audio": "/assets/models/examples/elevenlabs-music.wav"
+  "elevenlabs/music__example_audio": "/assets/models/examples/elevenlabs-music.wav",
+  "stable-audio-2-5": "/assets/models/stable-audio-2-5.png",
+  "stability-ai/stable-audio-2.5": "/assets/models/stable-audio-2-5.png",
+  "stable-audio-2-5__logo": "/assets/models/stable-audio-2-5-logo.png",
+  "stable-audio-2-5__example_video": "/assets/models/examples/stable-audio-2-5.mp4",
+  "stability-ai/stable-audio-2.5__example_video": "/assets/models/examples/stable-audio-2-5.mp4",
+  "stable-audio-2-5__example": "/assets/models/examples/stable-audio-2-5.jpg",
+  "stability-ai/stable-audio-2.5__example": "/assets/models/examples/stable-audio-2-5.jpg",
+  "stable-audio-2-5__example_audio": "/assets/models/examples/stable-audio-2-5.mp3",
+  "stability-ai/stable-audio-2.5__example_audio": "/assets/models/examples/stable-audio-2-5.mp3"
 }

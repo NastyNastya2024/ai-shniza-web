@@ -300,6 +300,23 @@ window.VITRINA = {
    "audio": "works/elevenlabsmusic.wav",
    "published": true,
    "model_slug": "elevenlabs-music"
+  },
+  {
+   "id": "ex-stable-audio-2-5",
+   "file": "stableaudio25",
+   "title": "Soulful boom-bap instrumental",
+   "model": "Stable Audio 2.5",
+   "type": "image",
+   "dur": "0:30",
+   "creator": "c1",
+   "likes": 360,
+   "date": "сегодня",
+   "w": 1200,
+   "h": 630,
+   "src": "works/stableaudio25.jpg",
+   "audio": "works/stableaudio25.mp3",
+   "published": true,
+   "model_slug": "stable-audio-2-5"
   }
  ],
  "creators": [
@@ -307,7 +324,7 @@ window.VITRINA = {
    "id": "c1",
    "name": "Мира Свет",
    "nick": "mira_svet_demo",
-   "works": 18,
+   "works": 19,
    "grad": "#FF9A3D,#F05A7E",
    "about": "Неон, ночные города, кино-свет",
    "contacts": [

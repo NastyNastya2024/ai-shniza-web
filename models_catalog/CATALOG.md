@@ -42,6 +42,7 @@ Units differ by model (per image / per second / per token / per megapixel). Comp
 | Gemini 3.1 Flash TTS | replicate | google/gemini-3.1-flash-tts | audio | text | audio | $2 per million input tokens (or 500,000 tokens for $1) · $0.04 per thousand output tokens (or 25,000 tokens for $1) |
 | ElevenLabs v3 | replicate | elevenlabs/v3 | audio | text | audio | $0.10 per thousand input characters (or 10,000 characters for $1) |
 | ElevenLabs Music | replicate | elevenlabs/music | audio | text | audio | $0.0083/s |
+| Stable Audio 2.5 | replicate | stability-ai/stable-audio-2.5 | audio | text | audio | $0.20 / file |
 | Lyria 2 | replicate | google/lyria-2 | audio | text | audio | $2 per thousand seconds of output audio (or 500 seconds for $1) |
 | MiniMax Music-01 | replicate | minimax/music-01 | audio | text, audio | audio | $0.035 per output audio file (or around 28 files for $1) |
 | ACE-Step | replicate | lucataco/ace-step | audio | text | audio | ~$0.022 / run |

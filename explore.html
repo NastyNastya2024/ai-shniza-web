@@ -401,6 +401,7 @@ html{transition:background-color .3s}
         <button class="chip" data-f="Ideogram" aria-pressed="false">Ideogram</button>
         <button class="chip" data-f="ACE" aria-pressed="false">ACE</button>
         <button class="chip" data-f="ElevenLabs" aria-pressed="false">ElevenLabs</button>
+        <button class="chip" data-f="Stable Audio" aria-pressed="false">Stable Audio</button>
       </div>
       <div class="filters-more" id="filtersMore" hidden>
         <button type="button" class="chip more-btn" id="moreBtn" aria-expanded="false" aria-haspopup="true" aria-controls="moreMenu"><span class="more-label" data-i18n="explore.filter.more">Ещё</span> <span aria-hidden="true">▾</span></button>
@@ -583,6 +584,7 @@ html{transition:background-color .3s}
       if (/Ideogram/i.test(m)) return 'ideogram-v3-turbo';
       if (/ACE-?Step/i.test(m)) return 'ace-step';
       if (/ElevenLabs\s*Music/i.test(m)) return 'elevenlabs-music';
+      if (/Stable\s*Audio\s*2\.5/i.test(m)) return 'stable-audio-2-5';
       return '';
     };
     const slug = modelSlug(w);
