@@ -128,12 +128,12 @@ window.AISH_DICT_RU = {
   'index.detect.image': 'картин|фото|изображ|арт|постер',
 
   /* облачко шарика: 1–6 знакомство, 7–20 случайные (вежливый тон, sunny-phrases) */
-  'index.greet.01': 'Здравствуйте! Я {brand}',
-  'index.greet.02': 'Маркетплейс генеративных моделей',
-  'index.greet.03': 'Здесь можно создать видео, картинки и музыку',
-  'index.greet.04': 'Расскажите идею — подберу лучшую модель',
-  'index.greet.05': '…и лучшую цену, чтобы не переплачивать',
-  'index.greet.06': 'Сейчас Seedance бесплатно — угощаю!',
+  'index.greet.01': 'Что готовим — видео, картинку или музыку?',
+  'index.greet.02': 'Расскажите идею — подберу модель и цену',
+  'index.greet.03': 'Сейчас Seedance бесплатно — угощаю!',
+  'index.greet.04': 'Видео со звуком в Seedance — бесплатно',
+  'index.greet.05': 'Сравню модели и цены — вам останется творить',
+  'index.greet.06': 'Цены видны сразу, без сюрпризов',
   'index.greet.07': 'Видео со звуком в Seedance — бесплатно',
   'index.greet.08': 'Рекомендую бесплатный Seedance — вкусно!',
   'index.greet.09': 'Сравню модели и цены — вам останется творить',
@@ -150,7 +150,7 @@ window.AISH_DICT_RU = {
   'index.greet.20': 'Когда будете готовы — нажмите «Сгенерировать»',
 
   /* реплики яишенки в сценарии (кнопки, ввод, жарка) */
-  'index.say.hello': 'Привет! Я {brand}!',
+  'index.say.hello': 'Привет! Что будем готовить?',
   'index.say.idle': [],
   'index.say.listen': [
     'Слушаю внимательно, вся во внимании!',
@@ -350,6 +350,10 @@ window.AISH_DICT_RU = {
   'studio.kind.image': 'Картинка',
   'studio.kind.music': 'Музыка',
   'studio.kind.imageToVideo': 'Фото → видео',
+  'studio.kind.text': 'Текст',
+  'studio.kind.audio': 'Аудио',
+  'studio.kind.assistant': 'Ассистент',
+  'studio.model.examples': 'Примеры',
 
   /* композер */
   'studio.composer.label': 'Задача для модели',
@@ -425,6 +429,9 @@ window.AISH_DICT_RU = {
   'studio.vit.back': '← Похожие работы',
   'studio.vit.generateIn': 'Генерировать в {model}',
   'studio.vit.goChat': 'Перейти в переписку',
+  'studio.vit.meta.res': 'разрешение {size}',
+  'studio.vit.meta.resTier': 'качество {tier} (разрешение {size})',
+  'studio.vit.meta.dur': '{n} сек',
   'studio.hint.go': 'Смотреть →',
   'studio.hint.dismiss': 'Скрыть подсказку',
   'studio.hint.count': {

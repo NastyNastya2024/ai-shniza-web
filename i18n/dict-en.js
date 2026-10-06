@@ -129,12 +129,12 @@ window.AISH_DICT_EN = {
   'index.detect.image': 'image|picture|photo|artwork|poster|painting',
 
   /* orb bubble: 1–6 intro, 7–20 random (polite tone, sunny-phrases) */
-  'index.greet.01': "Hello! I'm {brand}",
-  'index.greet.02': 'A marketplace of generative AI models',
-  'index.greet.03': 'Create video, images and music here',
-  'index.greet.04': "Share your idea—I'll find the best model",
-  'index.greet.05': '…and the best price, so you never overpay',
-  'index.greet.06': 'Seedance is free right now—my treat!',
+  'index.greet.01': 'What are we making—video, image, or music?',
+  'index.greet.02': "Share your idea—I'll pick a model and price",
+  'index.greet.03': 'Seedance is free right now—my treat!',
+  'index.greet.04': 'Video with sound in Seedance—free',
+  'index.greet.05': "I'll compare models and prices for you",
+  'index.greet.06': 'Prices up front, no surprises',
   'index.greet.07': 'Video with sound in Seedance—free',
   'index.greet.08': 'May I suggest free Seedance? Delicious!',
   'index.greet.09': "I'll compare models and prices for you",
@@ -151,7 +151,7 @@ window.AISH_DICT_EN = {
   'index.greet.20': 'Whenever you\u2019re ready, press \u201cGenerate\u201d',
 
   /* orb lines in the flow (chips, typing, cook) */
-  'index.say.hello': "Hi! I'm {brand}!",
+  'index.say.hello': 'Hi! What are we making?',
   'index.say.idle': [],
   'index.say.listen': [
     "Listening closely, I'm all ears!",
@@ -351,6 +351,10 @@ window.AISH_DICT_EN = {
   'studio.kind.image': 'Image',
   'studio.kind.music': 'Music',
   'studio.kind.imageToVideo': 'Image → video',
+  'studio.kind.text': 'Text',
+  'studio.kind.audio': 'Audio',
+  'studio.kind.assistant': 'Assistant',
+  'studio.model.examples': 'Examples',
 
   /* composer */
   'studio.composer.label': 'Task for the model',
@@ -426,6 +430,9 @@ window.AISH_DICT_EN = {
   'studio.vit.back': '← Similar works',
   'studio.vit.generateIn': 'Generate with {model}',
   'studio.vit.goChat': 'Open conversation',
+  'studio.vit.meta.res': 'resolution {size}',
+  'studio.vit.meta.resTier': '{tier} quality (resolution {size})',
+  'studio.vit.meta.dur': '{n} s',
   'studio.hint.go': 'View →',
   'studio.hint.dismiss': 'Dismiss hint',
   'studio.hint.count': {

@@ -386,9 +386,15 @@ html{transition:background-color .3s}
         <button class="chip" data-f="all" aria-pressed="true" data-i18n="explore.filter.all">Все</button>
         <button class="chip" data-f="video" aria-pressed="false" data-i18n="explore.filter.video">Видео</button>
         <button class="chip" data-f="image" aria-pressed="false" data-i18n="explore.filter.image">Картинки</button>
+        <button class="chip" data-f="Wan" aria-pressed="false">Wan</button>
+        <button class="chip" data-f="Grok" aria-pressed="false">Grok</button>
         <button class="chip" data-f="Seedance" aria-pressed="false">Seedance</button>
+        <button class="chip" data-f="Veo" aria-pressed="false">Veo</button>
         <button class="chip" data-f="Kling" aria-pressed="false">Kling</button>
+        <button class="chip" data-f="PixVerse" aria-pressed="false">PixVerse</button>
+        <button class="chip" data-f="P-Video" aria-pressed="false">P-Video</button>
         <button class="chip" data-f="Seedream" aria-pressed="false">Seedream</button>
+        <button class="chip" data-f="GPT" aria-pressed="false">GPT</button>
       </div>
       <div class="filters-more" id="filtersMore" hidden>
         <button type="button" class="chip more-btn" id="moreBtn" aria-expanded="false" aria-haspopup="true" aria-controls="moreMenu"><span class="more-label" data-i18n="explore.filter.more">Ещё</span> <span aria-hidden="true">▾</span></button>
@@ -425,6 +431,30 @@ html{transition:background-color .3s}
   const { creators, networks } = window.VITRINA;
   let works = window.VITRINA.works.filter((w) => w.published !== false);   // на витрине — только опубликованные
   if (window.AISH_LIKES) window.AISH_LIKES.hydrate(works);
+  // Dynamic model-family chips from works (Wan and future nets)
+  (function ensureModelChips() {
+    const main = document.getElementById('filtersMain');
+    if (!main) return;
+    const known = new Set(Array.from(main.querySelectorAll('.chip[data-f]')).map((c) => c.dataset.f));
+    const families = [];
+    works.forEach((w) => {
+      const token = String(w.model || '').trim().split(/\s+/)[0];
+      if (!token || token.length < 3) return;
+      if (['Wan', 'Grok', 'Seedance', 'Seedream', 'GPT'].includes(token) || !known.has(token)) {
+        if (!families.includes(token) && !['Все', 'Видео', 'Картинки'].includes(token)) families.push(token);
+      }
+    });
+    families.forEach((f) => {
+      if (known.has(f)) return;
+      const b = document.createElement('button');
+      b.className = 'chip';
+      b.dataset.f = f;
+      b.setAttribute('aria-pressed', 'false');
+      b.textContent = f;
+      main.appendChild(b);
+      known.add(f);
+    });
+  })();
   const NET = Object.fromEntries(networks.map((n) => [n.id, n]));
   const href = (c) => { const n = NET[c.net]; if (!n || !n.url) return ''; const u = String(c.login).replace(/^@/, '').trim(); return n.url.replace('{u}', encodeURIComponent(u).replace(/%2F/g, '/').replace(/%40/g, '@')).replace('{d}', u.replace(/\D/g, '')); };
   const C = Object.fromEntries(creators.map((c) => [c.id, c]));
@@ -463,7 +493,7 @@ html{transition:background-color .3s}
       const c = C[w.creator] || { name: '', nick: '' };
       if (filter === 'video' && w.type !== 'video') return false;
       if (filter === 'image' && w.type !== 'image') return false;
-      if (['Seedance', 'Kling', 'Seedream'].includes(filter) && String(w.model || '').indexOf(filter) !== 0) return false;
+      if (filter !== 'all' && filter !== 'video' && filter !== 'image' && String(w.model || '').indexOf(filter) !== 0) return false;
       return !q || (w.title + ' ' + wTitle(w) + ' ' + w.model + ' ' + c.name + ' ' + cName(c) + ' ' + c.nick).toLowerCase().includes(q);
     });
     if (sort === 'top') list.sort((a, b) => (b.likes || 0) - (a.likes || 0));
@@ -526,16 +556,24 @@ html{transition:background-color .3s}
       + moreRow
       + '</section>';
     const likeBtn = '<button type="button" class="d-like' + (w.liked ? ' is-on' : '') + '" data-act="like" aria-pressed="' + (w.liked ? 'true' : 'false') + '" aria-label="' + esc(tr(w.liked ? 'common.like.remove' : 'common.like.add')) + '">' + ICON.heart + '<span>' + (w.likes || 0) + '</span></button>';
-    const modelSlug = (name) => {
-      const m = String(name || '');
-      if (/^Seedance/i.test(m)) return 'seedance-lite';
-      if (/^Kling/i.test(m)) return 'kling-o3-i2v';
-      if (/Seedream\s*5\s*Pro/i.test(m)) return 'seedream-5-pro';
-      if (/Seedream/i.test(m)) return 'seedream-5-lite';
-      if (/ACE-?Step/i.test(m)) return 'ace-step';
+    const modelSlug = (w) => {
+      if (w.model_slug) return w.model_slug;
+      const m = String(w.model || '');
+      if (/^Wan/i.test(m)) return 'wan-3-0';
+      if (/^Grok/i.test(m)) return 'grok-imagine-video-1-5';
+      if (/^Seedance/i.test(m)) return 'seedance-2-5';
+      if (/Veo\s*3\.1\s*Fast/i.test(m)) return 'veo-3-1-fast';
+      if (/^Veo/i.test(m)) return 'veo-3-1';
+      if (/^Kling/i.test(m)) return 'kling-v2-5-turbo-pro';
+      if (/^PixVerse/i.test(m)) return 'pixverse-v6';
+      if (/^P-?Video/i.test(m)) return 'p-video';
+      if (/Seedream/i.test(m)) return 'seedream-5-pro';
+      if (/GPT\s*Image\s*2\.5\s*Flare/i.test(m)) return 'gpt-image-2-5-flare';
+      if (/GPT\s*Image\s*2\.5\s*Sunburst/i.test(m)) return 'gpt-image-2-5-sunburst';
+      if (/^GPT\s*Image\s*2(?!\.5)/i.test(m)) return 'gpt-image-2';
       return '';
     };
-    const slug = modelSlug(w.model);
+    const slug = modelSlug(w);
     const genBtn = w.model
       ? '<a class="d-gen" href="/app' + (slug ? '?model=' + encodeURIComponent(slug) : '') + '">' + esc(tr('studio.vit.generateIn', { model: w.model })) + '</a>'
       : '';

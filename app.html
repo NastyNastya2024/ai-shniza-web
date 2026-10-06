@@ -91,11 +91,35 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .model-toolbar .search-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--accent-ink);pointer-events:none;z-index:1}
 .model-toolbar #tabs{flex:1 1 auto;min-width:0;display:flex;gap:2px;padding:3px;border-radius:12px;background:var(--seg-bg);overflow:hidden;transition:opacity .2s ease,flex-basis .28s ease,max-width .28s ease,padding .2s ease}
 .model-toolbar.search-on #tabs{flex:0 0 0;max-width:0;opacity:0;padding-left:0;padding-right:0;pointer-events:none}
-.model{border-radius:14px!important;padding:9px 11px!important;gap:8px!important}
-.model .m-name{font-size:13px!important;font-weight:700}
-.model .m-kind{font-size:11px!important}
-.model .m-price{font-size:13px!important;font-weight:700}
-.model .m-unit{font-size:10px!important}
+.model{border-radius:14px!important;padding:9px 11px!important;gap:10px!important;align-items:flex-start!important}
+.model .m-logo{flex:0 0 44px;width:44px;height:44px;border-radius:12px;overflow:hidden;background:var(--seg-bg);border:1px solid var(--field-brd);display:flex;align-items:center;justify-content:center;position:relative}
+.model .m-logo img{width:100%;height:100%;object-fit:contain;display:block;background:#fff}
+.model .m-logo .m-logo-fallback{font-size:15px;font-weight:800;color:var(--accent-ink);letter-spacing:-0.02em}
+.model .m-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:6px}
+.model .m-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-width:0}
+.model .m-meta{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.model .m-cost{flex:0 0 auto;max-width:46%;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.model .m-name{font-size:13px!important;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.model .m-kind{
+  display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:999px;
+  border:1px solid var(--field-brd);background:var(--field);
+  color:var(--muted);font-size:10px!important;font-weight:700;line-height:1;letter-spacing:.01em;
+  max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;
+}
+.model .m-price{font-size:12px!important;font-weight:700;line-height:1.25;white-space:nowrap}
+.model .m-unit{font-size:10px!important;line-height:1.25;color:var(--muted2);white-space:nowrap}
+.model .m-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
+.model .m-ex{
+  display:inline-flex;align-items:center;gap:0;
+  height:22px;padding:0 9px;border-radius:999px;
+  border:1px solid var(--field-brd);background:var(--field);
+  color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.01em;
+  max-width:100%;cursor:pointer;box-sizing:border-box;
+}
+.model .m-ex:hover{color:var(--ink);border-color:rgba(255,162,53,.4);background:rgba(255,162,53,.12)}
+.model-on .m-kind,.model-on .m-ex{border-color:rgba(255,162,53,.35);background:rgba(255,162,53,.1);color:var(--ink)}
+.t-dark .model .m-logo{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
+.t-dark .model .m-kind,.t-dark .model .m-ex{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
 .ttl{scrollbar-width:thin}
 .ttl{-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 26px),transparent);padding-bottom:18px!important}
 .cabinet{border-radius:18px;background:var(--card-on);border:1px solid var(--glass-brd);box-shadow:0 -14px 30px -18px var(--shadow),0 10px 24px -18px var(--shadow);overflow:hidden;flex:0 0 auto}
@@ -208,8 +232,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .vit-sec h3{margin:8px 4px 10px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted2)}
 .vit-grid{columns:2;column-gap:8px}
 .vit-card{break-inside:avoid;display:block;width:100%;margin:0 0 8px;padding:0;border:none;border-radius:14px;overflow:hidden;position:relative;cursor:pointer;background:var(--field);text-align:left}
-.vit-card img{display:block;width:100%;height:auto;transition:transform .4s ease}
-.vit-card:hover img{transform:scale(1.04)}
+.vit-card img,.vit-card video{
+  display:block;width:100%;height:auto;max-width:100%;
+  object-fit:cover;vertical-align:top;transition:transform .4s ease;
+}
+.vit-card video{pointer-events:none;background:#120f20}
+.vit-card:hover img,.vit-card:hover video{transform:scale(1.04)}
 .vit-card .vc-t{position:absolute;left:0;right:0;bottom:0;padding:22px 9px 8px;background:linear-gradient(180deg,rgba(20,14,40,0),rgba(20,14,40,.78));color:#fff;font-size:11.5px;font-weight:600;line-height:1.3}
 .t-dark .vit-card .vc-t{background:linear-gradient(180deg,rgba(10,6,24,0),rgba(10,6,24,.85))}
 .vit-card .vc-p{position:absolute;left:7px;top:7px;height:20px;padding:0 6px;border-radius:999px;background:rgba(20,14,40,.6);color:#fff;font-size:10.5px;font-weight:700;display:flex;align-items:center;gap:3px}
@@ -217,9 +245,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .vit-empty{margin:4px;padding:14px;border-radius:16px;border:1.5px dashed var(--field-brd);font-size:13px;line-height:1.45;color:var(--muted)}
 .t-dark .vit-empty{border-color:rgba(255,255,255,.18)}
 .vit-pv{display:flex;flex-direction:column;gap:12px}
-.vit-pv .media{border-radius:18px;overflow:hidden;background:var(--field)}
+.vit-pv .media{border-radius:18px;overflow:hidden;background:var(--field);position:relative}
 .vit-pv .media img,.vit-pv .media video{display:block;width:100%;height:auto;max-height:300px;object-fit:contain;background:#120f20}
 .vit-pv h4{margin:2px 4px 0;font-size:18px;font-weight:700;color:var(--ink);line-height:1.25}
+.vit-pv .vc-res{margin:0 4px;font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.01em;line-height:1.35}
+.vit-pv .vc-res:empty{display:none}
 .vit-pv .by{margin:0 4px;font-size:13px;color:var(--muted)}
 .vit-pv .acts{display:flex;flex-direction:column;gap:8px;margin:4px 0 10px}
 .vit-pv .acts button,.vit-pv .acts a,.vit-pv .btn-gen{min-height:48px;height:auto;padding:12px 16px;border-radius:14px;font-family:'Onest',sans-serif;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-decoration:none;box-sizing:border-box;width:100%;color:var(--purple-ink);background:#F7F5FD;box-shadow:none}
@@ -553,13 +583,28 @@ class Component extends DCLogic {
   init() {
     if (this._ready) return;
     this._ready = true;
-    this.state = Object.assign({ tab: 'all', query: '', sort: 'cheap', searchFocus: false, sel: 'seedream-5-lite', text: URL_PROMPT || '', say: '', shown: 0, blink: false, chat: false, msgs: [], typing: false, authed: false, leftOpen: !IS_MOBILE, rightOpen: true, dark: (this.props.theme || 'light') === 'dark', userName: '', userLetter: '?', balanceText: tr('common.balance', { amount: AISH_I18N.money(0) }), modal: null, social: null, email: '', password: '', pwMode: false, consent: false, code: '', err: '', errField: '', resendIn: 0, checking: false, shake: false, locked: false, attempts: 0, afterLogin: null }, this.state || {});
+    this.state = Object.assign({ tab: 'all', query: '', sort: 'cheap', searchFocus: false, sel: 'wan-3-0', text: URL_PROMPT || '', say: '', shown: 0, blink: false, chat: false, msgs: [], typing: false, authed: false, leftOpen: !IS_MOBILE, rightOpen: true, dark: (this.props.theme || 'light') === 'dark', userName: '', userLetter: '?', balanceText: tr('common.balance', { amount: AISH_I18N.money(0) }), modal: null, social: null, email: '', password: '', pwMode: false, consent: false, code: '', err: '', errField: '', resendIn: 0, checking: false, shake: false, locked: false, attempts: 0, afterLogin: null }, this.state || {});
     this.timers = {};
     this.pendingPrompt = '';
     this.pendingSel = '';
     this.later = (n, ms, fn) => { clearTimeout(this.timers[n]); this.timers[n] = setTimeout(fn, ms); };
-    /* цена/единицы считаются по локали: cost — сравнение/сортировка, rub — цена за единицу, perSec — тарификация за секунду */
+    /* цена/единицы: cost — сортировка; rub — число; price/unit — подписи в списке */
     this.priceModel = (m) => {
+      if (m.priceFromApi) {
+        const free = !m.cost;
+        const label = String(m.priceFromApi).trim();
+        const short = free ? tr('common.price.freeShort') : shortPriceLabel(label);
+        // Unit already baked into short ("от 4,3 ₽/сек") — don't repeat under the price.
+        const baked = /₽\/(сек|млн|фото)/.test(short) || /^от\s/i.test(short);
+        const unit = free || baked ? '' : (m.unitFromApi || priceUnitHint(label));
+        return Object.assign({}, m, {
+          kind: m.kind || tr(m.kindKey || 'studio.kind.image'),
+          price: free ? tr('common.price.free') : short,
+          unit: unit,
+          short: short,
+          est: free ? moneyText(0) : short
+        });
+      }
       if (m.cost === 0) return Object.assign({}, m, { kind: tr(m.kindKey), price: tr('common.price.free'), unit: tr('common.price.promo'), short: tr('common.price.freeShort'), est: moneyText(0) });
       if (m.perSec) {
         const per = tr('common.price.perSec', { price: moneyText(m.rub) });
@@ -569,13 +614,21 @@ class Component extends DCLogic {
       return Object.assign({}, m, { kind: tr(m.kindKey), price: p, unit: tr(m.type === 'image' ? 'common.price.perImage' : 'common.price.perRun'), short: p, est: p });
     };
     this.MODELS = [
-      { slug: 'seedance-lite', model_key: 'veo-free/seedance', name: 'Seedance Lite', kindKey: 'studio.kind.videoSound', type: 'video', cost: 0, rub: 0 },
-      { slug: 'seedream-5-lite', model_key: 'fal/seedream-5-lite', name: 'Seedream 5 Lite', kindKey: 'studio.kind.image', type: 'image', cost: 9, rub: 9 },
-      { slug: 'ace-step', model_key: 'lucataco/ace-step', name: 'ACE-Step', kindKey: 'studio.kind.music', type: 'music', cost: 11, rub: 11 },
-      { slug: 'seedream-5-pro', model_key: 'fal/seedream-5-pro', name: 'Seedream 5 Pro', kindKey: 'studio.kind.image', type: 'image', cost: 16, rub: 16 },
-      { slug: 'kling-o3-i2v', model_key: 'fal-ai/kling-o3-i2v', name: 'Kling O3', kindKey: 'studio.kind.imageToVideo', type: 'video', cost: 100, rub: 20, perSec: true }
+      { slug: 'wan-3-0', model_key: 'wan-3-0', name: 'Wan 3.0', kindKey: 'studio.kind.imageToVideo', type: 'video', cost: 22, rub: 4.2, perSec: true },
+      { slug: 'grok-imagine-video-1-5', model_key: 'grok-imagine-video-1-5', name: 'Grok Imagine Video 1.5', kindKey: 'studio.kind.imageToVideo', type: 'video', cost: 34, rub: 6.8, perSec: true },
+      { slug: 'seedance-2-5', model_key: 'seedance-2-5', name: 'Seedance 2.5', kindKey: 'studio.kind.videoSound', type: 'video', cost: 44, rub: 8.8, perSec: true },
+      { slug: 'veo-3-1', model_key: 'veo-3-1', name: 'Veo 3.1', kindKey: 'studio.kind.videoSound', type: 'video', cost: 136, rub: 17, perSec: true },
+      { slug: 'veo-3-1-fast', model_key: 'veo-3-1-fast', name: 'Veo 3.1 Fast', kindKey: 'studio.kind.videoSound', type: 'video', cost: 72, rub: 9, perSec: true },
+      { slug: 'kling-v2-5-turbo-pro', model_key: 'kling-v2-5-turbo-pro', name: 'Kling 2.5 Turbo Pro', kindKey: 'studio.kind.imageToVideo', type: 'video', cost: 30, rub: 6, perSec: true },
+      { slug: 'pixverse-v6', model_key: 'pixverse-v6', name: 'PixVerse V6', kindKey: 'studio.kind.videoSound', type: 'video', cost: 22, rub: 4.3, perSec: true },
+      { slug: 'p-video', model_key: 'p-video', name: 'P-Video', kindKey: 'studio.kind.videoSound', type: 'video', cost: 9, rub: 1.7, perSec: true },
+      { slug: 'seedream-5-pro', model_key: 'seedream-5-pro', name: 'Seedream 5.0 Pro', kindKey: 'studio.kind.image', type: 'image', cost: 4, rub: 4 },
+      { slug: 'gpt-image-2', model_key: 'gpt-image-2', name: 'GPT Image 2', kindKey: 'studio.kind.image', type: 'image', cost: 1, rub: 1 },
+      { slug: 'gpt-image-2-5-flare', model_key: 'gpt-image-2-5-flare', name: 'GPT Image 2.5 Flare', kindKey: 'studio.kind.image', type: 'image', cost: 1, rub: 1 },
+      { slug: 'gpt-image-2-5-sunburst', model_key: 'gpt-image-2-5-sunburst', name: 'GPT Image 2.5 Sunburst', kindKey: 'studio.kind.image', type: 'image', cost: 1, rub: 1 }
     ].map(this.priceModel);
     if (URL_MODEL && this.MODELS.some((m) => m.slug === URL_MODEL)) this.state.sel = URL_MODEL;
+    else this.state.sel = 'wan-3-0';
     this.TAB_ICONS = {
       video: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"></rect><path d="m16 10 5-3v10l-5-3z"></path></svg>',
       image: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="9" cy="9" r="2"></circle><path d="m3 16 5-5 4 4 3-3 6 6"></path></svg>',
@@ -602,19 +655,25 @@ class Component extends DCLogic {
       this.later('type', 1000, () => {
         const t = this.state.text.toLowerCase();
         const cost = (slug) => { const mm = this.MODELS.find((x) => x.slug === slug); return mm ? moneyText(mm.rub) : ''; };
-        if (rx('studio.detect.sound').test(t)) { this.setState({ sel: 'seedance-lite' }); this.speak(tr('studio.eggy.sound')); }
-        else if (rx('studio.detect.video').test(t)) { this.setState({ sel: 'kling-o3-i2v' }); this.speak(tr('studio.eggy.video')); }
-        else if (rx('studio.detect.music').test(t)) { this.setState({ sel: 'ace-step' }); this.speak(tr('studio.eggy.music', { price: cost('ace-step') })); }
-        else if (rx('studio.detect.image').test(t)) { this.setState({ sel: 'seedream-5-lite' }); this.speak(tr('studio.eggy.image', { price: cost('seedream-5-lite') })); }
-        else if (t.trim()) this.speak(tr('studio.eggy.ready'));
+        const has = (slug) => this.MODELS.some((x) => x.slug === slug);
+        const firstOf = (type) => (this.MODELS.find((x) => x.type === type) || {}).slug;
+        if (rx('studio.detect.music').test(t) && firstOf('music')) {
+          const slug = firstOf('music');
+          this.setState({ sel: slug }); this.speak(tr('studio.eggy.music', { price: cost(slug) }));
+        } else if (rx('studio.detect.video').test(t) || rx('studio.detect.sound').test(t) || rx('studio.detect.image').test(t)) {
+          const slug = has('wan-3-0') ? 'wan-3-0' : (has('grok-imagine-video-1-5') ? 'grok-imagine-video-1-5' : firstOf('video'));
+          if (slug) { this.setState({ sel: slug }); this.speak(tr('studio.eggy.video')); }
+        } else if (t.trim()) this.speak(tr('studio.eggy.ready'));
       });
     };
     this.pickFor = (t) => {
       t = t.toLowerCase();
-      if (rx('studio.detect.sound').test(t)) return 'seedance-lite';
-      if (rx('studio.detect.video').test(t)) return 'kling-o3-i2v';
-      if (rx('studio.detect.music').test(t)) return 'ace-step';
-      if (rx('studio.detect.image').test(t)) return 'seedream-5-lite';
+      const has = (slug) => this.MODELS.some((x) => x.slug === slug);
+      const firstOf = (type) => (this.MODELS.find((x) => x.type === type) || {}).slug;
+      if (rx('studio.detect.music').test(t)) return firstOf('music') || this.state.sel;
+      if (rx('studio.detect.video').test(t) || rx('studio.detect.sound').test(t) || rx('studio.detect.image').test(t)) {
+        return has('wan-3-0') ? 'wan-3-0' : (has('grok-imagine-video-1-5') ? 'grok-imagine-video-1-5' : (firstOf('video') || this.state.sel));
+      }
       return this.state.sel;
     };
     this.push = (m) => this.setState({ msgs: this.state.msgs.concat([Object.assign({ id: Date.now() + Math.random() }, m)]) });
@@ -635,9 +694,17 @@ class Component extends DCLogic {
       this.later('cook', 900, () => this.runJob(m, prompt));
     };
     this.runJob = async (m, prompt) => {
+      if (m && (m.viaGenerate || m.type === 'text')) {
+        await this.runGenerate(m, prompt);
+        return;
+      }
       const params = m.type === 'video' ? { duration_sec: 5 } : {};
       const est = await api('/api/jobs/estimate', { method: 'POST', body: JSON.stringify({ model_key: m.model_key, params }) });
-      if (!est.res.ok) { this.botSay({ text: tr('studio.chat.estimateFailed') }, 200); return; }
+      if (!est.res.ok) {
+        if (m && m.integrated) { await this.runGenerate(m, prompt); return; }
+        this.botSay({ text: tr('studio.chat.estimateFailed') }, 200);
+        return;
+      }
       const priceKop = est.data.price_kop || 0;
       if (est.data.enough === false && priceKop > 0) {
         const need = priceKop - (est.data.available_kop || 0);
@@ -658,6 +725,7 @@ class Component extends DCLogic {
         else if (err === 'free_limit') this.botSay({ text: tr('studio.chat.freeLimit') }, 200);
         else if (err === 'free_queue_full') this.botSay({ text: tr('studio.chat.freeQueueFull') }, 200);
         else if (err === 'auth_required') this.botSay({ text: tr('studio.chat.needLogin'), loginCta: true }, 200);
+        else if (m && m.integrated) { await this.runGenerate(m, prompt); return; }
         else this.botSay({ text: tr('studio.chat.failedRetry') }, 200);
         await refreshUser();
         return;
@@ -668,6 +736,32 @@ class Component extends DCLogic {
       await refreshUser();
       if (start.data.status === 'succeeded') { await this.finishJob(jobId, workId); return; }
       this.watchJob(jobId, workId);
+    };
+    this.runGenerate = async (m, prompt) => {
+      this.patchLastBot({ text: tr('studio.chat.cooking'), job: true });
+      const { res, data } = await api('/api/generate', {
+        method: 'POST',
+        body: JSON.stringify({ model: m.model_key || m.slug, prompt: prompt || '' })
+      });
+      if (!res.ok) {
+        const detail = (data && (data.detail || data.error)) || '';
+        this.botSay({ text: tr('studio.chat.failedRetry') + (detail ? ('\n\n' + String(detail).slice(0, 180)) : '') }, 200);
+        return;
+      }
+      if (data && data.kind === 'text') {
+        const reply = String(data.reply || '').trim() || tr('studio.chat.failedRetry');
+        this.patchLastBot({ text: reply, job: false });
+        return;
+      }
+      const url = (data && data.urls && data.urls[0]) || '';
+      const kind = (data && data.kind) || m.type || 'image';
+      this.patchLastBot({
+        text: String((data && data.reply) || tr('studio.chat.queued')).trim() || tr('studio.chat.queued'),
+        result: !!url,
+        mediaUrl: url,
+        mediaKind: kind === 'audio' ? 'audio' : (kind === 'video' ? 'video' : 'image'),
+        job: false
+      });
     };
     this.watchJob = (jobId, workId) => {
       let done = false;
@@ -723,20 +817,51 @@ class Component extends DCLogic {
       });
       await refreshUser();
     };
-    this.onSubmit = (e) => {
+    this.onSubmit = async (e) => {
       if (e && e.preventDefault) e.preventDefault();
       const text = this.state.text.trim();
       if (!text) { this.speak(tr('studio.eggy.needIdea')); return; }
       const sel = this.pickFor(text);
-      const m = this.MODELS.find((x) => x.slug === sel);
-      const first = !this.state.chat;
+      const m = this.MODELS.find((x) => x.slug === sel) || this.MODELS[0];
       this.pendingPrompt = text;
       this.pendingSel = sel;
       this.setState({ chat: true, text: '', sel: sel });
       this.push({ role: 'user', text: text });
-      const price = m.cost === 0 ? tr('common.price.freeShort') : tr('studio.eggy.priceEst', { price: m.est });
-      if (this.state.authed) this.later('lead', first ? 650 : 0, () => { this.botSay({ text: tr('studio.chat.take', { model: m.name, price: price }), first: first }, 800); this.later('ck', 1700, this.cook); });
-      else this.later('lead', first ? 650 : 0, () => this.botSay({ text: tr('studio.chat.take', { model: m.name, price: price }) + ' ' + tr('studio.chat.loginHint'), loginCta: true, first: first }, 800));
+      // Диалог через /api/chat, генерация — только по GENERATE_NOW
+      this.setState({ typing: true });
+      const history = this.state.msgs
+        .filter((x) => x && (x.role === 'user' || x.role === 'bot') && x.text)
+        .slice(-18)
+        .map((x) => ({ role: x.role === 'bot' ? 'assistant' : 'user', content: String(x.text).slice(0, 4000) }));
+      try {
+        const { res, data } = await api('/api/chat', {
+          method: 'POST',
+          body: JSON.stringify({
+            messages: history,
+            selected_model_id: m.model_key || '',
+            selected_model_name: m.name || '',
+          }),
+        });
+        this.setState({ typing: false });
+        if (!res.ok) {
+          const detail = (data && (data.detail || data.error)) || '';
+          this.botSay({ text: tr('studio.chat.failedRetry') + (detail ? ('\n\n' + String(detail).slice(0, 180)) : '') }, 200);
+          return;
+        }
+        const reply = (data && data.reply) ? String(data.reply) : '';
+        if (reply) this.push({ role: 'bot', text: reply });
+        if (data && data.generate_prompt) {
+          this.pendingPrompt = String(data.generate_prompt);
+          if (data.generate_model) {
+            const byKey = this.MODELS.find((x) => x.model_key === data.generate_model);
+            if (byKey) { this.pendingSel = byKey.slug; this.setState({ sel: byKey.slug }); }
+          }
+          this.later('ck', 900, this.cook);
+        }
+      } catch (_) {
+        this.setState({ typing: false });
+        this.botSay({ text: tr('studio.chat.failedRetry') }, 200);
+      }
     };
     this.login = () => {
       try {
@@ -813,14 +938,14 @@ class Component extends DCLogic {
       const wasChat = this.state.afterLogin === 'chat';
       this.setState({ modal: null, password: '', code: '', err: '', errField: '' });
       await refreshUser();
-      if (wasChat && this.pendingPrompt) { this.botSay({ text: tr('studio.chat.welcomed') }, 600); this.later('ck', 1500, this.cook); }
-      else this.speak(tr('studio.eggy.welcomeBack'));
+      if (wasChat && this.pendingPrompt) {
+        this.botSay({ text: tr('studio.chat.welcomed') }, 600);
+      } else this.speak(tr('studio.eggy.welcomeBack'));
     };
     this.logout = async () => { await api('/api/auth/logout', { method: 'POST' }); await refreshUser(); this.speak(tr('studio.eggy.loggedOut')); };
     this.afterAuth = () => {
       if (this.state.chat && this.pendingPrompt) {
         this.botSay({ text: tr('studio.chat.welcomed') }, 600);
-        this.later('ck', 1500, this.cook);
       } else this.speak(tr('studio.eggy.welcomeBack'));
     };
     this.goHome = (e) => {
@@ -888,10 +1013,16 @@ class Component extends DCLogic {
     let list = this.MODELS.filter((m) => (st.tab === 'all' || m.type === st.tab) && (!q || (m.name + ' ' + m.slug + ' ' + m.kind).toLowerCase().includes(q)));
     list = list.slice().sort((a, b) => a.cost - b.cost);
     const models = list.map((m) => ({
-      name: m.name, kind: m.kind, price: m.price, unit: m.unit,
+      slug: m.slug, name: m.name, kind: m.kind, price: m.price, unit: m.unit,
+      thumb: m.thumb || '', example: m.example || '', exampleVideo: m.exampleVideo || '',
+      letter: String(m.name || '?').replace(/^[^a-zA-Zа-яА-ЯёЁ0-9]+/, '').slice(0, 1).toUpperCase() || '?',
       on: m.slug === st.sel, cls: m.slug === st.sel ? 'model-on' : '',
       priceColor: m.cost === 0 ? 'var(--free)' : 'var(--ink)',
-      pick: () => { this.setState({ sel: m.slug, leftOpen: MOBILE() ? false : this.state.leftOpen }); this.speak(m.cost === 0 ? tr('studio.eggy.modelFree', { model: m.name }) : tr('studio.eggy.modelPrice', { model: m.name, price: m.price, unit: m.unit })); }
+      pick: () => { this.setState({ sel: m.slug, leftOpen: MOBILE() ? false : this.state.leftOpen }); this.speak(m.cost === 0 ? tr('studio.eggy.modelFree', { model: m.name }) : tr('studio.eggy.modelPrice', { model: m.name, price: m.price, unit: m.unit })); },
+      examples: () => {
+        this.setState({ sel: m.slug, leftOpen: MOBILE() ? false : this.state.leftOpen });
+        if (window.vitOpenForModel) window.vitOpenForModel(m.slug);
+      }
     }));
     const s = this.MODELS.find((m) => m.slug === st.sel) || this.MODELS[1];
     let lastBot = -1; st.msgs.forEach((m, i) => { if (m.role === 'bot') lastBot = i; });
@@ -946,6 +1077,11 @@ const app = new Component({ theme: DEFAULT_THEME });
 window.app = app;
 const $ = (id) => document.getElementById(id);
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fmtBot = (t) => esc(t)
+  .replace(/^###\s+(.+)$/gm, '<strong>$1</strong>')
+  .replace(/^##\s+(.+)$/gm, '<strong>$1</strong>')
+  .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  .replace(/\n/g, '<br>');
 let raf = 0, lastMsgs = -1, lastModelsKey = '', lastTabsKey = '', lastSay = null, lastDark = null, lastModal = false, lastStepCode = false;
 function scheduleRender() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
 
@@ -1020,14 +1156,46 @@ function render() {
       tabs.appendChild(b);
     });
   }
-  const mk = v.models.map((m) => m.name + m.on + m.price).join('|');
+  const mk = v.models.map((m) => m.name + m.on + m.price + (m.thumb || '') + (m.example || '')).join('|');
   if (mk !== lastModelsKey) {
     lastModelsKey = mk; const list = $('models'); list.innerHTML = '';
     v.models.forEach((m) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'model ' + m.cls; b.setAttribute('aria-pressed', m.on);
-      b.style.cssText = 'flex:0 0 auto;display:flex;align-items:center';
-      b.innerHTML = '<span style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="m-name" style="color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(m.name) + '</span><span class="m-kind" style="color:var(--muted2)">' + esc(m.kind) + '</span></span><span style="flex:0 0 auto;text-align:right;display:flex;flex-direction:column;gap:2px"><span class="m-price" style="color:' + m.priceColor + '">' + esc(m.price) + '</span><span class="m-unit" style="color:var(--muted2)">' + esc(m.unit) + '</span></span>';
-      b.onclick = m.pick; list.appendChild(b);
+      b.style.cssText = 'flex:0 0 auto;display:flex;';
+      const logo = m.thumb
+        ? '<img src="' + esc(m.thumb) + '" alt="" loading="lazy" decoding="async">'
+        : '<span class="m-logo-fallback" aria-hidden="true">' + esc(m.letter) + '</span>';
+      const hasExamples = !!(m.exampleVideo || m.example);
+      const ex = hasExamples
+        ? '<span class="m-ex" data-examples role="button" title="' + esc(tr('studio.model.examples')) + '">' + esc(tr('studio.model.examples')) + '</span>'
+        : '';
+      b.innerHTML =
+        '<span class="m-logo">' + logo + '</span>'
+        + '<span class="m-main">'
+        + '<span class="m-top">'
+        + '<span class="m-meta">'
+        + '<span class="m-name" style="color:var(--ink)">' + esc(m.name) + '</span>'
+        + '</span>'
+        + '<span class="m-cost">'
+        + '<span class="m-price" style="color:' + m.priceColor + '">' + esc(m.price) + '</span>'
+        + (m.unit ? '<span class="m-unit">' + esc(m.unit) + '</span>' : '')
+        + '</span>'
+        + '</span>'
+        + '<span class="m-row">'
+        + '<span class="m-kind">' + esc(m.kind) + '</span>'
+        + ex
+        + '</span>'
+        + '</span>';
+      b.onclick = (e) => {
+        if (e.target.closest('[data-examples]')) {
+          e.preventDefault();
+          e.stopPropagation();
+          m.examples();
+          return;
+        }
+        m.pick();
+      };
+      list.appendChild(b);
     });
   }
   $('empty').classList.toggle('hidden', !v.empty);
@@ -1056,7 +1224,7 @@ function msgEl(m) {
       + (m.workId ? '<a href="/w/' + esc(m.workId) + '" target="_blank" rel="noopener" style="height:36px;padding:0 14px;border-radius:12px;border:1px solid var(--field-brd);background:var(--field);color:var(--ink);font:700 13px Manrope,system-ui,sans-serif;text-decoration:none;display:inline-flex;align-items:center">' + esc(tr('common.open')) + '</a>' : '')
     : '';
   el.innerHTML = '<span class="bot-av ' + m.avCls + '" style="position:relative;flex:0 0 auto;width:38px;height:38px"><img src="' + ORB_SRC + '" alt="' + esc(tr('common.brand.alt')) + '" style="position:absolute;inset:0;width:100%;height:100%;display:block"><span class="eye-p l bot-eye"><span class="eye-shape" style="box-shadow:none"></span></span><span class="eye-p r bot-eye"><span class="eye-shape" style="box-shadow:none"></span></span></span>'
-    + '<div class="glass" style="border-radius:20px 20px 20px 6px;padding:12px 16px;display:flex;flex-direction:column;gap:10px;align-items:flex-start;box-shadow:0 12px 30px -20px var(--shadow)"><span style="font-size:15px;line-height:1.45;color:var(--ink)">' + esc(m.text) + '</span>'
+    + '<div class="glass" style="border-radius:20px 20px 20px 6px;padding:12px 16px;display:flex;flex-direction:column;gap:10px;align-items:flex-start;box-shadow:0 12px 30px -20px var(--shadow)"><span style="font-size:15px;line-height:1.5;color:var(--ink);white-space:normal">' + fmtBot(m.text) + '</span>'
     + media
     + (likeChip ? '<div style="display:flex;flex-wrap:wrap;gap:8px">' + likeChip + '</div>' : '')
     + (m.loginCta ? '<button type="button" class="btn-login" data-cta data-login style="height:40px;padding:0 18px;border-radius:12px;font-size:14px">' + esc(tr('studio.chat.loginRun')) + '</button>' : '')
@@ -1137,6 +1305,7 @@ async function syncPricing() {
     const byKey = {};
     (data.items || []).forEach((it) => { byKey[it.model_key] = it; });
     app.MODELS = app.MODELS.map((m) => {
+      if (m.priceFromApi) return m;
       const it = byKey[m.model_key];
       if (!it) return m;
       const rub = Number(it.price_rub) || 0;
@@ -1149,6 +1318,132 @@ async function syncPricing() {
     });
     lastModelsKey = '';
     scheduleRender();
+  } catch (_) {}
+}
+
+function parsePriceRub(s) {
+  const m = String(s || '').replace(/\u00a0/g, ' ').match(/(\d+[.,]?\d*)/);
+  if (!m) return 0;
+  return parseFloat(m[1].replace(',', '.')) || 0;
+}
+
+/** Compact API price for sidebar: "4,3 ₽ / сек видео at 480p" → "от 4,3 ₽/сек" */
+function shortPriceLabel(raw) {
+  let s = String(raw || '').replace(/\u00a0/g, ' ').trim();
+  if (!s) return '';
+  const hasTiers = s.includes('·') || /at\s*\d+p/i.test(s) || /480p|720p|1080p/i.test(s);
+  s = s.split('·')[0].trim();
+  const m = s.match(/(\d+[.,]?\d*)\s*₽/);
+  if (!m) return s.length > 28 ? s.slice(0, 26) + '…' : s;
+  const num = m[1];
+  let core = num + ' ₽';
+  if (/\/\s*сек|per\s*sec|\/\s*s\b/i.test(s)) core = num + ' ₽/сек';
+  else if (/млн|\/\s*1m|token/i.test(s)) core = num + ' ₽/млн';
+  else if (/изобр|image|картин/i.test(s)) core = num + ' ₽/фото';
+  if (hasTiers && !/^от\s/i.test(core)) return 'от ' + core;
+  return core;
+}
+
+function priceUnitHint(raw) {
+  const s = String(raw || '');
+  if (/\/\s*сек|per\s*sec/i.test(s)) return 'за секунду';
+  if (/млн|token/i.test(s)) return 'за 1 млн токенов';
+  if (/изобр|image|картин/i.test(s)) return 'за картинку';
+  return '';
+}
+
+function integrationType(it) {
+  const kind = String(it.kind || '').toLowerCase();
+  const outs = it.outputs || [];
+  const ins = it.inputs || [];
+  if (it.is_assistant || kind === 'llm' || kind === 'chat') return 'text';
+  if (kind === 'video' || outs.indexOf('video') >= 0) return 'video';
+  if (kind === 'audio' || kind === 'stt' || outs.indexOf('audio') >= 0 || outs.indexOf('music') >= 0) return 'music';
+  if (kind === 'image' || outs.indexOf('image') >= 0) return 'image';
+  if (outs.indexOf('text') >= 0 && outs.length === 1) return 'text';
+  if (ins.indexOf('image') >= 0 && outs.indexOf('video') >= 0) return 'video';
+  return 'image';
+}
+
+function integrationKindLabel(it, type) {
+  if (it.is_assistant || it.kind === 'llm' || it.kind === 'chat') return tr('studio.kind.assistant');
+  if (type === 'text') return tr('studio.kind.text');
+  if (type === 'music') return tr('studio.kind.audio');
+  if (type === 'video' && (it.inputs || []).indexOf('image') >= 0) return tr('studio.kind.imageToVideo');
+  if (type === 'video') return tr('studio.kind.videoSound');
+  return tr('studio.kind.image');
+}
+
+function integrationDisplayName(name) {
+  return String(name || '')
+    .replace(/^Ассистент\s*[·•\-—]\s*/i, '')
+    .replace(/\bOmniRoute\b/gi, '')
+    .replace(/\bReplicate\b/gi, '')
+    .replace(/\bfal(?:\.ai)?\b/gi, '')
+    .replace(/\s*[·•\-—]\s*$/g, '')
+    .replace(/^\s*[·•\-—]\s*/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim() || name;
+}
+
+async function loadIntegrations() {
+  try {
+    const { res, data } = await api('/api/integrations');
+    if (!res.ok) return;
+    const items = data.items || [];
+    if (!items.length) return;
+    const mapped = items.map((it) => {
+      const type = integrationType(it);
+      const priceRaw = (it.price_full || it.price || '').trim();
+      const rub = parsePriceRub(priceRaw);
+      const free = /бесплат|free/i.test(priceRaw) || (!priceRaw && (it.is_assistant || it.provider === 'omniroute'));
+      const viaGenerate = !!(it.is_assistant || type === 'text' || it.provider === 'replicate' || it.provider === 'fal' || it.provider === 'omniroute');
+      const thumb = (it.image_url || it.cover_url || '').trim();
+      const example = (it.example_url || it.example_image || thumb).trim();
+      const exampleVideo = (it.example_video_url || '').trim();
+      return app.priceModel({
+        slug: it.id,
+        model_key: it.id,
+        name: integrationDisplayName(it.name),
+        type: type,
+        kind: integrationKindLabel(it, type),
+        cost: free ? 0 : (rub || 9999),
+        rub: free ? 0 : rub,
+        perSec: /\/\s*с|сек/i.test(priceRaw),
+        priceFromApi: free ? '' : priceRaw,
+        unitFromApi: '',
+        integrated: true,
+        viaGenerate: viaGenerate,
+        provider: it.provider,
+        thumb: thumb,
+        example: example,
+        exampleVideo: exampleVideo
+      });
+    });
+    if (!mapped.length) return;
+    app.MODELS = mapped;
+    const aliasSel = {
+      'wan-3-0-t2v-fal': 'wan-3-0',
+      'wan-3-0-i2v-fal': 'wan-3-0',
+      'grok-imagine-video-1-5-i2v-fal': 'grok-imagine-video-1-5'
+    };
+    if (aliasSel[app.state.sel] && mapped.some((m) => m.slug === aliasSel[app.state.sel])) {
+      app.setState({ sel: aliasSel[app.state.sel] });
+    }
+    const still = mapped.some((m) => m.slug === app.state.sel);
+    if (!still) {
+      const prefer = mapped.find((m) => m.slug === 'wan-3-0')
+        || mapped.find((m) => m.slug === 'seedream-5-pro')
+        || mapped.find((m) => m.slug === 'grok-imagine-video-1-5')
+        || mapped.find((m) => m.type === 'video')
+        || mapped[0];
+      if (prefer) app.setState({ sel: prefer.slug });
+    }
+    lastModelsKey = '';
+    scheduleRender();
+    if (window.renderVit) {
+      try { window.renderVit(); } catch (_) {}
+    }
   } catch (_) {}
 }
 
@@ -1173,111 +1468,216 @@ refreshUser().then(() => {
   } else app.speak(tr('studio.eggy.welcomeBack'));
 });
 syncPricing();
+loadIntegrations();
 
-/* ---------- витрина справа: похожие работы по теме и по модели ---------- */
+/* ---------- витрина справа: похожие работы по модели + примеры нейросетей ---------- */
 (function () {
   const D = window.VITRINA || { works: [], creators: [] };
   const CR = Object.fromEntries((D.creators || []).map((c) => [c.id, c]));
-  const WORKS = (D.works || []).filter((w) => w.published !== false);
-  const MODEL_OF = { 'seedance-lite': 'Seedance 1.0 Lite', 'seedream-5-lite': 'Seedream 5 Lite', 'seedream-5-pro': 'Seedream 5 Pro', 'kling-o3-i2v': 'Kling O3' };
-  const TOPICS = [
-    [/город|ноч|неон|улиц|кибер|огн|city|night|neon|street|cyber|light/, ['w01', 'w17', 'w19', 'w23']],
-    [/закат|рассвет|солнц|вечер|небо|sunset|sunrise|sun|evening|sky/, ['w02', 'w18', 'w14', 'w08']],
-    [/мор|волн|вод|озер|река|дожд|капл|пляж|sea|ocean|wave|water|lake|river|rain|drop|beach/, ['w24', 'w03', 'w23', 'w15', 'w14']],
-    [/космос|звезд|галакт|сиян|планет|луна|лун|space|star|galaxy|aurora|planet|moon/, ['w12', 'w05', 'w10']],
-    [/гор|природ|лес|дерев|пейзаж|пустын|дюн|mountain|nature|forest|tree|landscape|desert|dune/, ['w10', 'w03', 'w18', 'w22']],
-    [/цвет|сад|весн|роз|flower|garden|spring|rose/, ['w21', 'w13', 'w20']],
-    [/еда|яичн|яйц|апельс|фрукт|повар|кухн|завтрак|натюрморт|кот|котик|food|egg|orange|fruit|chef|kitchen|breakfast|still life|cat/, ['w09', 'w04', 'w16']],
-    [/абстрак|узор|фон|текстур|мрамор|хром|жидк|оп-арт|abstract|pattern|background|texture|marble|chrome|liquid|op-art/, ['w13', 'w16', 'w15', 'w07', 'w22']],
-    [/постер|плакат|баухаус|дизайн|логотип|обложк|poster|bauhaus|design|logo|cover/, ['w06', 'w11', 'w02']],
-    [/ретро|синтвейв|80|винтаж|retro|synthwave|vintage/, ['w02', 'w08', 'w19']],
-    [/музык|трек|клип|концерт|music|track|clip|concert/, ['w19', 'w08', 'w01']]
-  ];
+  let WORKS = (D.works || []).filter((w) => w.published !== false);
+  const MODEL_OF = {
+    'seedance-lite': 'Seedance 1.0 Lite',
+    'seedream-5-lite': 'Seedream 5 Lite',
+    'seedream-5-pro': 'Seedream 5 Pro',
+    'kling-o3-i2v': 'Kling O3',
+    'kling-v2-5-turbo-pro': 'Kling 2.5 Turbo Pro',
+    'pixverse-v6': 'PixVerse V6',
+    'p-video': 'P-Video',
+    'wan-3-0': 'Wan 3.0',
+    'grok-imagine-video-1-5': 'Grok Imagine Video 1.5',
+    'seedance-2-5': 'Seedance 2.5',
+    'veo-3-1': 'Veo 3.1',
+    'veo-3-1-fast': 'Veo 3.1 Fast',
+    'seedream-5-pro': 'Seedream 5.0 Pro',
+    'gpt-image-2': 'GPT Image 2',
+    'gpt-image-2-5-flare': 'GPT Image 2.5 Flare',
+    'gpt-image-2-5-sunburst': 'GPT Image 2.5 Sunburst'
+  };
   // MOBILE/TABLET/SHEET — из внешнего scope
-  const norm = (t) => String(t || '').toLowerCase().replace(/ё/g, 'е');
   const wTitle = (w) => L.workTitle(w);
-  const stems = (t) => norm(t).split(/[^a-zа-я0-9]+/).filter((x) => x.length >= 4).map((x) => x.slice(0, 5));
-  function byTopic(text) {
-    const t = norm(text); if (!t.trim()) return [];
-    const score = {};
-    TOPICS.forEach(([re, ids]) => { if (re.test(t)) ids.forEach((id, i) => { score[id] = (score[id] || 0) + 3 - i * 0.1; }); });
-    const st = stems(t);
-    WORKS.forEach((w) => { const ws = stems(w.title).concat(stems(wTitle(w))); if (st.some((s) => ws.includes(s))) score[w.id] = (score[w.id] || 0) + 5; });
-    return Object.keys(score).sort((a, b) => score[b] - score[a]).map((id) => WORKS.find((w) => w.id === id)).filter(Boolean).slice(0, 8);
-  }
   function sameModel(w, m, mName) {
     if (!w || !m) return false;
-    if (mName && w.model === mName) return true;
-    if (w.model === m.name) return true;
-    if (/^seedance/.test(m.slug) && /^Seedance/i.test(w.model || '')) return true;
-    if (/^kling/.test(m.slug) && /^Kling/i.test(w.model || '')) return true;
-    if (/^seedream-5-pro/.test(m.slug) && /Seedream 5 Pro/i.test(w.model || '')) return true;
-    if (/^seedream-5-lite/.test(m.slug) && /Seedream 5 Lite/i.test(w.model || '')) return true;
+    const wm = String(w.model || '');
+    const slug = String(m.slug || '');
+    if (w.model_slug && w.model_slug === slug) return true;
+    if (mName && wm === mName) return true;
+    if (wm === m.name) return true;
+    if (/wan[-_]?3/i.test(slug) && /^Wan/i.test(wm)) return true;
+    if (/grok[-_]?imagine/i.test(slug) && /^Grok/i.test(wm)) return true;
+    if (/seedance/i.test(slug) && /^Seedance/i.test(wm)) return true;
+    if (/veo-3-1-fast/i.test(slug) && /Veo\s*3\.1\s*Fast/i.test(wm)) return true;
+    if (/(^|[^\w-])veo-3-1($|[^\w-])/i.test(slug) && /^Veo\s*3\.1(?!\s*Fast)/i.test(wm)) return true;
+    if (/kling/i.test(slug) && /^Kling/i.test(wm)) return true;
+    if (/pixverse/i.test(slug) && /^PixVerse/i.test(wm)) return true;
+    if (/p-video|pvideo/i.test(slug) && /^P-?Video/i.test(wm)) return true;
+    if (/seedream-5-pro|seedream-5-pro-/i.test(slug) && /Seedream 5 Pro/i.test(wm)) return true;
+    if (/seedream-5-lite|seedream-5-lite-/i.test(slug) && /Seedream 5 Lite/i.test(wm)) return true;
+    if (/gpt-image-2-5-flare/i.test(slug) && /GPT\s*Image\s*2\.5\s*Flare/i.test(wm)) return true;
+    if (/gpt-image-2-5-sunburst/i.test(slug) && /GPT\s*Image\s*2\.5\s*Sunburst/i.test(wm)) return true;
+    if (/(^|[^\w-])gpt-image-2($|[^\w-])/i.test(slug) && /^GPT\s*Image\s*2(?!\.5)/i.test(wm)) return true;
+    if (/seedream/i.test(slug) && /Seedream/i.test(wm)) return true;
+    const token = String(m.name || '').trim().split(/\s+/)[0];
+    if (token && token.length >= 3 && new RegExp('^' + token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(wm)) return true;
     return false;
   }
-  let open = false, preview = null, pvMode = 'view', lastKey = '', timer = 0, hintOff = false, hinted = false, lastSent = null;
+  function syncExampleWorks() {
+    const base = (D.works || []).filter((w) => w.published !== false);
+    const seen = new Set(base.map((w) => w.id));
+    const extras = [];
+    (app.MODELS || []).forEach((m) => {
+      const video = (m.exampleVideo || '').trim();
+      const still = (m.example || m.thumb || '').trim();
+      if (!video && !still) return;
+      if (m.type === 'text' || m.type === 'music') return;
+      const id = 'ex-' + m.slug;
+      if (seen.has(id)) return;
+      // skip if static catalog already has this model_slug
+      if (base.some((w) => w.model_slug === m.slug || sameModel(w, m, MODEL_OF[m.slug]))) return;
+      seen.add(id);
+      extras.push({
+        id: id,
+        title: tr('studio.model.examples') + ' · ' + m.name,
+        model: m.name,
+        model_slug: m.slug,
+        type: m.type === 'video' || video ? 'video' : 'image',
+        dur: video ? '' : '',
+        creator: 'c1',
+        likes: 0,
+        date: '',
+        w: 1280,
+        h: 720,
+        src: still || video,
+        video: video || '',
+        published: true
+      });
+    });
+    WORKS = extras.concat(base);
+  }
+  let open = false, preview = null, pvMode = 'view', lastKey = '', timer = 0, lastSent = null;
   let modelFilter = true, lastSel = '';
   const $ = (id) => document.getElementById(id);
   const esc2 = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const topicText = () => { const st = app.state; if (st.text && st.text.trim()) return st.text.trim(); const u = (st.msgs || []).filter((m) => m.role === 'user'); return u.length ? u[u.length - 1].text : ''; };
   const modelObj = () => app.MODELS.find((m) => m.slug === app.state.sel) || app.MODELS[1];
-  const card = (w) => '<button class="vit-card" data-w="' + w.id + '" aria-label="' + esc2(wTitle(w)) + '"><img src="' + esc2(w.src) + '" alt="" loading="lazy" width="' + (w.w || 400) + '" height="' + (w.h || 400) + '">'
-    + (w.type === 'video' ? '<span class="vc-p">▶ ' + esc2(w.dur || '') + '</span>' : '') + '<span class="vc-t">' + esc2(wTitle(w)) + '</span></button>';
+  /** Human meta under preview title: «качество 480p (720×406) · 5 сек» */
+  function resTier(vw, vh) {
+    const w = Math.round(Number(vw) || 0);
+    const h = Math.round(Number(vh) || 0);
+    if (!w || !h) return '';
+    const long = Math.max(w, h);
+    const short = Math.min(w, h);
+    if (long >= 1800 || short >= 1000) return '1080p';
+    if (long >= 1100 || short >= 680) return '720p';
+    if (long >= 640 || short >= 360) return '480p';
+    return '';
+  }
+  function durSeconds(work, vid) {
+    if (vid && vid.duration && isFinite(vid.duration) && vid.duration > 0) return Math.round(vid.duration);
+    const raw = String(work.dur || '').trim();
+    if (!raw) return 0;
+    if (/^\d+$/.test(raw)) return parseInt(raw, 10) || 0;
+    const m = raw.match(/^(\d+)\s*:\s*(\d+)$/);
+    if (m) return (parseInt(m[1], 10) || 0) * 60 + (parseInt(m[2], 10) || 0);
+    const sec = raw.match(/(\d+)\s*с/i);
+    if (sec) return parseInt(sec[1], 10) || 0;
+    return 0;
+  }
+  function videoMetaText(work, vid) {
+    const w = Math.round(Number((vid && vid.videoWidth) || work.w) || 0);
+    const h = Math.round(Number((vid && vid.videoHeight) || work.h) || 0);
+    const parts = [];
+    if (w && h) {
+      const size = w + '\u00d7' + h;
+      const tier = resTier(w, h);
+      parts.push(tier ? tr('studio.vit.meta.resTier', { tier: tier, size: size }) : tr('studio.vit.meta.res', { size: size }));
+    }
+    const n = durSeconds(work, vid);
+    if (n > 0) {
+      work.dur = Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0');
+      parts.push(tr('studio.vit.meta.dur', { n: n }));
+    }
+    return parts.join(' \u00b7 ');
+  }
+  function fillVideoMeta(root, work) {
+    const vid = root && root.querySelector('video');
+    const badge = root && root.querySelector('.vc-res');
+    if (!badge) return;
+    const paint = () => {
+      if (vid && vid.videoWidth && vid.videoHeight) {
+        work.w = vid.videoWidth;
+        work.h = vid.videoHeight;
+      }
+      badge.textContent = videoMetaText(work, vid);
+    };
+    if (!vid) { paint(); return; }
+    if (vid.readyState >= 1) paint();
+    else vid.addEventListener('loadedmetadata', paint, { once: true });
+  }
+  const card = (w) => {
+    const aw = Number(w.w) || 16;
+    const ah = Number(w.h) || 9;
+    const ratio = aw + ' / ' + ah;
+    const poster = (w.src || '').trim();
+    const media = w.video
+      ? '<video src="' + esc2(w.video) + '"' + (poster ? ' poster="' + esc2(poster) + '"' : '')
+        + ' muted loop playsinline autoplay preload="metadata" style="aspect-ratio:' + ratio + ';object-fit:cover;width:100%;height:auto"></video>'
+      : '<img src="' + esc2(poster) + '" alt="" loading="lazy" width="' + aw + '" height="' + ah + '" style="aspect-ratio:' + ratio + ';object-fit:cover;width:100%;height:auto">';
+    const cardDur = (() => {
+      const n = durSeconds(w, null);
+      return n > 0 ? tr('studio.vit.meta.dur', { n: n }) : (w.dur || '');
+    })();
+    return '<button class="vit-card" data-w="' + w.id + '" aria-label="' + esc2(wTitle(w) || w.title || '') + '">' + media
+      + (w.type === 'video' || w.video ? '<span class="vc-p">▶ ' + esc2(cardDur) + '</span>' : '')
+      + '<span class="vc-t">' + esc2(wTitle(w) || w.title || '') + '</span></button>';
+  };
   function compute() {
+    syncExampleWorks();
     if (app.state.sel !== lastSel) { lastSel = app.state.sel; modelFilter = true; }
-    const topic = topicText(), m = modelObj(), mName = MODEL_OF[m.slug];
-    const t = byTopic(topic);
+    const m = modelObj(), mName = MODEL_OF[m.slug] || m.name;
     let mw = [];
     if (modelFilter) {
-      mw = WORKS.filter((w) => sameModel(w, m, mName) && !t.includes(w)).sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 8);
-    } else if (!topic) {
-      /* нет фильтров — вся витрина */
+      mw = WORKS.filter((w) => sameModel(w, m, mName)).sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 24);
+    } else {
       mw = WORKS.slice().sort((a, b) => (b.likes || 0) - (a.likes || 0));
     }
-    return { topic, m, mName, t, mw, modelFilter };
+    return { m, mName, mw, modelFilter };
   }
   function syncScrim() { if (typeof updateStudioScrim === 'function') updateStudioScrim(); }
   function draw() {
     const r = compute();
-    const n = r.t.length + r.mw.length; $('vitCnt').textContent = n; $('vitCnt').classList.toggle('hidden', !n || open);
-    const showHint = !open && !hintOff && r.topic && r.t.length > 0 && !app.state.chat;
-    $('vitHint').classList.toggle('hidden', !showHint);
-    if (showHint) {
-      $('vhTh').innerHTML = r.t.slice(0, 3).map((w) => '<img src="' + esc2(w.src) + '" alt="">').join('');
-      $('vhT').textContent = tr(MOBILE() ? 'studio.hint.count' : 'studio.hint.countFull', { n: r.t.length });
-      if (!hinted) { hinted = true; $('vitBtn').classList.add('pulse'); setTimeout(() => $('vitBtn').classList.remove('pulse'), 3300); }
-    }
-    if (!r.topic) hinted = false;
-    const ids = r.t.concat(r.mw).map((w) => w.id);
+    const n = r.mw.length;
+    $('vitCnt').textContent = n;
+    $('vitCnt').classList.toggle('hidden', !n || open);
+    $('vitHint').classList.add('hidden');
+    const ids = r.mw.map((w) => w.id);
     const full = '/explore' + (ids.length ? '?ids=' + ids.join(',') + '&from=studio' : '');
     $('vitFull2').href = full;
     if (!open) return;
     if (preview) return drawPreview(preview);
     const boldVal = (key, name, val) => esc2(tr(key, { [name]: '\u0000' })).replace('\u0000', '<b>' + esc2(val) + '</b>');
-    const topicChip = r.topic
-      ? '<span title="' + esc2(r.topic) + '">' + boldVal('studio.vit.topic', 'topic', r.topic.length > 34 ? r.topic.slice(0, 34) + '…' : r.topic) + '</span>'
-      : '';
     const modelChip = r.modelFilter
       ? '<span>' + boldVal('studio.vit.model', 'model', r.m.name)
         + '<button type="button" class="vit-chip-x" data-clear-model aria-label="' + esc2(tr('studio.vit.clearModel')) + '" title="' + esc2(tr('studio.vit.clearModel')) + '">×</button></span>'
       : '';
-    $('vitCtx').innerHTML = topicChip + modelChip;
-    const list = r.t.concat(r.mw);
+    $('vitCtx').innerHTML = modelChip;
+    const list = r.mw;
     let h = '<section class="vit-sec">';
     if (list.length) h += '<div class="vit-grid">' + list.map(card).join('') + '</div>';
     else if (r.modelFilter && r.m.type === 'music') h += '<div class="vit-empty">' + esc2(tr('studio.vit.empty.music')) + '</div>';
     else if (r.modelFilter && r.m.type === 'text') h += '<div class="vit-empty">' + esc2(tr('studio.vit.empty.text')) + '</div>';
-    else if (!r.topic && r.modelFilter) h += '<div class="vit-empty">' + esc2(tr('studio.vit.empty.start')) + '</div>';
     else h += '<div class="vit-empty">' + esc2(tr('studio.vit.empty.none')) + '</div>';
     h += '</section>';
     $('vitBody').innerHTML = h;
   }
   function drawPreview(id) {
-    const w = D.works.find((x) => x.id === id); if (!w) { preview = null; pvMode = 'view'; return draw(); }
+    const w = WORKS.find((x) => x.id === id) || D.works.find((x) => x.id === id); if (!w) { preview = null; pvMode = 'view'; return draw(); }
     const c = CR[w.creator] || { id: w.creator, name: tr('vitrina.creator.fallback'), nick: '', works: 0, grad: '#FF8A2B,#F2668B' };
-    const media = w.video ? '<video src="' + esc2(w.video) + '" poster="' + esc2(w.src) + '" autoplay muted loop playsinline></video>' : '<img src="' + esc2(w.src) + '" alt="' + esc2(wTitle(w)) + '">';
-    const slug = Object.keys(MODEL_OF).find((k) => MODEL_OF[k] === w.model)
-      || (/^Seedance/i.test(w.model) ? 'seedance-lite' : /^Kling/i.test(w.model) ? 'kling-o3-i2v' : /Seedream 5 Pro/i.test(w.model) ? 'seedream-5-pro' : /Seedream/i.test(w.model) ? 'seedream-5-lite' : null);
+    const media = w.video
+      ? '<video src="' + esc2(w.video) + '" poster="' + esc2(w.src) + '" autoplay muted loop playsinline preload="metadata"></video>'
+      : '<img src="' + esc2(w.src) + '" alt="' + esc2(wTitle(w) || w.title || '') + '">';
+    const resBadge = '<p class="vc-res">' + esc2(videoMetaText(w, null)) + '</p>';
+    const slug = w.model_slug
+      || Object.keys(MODEL_OF).find((k) => MODEL_OF[k] === w.model)
+      || (/^Wan/i.test(w.model) ? 'wan-3-0' : /^Grok/i.test(w.model) ? 'grok-imagine-video-1-5' : /^Seedance/i.test(w.model) ? 'seedance-2-5' : /Veo\s*3\.1\s*Fast/i.test(w.model) ? 'veo-3-1-fast' : /^Veo/i.test(w.model) ? 'veo-3-1' : /^Kling/i.test(w.model) ? 'kling-v2-5-turbo-pro' : /^PixVerse/i.test(w.model) ? 'pixverse-v6' : /^P-?Video/i.test(w.model) ? 'p-video' : /Seedream/i.test(w.model) ? 'seedream-5-pro' : /GPT\s*Image\s*2\.5\s*Flare/i.test(w.model) ? 'gpt-image-2-5-flare' : /GPT\s*Image\s*2\.5\s*Sunburst/i.test(w.model) ? 'gpt-image-2-5-sunburst' : /^GPT\s*Image\s*2(?!\.5)/i.test(w.model) ? 'gpt-image-2' : null);
     const slugName = slug ? (app.MODELS.find((m) => m.slug === slug) || {}).name : '';
     const handle = c.nick || c.handle || '';
     const cHref = handle
@@ -1327,7 +1727,9 @@ syncPricing();
     $('vitCtx').innerHTML = '';
     $('vitBody').innerHTML = '<div class="vit-pv"><button type="button" class="vit-back" data-vback>' + esc2(tr('studio.vit.back')) + '</button><div class="media">' + media + '</div>'
       + '<h4>' + esc2(wTitle(w)) + '</h4>'
+      + resBadge
       + genBtn + creatorCard + lower + '</div>';
+    fillVideoMeta($('vitBody').querySelector('.vit-pv'), w);
     const f = $('vitReqForm');
     if (f) {
       f.addEventListener('submit', async (e) => {
@@ -1411,17 +1813,27 @@ syncPricing();
     } catch (e) {}
   }
   window.renderVit = function () {
-    const key = topicText() + '|' + app.state.sel + '|' + open + '|' + app.state.chat + '|' + modelFilter;
+    const key = app.state.sel + '|' + open + '|' + app.state.chat + '|' + modelFilter;
     if (key === lastKey) return; lastKey = key;
     clearTimeout(timer); timer = setTimeout(draw, 250);
   };
   window.vitIsOpen = () => open;
   window.vitClose = () => setOpen(false);
   window.vitMarkLeftRestore = (v) => { leftWasOpen = !!v; };
+  window.vitOpenForModel = (slug) => {
+    const id = String(slug || app.state.sel || '').trim();
+    if (id && app.state.sel !== id) app.setState({ sel: id });
+    modelFilter = true;
+    lastSel = id || app.state.sel;
+    preview = null;
+    pvMode = 'view';
+    lastKey = '';
+    setOpen(true);
+  };
   $('vitBtn').addEventListener('click', () => setOpen(!open));
   $('vitClose').addEventListener('click', () => setOpen(false));
   $('vitHintBtn').addEventListener('click', () => setOpen(true));
-  $('vitHintX').addEventListener('click', () => { hintOff = true; draw(); });
+  $('vitHintX').addEventListener('click', () => { $('vitHint').classList.add('hidden'); });
   $('vitCtx').addEventListener('click', (e) => {
     if (!e.target.closest('[data-clear-model]')) return;
     modelFilter = false;

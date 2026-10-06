@@ -1,25 +1,36 @@
 /*
  * Список работ для ленты на главной.
  * Файлы лежат в /works/. Клик открывает /explore?work=<id>.
+ * Только сети, подключённые по схеме Wan/Grok.
  */
 window.AISHNITSA_WORKS = [
-  'works/neon.webm',
-  'works/ribbon.webp',
-  'works/lake.webm',
-  'works/spectrum.webp',
-  'works/dunes.webp',
-  'works/flower.webp',
-  'works/sail.webp',
-  'works/chrome.webp',
-  'works/hero.webp',
-  'works/aurora.webp',
-  'works/bauhaus.webp',
-  'works/galaxy.webp'
+  'works/wan30.mp4',
+  'works/grok15.mp4',
+  'works/seedance25.mp4',
+  'works/veo31.mp4',
+  'works/veo31fast.mp4',
+  'works/kling25turbopro.mp4',
+  'works/pixversev6.mp4',
+  'works/pvideo.mp4',
+  'works/seedream5pro.jpg',
+  'works/gptimage2.jpg',
+  'works/gptimage25flare.jpg',
+  'works/gptimage25sunburst.jpg'
 ];
 
 window.AISHNITSA_WORK_IDS = [
-  'w01', 'w07', 'w03', 'w11', 'w18', 'w21',
-  'w14', 'w16', 'w04', 'w05', 'w06', 'w12'
+  'ex-wan-3-0',
+  'ex-grok-imagine-video-1-5',
+  'ex-seedance-2-5',
+  'ex-veo-3-1',
+  'ex-veo-3-1-fast',
+  'ex-kling-v2-5-turbo-pro',
+  'ex-pixverse-v6',
+  'ex-p-video',
+  'ex-seedream-5-pro',
+  'ex-gpt-image-2',
+  'ex-gpt-image-2-5-flare',
+  'ex-gpt-image-2-5-sunburst'
 ];
 
 window.AISHNITSA_LENS = {
@@ -27,7 +38,7 @@ window.AISHNITSA_LENS = {
   axis: 'x',
   speed: 0.018,
   hoverSpeed: 0.005,
-  cols: 4, rows: 3,
+  cols: 5, rows: 1,
   gap: 30, radius: 34,
   tileRatio: 0.74
 };

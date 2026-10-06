@@ -362,7 +362,7 @@ html[data-theme="dark"] .hdr-tag,html[data-theme="dark"] .hdr-btn{color:#D7CCFF!
           <span class="btn-label" data-i18n="index.hero.models">Все модели</span>
           <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
         </button>
-        <button type="submit" class="gen-btn" aria-label="Сгенерировать" data-i18n-attr="aria-label:common.generate" style="margin-left: auto; height: 48px; padding: 0 20px 0 18px; border-radius: 999px; border: none; color: #FFFFFF; font-family: 'Onest', sans-serif; font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; cursor: pointer">
+        <button type="button" id="genBtn" class="gen-btn" aria-label="Сгенерировать" data-i18n-attr="aria-label:common.generate" style="margin-left: auto; height: 48px; padding: 0 20px 0 18px; border-radius: 999px; border: none; color: #FFFFFF; font-family: 'Onest', sans-serif; font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; cursor: pointer">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"></path></svg>
           <span class="btn-label" data-i18n="common.generate">Сгенерировать</span>
         </button>
@@ -786,8 +786,21 @@ els.root.addEventListener('mousemove', (e) => app.onMove(e));
 els.input.addEventListener('input', (e) => app.onType(e));
 els.input.addEventListener('focus', () => app.onFocus());
 els.input.addEventListener('blur', () => app.onBlur());
+els.input.addEventListener('keydown', (e) => {
+  // Tab must not leave the prompt for «Все модели» / Submit → accidental /app
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    return;
+  }
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+    e.preventDefault();
+    app.onSubmit(e);
+  }
+});
 els.form.addEventListener('submit', (e) => app.onSubmit(e));
 els.btn.addEventListener('click', () => app.onPoke());
+const genBtn = document.getElementById('genBtn');
+if (genBtn) genBtn.addEventListener('click', (e) => app.onSubmit(e));
 render();
 app.componentDidMount();
 

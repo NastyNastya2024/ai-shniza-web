@@ -24,9 +24,12 @@ Units differ by model (per image / per second / per token / per megapixel). Comp
 | Ассистент · Claude Haiku 4.5 | replicate | anthropic/claude-4.5-haiku | llm | text | text | $5 per million output tokens (or 200,000 tokens for $1) · $1 per million input tokens (or 1,000,000 tokens for $1) |
 | Ассистент · Claude Opus 4.7 | replicate | anthropic/claude-opus-4.7 | llm | text, image | text | $5 per million input tokens (or 200,000 tokens for $1) · $0.025 per thousand output tokens (or 40,000 tokens for $1) |
 | Ассистент · Gemini 3.5 Flash | replicate | google/gemini-3.5-flash | llm | text | text | $1.50 per million input tokens (or around 666,666 tokens for $1) · $9 per million output tokens (or around 111,111 tokens for $1) |
+| Ассистент · Gemini 3.1 Pro | replicate | google/gemini-3.1-pro | llm | text, image | text | $2 per million input tokens (or 500,000 tokens for $1) · $0.012 per thousand output tokens (or around 83,333 tokens for $1) |
 | Ассистент · GPT-5.4 | replicate | openai/gpt-5.4 | llm | text, image | text | $2.50 per million input tokens (or 400,000 tokens for $1) · $0.015 per thousand output tokens (or around 66,666 tokens for $1) |
 | GPT-5.6 Sol | replicate | openai/gpt-5.6-sol | llm | text, image | text | $2 per million input tokens (or 500,000 tokens for $1) · $0.01 per thousand output tokens (or 100,000 tokens for $1) |
 | Runway Gen-4.5 | replicate | runwayml/gen-4.5 | video | text, image | video | $0.12 per second of output video (or around 83 seconds for $10) |
+| Veo 3.1 | replicate | google/veo-3.1 | video | text, image | video | $0.20/s without audio · $0.40/s with audio |
+| Veo 3.1 Fast | replicate | google/veo-3.1-fast | video | text, image | video | $0.10/s without audio · $0.15/s with audio |
 | Veo 3.1 Lite | replicate | google/veo-3.1-lite | video | text, image | video | $0.05 per second of output video (or 20 seconds for $1) |
 | Sora 2 | replicate | openai/sora-2 | video | text, image | video | $0.10 per second of output video (or 10 seconds for $1) |
 | Hailuo 2.3 Fast | replicate | minimax/hailuo-2.3-fast | video | image, text | video | $0.19 per output video (or around 52 videos for $10) |
@@ -52,15 +55,18 @@ Units differ by model (per image / per second / per token / per megapixel). Comp
 | Gen-4 Image | replicate | runwayml/gen4-image | image | text, image | image | $0.05 per output image (or 20 images for $1) |
 | Z-Image Turbo | replicate | prunaai/z-image-turbo | image | text | image | $2.50 per thousand output image megapixels (or 400 megapixels for $1) |
 | HiDream L1 Fast | replicate | prunaai/hidream-l1-fast | image | text | image | $5 per thousand output images (or 200 images for $1) |
-| GPT Image 2.5 Flare | replicate | openai/gpt-image-2.5-flare | image | text, image | image | $0.25 per output image (or 40 images for $10) |
-| GPT Image 2.5 Sunburst | replicate | openai/gpt-image-2.5-sunburst | image | text, image | image | $0.25 per output image (or 40 images for $10) |
-| Wan 3.0 | replicate | alibaba/wan-3 | video | text, image | video | $0.025 per second of output video (or 40 seconds for $1) |
-| Seedance 2.5 | replicate | bytedance/seedance-2.5 | video | text | video | $0.1028 per second of output video (or around 97 seconds for $10) |
+| GPT Image 2 | replicate | openai/gpt-image-2 | image | text, image | image | $0.012/image low · $0.047 medium · $0.128 high |
+| GPT Image 2.5 Flare | replicate | openai/gpt-image-2.5-flare | image | text, image | image | $0.012/image low · $0.047 medium · $0.128 high · $0.25 xhigh · $0.50 max |
+| GPT Image 2.5 Sunburst | replicate | openai/gpt-image-2.5-sunburst | image | text, image | image | $0.012/image low · $0.047 medium · $0.128 high · $0.25 xhigh · $0.50 max |
+| Wan 3.0 | replicate | alibaba/wan-3 | video | text, image | video | $0.05/s 480p · $0.10/s 720p · $0.20/s 1080p |
+| Grok Imagine Video 1.5 | replicate | xai/grok-imagine-video-1.5 | video | image, text | video | $0.08/s output video (synced audio · 480p/720p · 1–15s) |
+| Seedance 2.5 | replicate | bytedance/seedance-2.5 | video | text, image | video | $0.1028/s output video (synced audio · 480p/720p · up to 30s) |
 | Seedance 2.0 | replicate | bytedance/seedance-2.0 | video | text | video | $0.10 per second of output video (or 10 seconds for $1) |
 | Happy Horse 1.1 T2V | fal | alibaba/happy-horse/v1.1/text-to-video | video | text | video | 720p $0.14/s · 1080p $0.18/s |
 | Gemini Omni Flash | fal | google/gemini-omni-flash | video | text | video | $21.875 / 1M tokens · ~$0.125/s at 720p |
 | Grok Imagine Video 1.5 I2V | fal | xai/grok-imagine-video/v1.5/image-to-video | video | image, text | video | 480p $0.08/s · 720p $0.14/s · 1080p $0.25/s · +$0.01/ref image |
 | Seedance 2.0 T2V | fal | bytedance/seedance-2.0/text-to-video | video | text | video | 720p $0.3034/s · 1080p $0.682/s (also token formula on page) |
+| Kling 2.5 Turbo Pro | replicate | kwaivgi/kling-v2.5-turbo-pro | video | text, image | video | $0.07/s |
 | Kling O3 Standard I2V | fal | fal-ai/kling-video/o3/standard/image-to-video | video | image, text | video | $0.084/s audio off · $0.112/s audio on |
 | MiniMax H3 Ref→Video | fal | minimax/h3/reference-to-video | video | text, image | video | 480p $0.05/s · 768p $0.06/s · 2K $0.13/s · 4K $0.16/s · +$0.08 after 5 ref images |
 | Wan 3.0 T2V | fal | alibaba/wan-3.0/text-to-video | video | text | video | 480p $0.05/s · 720p $0.10/s · 1080p $0.20/s |
@@ -70,8 +76,11 @@ Units differ by model (per image / per second / per token / per megapixel). Comp
 | LTX 2.3 I2V | fal | fal-ai/ltx-2.3/image-to-video | video | image, text | video | 1080p $0.08/s · 1440p $0.16/s · 2160p $0.32/s |
 | LTX 2.3 I2V Fast | fal | fal-ai/ltx-2.3/image-to-video/fast | video | image, text | video | 1080p $0.06/s · 1440p $0.12/s · 2160p $0.24/s |
 | LTX 2.3 A2V | fal | fal-ai/ltx-2.3/audio-to-video | video | audio, text, image | video | $0.10/s |
+| PixVerse V6 | replicate | pixverse/pixverse-v6 | video | text, image | video | $0.05/s 360p · $0.07 540p · $0.09 720p · $0.18 1080p |
+| P-Video | replicate | prunaai/p-video | video | text, image, audio | video | $0.005/s 720p draft · $0.02 720p · $0.01 1080p draft · $0.04 1080p |
 | PixVerse V6 T2V | fal | fal-ai/pixverse/v6/text-to-video | video | text | video | 360p $0.025–0.035/s · 540p $0.035–0.045/s · 720p $0.045–0.060/s · 1080p $0.090–0.115/s (no/with audio) |
 | PixVerse V6 I2V | fal | fal-ai/pixverse/v6/image-to-video | video | image, text | video | 360p $0.025–0.035/s · 540p $0.035–0.045/s · 720p $0.045–0.060/s · 1080p $0.090–0.115/s (no/with audio) |
+| Seedream 5.0 Pro | replicate | bytedance/seedream-5-pro | image | text, image | image | $0.045/image 1K · $0.09/image 2K |
 | Seedream 5.0 Lite Edit | fal | fal-ai/bytedance/seedream/v5/lite/edit | image | image, text | image | $0.035 / image |
 | Seedream 5.0 Lite T2I | fal | fal-ai/bytedance/seedream/v5/lite/text-to-image | image | text | image | $0.035 / image |
 | Seedream 5.0 Pro T2I | fal | bytedance/seedream/v5/pro/text-to-image | image | text | image | ≤1536² $0.0675/image · ≤2048² $0.135/image (tentative) |

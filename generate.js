@@ -36,11 +36,23 @@ const GROUP_LABELS = {
 };
 
 const PROVIDER_LABELS = {
-  replicate: "Replicate",
-  fal: "fal.ai",
-  omniroute: "OmniRoute",
-  groq: "Groq",
+  replicate: "",
+  fal: "",
+  omniroute: "",
+  groq: "",
 };
+
+function publicModelName(name) {
+  return String(name || "")
+    .replace(/^Ассистент\s*[·•\-—]\s*/i, "")
+    .replace(/\bOmniRoute\b/gi, "")
+    .replace(/\bReplicate\b/gi, "")
+    .replace(/\bfal(?:\.ai)?\b/gi, "")
+    .replace(/\s*[·•\-—]\s*$/g, "")
+    .replace(/^\s*[·•\-—]\s*/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim() || "Ассистент";
+}
 
 async function ensureCsrf() {
   if (window.__csrfToken) return window.__csrfToken;
@@ -93,7 +105,7 @@ function fillPromptFromQuery() {
 
 function isAssistantSpec(model) {
   if (!model) return false;
-  return model.group === "assistants" || model.kind === "chat" || model.kind === "llm";
+  return model.group === "assistants" || model.kind === "chat" || model.kind === "llm" || model.is_assistant;
 }
 
 function findModel(id) {
@@ -105,7 +117,7 @@ function currentAssistant() {
     findModel(selectedAssistantId) ||
     findModel(DEFAULT_ASSISTANT_ID) || {
       id: "assistant",
-      name: "Ассистент · OmniRoute",
+      name: "Ассистент",
       provider: "omniroute",
       kind: "chat",
       group: "assistants",
@@ -116,7 +128,7 @@ function currentAssistant() {
 function currentGenerateModel() {
   if (!selectedGenerateModelId) return null;
   const model = findModel(selectedGenerateModelId);
-  if (!model || isAssistantSpec(model)) return null;
+  if (!model) return null;
   return model;
 }
 
@@ -137,30 +149,44 @@ async function loadIntegrations(opts = {}) {
       integratedModels = [
         {
           id: "assistant",
-          name: "Ассистент · OmniRoute",
+          name: "Ассистент",
           provider: "omniroute",
           kind: "chat",
           group: "assistants",
           inputs: ["text"],
           outputs: ["text"],
-          price: "free-tier",
+          price: "Бесплатно",
         },
       ];
     }
   }
 
-  // Ассистент всегда Omni (резерв DeepSeek на сервере) — не выбирается в UI
-  selectedAssistantId = DEFAULT_ASSISTANT_ID;
-  localStorage.removeItem("selectedAssistantId");
+  integratedModels = integratedModels.map((m) => ({
+    ...m,
+    name: publicModelName(m.name || m.id),
+    notes: /\b(omniroute|replicate|fal(?:\.ai)?)\b/i.test(String(m.notes || ""))
+      ? ""
+      : (m.notes || ""),
+  }));
+
+  // Keep default chat assistant unless user picks another LLM
+  if (!selectedAssistantId || !findModel(selectedAssistantId)) {
+    selectedAssistantId = DEFAULT_ASSISTANT_ID;
+  }
 
   const savedGenerate = localStorage.getItem("selectedGenerateModelId");
   const legacy = localStorage.getItem("selectedIntegrationId");
+  const savedAssistant = localStorage.getItem("selectedAssistantId");
 
-  if (savedGenerate && findModel(savedGenerate) && !isAssistantSpec(findModel(savedGenerate))) {
+  if (savedAssistant && findModel(savedAssistant)) {
+    selectedAssistantId = savedAssistant;
+  }
+
+  if (savedGenerate && findModel(savedGenerate)) {
     selectedGenerateModelId = savedGenerate;
-  } else if (legacy && findModel(legacy) && !isAssistantSpec(findModel(legacy))) {
+  } else if (legacy && findModel(legacy)) {
     selectedGenerateModelId = legacy;
-  } else if (selectedGenerateModelId && (!findModel(selectedGenerateModelId) || isAssistantSpec(findModel(selectedGenerateModelId)))) {
+  } else if (selectedGenerateModelId && !findModel(selectedGenerateModelId)) {
     selectedGenerateModelId = null;
   }
 
@@ -179,8 +205,6 @@ function modalityLabel(mod) {
 function filteredModels() {
   const q = filterQuery.trim().toLowerCase();
   return integratedModels.filter((model) => {
-    // Ассистенты не выбираются в UI: всегда Omni → резерв на сервере
-    if (isAssistantSpec(model)) return false;
     const inputs = model.inputs || [];
     const outputs = model.outputs || [];
     if (filterInput && !inputs.includes(filterInput)) return false;
@@ -212,11 +236,10 @@ function renderModelsList() {
     return;
   }
 
-  const order = ["generative", "image", "video", "audio"];
+  const order = ["assistants", "generative", "image", "video", "audio"];
   const byGroup = {};
   for (const model of models) {
     const g = model.group || model.kind || "other";
-    if (g === "assistants") continue;
     if (!byGroup[g]) byGroup[g] = [];
     byGroup[g].push(model);
   }
@@ -256,8 +279,12 @@ function renderModelsList() {
 
 function selectModel(modelId) {
   const model = findModel(modelId);
-  if (!model || isAssistantSpec(model)) return;
+  if (!model) return;
   selectedGenerateModelId = modelId;
+  if (isAssistantSpec(model)) {
+    selectedAssistantId = modelId;
+    localStorage.setItem("selectedAssistantId", selectedAssistantId);
+  }
   localStorage.setItem("selectedGenerateModelId", selectedGenerateModelId);
   localStorage.setItem("selectedIntegrationId", selectedGenerateModelId);
   updateSelectedModelBar();
@@ -269,8 +296,15 @@ function updateSelectedModelBar() {
   const assistantEl = document.getElementById("selected-assistant-name");
   const modelEl = document.getElementById("selected-model-name");
   const gen = currentGenerateModel();
-  if (assistantEl) assistantEl.textContent = "OmniRoute · free";
-  if (modelEl) modelEl.textContent = gen ? gen.name || gen.id : "не выбрана";
+  const asst = currentAssistant();
+  if (assistantEl) {
+    assistantEl.textContent = isAssistantSpec(gen)
+      ? (gen.name || gen.id)
+      : (asst ? (asst.name || asst.id) : "Ассистент");
+  }
+  if (modelEl) {
+    modelEl.textContent = gen && !isAssistantSpec(gen) ? (gen.name || gen.id) : (gen && isAssistantSpec(gen) ? "текст" : "не выбрана");
+  }
 }
 
 function setSideTab(tab) {
@@ -1012,11 +1046,11 @@ async function sendChat(opts = {}) {
   if (!response.ok) {
     let hint = "Не удалось получить ответ. Попробуйте ещё раз.";
     if (data.error === "not_configured") {
-      hint = "Чат не настроен: добавьте OMNIROUTE_API_KEY в .env и перезапустите сервер.";
+      hint = "Чат временно недоступен. Попробуйте позже.";
     } else if (data.status === 401 || data.status === 403) {
-      hint = "Ключ OmniRoute отклонён. Проверьте OMNIROUTE_API_KEY в .env.";
+      hint = "Чат временно недоступен. Попробуйте позже.";
     } else if (data.detail) {
-      hint = `Не удалось получить ответ: ${data.detail}`;
+      hint = "Не удалось получить ответ. Попробуйте ещё раз.";
     }
     addMessage("assistant", hint);
     return null;
@@ -1069,13 +1103,13 @@ async function sendReplicateGenerate(model, overridePrompt) {
   if (!response.ok) {
     let hint = "Не удалось выполнить генерацию.";
     if (data.error === "not_configured") {
-      hint = "Replicate не настроен: добавьте REPLICATE_API_TOKEN в .env на сервере.";
+      hint = "Генерация временно недоступна. Попробуйте позже.";
     } else if (data.error === "channel_unavailable") {
-      hint = `Канал ${(data.provider || "").toUpperCase()} сейчас недоступен — модель скрыта из маршрутизации.`;
+      hint = "Модель сейчас недоступна. Выберите другую или попробуйте позже.";
     } else if (data.error === "queue_unavailable") {
-      hint = "Очередь генерации недоступна (Redis / workers).";
+      hint = "Очередь генерации недоступна. Попробуйте позже.";
     } else if (data.detail) {
-      hint = `Ошибка: ${typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail)}`;
+      hint = "Не удалось выполнить генерацию. Попробуйте ещё раз.";
     }
     addMessage("assistant", hint);
     return false;

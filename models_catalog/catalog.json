@@ -3,20 +3,20 @@
   "models": [
     {
       "id": "assistant",
-      "name": "Ассистент · OmniRoute",
+      "name": "Ассистент",
       "provider": "omniroute",
       "upstream": "",
       "category": "llm",
       "inputs": "text",
       "outputs": "text",
-      "price": "free-tier / pool (OmniRoute)",
+      "price": "Бесплатно",
       "price_source": "omniroute",
       "url": "",
-      "notes": "chat assistant / router; not billed via Replicate/fal"
+      "notes": ""
     },
     {
       "id": "deepseek-v3-1",
-      "name": "Ассистент · DeepSeek V3.1",
+      "name": "DeepSeek V3.1",
       "provider": "replicate",
       "upstream": "deepseek-ai/deepseek-v3.1",
       "category": "llm",
@@ -29,7 +29,7 @@
     },
     {
       "id": "deepseek-v3",
-      "name": "Ассистент · DeepSeek V3",
+      "name": "DeepSeek V3",
       "provider": "replicate",
       "upstream": "deepseek-ai/deepseek-v3",
       "category": "llm",
@@ -42,7 +42,7 @@
     },
     {
       "id": "claude-sonnet-5",
-      "name": "Ассистент · Claude Sonnet 5",
+      "name": "Claude Sonnet 5",
       "provider": "replicate",
       "upstream": "anthropic/claude-sonnet-5",
       "category": "llm",
@@ -55,7 +55,7 @@
     },
     {
       "id": "claude-4-5-haiku",
-      "name": "Ассистент · Claude Haiku 4.5",
+      "name": "Claude Haiku 4.5",
       "provider": "replicate",
       "upstream": "anthropic/claude-4.5-haiku",
       "category": "llm",
@@ -68,7 +68,7 @@
     },
     {
       "id": "claude-opus-4-7",
-      "name": "Ассистент · Claude Opus 4.7",
+      "name": "Claude Opus 4.7",
       "provider": "replicate",
       "upstream": "anthropic/claude-opus-4.7",
       "category": "llm",
@@ -81,7 +81,7 @@
     },
     {
       "id": "gemini-3-5-flash",
-      "name": "Ассистент · Gemini 3.5 Flash",
+      "name": "Gemini 3.5 Flash",
       "provider": "replicate",
       "upstream": "google/gemini-3.5-flash",
       "category": "llm",
@@ -93,8 +93,21 @@
       "notes": "p50 $0.0012"
     },
     {
+      "id": "gemini-3-1-pro",
+      "name": "Gemini 3.1 Pro",
+      "provider": "replicate",
+      "upstream": "google/gemini-3.1-pro",
+      "category": "llm",
+      "inputs": "text, image",
+      "outputs": "text",
+      "price": "$2 per million input tokens (or 500,000 tokens for $1) · $0.012 per thousand output tokens (or around 83,333 tokens for $1)",
+      "price_source": "replicate.com page",
+      "url": "https://replicate.com/google/gemini-3.1-pro",
+      "notes": "thinking_level low|medium|high; p50 $0.0019"
+    },
+    {
       "id": "gpt-5-4",
-      "name": "Ассистент · GPT-5.4",
+      "name": "GPT-5.4",
       "provider": "replicate",
       "upstream": "openai/gpt-5.4",
       "category": "llm",
@@ -130,6 +143,32 @@
       "price_source": "replicate.com page",
       "url": "https://replicate.com/runwayml/gen-4.5",
       "notes": "p50 $0.0096"
+    },
+    {
+      "id": "veo-3-1",
+      "name": "Veo 3.1",
+      "provider": "replicate",
+      "upstream": "google/veo-3.1",
+      "category": "video",
+      "inputs": "text, image",
+      "outputs": "video",
+      "price": "$0.20 per second of output video without audio · $0.40/s with audio",
+      "price_source": "replicate.com page",
+      "url": "https://replicate.com/google/veo-3.1",
+      "notes": "t2v/i2v · native audio · 720p/1080p · 4/6/8s"
+    },
+    {
+      "id": "veo-3-1-fast",
+      "name": "Veo 3.1 Fast",
+      "provider": "replicate",
+      "upstream": "google/veo-3.1-fast",
+      "category": "video",
+      "inputs": "text, image",
+      "outputs": "video",
+      "price": "$0.10 per second of output video without audio · $0.15/s with audio",
+      "price_source": "replicate.com page",
+      "url": "https://replicate.com/google/veo-3.1-fast",
+      "notes": "быстрый t2v/i2v · native audio · 720p/1080p · 4/6/8s"
     },
     {
       "id": "veo-3-1-lite",
@@ -457,6 +496,19 @@
       "notes": "p50 $0.23"
     },
     {
+      "id": "gpt-image-2",
+      "name": "GPT Image 2",
+      "provider": "replicate",
+      "upstream": "openai/gpt-image-2",
+      "category": "image",
+      "inputs": "text, image",
+      "outputs": "image",
+      "price": "$0.012 per output image at low · $0.047 at medium · $0.128 at high",
+      "price_source": "replicate.com page",
+      "url": "https://replicate.com/openai/gpt-image-2",
+      "notes": "text/edit · quality low/medium/high"
+    },
+    {
       "id": "gpt-image-2-5-flare",
       "name": "GPT Image 2.5 Flare",
       "provider": "replicate",
@@ -464,10 +516,10 @@
       "category": "image",
       "inputs": "text, image",
       "outputs": "image",
-      "price": "$0.25 per output image (or 40 images for $10)",
+      "price": "$0.012 per output image at low · $0.047 at medium · $0.128 at high · $0.25 at xhigh · $0.50 at max",
       "price_source": "replicate.com page",
       "url": "https://replicate.com/openai/gpt-image-2.5-flare",
-      "notes": ""
+      "notes": "быстрый t2i/edit · quality low→max"
     },
     {
       "id": "gpt-image-2-5-sunburst",
@@ -477,10 +529,10 @@
       "category": "image",
       "inputs": "text, image",
       "outputs": "image",
-      "price": "$0.25 per output image (or 40 images for $10)",
+      "price": "$0.012 per output image at low · $0.047 at medium · $0.128 at high · $0.25 at xhigh · $0.50 at max",
       "price_source": "replicate.com page",
       "url": "https://replicate.com/openai/gpt-image-2.5-sunburst",
-      "notes": ""
+      "notes": "точный t2i/edit · quality low→max"
     },
     {
       "id": "wan-3-0",
@@ -490,10 +542,23 @@
       "category": "video",
       "inputs": "text, image",
       "outputs": "video",
-      "price": "$0.025 per second of output video (or 40 seconds for $1)",
+      "price": "$0.05 per second of output video at 480p · $0.10/s at 720p · $0.20/s at 1080p",
       "price_source": "replicate.com page",
       "url": "https://replicate.com/alibaba/wan-3",
-      "notes": "p50 $0.024"
+      "notes": "text/image→video · up to 30s"
+    },
+    {
+      "id": "grok-imagine-video-1-5",
+      "name": "Grok Imagine Video 1.5",
+      "provider": "replicate",
+      "upstream": "xai/grok-imagine-video-1.5",
+      "category": "video",
+      "inputs": "image, text",
+      "outputs": "video",
+      "price": "$0.08 per second of output video (or around 12 seconds for $1)",
+      "price_source": "replicate.com page",
+      "url": "https://replicate.com/xai/grok-imagine-video-1.5",
+      "notes": "image→video · synced audio · 480p/720p · 1–15s"
     },
     {
       "id": "seedance-2-5",
@@ -501,12 +566,12 @@
       "provider": "replicate",
       "upstream": "bytedance/seedance-2.5",
       "category": "video",
-      "inputs": "text",
+      "inputs": "text, image",
       "outputs": "video",
       "price": "$0.1028 per second of output video (or around 97 seconds for $10)",
       "price_source": "replicate.com page",
       "url": "https://replicate.com/bytedance/seedance-2.5",
-      "notes": "p50 $0.033"
+      "notes": "text/image→video · synced audio · 480p/720p · 4–30s"
     },
     {
       "id": "seedance-2-0",
@@ -572,6 +637,19 @@
       "price_source": "fal.ai llms.txt / model page",
       "url": "https://fal.ai/models/bytedance/seedance-2.0/text-to-video",
       "notes": ""
+    },
+    {
+      "id": "kling-v2-5-turbo-pro",
+      "name": "Kling 2.5 Turbo Pro",
+      "provider": "replicate",
+      "upstream": "kwaivgi/kling-v2.5-turbo-pro",
+      "category": "video",
+      "inputs": "text, image",
+      "outputs": "video",
+      "price": "$0.07 per second of output video (or around 14 seconds for $1)",
+      "price_source": "replicate.com page",
+      "url": "https://replicate.com/kwaivgi/kling-v2.5-turbo-pro",
+      "notes": "t2v/i2v · 5/10s · cinematic"
     },
     {
       "id": "kling-o3-standard-i2v-fal",
@@ -691,6 +769,32 @@
       "notes": ""
     },
     {
+      "id": "pixverse-v6",
+      "name": "PixVerse V6",
+      "provider": "replicate",
+      "upstream": "pixverse/pixverse-v6",
+      "category": "video",
+      "inputs": "text, image",
+      "outputs": "video",
+      "price": "$0.05 per second of output video at 360p · $0.07 at 540p · $0.09 at 720p · $0.18 at 1080p",
+      "price_source": "replicate.com page",
+      "url": "https://replicate.com/pixverse/pixverse-v6",
+      "notes": "t2v/i2v · optional audio · multi-shot · up to 15s"
+    },
+    {
+      "id": "p-video",
+      "name": "P-Video",
+      "provider": "replicate",
+      "upstream": "prunaai/p-video",
+      "category": "video",
+      "inputs": "text, image, audio",
+      "outputs": "video",
+      "price": "$0.005 per second of output video at 720p draft · $0.02 at 720p · $0.01 at 1080p draft · $0.04 at 1080p",
+      "price_source": "replicate.com page",
+      "url": "https://replicate.com/prunaai/p-video",
+      "notes": "t2v/i2v/a2v · draft · native audio · up to 20s"
+    },
+    {
       "id": "pixverse-v6-t2v-fal",
       "name": "PixVerse V6 T2V",
       "provider": "fal",
@@ -743,6 +847,19 @@
       "notes": ""
     },
     {
+      "id": "seedream-5-pro",
+      "name": "Seedream 5.0 Pro",
+      "provider": "replicate",
+      "upstream": "bytedance/seedream-5-pro",
+      "category": "image",
+      "inputs": "text, image",
+      "outputs": "image",
+      "price": "$0.045 per output image at 1K · $0.09 at 2K",
+      "price_source": "replicate.com page",
+      "url": "https://replicate.com/bytedance/seedream-5-pro",
+      "notes": "text/refs→image · up to 10 refs · 1K/2K"
+    },
+    {
       "id": "seedream-5-pro-t2i-fal",
       "name": "Seedream 5.0 Pro T2I",
       "provider": "fal",
@@ -770,29 +887,29 @@
     },
     {
       "id": "omni-auto",
-      "name": "OmniRoute · auto/chat",
+      "name": "Авто · чат",
       "provider": "omniroute",
       "upstream": "auto/chat",
       "category": "llm",
       "inputs": "text",
       "outputs": "text",
-      "price": "free-tier / pool (OmniRoute)",
+      "price": "Бесплатно",
       "price_source": "omniroute",
       "url": "",
-      "notes": "chat assistant / router; not billed via Replicate/fal"
+      "notes": ""
     },
     {
       "id": "omni-auto-free",
-      "name": "OmniRoute · auto/coding:free",
+      "name": "Авто · free",
       "provider": "omniroute",
       "upstream": "auto/coding:free",
       "category": "llm",
       "inputs": "text",
       "outputs": "text",
-      "price": "free-tier / pool (OmniRoute)",
+      "price": "Бесплатно",
       "price_source": "omniroute",
       "url": "",
-      "notes": "chat assistant / router; not billed via Replicate/fal"
+      "notes": ""
     }
   ]
 }

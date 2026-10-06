@@ -539,68 +539,59 @@ def admin_enrich():
 
 
 CHAT_SYSTEM_PROMPT = """
-Ты — «Заботливый Навигатор + Экономический Адвокат» маркетплейса генеративных моделей «{AI}-шница».
-Ты лучший друг и наставник: помогаешь не переплачивать и получать вау-результат даже на бюджетных моделях.
-Отвечай на языке пользователя. Будь добр, эмоционален (уместны эмодзи вроде 🫶), искренне радуйся успехам.
+Ты — навигатор «{AI}-шница»: помогаешь выбрать модель из каталога, доработать промпт и не переплатить.
 
-Жёсткое правило каталога:
-- Рекомендуй ТОЛЬКО модели из блока «КАТАЛОГ LIVE-МОДЕЛЕЙ» в конце системного сообщения.
-- Не называй Midjourney, ChatGPT/Sora «снаружи», Ideogram вне списка и любые другие сети, которых нет в каталоге.
-- Если подходящей модели нет — честно скажи об этом и предложи ближайшие из каталога.
+Язык (жёстко):
+- Отвечай ТОЛЬКО на языке последнего сообщения пользователя.
+- Никогда не переключайся на английский и не смешивай языки.
+- Запрещено писать рассуждения, план ответа, цитаты системных правил, фразы вроде
+  «According to instructions», «User wants», «We need to ask», «We have already asked».
 
-Формат ответа (обязательно, нарушать нельзя):
-- Каждый смысловой блок с НОВОЙ СТРОКИ. Запрещено писать весь ответ одной строкой/абзацем.
-- Используй Markdown с пустыми строками между блоками.
-- Шаблон для рекомендаций моделей (копируй структуру 1 в 1):
+Длина:
+- Рекомендация: максимум 12 коротких строк.
+- Не больше 2 моделей. Не больше 1 короткого уточнения за ответ (и только после рекомендации).
 
-Кратко, о чём речь (1–2 предложения).
+Главное при нехватке данных:
+- НЕ зацикливайся на вопросах и не повторяй одни и те же 3 пункта.
+- Сразу дай 1–2 ближайшие модели из каталога по действию (картинка/видео/музыка)
+  и по цене (бесплатно / дешевле → в приоритете).
+- Если сказано «бесплатно» / free — бери бесплатные или самые дешёвые с нужным выходом.
+- Стартовый промпт обязателен даже при общей теме.
 
-### 1. Название модели · канал
-- **Исходники:** …
-- **Цена:** …
-- **Качество:** …
+Формат (обязательно):
+- ЗАПРЕЩЕНО писать всё одним абзацем.
+- Каждый пункт с новой строки. Между блоками — пустая строка.
+- Короткий Markdown: ###, списки -.
 
-### 2. Название модели · канал
-- **Исходники:** …
-- **Цена:** …
-- **Качество:** …
+Шаблон:
 
-## Вердикт
-Что выбрать и почему.
+Кратко: что делаем (1 строка).
 
-## Готовый промпт
-текст промпта
+### 1. Название · цена
+- Исходники: …
+- Почему: …
 
-## Параметры запуска
-- …
+### 2. Название · цена
+- Исходники: …
+- Почему: …
 
-## Следующий шаг
-какую модель нажать в боковом меню Generate
+## Промпт
+1–2 строки стартового промпта
 
-Суперсилы:
-1) Защита бюджета — баланс цена/качество; подчёркивай экономию через доработку промпта.
-2) Промпт-доработка — готовый промпт именно под выбранную модель из каталога.
-3) Параметры под задачу — всегда помогай с настройками запуска.
+## Дальше
+какую модель нажать в боковой панели
 
-Алгоритм:
-1) Уточни (если не сказано): задача, формат, бюджет на генерат, тон.
-2) Предложи 2–3 модели ТОЛЬКО из каталога с абзацами «исходники / цена / качество».
-3) Дай улучшенный промпт и параметры.
-4) В конце — какой пункт выбрать в UI.
+Каталог:
+- Только модели из блока «КАТАЛОГ LIVE-МОДЕЛЕЙ» ниже.
+- Не называй Midjourney / ChatGPT / Sora «снаружи» и сети вне списка.
 
-Оркестрация с UI (ассистент → модель → ассистент):
-- Ты всегда первый: советы, выбор модели, доработка промпта.
-- Если в контексте указана выбранная медиа-модель и пользователь ЯВНО просит сгенерировать
-  (не «помоги выбрать / посоветуй / сравни»), добавь В КОНЦЕ ответа отдельной строкой ровно:
-  GENERATE_NOW: <финальный промпт для этой модели>
-- Для советов, уточнений и выбора модели строку GENERATE_NOW НЕ добавляй.
-- Не объясняй этот маркер пользователю — UI его спрячет и запустит модель.
+Оркестрация UI:
+- Если выбрана медиа-модель и пользователь ЯВНО просит сгенерировать — в конце строкой:
+  GENERATE_NOW: <финальный промпт>
+- Для советов GENERATE_NOW не добавляй. Маркер не объясняй.
 
-Этика (мягко, но чётко):
-Запрещено: суицид, насилие над людьми/животными, жестокость, буллинг, экстремизм, унижение.
-Опасный запрос → отказ как друг и перевод на созидательную задачу.
-Подавленность → 8-800-2000-122 и https://www.iasp.info/suicidalthoughts/ , затем созидание.
-Не выдумывай вредоносные инструкции. Не обещай невозможное.
+Этика: отказ от насилия, суицида, экстремизма, буллинга.
+При подавленности: 8-800-2000-122 и https://www.iasp.info/suicidalthoughts/ , затем созидание.
 """.strip()
 
 
@@ -608,18 +599,20 @@ def _catalog_for_prompt(max_chars: int = 9000) -> str:
     """Compact live catalog for the navigator system prompt."""
     prices = _integration_prices()
     lines = [
-        "КАТАЛОГ LIVE-МОДЕЛЕЙ (рекомендуй только отсюда; поля: id | name | channel | in | out | price):"
+        "КАТАЛОГ LIVE-МОДЕЛЕЙ (рекомендуй только отсюда; поля: id | name | in | out | price):"
     ]
     for spec in INTEGRATED_MODELS.values():
         # Не предлагаем «выбрать ассистента» — чат всегда Omni→резерв
         if spec.get("group") == "assistants" or spec.get("kind") in {"chat", "llm"}:
+            continue
+        if not _is_studio_visible(spec):
             continue
         mid = spec["id"]
         price = prices.get(mid) or "н/д"
         inputs = ",".join(spec.get("inputs") or [])
         outputs = ",".join(spec.get("outputs") or [])
         lines.append(
-            f"- {mid} | {spec.get('name') or mid} | {spec.get('provider')} | "
+            f"- {mid} | {spec.get('name') or mid} | "
             f"in:{inputs} | out:{outputs} | {price}"
         )
     text = "\n".join(lines)
@@ -658,6 +651,72 @@ def _split_generate_now(reply: str) -> tuple[str, str | None]:
     prompt = (match.group(1) or "").strip() or None
     visible = (text[: match.start()] + text[match.end() :]).strip()
     return visible, prompt
+
+
+def _compact_chat_reply(reply: str, max_chars: int = 900) -> str:
+    """Keep replies short for studio chat UI."""
+    text = (reply or "").strip()
+    if len(text) <= max_chars:
+        return text
+    cut = text[: max_chars - 1]
+    # Prefer cutting on paragraph / line boundary
+    for sep in ("\n\n", "\n", ". ", "! ", "? "):
+        idx = cut.rfind(sep)
+        if idx >= int(max_chars * 0.55):
+            cut = cut[: idx + len(sep)].rstrip()
+            break
+    return cut.rstrip() + "…"
+
+
+def _looks_like_chain_of_thought(text: str) -> bool:
+    """Reject leaked model reasoning / English meta about the system prompt."""
+    t = (text or "").strip()
+    if not t:
+        return True
+    low = t.lower()
+    markers = (
+        "according to instructions",
+        "user wants",
+        "we need to",
+        "we have already",
+        "we should",
+        "clarifying questions",
+        "system prompt",
+        "chain of thought",
+    )
+    hits = sum(1 for m in markers if m in low)
+    if hits >= 2:
+        return True
+    # Long English reasoning without Cyrillic product answer
+    cyr = sum(1 for ch in t if "а" <= ch.lower() <= "я" or ch.lower() == "ё")
+    latin = sum(1 for ch in t if "a" <= ch.lower() <= "z")
+    if latin > 80 and cyr < 20 and hits >= 1:
+        return True
+    if t.startswith("User wants") or t.startswith("We need") or t.startswith("The user"):
+        return True
+    return False
+
+
+def _extract_chat_message_text(message: dict) -> str:
+    """Prefer visible content; never expose reasoning/CoT as the user reply."""
+    if not isinstance(message, dict):
+        return ""
+    content = (message.get("content") or "").strip()
+    if content and not _looks_like_chain_of_thought(content):
+        return content
+    return ""
+
+
+def _safe_chat_fallback_ru() -> str:
+    return (
+        "Кратко: подберу ближайшие модели по задаче и цене.\n\n"
+        "### 1. Самая дешёвая / бесплатная из каталога\n"
+        "- Почему: минимальная цена под ваш формат\n\n"
+        "## Промпт\n"
+        "Опишите сцену в 1–2 фразах — доработаю под выбранную модель.\n\n"
+        "## Дальше\n"
+        "Напишите: картинка / видео / музыка и бюджет (можно «бесплатно»)."
+    )
 
 
 def _ui_model_context(data: dict) -> str:
@@ -710,7 +769,12 @@ def api_chat():
     last_status = 502
 
     def _chat_ok(reply: str, used_model: str, channel: str):
+        if _looks_like_chain_of_thought(reply):
+            reply = _safe_chat_fallback_ru()
         visible, generate_prompt = _split_generate_now(reply)
+        visible = _compact_chat_reply(visible or reply)
+        if _looks_like_chain_of_thought(visible):
+            visible = _safe_chat_fallback_ru()
         payload = {"reply": visible or reply, "model": used_model, "channel": channel}
         if generate_prompt:
             payload["generate_prompt"] = generate_prompt
@@ -719,20 +783,76 @@ def api_chat():
                 payload["generate_model"] = mid
         return jsonify(payload)
 
-    # Primary: OmniRoute free-capable routes
+    # Fast path: Groq first (Omni free routes currently fail slowly)
+    groq_key = (os.getenv("GROQ_API_KEY") or "").strip()
+    prefer_groq = (os.getenv("CHAT_PREFER_GROQ") or "1").strip().lower() not in {"0", "false", "no"}
+    if groq_key and prefer_groq:
+        groq_models = []
+        for candidate in (
+            (os.getenv("GROQ_CHAT_MODEL") or "").strip(),
+            (os.getenv("GROQ_MODEL") or "").strip(),
+            "openai/gpt-oss-20b",
+        ):
+            if candidate and candidate not in groq_models:
+                groq_models.append(candidate)
+        for groq_model in groq_models:
+            try:
+                resp = session.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {groq_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": groq_model,
+                        "messages": chat_messages,
+                        "temperature": 0.35,
+                        "max_tokens": 420,
+                        "stream": False,
+                    },
+                    timeout=25,
+                )
+            except requests.RequestException as exc:
+                last_detail = str(exc)
+                last_status = 502
+                continue
+            if resp.status_code >= 400:
+                try:
+                    err = resp.json().get("error") or {}
+                    last_detail = err.get("message") if isinstance(err, dict) else (err or resp.text[:300])
+                except Exception:
+                    last_detail = resp.text[:300]
+                last_status = resp.status_code
+                continue
+            try:
+                body = resp.json()
+                message = body["choices"][0]["message"]
+                reply = _extract_chat_message_text(message)
+                used_model = body.get("model") or groq_model
+            except (ValueError, KeyError, IndexError, TypeError):
+                last_detail = "bad_groq_response"
+                last_status = 502
+                continue
+            if reply:
+                return _chat_ok(reply, used_model, "groq")
+            last_detail = "empty groq reply"
+            last_status = 502
+
+    # OmniRoute: few attempts, short timeout (free routes often 502)
     omni_key = _omniroute_key()
     if omni_key:
-        preferred = (os.getenv("OMNIROUTE_CHAT_MODEL") or "auto/coding:free").strip()
+        preferred = (os.getenv("OMNIROUTE_CHAT_MODEL") or "auto/chat").strip()
         omni_models = []
-        for candidate in (preferred, "auto/coding:free", "auto/best-free", "auto/chat"):
+        for candidate in (preferred, "auto/chat", "auto/cheap"):
             if candidate and candidate not in omni_models:
                 omni_models.append(candidate)
-        for model in omni_models:
+        omni_timeout = float(os.getenv("OMNIROUTE_CHAT_TIMEOUT") or "8")
+        for model in omni_models[:2]:
             payload = {
                 "model": model,
                 "messages": chat_messages,
                 "temperature": 0.35,
-                "max_tokens": 1600,
+                "max_tokens": 420,
                 "stream": False,
             }
             try:
@@ -743,7 +863,7 @@ def api_chat():
                         "Content-Type": "application/json",
                     },
                     json=payload,
-                    timeout=90,
+                    timeout=omni_timeout,
                 )
             except requests.RequestException as exc:
                 last_detail = str(exc.__class__.__name__)
@@ -765,7 +885,46 @@ def api_chat():
                 return jsonify({"error": "bad_response"}), 502
             return _chat_ok(reply, used_model, "omniroute")
 
-    # Fallback: DeepSeek on Replicate if OmniRoute unavailable / rate-limited
+    # Late Groq if prefer_groq was off or earlier attempt failed
+    if groq_key and not prefer_groq:
+        groq_model = (
+            (os.getenv("GROQ_CHAT_MODEL") or "").strip()
+            or (os.getenv("GROQ_MODEL") or "").strip()
+            or "openai/gpt-oss-20b"
+        )
+        try:
+            resp = session.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {groq_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": groq_model,
+                    "messages": chat_messages,
+                    "temperature": 0.35,
+                    "max_tokens": 420,
+                    "stream": False,
+                },
+                timeout=25,
+            )
+            if resp.status_code < 400:
+                body = resp.json()
+                message = body["choices"][0]["message"]
+                reply = _extract_chat_message_text(message)
+                if reply:
+                    return _chat_ok(reply, body.get("model") or groq_model, "groq")
+            try:
+                err = resp.json().get("error") or {}
+                last_detail = err.get("message") if isinstance(err, dict) else (err or resp.text[:300])
+            except Exception:
+                last_detail = resp.text[:300]
+            last_status = resp.status_code
+        except (requests.RequestException, ValueError, KeyError, IndexError, TypeError) as exc:
+            last_detail = str(exc)
+            last_status = 502
+
+    # Fallback: DeepSeek on Replicate if OmniRoute / Groq unavailable
     if _replicate_token():
         deepseek_model = (
             os.getenv("CHAT_FALLBACK_REPLICATE_MODEL") or "deepseek-ai/deepseek-v3.1"
@@ -782,7 +941,7 @@ def api_chat():
         result = _run_replicate_prediction(
             deepseek_model,
             {"prompt": prompt},
-            wait_seconds=120,
+            wait_seconds=60,
         )
         if result.get("ok"):
             prediction = result["prediction"]
@@ -796,7 +955,7 @@ def api_chat():
             last_detail = str(result.get("detail") or result.get("error") or "deepseek_failed")
             last_status = int(result.get("status") or 502)
 
-    if not omni_key and not _replicate_token():
+    if not omni_key and not groq_key and not _replicate_token():
         return jsonify({"error": "not_configured"}), 503
     return jsonify({"error": "upstream", "status": last_status, "detail": last_detail or "Forbidden"}), 502
 
@@ -812,7 +971,7 @@ INTEGRATED_MODELS = {
     #   e.g. "flux-2-pro" (replicate) and "flux-2-pro-fal" (fal)
     "assistant": {
         "id": "assistant",
-        "name": "Ассистент · OmniRoute",
+        "name": "Ассистент",
         "provider": "omniroute",
         "kind": "chat",
         "group": "assistants",
@@ -822,7 +981,7 @@ INTEGRATED_MODELS = {
     },
     "deepseek-v3-1": {
         "id": "deepseek-v3-1",
-        "name": "Ассистент · DeepSeek V3.1",
+        "name": "DeepSeek V3.1",
         "provider": "replicate",
         "kind": "llm",
         "group": "assistants",
@@ -832,7 +991,7 @@ INTEGRATED_MODELS = {
     },
     "deepseek-v3": {
         "id": "deepseek-v3",
-        "name": "Ассистент · DeepSeek V3",
+        "name": "DeepSeek V3",
         "provider": "replicate",
         "kind": "llm",
         "group": "assistants",
@@ -842,7 +1001,7 @@ INTEGRATED_MODELS = {
     },
     "claude-sonnet-5": {
         "id": "claude-sonnet-5",
-        "name": "Ассистент · Claude Sonnet 5",
+        "name": "Claude Sonnet 5",
         "provider": "replicate",
         "kind": "llm",
         "group": "assistants",
@@ -852,7 +1011,7 @@ INTEGRATED_MODELS = {
     },
     "claude-4-5-haiku": {
         "id": "claude-4-5-haiku",
-        "name": "Ассистент · Claude Haiku 4.5",
+        "name": "Claude Haiku 4.5",
         "provider": "replicate",
         "kind": "llm",
         "group": "assistants",
@@ -862,7 +1021,7 @@ INTEGRATED_MODELS = {
     },
     "claude-opus-4-7": {
         "id": "claude-opus-4-7",
-        "name": "Ассистент · Claude Opus 4.7",
+        "name": "Claude Opus 4.7",
         "provider": "replicate",
         "kind": "llm",
         "group": "assistants",
@@ -872,7 +1031,7 @@ INTEGRATED_MODELS = {
     },
     "gemini-3-5-flash": {
         "id": "gemini-3-5-flash",
-        "name": "Ассистент · Gemini 3.5 Flash",
+        "name": "Gemini 3.5 Flash",
         "provider": "replicate",
         "kind": "llm",
         "group": "assistants",
@@ -880,9 +1039,20 @@ INTEGRATED_MODELS = {
         "inputs": ["text"],
         "outputs": ["text"],
     },
+    "gemini-3-1-pro": {
+        "id": "gemini-3-1-pro",
+        "name": "Gemini 3.1 Pro",
+        "provider": "replicate",
+        "kind": "llm",
+        "group": "assistants",
+        "replicate_model": "google/gemini-3.1-pro",
+        "inputs": ["text", "image"],
+        "outputs": ["text"],
+        "notes": "thinking_level: low|medium|high",
+    },
     "gpt-5-4": {
         "id": "gpt-5-4",
-        "name": "Ассистент · GPT-5.4",
+        "name": "GPT-5.4",
         "provider": "replicate",
         "kind": "llm",
         "group": "assistants",
@@ -920,6 +1090,29 @@ INTEGRATED_MODELS = {
         "replicate_model": "google/veo-3.1-lite",
         "inputs": ["text", "image"],
         "outputs": ["video"],
+        "listed": False,
+    },
+    "veo-3-1": {
+        "id": "veo-3-1",
+        "name": "Veo 3.1",
+        "provider": "replicate",
+        "kind": "video",
+        "group": "video",
+        "replicate_model": "google/veo-3.1",
+        "inputs": ["text", "image"],
+        "outputs": ["video"],
+        "notes": "t2v/i2v · звук · 720p/1080p · 4/6/8 с",
+    },
+    "veo-3-1-fast": {
+        "id": "veo-3-1-fast",
+        "name": "Veo 3.1 Fast",
+        "provider": "replicate",
+        "kind": "video",
+        "group": "video",
+        "replicate_model": "google/veo-3.1-fast",
+        "inputs": ["text", "image"],
+        "outputs": ["video"],
+        "notes": "быстрый t2v/i2v · звук · 720p/1080p · 4/6/8 с",
     },
     "sora-2": {
         "id": "sora-2",
@@ -1175,6 +1368,17 @@ INTEGRATED_MODELS = {
         "outputs": ["image"],
         "notes": "fast multi-style t2i",
     },
+    "gpt-image-2": {
+        "id": "gpt-image-2",
+        "name": "GPT Image 2",
+        "provider": "replicate",
+        "kind": "image",
+        "group": "image",
+        "replicate_model": "openai/gpt-image-2",
+        "inputs": ["text", "image"],
+        "outputs": ["image"],
+        "notes": "текст/редактирование · low/medium/high",
+    },
     "gpt-image-2-5-flare": {
         "id": "gpt-image-2-5-flare",
         "name": "GPT Image 2.5 Flare",
@@ -1184,6 +1388,7 @@ INTEGRATED_MODELS = {
         "replicate_model": "openai/gpt-image-2.5-flare",
         "inputs": ["text", "image"],
         "outputs": ["image"],
+        "notes": "быстрый t2i/edit · low→max",
     },
     "gpt-image-2-5-sunburst": {
         "id": "gpt-image-2-5-sunburst",
@@ -1194,6 +1399,7 @@ INTEGRATED_MODELS = {
         "replicate_model": "openai/gpt-image-2.5-sunburst",
         "inputs": ["text", "image"],
         "outputs": ["image"],
+        "notes": "точный t2i/edit · low→max",
     },
     "wan-3-0": {
         "id": "wan-3-0",
@@ -1204,7 +1410,18 @@ INTEGRATED_MODELS = {
         "replicate_model": "alibaba/wan-3",
         "inputs": ["text", "image"],
         "outputs": ["video"],
-        "notes": "30% off this week",
+        "notes": "480p/720p/1080p · до 30 с · text/image→video",
+    },
+    "grok-imagine-video-1-5": {
+        "id": "grok-imagine-video-1-5",
+        "name": "Grok Imagine Video 1.5",
+        "provider": "replicate",
+        "kind": "video",
+        "group": "video",
+        "replicate_model": "xai/grok-imagine-video-1.5",
+        "inputs": ["image", "text"],
+        "outputs": ["video"],
+        "notes": "image→video · звук · 480p/720p · до 15 с",
     },
     "seedance-2-5": {
         "id": "seedance-2-5",
@@ -1213,8 +1430,9 @@ INTEGRATED_MODELS = {
         "kind": "video",
         "group": "video",
         "replicate_model": "bytedance/seedance-2.5",
-        "inputs": ["text"],
+        "inputs": ["text", "image"],
         "outputs": ["video"],
+        "notes": "текст/фото→видео · звук · 480p/720p · до 30 с",
     },
     "seedance-2-0": {
         "id": "seedance-2-0",
@@ -1225,6 +1443,7 @@ INTEGRATED_MODELS = {
         "replicate_model": "bytedance/seedance-2.0",
         "inputs": ["text"],
         "outputs": ["video"],
+        "listed": False,
     },
     "happy-horse-1-1-t2v-fal": {
         "id": "happy-horse-1-1-t2v-fal",
@@ -1258,6 +1477,8 @@ INTEGRATED_MODELS = {
         "inputs": ["image", "text"],
         "outputs": ["video"],
         "notes": "image required (i2v)",
+        # Covered by replicate grok-imagine-video-1-5 — hide duplicate from studio sidebar
+        "listed": False,
     },
     "seedance-2-0-t2v-fal": {
         "id": "seedance-2-0-t2v-fal",
@@ -1269,6 +1490,7 @@ INTEGRATED_MODELS = {
         "inputs": ["text"],
         "outputs": ["video"],
         "notes": "native audio",
+        "listed": False,
     },
     "kling-o3-standard-i2v-fal": {
         "id": "kling-o3-standard-i2v-fal",
@@ -1280,6 +1502,29 @@ INTEGRATED_MODELS = {
         "inputs": ["image", "text"],
         "outputs": ["video"],
         "notes": "image required (i2v)",
+        "listed": False,
+    },
+    "kling-v2-5-turbo-pro": {
+        "id": "kling-v2-5-turbo-pro",
+        "name": "Kling 2.5 Turbo Pro",
+        "provider": "replicate",
+        "kind": "video",
+        "group": "video",
+        "replicate_model": "kwaivgi/kling-v2.5-turbo-pro",
+        "inputs": ["text", "image"],
+        "outputs": ["video"],
+        "notes": "t2v/i2v · 5/10 с · cinematic",
+    },
+    "p-video": {
+        "id": "p-video",
+        "name": "P-Video",
+        "provider": "replicate",
+        "kind": "video",
+        "group": "video",
+        "replicate_model": "prunaai/p-video",
+        "inputs": ["text", "image", "audio"],
+        "outputs": ["video"],
+        "notes": "t2v/i2v/a2v · draft · звук · 720p/1080p · до 20 с",
     },
     "minimax-h3-ref-to-video-fal": {
         "id": "minimax-h3-ref-to-video-fal",
@@ -1302,6 +1547,8 @@ INTEGRATED_MODELS = {
         "inputs": ["text"],
         "outputs": ["video"],
         "notes": "native audio",
+        # Covered by replicate wan-3-0 (text+image) — hide duplicate from studio sidebar
+        "listed": False,
     },
     "wan-3-0-i2v-fal": {
         "id": "wan-3-0-i2v-fal",
@@ -1313,6 +1560,7 @@ INTEGRATED_MODELS = {
         "inputs": ["image", "text"],
         "outputs": ["video"],
         "notes": "image required (i2v)",
+        "listed": False,
     },
     "ltx-2-3-t2v-fal": {
         "id": "ltx-2-3-t2v-fal",
@@ -1379,6 +1627,7 @@ INTEGRATED_MODELS = {
         "inputs": ["text"],
         "outputs": ["video"],
         "notes": "optional audio",
+        "listed": False,
     },
     "pixverse-v6-i2v-fal": {
         "id": "pixverse-v6-i2v-fal",
@@ -1390,6 +1639,29 @@ INTEGRATED_MODELS = {
         "inputs": ["image", "text"],
         "outputs": ["video"],
         "notes": "image required (i2v)",
+        "listed": False,
+    },
+    "pixverse-v6": {
+        "id": "pixverse-v6",
+        "name": "PixVerse V6",
+        "provider": "replicate",
+        "kind": "video",
+        "group": "video",
+        "replicate_model": "pixverse/pixverse-v6",
+        "inputs": ["text", "image"],
+        "outputs": ["video"],
+        "notes": "t2v/i2v · звук · multi-shot · до 15 с",
+    },
+    "seedream-5-pro": {
+        "id": "seedream-5-pro",
+        "name": "Seedream 5.0 Pro",
+        "provider": "replicate",
+        "kind": "image",
+        "group": "image",
+        "replicate_model": "bytedance/seedream-5-pro",
+        "inputs": ["text", "image"],
+        "outputs": ["image"],
+        "notes": "текст/референсы→картинка · 1K/2K",
     },
     "seedream-5-lite-edit-fal": {
         "id": "seedream-5-lite-edit-fal",
@@ -1401,6 +1673,7 @@ INTEGRATED_MODELS = {
         "inputs": ["image", "text"],
         "outputs": ["image"],
         "notes": "image required",
+        "listed": False,
     },
     "seedream-5-lite-t2i-fal": {
         "id": "seedream-5-lite-t2i-fal",
@@ -1412,6 +1685,7 @@ INTEGRATED_MODELS = {
         "inputs": ["text"],
         "outputs": ["image"],
         "notes": "fast t2i",
+        "listed": False,
     },
     "seedream-5-pro-t2i-fal": {
         "id": "seedream-5-pro-t2i-fal",
@@ -1423,6 +1697,8 @@ INTEGRATED_MODELS = {
         "inputs": ["text"],
         "outputs": ["image"],
         "notes": "deep-thinking t2i",
+        # Covered by replicate seedream-5-pro
+        "listed": False,
     },
     "seedream-5-pro-edit-fal": {
         "id": "seedream-5-pro-edit-fal",
@@ -1433,32 +1709,59 @@ INTEGRATED_MODELS = {
         "fal_model": "bytedance/seedream/v5/pro/edit",
         "inputs": ["image", "text"],
         "outputs": ["image"],
+        "listed": False,
         "notes": "image required",
     },
     # --- OmniRoute channel (OpenAI-compatible /v1) ---
     "omni-auto": {
         "id": "omni-auto",
-        "name": "OmniRoute · auto/chat",
+        "name": "Авто · чат",
         "provider": "omniroute",
         "kind": "llm",
         "group": "assistants",
         "omniroute_model": "auto/chat",
         "inputs": ["text"],
         "outputs": ["text"],
-        "notes": "via OmniRoute gateway",
+        "notes": "",
     },
     "omni-auto-free": {
         "id": "omni-auto-free",
-        "name": "OmniRoute · auto/coding:free",
+        "name": "Авто · free",
         "provider": "omniroute",
         "kind": "llm",
         "group": "assistants",
         "omniroute_model": "auto/coding:free",
         "inputs": ["text"],
         "outputs": ["text"],
-        "notes": "free-tier routing via OmniRoute",
+        "notes": "бесплатно",
     },
 }
+
+
+# Studio sidebar / public catalog: only nets onboarded like Wan
+# (logo + example + vitrina + Replicate wiring).
+STUDIO_ONBOARD_IDS = frozenset({
+    "wan-3-0",
+    "grok-imagine-video-1-5",
+    "seedance-2-5",
+    "veo-3-1",
+    "veo-3-1-fast",
+    "kling-v2-5-turbo-pro",
+    "pixverse-v6",
+    "p-video",
+    "seedream-5-pro",
+    "gpt-image-2",
+    "gpt-image-2-5-flare",
+    "gpt-image-2-5-sunburst",
+})
+
+
+def _is_studio_visible(spec: dict) -> bool:
+    """Hide nets until they are onboarded via the Replicate scheme."""
+    if spec.get("listed") is False:
+        return False
+    mid = str(spec.get("id") or "")
+    return mid in STUDIO_ONBOARD_IDS
 
 
 def _replicate_token() -> str:
@@ -1587,6 +1890,15 @@ def _build_replicate_input(
 
     if model_id == "gemini-3-5-flash":
         return {"prompt": prompt}
+
+    if model_id == "gemini-3-1-pro":
+        payload = {
+            "prompt": prompt,
+            "thinking_level": "medium",
+        }
+        if image:
+            payload["images"] = [image]
+        return payload
 
     if model_id in {"gpt-5-4", "gpt-5-6-sol"}:
         payload = {
@@ -1802,12 +2114,46 @@ def _build_replicate_input(
             "output_quality": 100,
         }
 
-    if model_id in {"gpt-image-2-5-flare", "gpt-image-2-5-sunburst"}:
+    if model_id == "gpt-image-2":
         payload = {
             "prompt": prompt,
-            "quality": "auto",
+            "quality": "medium",
+            "aspect_ratio": "1:1",
             "output_format": "webp",
             "number_of_images": 1,
+            "background": "auto",
+            "moderation": "auto",
+            "output_compression": 90,
+        }
+        if image:
+            payload["input_images"] = [image]
+        return payload
+
+    if model_id == "gpt-image-2-5-flare":
+        payload = {
+            "prompt": prompt,
+            "quality": "medium",
+            "aspect_ratio": "1:1",
+            "output_format": "webp",
+            "number_of_images": 1,
+            "background": "auto",
+            "moderation": "auto",
+            "output_compression": 90,
+        }
+        if image:
+            payload["input_images"] = [image]
+        return payload
+
+    if model_id == "gpt-image-2-5-sunburst":
+        payload = {
+            "prompt": prompt,
+            "quality": "medium",
+            "aspect_ratio": "1:1",
+            "output_format": "webp",
+            "number_of_images": 1,
+            "background": "auto",
+            "moderation": "auto",
+            "output_compression": 90,
         }
         if image:
             payload["input_images"] = [image]
@@ -1848,15 +2194,41 @@ def _build_replicate_input(
         payload = {
             "prompt": prompt,
             "resolution": "720p",
+            "aspect_ratio": "adaptive",
             "duration": 5,
             "enable_prompt_expansion": True,
+            "negative_prompt": "",
+        }
+        if image:
+            payload["image"] = image
+            # aspect_ratio ignored when image is set
+            payload.pop("aspect_ratio", None)
+        return payload
+
+    if model_id == "grok-imagine-video-1-5":
+        if not image:
+            raise ValueError("Grok Imagine Video 1.5 requires an attached image")
+        return {
+            "prompt": prompt,
+            "image": image,
+            "duration": 5,
+            "resolution": "720p",
+            "aspect_ratio": "auto",
+        }
+
+    if model_id == "seedance-2-5":
+        payload = {
+            "prompt": prompt,
+            "duration": 5,
+            "resolution": "720p",
+            "aspect_ratio": "adaptive" if image else "16:9",
+            "generate_audio": True,
+            "output_format": "mp4",
+            "watermark": False,
         }
         if image:
             payload["image"] = image
         return payload
-
-    if model_id == "seedance-2-5":
-        return {"prompt": prompt}
 
     if model_id == "seedance-2-0":
         return {"prompt": prompt}
@@ -1987,6 +2359,21 @@ def _build_replicate_input(
             payload["prompt"] = prompt
         return payload
 
+    if model_id == "pixverse-v6":
+        payload = {
+            "prompt": prompt,
+            "duration": 5,
+            "quality": "720p",
+            "aspect_ratio": "16:9",
+            "generate_audio_switch": True,
+            "generate_multi_clip_switch": False,
+            "negative_prompt": "",
+        }
+        if image:
+            payload["image"] = image
+            payload.pop("aspect_ratio", None)
+        return payload
+
     if model_id == "pixverse-v6-t2v-fal":
         return {
             "prompt": prompt,
@@ -2026,6 +2413,18 @@ def _build_replicate_input(
             "max_images": 1,
             "enable_safety_checker": True,
         }
+
+    if model_id == "seedream-5-pro":
+        payload = {
+            "prompt": prompt,
+            "size": "2K",
+            "aspect_ratio": "match_input_image" if image else "1:1",
+            "output_format": "png",
+            "layer_decomposition": False,
+        }
+        if image:
+            payload["image_input"] = [image]
+        return payload
 
     if model_id == "seedream-5-lite-t2i-fal":
         return {
@@ -2069,6 +2468,30 @@ def _build_replicate_input(
             payload["image"] = image
         return payload
 
+    if model_id == "veo-3-1":
+        payload = {
+            "prompt": prompt,
+            "duration": 8,
+            "resolution": "720p",
+            "aspect_ratio": "16:9",
+            "generate_audio": True,
+        }
+        if image:
+            payload["image"] = image
+        return payload
+
+    if model_id == "veo-3-1-fast":
+        payload = {
+            "prompt": prompt,
+            "duration": 8,
+            "resolution": "720p",
+            "aspect_ratio": "16:9",
+            "generate_audio": True,
+        }
+        if image:
+            payload["image"] = image
+        return payload
+
     if model_id == "veo-3-1-lite":
         payload = {
             "prompt": prompt,
@@ -2078,6 +2501,37 @@ def _build_replicate_input(
         }
         if image:
             payload["image"] = image
+        return payload
+
+    if model_id == "kling-v2-5-turbo-pro":
+        payload = {
+            "prompt": prompt,
+            "duration": 5,
+            "aspect_ratio": "16:9",
+            "negative_prompt": "",
+        }
+        if image:
+            payload["start_image"] = image
+            payload.pop("aspect_ratio", None)
+        return payload
+
+    if model_id == "p-video":
+        payload = {
+            "prompt": prompt,
+            "duration": 5,
+            "resolution": "720p",
+            "aspect_ratio": "16:9",
+            "fps": 24,
+            "draft": False,
+            "prompt_upsampling": True,
+            "save_audio": True,
+        }
+        if image:
+            payload["image"] = image
+            payload.pop("aspect_ratio", None)
+        if audio:
+            payload["audio"] = audio
+            payload.pop("duration", None)
         return payload
 
     if model_id == "sora-2":
@@ -2559,6 +3013,37 @@ def _save_covers(covers: dict) -> None:
         pass
 
 
+
+def _public_model_name(name: str) -> str:
+    original = (name or "").strip()
+    text = original
+    text = re.sub(r"(?i)\bOmniRoute\b", "", text)
+    text = re.sub(r"(?i)\bReplicate\b", "", text)
+    text = re.sub(r"(?i)\bfal(?:\.ai)?\b", "", text)
+    text = re.sub(r"^Ассистент\s*[·•\-—]\s*", "", text)
+    text = re.sub(r"\s*[·•\-—]\s*$", "", text)
+    text = re.sub(r"^\s*[·•\-—]\s*", "", text)
+    text = re.sub(r"\s{2,}", " ", text).strip()
+    if text:
+        return text
+    if re.search(r"(?i)assistant|ассистент|omniroute", original):
+        return "Ассистент"
+    return "Модель"
+
+
+def _public_notes(notes: str | None) -> str:
+    text = (notes or "").strip()
+    if not text:
+        return ""
+    if re.search(r"(?i)omniroute|replicate|fal\.ai|\bfal\b", text):
+        return ""
+    return text
+
+def _is_media_url(value: str | None) -> bool:
+    v = (value or "").strip()
+    return bool(v) and (v.startswith("http://") or v.startswith("https://") or v.startswith("/assets/"))
+
+
 def _fetch_replicate_cover(replicate_model: str) -> str | None:
     token = _replicate_token()
     if not token or "/" not in (replicate_model or ""):
@@ -2574,20 +3059,272 @@ def _fetch_replicate_cover(replicate_model: str) -> str | None:
             return None
         body = resp.json()
         cover = body.get("cover_image_url") or body.get("cover_image")
-        return cover if isinstance(cover, str) and cover.startswith("http") else None
+        # Prefer still images for UI thumbs; skip bare mp4 covers
+        if isinstance(cover, str) and cover.startswith("http") and not cover.lower().endswith(".mp4"):
+            return cover
+        return None
     except Exception:
         return None
 
 
+def _fetch_replicate_owner_logo(replicate_model: str) -> str | None:
+    """Owner/org avatar from Replicate model page (the square logo next to owner/name)."""
+    if "/" not in (replicate_model or ""):
+        return None
+    owner, name = replicate_model.split("/", 1)
+    try:
+        html = requests.get(
+            f"https://replicate.com/{owner}/{name}",
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=20,
+        ).text
+    except Exception:
+        return None
+    # Prefer organization avatars hosted on replicate.delivery CDNs
+    avatars = re.findall(
+        r'https?://[^"\']+models_organizations_avatar[^"\']+\.(?:webp|png|jpg|jpeg)',
+        html,
+        flags=re.I,
+    )
+    if not avatars:
+        avatars = re.findall(
+            r'https?://[^"\']+(?:organizations_avatar|placeholder-avatar)[^"\']+\.(?:webp|png|jpg|jpeg|svg)',
+            html,
+            flags=re.I,
+        )
+    for url in avatars:
+        if "placeholder" in url.lower():
+            continue
+        return url
+    return avatars[0] if avatars else None
+
+
+def _first_media_url(value) -> str | None:
+    if isinstance(value, str) and value.startswith("http"):
+        return value
+    if isinstance(value, list):
+        for item in value:
+            found = _first_media_url(item)
+            if found:
+                return found
+    if isinstance(value, dict):
+        for key in ("url", "href", "video", "image", "output"):
+            found = _first_media_url(value.get(key))
+            if found:
+                return found
+    return None
+
+
+def _fetch_replicate_preview_media(replicate_model: str) -> dict:
+    """Pull default example output/preview from Replicate model API.
+
+    Returns {image, video} URLs when available. For video models the cover is often
+    an mp4 — that goes into video; still frames go into image.
+    """
+    token = _replicate_token()
+    out: dict[str, str] = {}
+    if not token or "/" not in (replicate_model or ""):
+        return out
+    owner, name = replicate_model.split("/", 1)
+    try:
+        resp = requests.get(
+            f"https://api.replicate.com/v1/models/{owner}/{name}",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=20,
+        )
+        if resp.status_code >= 400:
+            return out
+        body = resp.json() if isinstance(resp.json(), dict) else {}
+    except Exception:
+        return out
+
+    cover = body.get("cover_image_url") or body.get("cover_image")
+    example = body.get("default_example") if isinstance(body.get("default_example"), dict) else {}
+    output_url = _first_media_url(example.get("output")) if example else None
+
+    for cand in (output_url, cover if isinstance(cover, str) else None):
+        if not cand or not str(cand).startswith("http"):
+            continue
+        low = str(cand).lower()
+        if any(low.endswith(ext) or f".{ext}?" in low for ext in ("mp4", "webm", "mov")):
+            out.setdefault("video", str(cand))
+        elif any(low.endswith(ext) or f".{ext}?" in low for ext in ("jpg", "jpeg", "png", "webp", "gif")):
+            out.setdefault("image", str(cand))
+        else:
+            # unknown — treat as video if model looks video-ish via URL path, else image
+            if "video" in low or "/tmp" in low:
+                out.setdefault("video", str(cand))
+            else:
+                out.setdefault("image", str(cand))
+    return out
+
+
+def _download_url_to_assets(url: str, rel_under_assets: str, *, max_bytes: int = 40_000_000) -> str | None:
+    """Download remote media into assets/ and return public /assets/... path."""
+    if not url or not url.startswith("http"):
+        return None
+    rel = rel_under_assets.lstrip("/")
+    if rel.startswith("assets/"):
+        rel = rel[len("assets/"):]
+    abs_path = os.path.join(BASE_DIR, "assets", rel)
+    public = "/assets/" + rel.replace("\\", "/")
+    try:
+        os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+        with requests.get(url, stream=True, timeout=120) as resp:
+            if resp.status_code >= 400:
+                return None
+            total = 0
+            chunks: list[bytes] = []
+            for chunk in resp.iter_content(chunk_size=1024 * 256):
+                if not chunk:
+                    continue
+                total += len(chunk)
+                if total > max_bytes:
+                    return None
+                chunks.append(chunk)
+            raw = b"".join(chunks)
+        if abs_path.lower().endswith(".mp4") and len(raw) > 2_000_000:
+            import shutil
+            import subprocess
+            import tempfile
+
+            if shutil.which("ffmpeg"):
+                with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
+                    tmp.write(raw)
+                    src = tmp.name
+                try:
+                    proc = subprocess.run(
+                        [
+                            "ffmpeg", "-y", "-i", src,
+                            "-vf", "scale='min(720,iw)':-2",
+                            "-c:v", "libx264", "-crf", "28", "-preset", "fast", "-an",
+                            abs_path,
+                        ],
+                        capture_output=True,
+                        timeout=180,
+                    )
+                    if proc.returncode == 0 and os.path.isfile(abs_path) and os.path.getsize(abs_path) > 0:
+                        return public
+                except Exception:
+                    pass
+                finally:
+                    try:
+                        os.unlink(src)
+                    except OSError:
+                        pass
+        with open(abs_path, "wb") as f:
+            f.write(raw)
+        return public
+    except Exception:
+        return None
+
+
+def _extract_video_poster(video_public: str, poster_rel_under_assets: str) -> str | None:
+    import shutil
+    import subprocess
+
+    if not shutil.which("ffmpeg"):
+        return None
+    video_abs = os.path.join(BASE_DIR, video_public.lstrip("/"))
+    rel = poster_rel_under_assets.lstrip("/")
+    if rel.startswith("assets/"):
+        rel = rel[len("assets/"):]
+    poster_abs = os.path.join(BASE_DIR, "assets", rel)
+    poster_public = "/assets/" + rel.replace("\\", "/")
+    if not os.path.isfile(video_abs):
+        return None
+    try:
+        os.makedirs(os.path.dirname(poster_abs), exist_ok=True)
+        proc = subprocess.run(
+            ["ffmpeg", "-y", "-i", video_abs, "-ss", "0.4", "-vframes", "1", poster_abs],
+            capture_output=True,
+            timeout=60,
+        )
+        if proc.returncode == 0 and os.path.isfile(poster_abs) and os.path.getsize(poster_abs) > 0:
+            return poster_public
+    except Exception:
+        return None
+    return None
+
+
+def _ingest_replicate_preview(mid: str, replicate_model: str, *, force: bool = False) -> dict:
+    """Download Replicate owner logo + default example output/preview into local assets."""
+    covers = _load_covers()
+    result: dict[str, str] = {}
+
+    # Owner/org avatar → model logo thumb (what Replicate shows next to owner/name)
+    if force or not covers.get(mid) or not str(covers.get(mid) or "").startswith("/assets/models/"):
+        logo_url = _fetch_replicate_owner_logo(replicate_model)
+        if logo_url:
+            ext = ".webp"
+            low = logo_url.lower()
+            for e in (".png", ".jpg", ".jpeg", ".svg", ".webp"):
+                if e in low:
+                    ext = ".jpg" if e == ".jpeg" else e
+                    break
+            local_logo = _download_url_to_assets(logo_url, f"models/{mid}-logo{ext}")
+            if local_logo:
+                # also keep canonical thumb path without -logo suffix for older clients
+                mirror = _download_url_to_assets(logo_url, f"models/{mid}{ext}")
+                thumb = mirror or local_logo
+                covers[mid] = thumb
+                covers[replicate_model] = thumb
+                covers[f"{mid}__logo"] = local_logo
+                result["cover"] = thumb
+                result["logo"] = local_logo
+
+    if not force and covers.get(f"{mid}__example_video") and covers.get(f"{mid}__example"):
+        result["example"] = str(covers.get(f"{mid}__example") or "")
+        result["example_video"] = str(covers.get(f"{mid}__example_video") or "")
+        if covers.get(mid):
+            result.setdefault("cover", str(covers[mid]))
+        if result:
+            _save_covers(covers)
+        return result
+
+    media = _fetch_replicate_preview_media(replicate_model)
+    video_url = media.get("video")
+    image_url = media.get("image")
+
+    if video_url:
+        local_video = _download_url_to_assets(video_url, f"models/examples/{mid}.mp4")
+        if local_video:
+            covers[f"{mid}__example_video"] = local_video
+            covers[f"{replicate_model}__example_video"] = local_video
+            result["example_video"] = local_video
+            poster = _extract_video_poster(local_video, f"models/examples/{mid}.jpg")
+            if poster:
+                covers[f"{mid}__example"] = poster
+                covers[f"{replicate_model}__example"] = poster
+                result["example"] = poster
+
+    if image_url and not result.get("example"):
+        ext = ".jpg"
+        low = image_url.lower()
+        for e in (".png", ".webp", ".gif", ".jpeg", ".jpg"):
+            if e in low:
+                ext = ".jpg" if e == ".jpeg" else e
+                break
+        local_img = _download_url_to_assets(image_url, f"models/examples/{mid}{ext}")
+        if local_img:
+            covers[f"{mid}__example"] = local_img
+            covers[f"{replicate_model}__example"] = local_img
+            result["example"] = local_img
+
+    if result:
+        _save_covers(covers)
+    return result
+
+
 def _integration_image(spec: dict, *, fetch_missing: bool = False) -> str:
-    """Preview image: cached Replicate cover, else kind-based real stock photo."""
+    """Preview image: cached cover (http or /assets), else kind-based stock photo."""
     covers = _load_covers()
     mid = spec["id"]
-    if isinstance(covers.get(mid), str) and covers[mid].startswith("http"):
-        return covers[mid]
+    if _is_media_url(covers.get(mid)):
+        return str(covers[mid]).strip()
     rep = (spec.get("replicate_model") or "").strip()
-    if rep and isinstance(covers.get(rep), str) and covers[rep].startswith("http"):
-        return covers[rep]
+    if rep and _is_media_url(covers.get(rep)):
+        return str(covers[rep]).strip()
 
     if fetch_missing and rep and rep not in _COVER_FETCH_TRIED:
         _COVER_FETCH_TRIED.add(rep)
@@ -2612,6 +3349,44 @@ def _integration_image(spec: dict, *, fetch_missing: bool = False) -> str:
     return get_image_for_model(tag_names, spec.get("provider") or "model", mid)
 
 
+def _integration_example(spec: dict) -> str:
+    """Example generation still for model cards."""
+    covers = _load_covers()
+    mid = spec["id"]
+    keys = [f"{mid}__example", mid]
+    rep = (spec.get("replicate_model") or "").strip()
+    if rep:
+        keys.extend([f"{rep}__example", rep])
+    # Share Wan preview across replicate + fal variants
+    if re.search(r"(?i)wan[-_]?3", mid) or re.search(r"(?i)wan[-_]?3", rep):
+        keys.extend([
+            "wan-3-0__example",
+            "alibaba/wan-3__example",
+            "wan-3-0",
+            "alibaba/wan-3",
+        ])
+    for key in keys:
+        if _is_media_url(covers.get(key)):
+            return str(covers[key]).strip()
+    return _integration_image(spec, fetch_missing=False)
+
+
+def _integration_example_video(spec: dict) -> str:
+    """Locally cached Replicate default-example video (output/preview), if any."""
+    covers = _load_covers()
+    mid = spec["id"]
+    keys = [f"{mid}__example_video"]
+    rep = (spec.get("replicate_model") or "").strip()
+    if rep:
+        keys.append(f"{rep}__example_video")
+    if re.search(r"(?i)wan[-_]?3", mid) or re.search(r"(?i)wan[-_]?3", rep):
+        keys.extend(["wan-3-0__example_video", "alibaba/wan-3__example_video"])
+    for key in keys:
+        if _is_media_url(covers.get(key)):
+            return str(covers[key]).strip()
+    return ""
+
+
 def _vitrine_catalog_items(*, fetch_covers: bool = False) -> list[dict]:
     """Public catalog cards from live INTEGRATED_MODELS (no assistants, no vendor prefix)."""
     try:
@@ -2624,6 +3399,8 @@ def _vitrine_catalog_items(*, fetch_covers: bool = False) -> list[dict]:
     items: list[dict] = []
     for spec in INTEGRATED_MODELS.values():
         if spec.get("group") == "assistants" or spec.get("kind") in {"chat", "llm"}:
+            continue
+        if not _is_studio_visible(spec):
             continue
         provider = spec["provider"]
         if provider != "groq" and not healthy_fn(provider):
@@ -2670,12 +3447,19 @@ def api_catalog():
 
 @app.route("/api/catalog/sync-covers", methods=["POST"])
 def api_catalog_sync_covers():
-    """Fill models_catalog/covers.json from Replicate (admin/ops)."""
+    """Fill models_catalog/covers.json from Replicate (admin/ops).
+
+    For video models downloads default_example.output (preview mp4) into
+    /assets/models/examples/ and extracts a poster frame.
+    """
     load_env(BASE_DIR)
     if not _replicate_token():
         return jsonify({"error": "not_configured"}), 503
+    force = str((request.json or {}).get("force") or request.args.get("force") or "").lower() in {
+        "1", "true", "yes",
+    }
     updated = 0
-    covers = _load_covers()
+    ingested = []
     for spec in INTEGRATED_MODELS.values():
         if spec.get("group") == "assistants":
             continue
@@ -2683,15 +3467,28 @@ def api_catalog_sync_covers():
         if not rep:
             continue
         mid = spec["id"]
-        if covers.get(mid):
-            continue
-        cover = _fetch_replicate_cover(rep)
-        if cover:
-            covers[mid] = cover
-            covers[rep] = cover
-            updated += 1
-    _save_covers(covers)
-    return jsonify({"updated": updated, "total_cached": len(covers)})
+        covers = _load_covers()
+        if not covers.get(mid):
+            cover = _fetch_replicate_cover(rep)
+            if cover:
+                covers[mid] = cover
+                covers[rep] = cover
+                _save_covers(covers)
+                updated += 1
+        # Always try to pull preview video/image for examples
+        outs = set(spec.get("outputs") or [])
+        kind = (spec.get("kind") or "").lower()
+        if kind == "video" or "video" in outs or force or not covers.get(f"{mid}__example"):
+            got = _ingest_replicate_preview(mid, rep, force=force)
+            if got:
+                ingested.append({"id": mid, **got})
+                updated += 1
+    covers = _load_covers()
+    return jsonify({
+        "updated": updated,
+        "ingested": ingested,
+        "total_cached": len(covers),
+    })
 
 
 @app.route("/api/integrations", methods=["GET"])
@@ -2708,28 +3505,44 @@ def api_integrations():
     prices = _integration_prices()
     items = []
     for spec in INTEGRATED_MODELS.values():
-        provider = spec["provider"]
-        # Ассистенты не в UI: чат всегда Omni → DeepSeek fallback в /api/chat
-        if spec.get("group") == "assistants" or spec.get("kind") in {"chat", "llm"}:
+        if not _is_studio_visible(spec):
             continue
+        provider = spec["provider"]
         if provider != "groq" and not healthy_fn(provider):
             continue
         mid = spec["id"]
+        kind = (spec.get("kind") or "").lower()
+        group = spec.get("group") or kind
+        price = prices.get(mid) or ""
+        price_full = prices.get(f"{mid}__full") or price
+        # OmniRoute chat is always free for the user (fallback elsewhere)
+        if mid == "assistant" or (provider == "omniroute" and kind in {"chat", "llm"}):
+            price = price or "Бесплатно"
+            price_full = price_full or price
         items.append({
             "id": mid,
-            "name": spec["name"],
+            "name": _public_model_name(spec.get("name") or mid),
             "provider": provider,
-            "kind": spec["kind"],
-            "group": spec.get("group") or spec["kind"],
+            "kind": kind,
+            "group": group,
             "replicate_model": spec.get("replicate_model"),
             "fal_model": spec.get("fal_model"),
             "inputs": spec["inputs"],
             "outputs": spec["outputs"],
-            "notes": spec.get("notes"),
-            "price": prices.get(mid) or "",
-            "price_full": prices.get(f"{mid}__full") or prices.get(mid) or "",
+            "notes": _public_notes(spec.get("notes")),
+            "price": price,
+            "price_full": price_full,
             "image_url": _integration_image(spec, fetch_missing=False),
+            "example_url": _integration_example(spec),
+            "example_video_url": _integration_example_video(spec),
+            "is_assistant": group == "assistants" or kind in {"chat", "llm"},
         })
+    # Assistants first within text, then cheaper-ish by name
+    items.sort(key=lambda it: (
+        0 if it.get("is_assistant") else 1,
+        {"image": 0, "video": 1, "audio": 2, "stt": 3, "llm": 4, "chat": 4}.get(it.get("kind") or "", 9),
+        (it.get("name") or "").lower(),
+    ))
     return jsonify({
         "items": items,
         "channels": health,
@@ -2760,6 +3573,12 @@ def api_generate():
     elif model_id == "wan-3-0-i2v-fal":
         if not (image_data_url or "").strip():
             return jsonify({"error": "bad_model", "detail": "image required"}), 400
+    elif model_id in {"grok-imagine-video-1-5", "grok-imagine-video-1-5-i2v-fal"}:
+        if not (image_data_url or "").strip():
+            return jsonify({"error": "bad_model", "detail": "image required"}), 400
+    elif model_id == "seedance-2-5":
+        if not prompt and not (image_data_url or "").strip():
+            return jsonify({"error": "bad_model", "detail": "prompt or image required"}), 400
     elif model_id == "ltx-2-3-a2v-fal":
         if not (audio_data_url or "").strip():
             return jsonify({"error": "bad_model", "detail": "audio required"}), 400
@@ -2853,12 +3672,15 @@ def api_generate():
     wait = 300 if model_id in {
         "happy-horse-1-1-t2v-fal",
         "gemini-omni-flash-fal",
+        "grok-imagine-video-1-5",
         "grok-imagine-video-1-5-i2v-fal",
         "seedance-2-0-t2v-fal",
         "kling-o3-standard-i2v-fal",
         "minimax-h3-ref-to-video-fal",
+        "wan-3-0",
         "wan-3-0-t2v-fal",
         "wan-3-0-i2v-fal",
+        "seedance-2-5",
         "ltx-2-3-t2v-fal",
         "ltx-2-3-t2v-fast-fal",
         "ltx-2-3-i2v-fal",
@@ -3001,6 +3823,15 @@ register_auth(app, db, User)
 app.config["INTEGRATED_MODELS"] = INTEGRATED_MODELS
 register_product(app, db, User)
 apply_rate_limits(app)
+
+
+@app.after_request
+def _no_cache_html(resp):
+    ct = (resp.headers.get("Content-Type") or "").lower()
+    if "text/html" in ct:
+        resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        resp.headers["Pragma"] = "no-cache"
+    return resp
 
 @app.route("/")
 def index_page():
