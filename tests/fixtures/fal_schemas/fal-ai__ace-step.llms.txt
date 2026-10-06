@@ -1,0 +1,268 @@
+# ACE Step
+
+> Generate music with lyrics from text using ACE-Step
+
+
+## Overview
+
+- **Endpoint**: `https://fal.run/fal-ai/ace-step`
+- **Model ID**: `fal-ai/ace-step`
+- **Category**: text-to-audio
+- **Kind**: inference
+**Tags**: text-to-audio, text-to-music
+
+
+
+## Pricing
+
+Your request will cost $0.0002 per second of generated audio. For $1 you can run generate 5000 seconds (83 minutes) of music from lyrics.
+
+For more details, see [fal.ai pricing](https://fal.ai/pricing).
+
+## API Information
+
+This model can be used via our HTTP API or more conveniently via our client libraries.
+See the input and output schema below, as well as the usage examples.
+
+
+### Input Schema
+
+The API accepts the following input parameters:
+
+
+- **`tags`** (`string`, _required_):
+  Comma-separated list of genre tags to control the style of the generated audio. Can also be supplied as `prompt`.
+  - Examples: "lofi, hiphop, drum and bass, trap, chill"
+
+- **`lyrics`** (`string`, _optional_):
+  Lyrics to be sung in the audio. If not provided or if [inst] or [instrumental] is the content of this field, no lyrics will be sung. Use control structures like [verse], [chorus] and [bridge] to control the structure of the song. Default value: `""`
+  - Default: `""`
+
+- **`duration`** (`float`, _optional_):
+  The duration of the generated audio in seconds. Default value: `60`
+  - Default: `60`
+  - Range: `5` to `240`
+
+- **`number_of_steps`** (`integer`, _optional_):
+  Number of steps to generate the audio. Default value: `27`
+  - Default: `27`
+  - Range: `3` to `60`
+  - Examples: 27
+
+- **`seed`** (`integer`, _optional_):
+  Random seed for reproducibility. If not provided, a random seed will be used.
+
+- **`scheduler`** (`SchedulerEnum`, _optional_):
+  Scheduler to use for the generation process. Default value: `"euler"`
+  - Default: `"euler"`
+  - Options: `"euler"`, `"heun"`
+  - Examples: "euler"
+
+- **`guidance_type`** (`GuidanceTypeEnum`, _optional_):
+  Type of CFG to use for the generation process. Default value: `"apg"`
+  - Default: `"apg"`
+  - Options: `"cfg"`, `"apg"`, `"cfg_star"`
+  - Examples: "apg"
+
+- **`granularity_scale`** (`integer`, _optional_):
+  Granularity scale for the generation process. Higher values can reduce artifacts. Default value: `10`
+  - Default: `10`
+  - Range: `-100` to `100`
+  - Examples: 10
+
+- **`guidance_interval`** (`float`, _optional_):
+  Guidance interval for the generation. 0.5 means only apply guidance in the middle steps (0.25 * infer_steps to 0.75 * infer_steps) Default value: `0.5`
+  - Default: `0.5`
+  - Range: `0` to `1`
+  - Examples: 0.5
+
+- **`guidance_interval_decay`** (`float`, _optional_):
+  Guidance interval decay for the generation. Guidance scale will decay from guidance_scale to min_guidance_scale in the interval. 0.0 means no decay.
+  - Default: `0`
+  - Range: `0` to `1`
+  - Examples: 0
+
+- **`guidance_scale`** (`float`, _optional_):
+  Guidance scale for the generation. Default value: `15`
+  - Default: `15`
+  - Range: `0` to `200`
+  - Examples: 15
+
+- **`minimum_guidance_scale`** (`float`, _optional_):
+  Minimum guidance scale for the generation after the decay. Default value: `3`
+  - Default: `3`
+  - Range: `0` to `200`
+  - Examples: 3
+
+- **`tag_guidance_scale`** (`float`, _optional_):
+  Tag guidance scale for the generation. Default value: `5`
+  - Default: `5`
+  - Range: `0` to `10`
+  - Examples: 5
+
+- **`lyric_guidance_scale`** (`float`, _optional_):
+  Lyric guidance scale for the generation. Default value: `1.5`
+  - Default: `1.5`
+  - Range: `0` to `10`
+  - Examples: 1.5
+
+
+
+**Required Parameters Example**:
+
+```json
+{
+  "tags": "lofi, hiphop, drum and bass, trap, chill"
+}
+```
+
+**Full Example**:
+
+```json
+{
+  "tags": "lofi, hiphop, drum and bass, trap, chill",
+  "duration": 60,
+  "number_of_steps": 27,
+  "scheduler": "euler",
+  "guidance_type": "apg",
+  "granularity_scale": 10,
+  "guidance_interval": 0.5,
+  "guidance_interval_decay": 0,
+  "guidance_scale": 15,
+  "minimum_guidance_scale": 3,
+  "tag_guidance_scale": 5,
+  "lyric_guidance_scale": 1.5
+}
+```
+
+
+### Output Schema
+
+The API returns the following output format:
+
+- **`audio`** (`File`, _required_):
+  The generated audio file.
+  - Examples: {"url":"https://storage.googleapis.com/falserverless/example_outputs/ace-step-text-to-audio.wav"}
+
+- **`seed`** (`integer`, _required_):
+  The random seed used for the generation process.
+  - Examples: 42
+
+- **`tags`** (`string`, _required_):
+  The genre tags used in the generation process.
+  - Examples: "lofi, hiphop, drum and bass, trap, chill"
+
+- **`lyrics`** (`string`, _required_):
+  The lyrics used in the generation process.
+  - Examples: "[inst]"
+
+
+
+**Example Response**:
+
+```json
+{
+  "audio": {
+    "url": "https://storage.googleapis.com/falserverless/example_outputs/ace-step-text-to-audio.wav"
+  },
+  "seed": 42,
+  "tags": "lofi, hiphop, drum and bass, trap, chill",
+  "lyrics": "[inst]"
+}
+```
+
+
+## Usage Examples
+
+### cURL
+
+```bash
+curl --request POST \
+  --url https://fal.run/fal-ai/ace-step \
+  --header "Authorization: Key $FAL_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{
+     "tags": "lofi, hiphop, drum and bass, trap, chill"
+   }'
+```
+
+### Python
+
+Ensure you have the Python client installed:
+
+```bash
+pip install fal-client
+```
+
+Then use the API client to make requests:
+
+```python
+import fal_client
+
+def on_queue_update(update):
+    if isinstance(update, fal_client.InProgress):
+        for log in update.logs:
+           print(log["message"])
+
+result = fal_client.subscribe(
+    "fal-ai/ace-step",
+    arguments={
+        "tags": "lofi, hiphop, drum and bass, trap, chill"
+    },
+    with_logs=True,
+    on_queue_update=on_queue_update,
+)
+print(result)
+```
+
+### JavaScript
+
+Ensure you have the JavaScript client installed:
+
+```bash
+npm install --save @fal-ai/client
+```
+
+Then use the API client to make requests:
+
+```javascript
+import { fal } from "@fal-ai/client";
+
+const result = await fal.subscribe("fal-ai/ace-step", {
+  input: {
+    tags: "lofi, hiphop, drum and bass, trap, chill"
+  },
+  logs: true,
+  onQueueUpdate: (update) => {
+    if (update.status === "IN_PROGRESS") {
+      update.logs.map((log) => log.message).forEach(console.log);
+    }
+  },
+});
+console.log(result.data);
+console.log(result.requestId);
+```
+
+
+## Additional Resources
+
+### Documentation
+
+- [Model Playground](https://fal.ai/models/fal-ai/ace-step)
+- [API Documentation](https://fal.ai/models/fal-ai/ace-step/api)
+- [OpenAPI Schema](https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=fal-ai/ace-step)
+
+### fal.ai Platform
+
+- [Platform Documentation](https://fal.ai/docs/documentation)
+- [Python Client](https://fal.ai/docs/api-reference/client-libraries/python)
+- [JavaScript Client](https://fal.ai/docs/api-reference/client-libraries/javascript)
+
+### Other agent-readable surfaces
+
+This file covers one model. To find anything else:
+
+- [Platform overview](https://fal.ai/llms.txt): Entry points and representative endpoint IDs
+- [Documentation index](https://fal.ai/docs/llms.txt): Every documentation page
+- [Full documentation text](https://fal.ai/docs/llms-full.txt): The whole documentation inlined
+- Any other model: `https://fal.ai/models/<endpoint-id>/llms.txt`

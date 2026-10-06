@@ -1,0 +1,100 @@
+{
+  "fal_model": "fal-ai/nano-banana-2",
+  "source": "https://fal.ai/models/fal-ai/nano-banana-2/llms.txt",
+  "fetched_at": "2026-10-06",
+  "required": [
+    "prompt"
+  ],
+  "properties": {
+    "prompt": {
+      "type": "string",
+      "default": "1"
+    },
+    "num_images": {
+      "type": "integer",
+      "enum": [
+        "auto"
+      ],
+      "default": "1"
+    },
+    "seed": {
+      "type": "integer",
+      "enum": [
+        "auto"
+      ],
+      "default": "auto"
+    },
+    "aspect_ratio": {
+      "type": "Enum",
+      "enum": [
+        "auto"
+      ],
+      "default": "auto"
+    },
+    "output_format": {
+      "type": "OutputFormatEnum",
+      "enum": [
+        "jpeg"
+      ],
+      "default": "png"
+    },
+    "safety_tolerance": {
+      "type": "SafetyToleranceEnum",
+      "enum": [
+        "1"
+      ],
+      "default": "4"
+    },
+    "sync_mode": {
+      "type": "boolean",
+      "default": "false"
+    },
+    "system_prompt": {
+      "type": "string",
+      "enum": [
+        "0.5K",
+        "1K",
+        "2K",
+        "4K"
+      ],
+      "default": ""
+    },
+    "resolution": {
+      "type": "ResolutionEnum",
+      "enum": [
+        "0.5K",
+        "1K",
+        "2K",
+        "4K"
+      ],
+      "default": "1K"
+    },
+    "limit_generations": {
+      "type": "boolean",
+      "default": "true"
+    },
+    "enable_web_search": {
+      "type": "boolean",
+      "enum": [
+        "minimal"
+      ],
+      "default": "false"
+    },
+    "thinking_level": {
+      "type": "Enum",
+      "enum": [
+        "minimal"
+      ]
+    }
+  },
+  "output_example": {
+    "images": [
+      {
+        "url": "https://storage.googleapis.com/falserverless/example_outputs/nano-banana-2-t2i-output.png",
+        "file_name": "nano-banana-2-t2i-output.png",
+        "content_type": "image/png"
+      }
+    ],
+    "description": ""
+  }
+}

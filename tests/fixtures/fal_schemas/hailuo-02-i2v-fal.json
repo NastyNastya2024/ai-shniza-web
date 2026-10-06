@@ -1,0 +1,17 @@
+{
+  "fal_model": "fal-ai/minimax/hailuo-02/standard/image-to-video",
+  "source": "https://fal.ai/models/fal-ai/minimax/hailuo-02/standard/image-to-video/llms.txt",
+  "fetched_at": "2026-10-06",
+  "required": ["prompt", "image_url"],
+  "properties": {
+    "prompt": {"type": "string"},
+    "image_url": {"type": "string"},
+    "duration": {"type": "DurationEnum", "enum": ["6", "10"], "default": "6"},
+    "prompt_optimizer": {"type": "boolean", "default": "true"},
+    "resolution": {"type": "ResolutionEnum", "enum": ["512P", "768P"], "default": "768P"},
+    "end_image_url": {"type": "string"}
+  },
+  "output_example": {
+    "video": {"url": "https://v3.fal.media/files/monkey/xF9OsLwGjjNURyAxD8RM1_output.mp4"}
+  }
+}

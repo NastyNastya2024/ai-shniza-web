@@ -1,0 +1,15 @@
+{
+  "fal_model": "bytedance/seedream/v5/pro/edit",
+  "source": "https://fal.ai/models/bytedance/seedream/v5/pro/edit/llms.txt",
+  "fetched_at": "2026-10-06",
+  "required": ["prompt", "image_urls"],
+  "properties": {
+    "prompt": {"type": "string"},
+    "image_urls": {"type": "list<string>"},
+    "image_size": {"type": "string"},
+    "num_images": {"type": "integer"},
+    "output_format": {"type": "string"},
+    "enable_safety_checker": {"type": "boolean"}
+  },
+  "output_example": {"images": [{"url": "https://example.com/sd.png"}]}
+}

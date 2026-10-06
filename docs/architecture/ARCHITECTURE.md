@@ -47,7 +47,13 @@
 2. Логика диспетчера (failover)
 --------------------------------------------------------------------------------
 
-Вход: LogicalModel (то, что видит пользователь) + payload (prompt, media).
+**Сейчас (без LogicalModel в БД):** пары Replicate → fal заданы в `FAILOVER_MAP`
+и `INTEGRATED_MODELS` (`listed: false`, `backup_for`). Выбор резерва:
+`_failover_target(primary_id, has_image)` → id fal-копии. Полный список и
+исключения (p-video, gen4-turbo) — `docs/fal_backups_report.md`. Автоматическое
+переключение при падении канала — задача B2 (dispatcher + worker).
+
+Вход (целевая модель): LogicalModel (то, что видит пользователь) + payload (prompt, media).
 
 Шаги:
 

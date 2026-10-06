@@ -42,6 +42,15 @@ def _stop(*_args) -> None:
 
 
 def _wait_seconds(model_id: str, kind: str) -> int:
+    try:
+        import server as srv
+
+        spec = srv.INTEGRATED_MODELS.get(model_id) or {}
+        ws = spec.get("wait_sec")
+        if isinstance(ws, (int, float)) and ws > 0:
+            return int(ws)
+    except Exception:  # noqa: BLE001
+        pass
     long_ids = {
         "happy-horse-1-1-t2v-fal",
         "gemini-omni-flash-fal",
@@ -63,6 +72,16 @@ def _wait_seconds(model_id: str, kind: str) -> int:
         "pixverse-v6-i2v-fal",
         "minimax-music-2-5",
         "dreamactor-m2",
+        "seedance-2-5-t2v-fal",
+        "seedance-2-5-ref2v-fal",
+        "veo-3-1-t2v-fal",
+        "veo-3-1-i2v-fal",
+        "veo-3-1-fast-t2v-fal",
+        "veo-3-1-fast-i2v-fal",
+        "kling-v2-5-turbo-pro-t2v-fal",
+        "kling-v2-5-turbo-pro-i2v-fal",
+        "hailuo-02-t2v-fal",
+        "hailuo-02-i2v-fal",
     }
     if model_id in long_ids:
         return 300

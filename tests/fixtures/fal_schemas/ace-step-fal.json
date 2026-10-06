@@ -1,0 +1,87 @@
+{
+  "fal_model": "fal-ai/ace-step",
+  "source": "https://fal.ai/models/fal-ai/ace-step/llms.txt",
+  "fetched_at": "2026-10-06",
+  "required": [
+    "tags"
+  ],
+  "properties": {
+    "tags": {
+      "type": "string"
+    },
+    "lyrics": {
+      "type": "string",
+      "default": ""
+    },
+    "duration": {
+      "type": "float",
+      "default": "60"
+    },
+    "number_of_steps": {
+      "type": "integer",
+      "enum": [
+        "euler"
+      ],
+      "default": "27"
+    },
+    "seed": {
+      "type": "integer",
+      "enum": [
+        "euler"
+      ],
+      "default": "euler"
+    },
+    "scheduler": {
+      "type": "SchedulerEnum",
+      "enum": [
+        "euler"
+      ],
+      "default": "euler"
+    },
+    "guidance_type": {
+      "type": "GuidanceTypeEnum",
+      "enum": [
+        "cfg",
+        "apg",
+        "cfg_star"
+      ],
+      "default": "apg"
+    },
+    "granularity_scale": {
+      "type": "integer",
+      "default": "10"
+    },
+    "guidance_interval": {
+      "type": "float",
+      "default": "0.5"
+    },
+    "guidance_interval_decay": {
+      "type": "float",
+      "default": "0"
+    },
+    "guidance_scale": {
+      "type": "float",
+      "default": "15"
+    },
+    "minimum_guidance_scale": {
+      "type": "float",
+      "default": "3"
+    },
+    "tag_guidance_scale": {
+      "type": "float",
+      "default": "5"
+    },
+    "lyric_guidance_scale": {
+      "type": "float",
+      "default": "1.5"
+    }
+  },
+  "output_example": {
+    "audio": {
+      "url": "https://storage.googleapis.com/falserverless/example_outputs/ace-step-text-to-audio.wav"
+    },
+    "seed": 42,
+    "tags": "lofi, hiphop, drum and bass, trap, chill",
+    "lyrics": "[inst]"
+  }
+}

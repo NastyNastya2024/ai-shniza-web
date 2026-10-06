@@ -1,0 +1,28 @@
+{
+  "fal_model": "xai/grok-imagine-video/v1.5/image-to-video",
+  "source": "https://fal.ai/models/xai/grok-imagine-video/v1.5/image-to-video/llms.txt",
+  "fetched_at": "2026-10-06",
+  "required": [
+    "prompt",
+    "image_url"
+  ],
+    "properties": {
+      "prompt": {
+        "type": "string"
+      },
+      "image_url": {
+        "type": "string"
+      },
+      "duration": {
+        "type": "integer"
+      },
+      "resolution": {
+        "type": "string"
+      }
+    },
+  "output_example": {
+    "video": {
+      "url": "https://example.com/grok.mp4"
+    }
+  }
+}

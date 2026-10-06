@@ -1,0 +1,87 @@
+{
+  "fal_model": "bytedance/seedance-2.5/reference-to-video",
+  "source": "https://fal.ai/models/bytedance/seedance-2.5/reference-to-video/llms.txt",
+  "fetched_at": "2026-10-06",
+  "required": [],
+  "properties": {
+    "prompt": {
+      "type": "string"
+    },
+    "task": {
+      "type": "TaskEnum",
+      "enum": [
+        "reference"
+      ],
+      "default": "reference"
+    },
+    "image_urls": {
+      "type": "list<string>"
+    },
+    "video_urls": {
+      "type": "list<string>"
+    },
+    "audio_urls": {
+      "type": "list<string>"
+    },
+    "resolution": {
+      "type": "ResolutionEnum",
+      "enum": [
+        "480p",
+        "720p",
+        "1080p"
+      ],
+      "default": "720p"
+    },
+    "draft": {
+      "type": "boolean",
+      "enum": [
+        "auto"
+      ],
+      "default": "false"
+    },
+    "duration": {
+      "type": "DurationEnum",
+      "enum": [
+        "auto"
+      ],
+      "default": "auto"
+    },
+    "aspect_ratio": {
+      "type": "AspectRatioEnum",
+      "enum": [
+        "auto"
+      ],
+      "default": "auto"
+    },
+    "generate_audio": {
+      "type": "boolean",
+      "default": "true"
+    },
+    "bitrate_mode": {
+      "type": "BitrateModeEnum",
+      "enum": [
+        "standard"
+      ],
+      "default": "standard"
+    },
+    "codec": {
+      "type": "CodecEnum",
+      "enum": [
+        "auto"
+      ],
+      "default": "auto"
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "end_user_id": {
+      "type": "string"
+    }
+  },
+  "output_example": {
+    "video": {
+      "url": "https://storage.googleapis.com/falserverless/example_outputs/bytedance/seedance_2/output.mp4"
+    },
+    "seed": 42
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "fal_model": "fal-ai/stable-audio-25/text-to-audio",
+  "source": "https://fal.ai/models/fal-ai/stable-audio-25/text-to-audio/llms.txt",
+  "fetched_at": "2026-10-06",
+  "required": [
+    "prompt"
+  ],
+  "properties": {
+    "prompt": {
+      "type": "string",
+      "default": "190"
+    },
+    "seconds_total": {
+      "type": "integer",
+      "default": "190"
+    },
+    "num_inference_steps": {
+      "type": "integer",
+      "default": "8"
+    },
+    "guidance_scale": {
+      "type": "float",
+      "default": "1"
+    },
+    "sync_mode": {
+      "type": "boolean",
+      "default": "false"
+    }
+  },
+  "output_example": {
+    "audio": "https://v3.fal.media/files/zebra/lGob9bN7VHfFXG4R1btQn_tmpabwhgi6n.wav"
+  }
+}

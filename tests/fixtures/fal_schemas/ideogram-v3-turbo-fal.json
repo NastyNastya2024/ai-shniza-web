@@ -1,0 +1,25 @@
+{
+  "fal_model": "fal-ai/ideogram/v3",
+  "source": "https://fal.ai/models/fal-ai/ideogram/v3/llms.txt",
+  "fetched_at": "2026-10-06",
+  "required": ["prompt"],
+  "properties": {
+    "prompt": {"type": "string"},
+    "rendering_speed": {"type": "RenderingSpeedEnum", "enum": ["TURBO", "BALANCED", "QUALITY"], "default": "BALANCED"},
+    "image_size": {"type": "string", "default": "square_hd"},
+    "expand_prompt": {"type": "boolean", "default": "true"},
+    "num_images": {"type": "integer", "default": "1"},
+    "image_urls": {"type": "list<string>"},
+    "negative_prompt": {"type": "string"},
+    "style": {"type": "string"},
+    "style_preset": {"type": "string"},
+    "style_codes": {"type": "list<string>"},
+    "color_palette": {"type": "object"},
+    "seed": {"type": "integer"},
+    "sync_mode": {"type": "boolean"}
+  },
+  "output_example": {
+    "images": [{"url": "https://v3.fal.media/files/penguin/lHdRabS80guysb8Zw1kul_image.png"}],
+    "seed": 123456
+  }
+}

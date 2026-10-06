@@ -1,0 +1,72 @@
+{
+  "fal_model": "fal-ai/veo3.1",
+  "source": "https://fal.ai/models/fal-ai/veo3.1/llms.txt",
+  "fetched_at": "2026-10-06",
+  "required": [
+    "prompt"
+  ],
+  "properties": {
+    "prompt": {
+      "type": "string",
+      "enum": [
+        "16:9"
+      ],
+      "default": "16:9"
+    },
+    "aspect_ratio": {
+      "type": "AspectRatioEnum",
+      "enum": [
+        "16:9"
+      ],
+      "default": "16:9"
+    },
+    "duration": {
+      "type": "DurationEnum",
+      "enum": [
+        "4s"
+      ],
+      "default": "8s"
+    },
+    "negative_prompt": {
+      "type": "string",
+      "enum": [
+        "720p"
+      ],
+      "default": "720p"
+    },
+    "resolution": {
+      "type": "ResolutionEnum",
+      "enum": [
+        "720p"
+      ],
+      "default": "720p"
+    },
+    "generate_audio": {
+      "type": "boolean",
+      "default": "true"
+    },
+    "seed": {
+      "type": "integer",
+      "default": "true"
+    },
+    "auto_fix": {
+      "type": "boolean",
+      "enum": [
+        "1"
+      ],
+      "default": "true"
+    },
+    "safety_tolerance": {
+      "type": "SafetyToleranceEnum",
+      "enum": [
+        "1"
+      ],
+      "default": "4"
+    }
+  },
+  "output_example": {
+    "video": {
+      "url": "https://v3b.fal.media/files/b/kangaroo/oUCiZjQwEy6bIQdPUSLDF_output.mp4"
+    }
+  }
+}

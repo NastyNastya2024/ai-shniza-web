@@ -1,0 +1,34 @@
+{
+  "fal_model": "fal-ai/elevenlabs/music",
+  "source": "https://fal.ai/models/fal-ai/elevenlabs/music/llms.txt",
+  "fetched_at": "2026-10-06",
+  "required": [],
+  "properties": {
+    "prompt": {
+      "type": "string"
+    },
+    "composition_plan": {
+      "type": "MusicCompositionPlan"
+    },
+    "music_length_ms": {
+      "type": "integer"
+    },
+    "force_instrumental": {
+      "type": "boolean",
+      "default": "false"
+    },
+    "respect_sections_durations": {
+      "type": "boolean"
+    },
+    "output_format": {
+      "type": "OutputFormatEnum"
+    }
+  },
+  "output_example": {
+    "audio": {
+      "content_type": "audio/mpeg",
+      "file_name": "music_generated.mp3",
+      "url": "https://storage.googleapis.com/falserverless/example_outputs/elevenlabs/music_generated.mp3"
+    }
+  }
+}

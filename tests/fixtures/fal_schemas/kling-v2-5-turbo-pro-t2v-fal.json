@@ -1,0 +1,16 @@
+{
+  "fal_model": "fal-ai/kling-video/v2.5-turbo/pro/text-to-video",
+  "source": "https://fal.ai/models/fal-ai/kling-video/v2.5-turbo/pro/text-to-video/llms.txt",
+  "fetched_at": "2026-10-06",
+  "required": ["prompt"],
+  "properties": {
+    "prompt": {"type": "string"},
+    "duration": {"type": "DurationEnum", "enum": ["5", "10"], "default": "5"},
+    "aspect_ratio": {"type": "AspectRatioEnum", "enum": ["16:9", "9:16", "1:1"], "default": "16:9"},
+    "negative_prompt": {"type": "string", "default": "blur, distort, and low quality"},
+    "cfg_scale": {"type": "float", "default": "0.5"}
+  },
+  "output_example": {
+    "video": {"url": "https://storage.googleapis.com/falserverless/model_tests/kling/kling-v2.5-turbo-pro-text-to-video-output.mp4"}
+  }
+}

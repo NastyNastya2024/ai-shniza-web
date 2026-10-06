@@ -1,0 +1,36 @@
+{
+  "fal_model": "alibaba/wan-3.0/text-to-video",
+  "source": "https://fal.ai/models/alibaba/wan-3.0/text-to-video/llms.txt",
+  "fetched_at": "2026-10-06",
+  "required": [
+    "prompt"
+  ],
+    "properties": {
+      "prompt": {
+        "type": "string"
+      },
+      "resolution": {
+        "type": "string"
+      },
+      "aspect_ratio": {
+        "type": "string"
+      },
+      "duration": {
+        "type": "integer"
+      },
+      "audio": {
+        "type": "boolean"
+      },
+      "enable_prompt_expansion": {
+        "type": "boolean"
+      },
+      "enable_safety_checker": {
+        "type": "boolean"
+      }
+    },
+  "output_example": {
+    "video": {
+      "url": "https://example.com/wan.mp4"
+    }
+  }
+}

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
 import json
@@ -1527,6 +1528,8 @@ INTEGRATED_MODELS = {
         "notes": "image required (i2v)",
         # Covered by replicate grok-imagine-video-1-5 — hide duplicate from studio sidebar
         "listed": False,
+        "backup_for": "grok-imagine-video-1-5",
+        "wait_sec": 300,
     },
     "seedance-2-0-t2v-fal": {
         "id": "seedance-2-0-t2v-fal",
@@ -1597,6 +1600,8 @@ INTEGRATED_MODELS = {
         "notes": "native audio",
         # Covered by replicate wan-3-0 (text+image) — hide duplicate from studio sidebar
         "listed": False,
+        "backup_for": "wan-3-0",
+        "wait_sec": 300,
     },
     "wan-3-0-i2v-fal": {
         "id": "wan-3-0-i2v-fal",
@@ -1609,6 +1614,8 @@ INTEGRATED_MODELS = {
         "outputs": ["video"],
         "notes": "image required (i2v)",
         "listed": False,
+        "backup_for": "wan-3-0",
+        "wait_sec": 300,
     },
     "ltx-2-3-t2v-fal": {
         "id": "ltx-2-3-t2v-fal",
@@ -1676,6 +1683,8 @@ INTEGRATED_MODELS = {
         "outputs": ["video"],
         "notes": "optional audio",
         "listed": False,
+        "backup_for": "pixverse-v6",
+        "wait_sec": 300,
     },
     "pixverse-v6-i2v-fal": {
         "id": "pixverse-v6-i2v-fal",
@@ -1688,6 +1697,8 @@ INTEGRATED_MODELS = {
         "outputs": ["video"],
         "notes": "image required (i2v)",
         "listed": False,
+        "backup_for": "pixverse-v6",
+        "wait_sec": 300,
     },
     "pixverse-v6": {
         "id": "pixverse-v6",
@@ -1747,6 +1758,7 @@ INTEGRATED_MODELS = {
         "notes": "deep-thinking t2i",
         # Covered by replicate seedream-5-pro
         "listed": False,
+        "backup_for": "seedream-5-pro",
     },
     "seedream-5-pro-edit-fal": {
         "id": "seedream-5-pro-edit-fal",
@@ -1759,6 +1771,280 @@ INTEGRATED_MODELS = {
         "outputs": ["image"],
         "listed": False,
         "notes": "image required",
+        "backup_for": "seedream-5-pro",
+    },
+    "seedance-2-5-t2v-fal": {
+        "id": "seedance-2-5-t2v-fal",
+        "name": "Seedance 2.5 T2V (fal)",
+        "provider": "fal",
+        "kind": "video",
+        "group": "video",
+        "fal_model": "bytedance/seedance-2.5/text-to-video",
+        "inputs": ["text"],
+        "outputs": ["video"],
+        "notes": "backup for seedance-2-5",
+        "listed": False,
+        "backup_for": "seedance-2-5",
+        "wait_sec": 300,
+    },
+    "seedance-2-5-ref2v-fal": {
+        "id": "seedance-2-5-ref2v-fal",
+        "name": "Seedance 2.5 Ref→Video (fal)",
+        "provider": "fal",
+        "kind": "video",
+        "group": "video",
+        "fal_model": "bytedance/seedance-2.5/reference-to-video",
+        "inputs": ["image", "text"],
+        "outputs": ["video"],
+        "notes": "backup for seedance-2-5 (image)",
+        "listed": False,
+        "backup_for": "seedance-2-5",
+        "wait_sec": 300,
+    },
+    "veo-3-1-t2v-fal": {
+        "id": "veo-3-1-t2v-fal",
+        "name": "Veo 3.1 T2V (fal)",
+        "provider": "fal",
+        "kind": "video",
+        "group": "video",
+        "fal_model": "fal-ai/veo3.1",
+        "inputs": ["text"],
+        "outputs": ["video"],
+        "notes": "backup for veo-3-1",
+        "listed": False,
+        "backup_for": "veo-3-1",
+        "wait_sec": 300,
+    },
+    "veo-3-1-i2v-fal": {
+        "id": "veo-3-1-i2v-fal",
+        "name": "Veo 3.1 I2V (fal)",
+        "provider": "fal",
+        "kind": "video",
+        "group": "video",
+        "fal_model": "fal-ai/veo3.1/image-to-video",
+        "inputs": ["image", "text"],
+        "outputs": ["video"],
+        "notes": "backup for veo-3-1 (image)",
+        "listed": False,
+        "backup_for": "veo-3-1",
+        "wait_sec": 300,
+    },
+    "veo-3-1-fast-t2v-fal": {
+        "id": "veo-3-1-fast-t2v-fal",
+        "name": "Veo 3.1 Fast T2V (fal)",
+        "provider": "fal",
+        "kind": "video",
+        "group": "video",
+        "fal_model": "fal-ai/veo3.1/fast",
+        "inputs": ["text"],
+        "outputs": ["video"],
+        "notes": "backup for veo-3-1-fast",
+        "listed": False,
+        "backup_for": "veo-3-1-fast",
+        "wait_sec": 300,
+    },
+    "veo-3-1-fast-i2v-fal": {
+        "id": "veo-3-1-fast-i2v-fal",
+        "name": "Veo 3.1 Fast I2V (fal)",
+        "provider": "fal",
+        "kind": "video",
+        "group": "video",
+        "fal_model": "fal-ai/veo3.1/fast/image-to-video",
+        "inputs": ["image", "text"],
+        "outputs": ["video"],
+        "notes": "backup for veo-3-1-fast (image)",
+        "listed": False,
+        "backup_for": "veo-3-1-fast",
+        "wait_sec": 300,
+    },
+    "kling-v2-5-turbo-pro-t2v-fal": {
+        "id": "kling-v2-5-turbo-pro-t2v-fal",
+        "name": "Kling v2.5 Turbo Pro T2V (fal)",
+        "provider": "fal",
+        "kind": "video",
+        "group": "video",
+        "fal_model": "fal-ai/kling-video/v2.5-turbo/pro/text-to-video",
+        "inputs": ["text"],
+        "outputs": ["video"],
+        "notes": "backup for kling-v2-5-turbo-pro",
+        "listed": False,
+        "backup_for": "kling-v2-5-turbo-pro",
+        "wait_sec": 300,
+    },
+    "kling-v2-5-turbo-pro-i2v-fal": {
+        "id": "kling-v2-5-turbo-pro-i2v-fal",
+        "name": "Kling v2.5 Turbo Pro I2V (fal)",
+        "provider": "fal",
+        "kind": "video",
+        "group": "video",
+        "fal_model": "fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
+        "inputs": ["image", "text"],
+        "outputs": ["video"],
+        "notes": "backup for kling-v2-5-turbo-pro (image)",
+        "listed": False,
+        "backup_for": "kling-v2-5-turbo-pro",
+        "wait_sec": 300,
+    },
+    "hailuo-02-t2v-fal": {
+        "id": "hailuo-02-t2v-fal",
+        "name": "Hailuo 02 T2V (fal)",
+        "provider": "fal",
+        "kind": "video",
+        "group": "video",
+        "fal_model": "fal-ai/minimax/hailuo-02/standard/text-to-video",
+        "inputs": ["text"],
+        "outputs": ["video"],
+        "notes": "backup for hailuo-02 (768p standard)",
+        "listed": False,
+        "backup_for": "hailuo-02",
+        "wait_sec": 300,
+    },
+    "hailuo-02-i2v-fal": {
+        "id": "hailuo-02-i2v-fal",
+        "name": "Hailuo 02 I2V (fal)",
+        "provider": "fal",
+        "kind": "video",
+        "group": "video",
+        "fal_model": "fal-ai/minimax/hailuo-02/standard/image-to-video",
+        "inputs": ["image", "text"],
+        "outputs": ["video"],
+        "notes": "backup for hailuo-02 (image)",
+        "listed": False,
+        "backup_for": "hailuo-02",
+        "wait_sec": 300,
+    },
+    "gpt-image-2-fal": {
+        "id": "gpt-image-2-fal",
+        "name": "GPT Image 2 (fal)",
+        "provider": "fal",
+        "kind": "image",
+        "group": "image",
+        "fal_model": "openai/gpt-image-2",
+        "inputs": ["text"],
+        "outputs": ["image"],
+        "notes": "backup for gpt-image-2",
+        "listed": False,
+        "backup_for": "gpt-image-2",
+    },
+    "gpt-image-2-edit-fal": {
+        "id": "gpt-image-2-edit-fal",
+        "name": "GPT Image 2 Edit (fal)",
+        "provider": "fal",
+        "kind": "image",
+        "group": "image",
+        "fal_model": "openai/gpt-image-2/edit",
+        "inputs": ["image", "text"],
+        "outputs": ["image"],
+        "notes": "backup for gpt-image-2 (image)",
+        "listed": False,
+        "backup_for": "gpt-image-2",
+    },
+    "gpt-image-2-5-flare-fal": {
+        "id": "gpt-image-2-5-flare-fal",
+        "name": "GPT Image 2.5 Flare (fal)",
+        "provider": "fal",
+        "kind": "image",
+        "group": "image",
+        "fal_model": "openai/gpt-image-2.5/flare/text-to-image",
+        "inputs": ["text"],
+        "outputs": ["image"],
+        "notes": "backup for gpt-image-2-5-flare",
+        "listed": False,
+        "backup_for": "gpt-image-2-5-flare",
+    },
+    "gpt-image-2-5-sunburst-fal": {
+        "id": "gpt-image-2-5-sunburst-fal",
+        "name": "GPT Image 2.5 Sunburst (fal)",
+        "provider": "fal",
+        "kind": "image",
+        "group": "image",
+        "fal_model": "openai/gpt-image-2.5/sunburst/text-to-image",
+        "inputs": ["text"],
+        "outputs": ["image"],
+        "notes": "backup for gpt-image-2-5-sunburst",
+        "listed": False,
+        "backup_for": "gpt-image-2-5-sunburst",
+    },
+    "nano-banana-2-fal": {
+        "id": "nano-banana-2-fal",
+        "name": "Nano Banana 2 (fal)",
+        "provider": "fal",
+        "kind": "image",
+        "group": "image",
+        "fal_model": "fal-ai/nano-banana-2",
+        "inputs": ["text"],
+        "outputs": ["image"],
+        "notes": "backup for nano-banana-2",
+        "listed": False,
+        "backup_for": "nano-banana-2",
+    },
+    "nano-banana-2-edit-fal": {
+        "id": "nano-banana-2-edit-fal",
+        "name": "Nano Banana 2 Edit (fal)",
+        "provider": "fal",
+        "kind": "image",
+        "group": "image",
+        "fal_model": "fal-ai/nano-banana-2/edit",
+        "inputs": ["image", "text"],
+        "outputs": ["image"],
+        "notes": "backup for nano-banana-2 (image)",
+        "listed": False,
+        "backup_for": "nano-banana-2",
+    },
+    "ideogram-v3-turbo-fal": {
+        "id": "ideogram-v3-turbo-fal",
+        "name": "Ideogram V3 Turbo (fal)",
+        "provider": "fal",
+        "kind": "image",
+        "group": "image",
+        "fal_model": "fal-ai/ideogram/v3",
+        "inputs": ["text"],
+        "outputs": ["image"],
+        "notes": "backup for ideogram-v3-turbo",
+        "listed": False,
+        "backup_for": "ideogram-v3-turbo",
+    },
+    "ace-step-fal": {
+        "id": "ace-step-fal",
+        "name": "ACE-Step (fal)",
+        "provider": "fal",
+        "kind": "audio",
+        "group": "audio",
+        "fal_model": "fal-ai/ace-step",
+        "inputs": ["text"],
+        "outputs": ["audio"],
+        "notes": "backup for ace-step",
+        "listed": False,
+        "backup_for": "ace-step",
+        "wait_sec": 180,
+    },
+    "elevenlabs-music-fal": {
+        "id": "elevenlabs-music-fal",
+        "name": "ElevenLabs Music (fal)",
+        "provider": "fal",
+        "kind": "audio",
+        "group": "audio",
+        "fal_model": "fal-ai/elevenlabs/music",
+        "inputs": ["text"],
+        "outputs": ["audio"],
+        "notes": "backup for elevenlabs-music",
+        "listed": False,
+        "backup_for": "elevenlabs-music",
+        "wait_sec": 180,
+    },
+    "stable-audio-2-5-fal": {
+        "id": "stable-audio-2-5-fal",
+        "name": "Stable Audio 2.5 (fal)",
+        "provider": "fal",
+        "kind": "audio",
+        "group": "audio",
+        "fal_model": "fal-ai/stable-audio-25/text-to-audio",
+        "inputs": ["text"],
+        "outputs": ["audio"],
+        "notes": "backup for stable-audio-2-5",
+        "listed": False,
+        "backup_for": "stable-audio-2-5",
+        "wait_sec": 180,
     },
     # --- OmniRoute channel (OpenAI-compatible /v1) ---
     "omni-auto": {
@@ -1809,6 +2095,73 @@ STUDIO_ONBOARD_IDS = frozenset({
     "elevenlabs-music",
     "stable-audio-2-5",
 })
+
+# Replicate primary id → fal backup id by mode: "t" text-only, "i" with input image.
+FAILOVER_MAP: dict[str, dict[str, str]] = {
+    "wan-3-0": {"t": "wan-3-0-t2v-fal", "i": "wan-3-0-i2v-fal"},
+    "grok-imagine-video-1-5": {"i": "grok-imagine-video-1-5-i2v-fal"},
+    "seedance-2-5": {"t": "seedance-2-5-t2v-fal", "i": "seedance-2-5-ref2v-fal"},
+    "veo-3-1": {"t": "veo-3-1-t2v-fal", "i": "veo-3-1-i2v-fal"},
+    "veo-3-1-fast": {"t": "veo-3-1-fast-t2v-fal", "i": "veo-3-1-fast-i2v-fal"},
+    "kling-v2-5-turbo-pro": {"t": "kling-v2-5-turbo-pro-t2v-fal", "i": "kling-v2-5-turbo-pro-i2v-fal"},
+    "pixverse-v6": {"t": "pixverse-v6-t2v-fal", "i": "pixverse-v6-i2v-fal"},
+    "hailuo-02": {"t": "hailuo-02-t2v-fal", "i": "hailuo-02-i2v-fal"},
+    "seedream-5-pro": {"t": "seedream-5-pro-t2i-fal", "i": "seedream-5-pro-edit-fal"},
+    "gpt-image-2": {"t": "gpt-image-2-fal", "i": "gpt-image-2-edit-fal"},
+    "gpt-image-2-5-flare": {"t": "gpt-image-2-5-flare-fal"},
+    "gpt-image-2-5-sunburst": {"t": "gpt-image-2-5-sunburst-fal"},
+    "nano-banana-2": {"t": "nano-banana-2-fal", "i": "nano-banana-2-edit-fal"},
+    "ideogram-v3-turbo": {"t": "ideogram-v3-turbo-fal"},
+    "ace-step": {"t": "ace-step-fal"},
+    "elevenlabs-music": {"t": "elevenlabs-music-fal"},
+    "stable-audio-2-5": {"t": "stable-audio-2-5-fal"},
+}
+
+
+def _failover_target(model_id: str, has_image: bool) -> str | None:
+    """Return fal backup model id for a Replicate primary (B2 routing uses this)."""
+    modes = FAILOVER_MAP.get(model_id)
+    if not modes:
+        return None
+    key = "i" if has_image else "t"
+    backup_id = modes.get(key)
+    if not backup_id:
+        return None
+    spec = INTEGRATED_MODELS.get(backup_id)
+    if not spec or spec.get("provider") != "fal":
+        return None
+    return backup_id
+
+
+def _validate_failover_map() -> None:
+    log = logging.getLogger(__name__)
+    for primary, modes in FAILOVER_MAP.items():
+        prim = INTEGRATED_MODELS.get(primary)
+        if not prim or prim.get("provider") != "replicate":
+            log.error("FAILOVER_MAP primary %s missing or not replicate", primary)
+            continue
+        for _mode, backup_id in modes.items():
+            bak = INTEGRATED_MODELS.get(backup_id)
+            if not bak or bak.get("provider") != "fal":
+                log.error("FAILOVER_MAP backup %s invalid for %s", backup_id, primary)
+                continue
+            if bak.get("backup_for") != primary:
+                log.error(
+                    "FAILOVER_MAP backup %s backup_for=%s expected %s",
+                    backup_id,
+                    bak.get("backup_for"),
+                    primary,
+                )
+
+
+_validate_failover_map()
+
+_FAL_I2V_BACKUP_IDS = frozenset(
+    bid
+    for modes in FAILOVER_MAP.values()
+    for mode, bid in modes.items()
+    if mode == "i"
+)
 
 
 def _is_studio_visible(spec: dict) -> bool:
@@ -2649,6 +3002,179 @@ def _build_replicate_input(
             "image": image,
             "video": video,
             "cut_first_second": True,
+        }
+
+    if model_id == "seedance-2-5-t2v-fal":
+        return {
+            "prompt": prompt,
+            "resolution": "720p",
+            "duration": "5",
+            "aspect_ratio": "16:9",
+            "generate_audio": True,
+            "bitrate_mode": "standard",
+        }
+
+    if model_id == "seedance-2-5-ref2v-fal":
+        if not image:
+            raise ValueError("Seedance 2.5 Ref→Video requires an attached image")
+        payload = {
+            "prompt": prompt or "animate the reference",
+            "image_urls": [image],
+            "resolution": "720p",
+            "duration": "5",
+            "aspect_ratio": "16:9",
+            "generate_audio": True,
+            "task": "reference",
+        }
+        return payload
+
+    if model_id in {"veo-3-1-t2v-fal", "veo-3-1-fast-t2v-fal"}:
+        return {
+            "prompt": prompt,
+            "duration": "8s",
+            "resolution": "720p",
+            "aspect_ratio": "16:9",
+            "generate_audio": True,
+        }
+
+    if model_id in {"veo-3-1-i2v-fal", "veo-3-1-fast-i2v-fal"}:
+        if not image:
+            raise ValueError("Veo 3.1 I2V requires an attached start-frame image")
+        return {
+            "prompt": prompt,
+            "image_url": image,
+            "duration": "8s",
+            "resolution": "720p",
+            "generate_audio": True,
+        }
+
+    if model_id == "kling-v2-5-turbo-pro-t2v-fal":
+        return {
+            "prompt": prompt,
+            "duration": "5",
+            "aspect_ratio": "16:9",
+            "negative_prompt": "",
+            "cfg_scale": 0.5,
+        }
+
+    if model_id == "kling-v2-5-turbo-pro-i2v-fal":
+        if not image:
+            raise ValueError("Kling v2.5 Turbo Pro I2V requires an attached start-frame image")
+        return {
+            "prompt": prompt,
+            "image_url": image,
+            "duration": "5",
+            "negative_prompt": "blur, distort, and low quality",
+            "cfg_scale": 0.5,
+        }
+
+    if model_id == "hailuo-02-t2v-fal":
+        return {
+            "prompt": prompt,
+            "duration": "6",
+            "prompt_optimizer": True,
+        }
+
+    if model_id == "hailuo-02-i2v-fal":
+        if not image:
+            raise ValueError("Hailuo 02 I2V requires an attached image")
+        return {
+            "prompt": prompt,
+            "image_url": image,
+            "duration": "6",
+            "resolution": "768P",
+            "prompt_optimizer": True,
+        }
+
+    if model_id == "gpt-image-2-fal":
+        return {
+            "prompt": prompt,
+            "quality": "medium",
+            "image_size": "square_hd",
+            "num_images": 1,
+            "output_format": "webp",
+            "background": "auto",
+        }
+
+    if model_id == "gpt-image-2-edit-fal":
+        if not image:
+            raise ValueError("GPT Image 2 Edit requires an attached image")
+        return {
+            "prompt": prompt,
+            "image_urls": [image],
+            "image_size": "auto",
+            "quality": "medium",
+            "num_images": 1,
+            "output_format": "webp",
+            "background": "auto",
+        }
+
+    if model_id in {"gpt-image-2-5-flare-fal", "gpt-image-2-5-sunburst-fal"}:
+        return {
+            "prompt": prompt,
+            "quality": "medium",
+            "image_size": "square_hd",
+            "num_images": 1,
+            "output_format": "png",
+            "background": "auto",
+        }
+
+    if model_id == "nano-banana-2-fal":
+        return {
+            "prompt": prompt,
+            "aspect_ratio": "auto",
+            "resolution": "1K",
+            "output_format": "jpeg",
+        }
+
+    if model_id == "nano-banana-2-edit-fal":
+        if not image:
+            raise ValueError("Nano Banana 2 Edit requires an attached image")
+        return {
+            "prompt": prompt,
+            "image_urls": [image],
+            "aspect_ratio": "auto",
+            "resolution": "1K",
+            "output_format": "jpeg",
+        }
+
+    if model_id == "ideogram-v3-turbo-fal":
+        return {
+            "prompt": prompt,
+            "rendering_speed": "TURBO",
+            "image_size": "square_hd",
+            "expand_prompt": True,
+            "num_images": 1,
+        }
+
+    if model_id == "ace-step-fal":
+        return {
+            "tags": prompt,
+            "lyrics": "[instrumental]",
+            "duration": 60,
+            "number_of_steps": 27,
+            "seed": -1,
+            "scheduler": "euler",
+            "guidance_type": "apg",
+            "guidance_scale": 15,
+            "tag_guidance_scale": 5,
+            "lyric_guidance_scale": 1.5,
+        }
+
+    if model_id == "elevenlabs-music-fal":
+        return {
+            "prompt": prompt[:4000],
+            "music_length_ms": 30000,
+            "force_instrumental": False,
+            "output_format": "mp3_44100_128",
+        }
+
+    if model_id == "stable-audio-2-5-fal":
+        return {
+            "prompt": prompt,
+            "seconds_total": 30,
+            "num_inference_steps": 8,
+            "guidance_scale": 7,
         }
 
     raise ValueError(f"unknown model {model_id}")
@@ -3953,7 +4479,7 @@ def api_generate():
     elif model_id == "wan-3-0-i2v-fal":
         if not (image_data_url or "").strip():
             return jsonify({"error": "bad_model", "detail": "image required"}), 400
-    elif model_id in {"grok-imagine-video-1-5", "grok-imagine-video-1-5-i2v-fal", "gen4-turbo"}:
+    elif model_id in {"grok-imagine-video-1-5", "gen4-turbo"} or model_id in _FAL_I2V_BACKUP_IDS:
         if not (image_data_url or "").strip():
             return jsonify({"error": "bad_model", "detail": "image required"}), 400
     elif model_id == "seedance-2-5":

@@ -1,0 +1,71 @@
+{
+  "fal_model": "openai/gpt-image-2.5/flare/text-to-image",
+  "source": "https://fal.ai/models/openai/gpt-image-2.5/flare/text-to-image/llms.txt",
+  "fetched_at": "2026-10-06",
+  "required": [
+    "prompt"
+  ],
+  "properties": {
+    "prompt": {
+      "type": "string"
+    },
+    "image_size": {
+      "type": "ImageSize | Enum",
+      "default": "landscape_4_3"
+    },
+    "background": {
+      "type": "BackgroundEnum",
+      "enum": [
+        "auto"
+      ],
+      "default": "auto"
+    },
+    "quality": {
+      "type": "QualityEnum",
+      "enum": [
+        "auto",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default": "high"
+    },
+    "num_images": {
+      "type": "integer",
+      "enum": [
+        "jpeg"
+      ],
+      "default": "1"
+    },
+    "output_format": {
+      "type": "OutputFormatEnum",
+      "enum": [
+        "jpeg",
+        "png",
+        "webp"
+      ],
+      "default": "png"
+    },
+    "output_compression": {
+      "type": "integer",
+      "default": "false"
+    },
+    "sync_mode": {
+      "type": "boolean",
+      "default": "false"
+    }
+  },
+  "output_example": {
+    "images": [
+      {
+        "height": 1024,
+        "width": 1024,
+        "content_type": "image/png",
+        "url": "https://v3b.fal.media/files/b/0a869129/EnWrO3XWjPE0nxBDpaQrj.png",
+        "file_name": "EnWrO3XWjPE0nxBDpaQrj.png"
+      }
+    ]
+  }
+}

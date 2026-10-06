@@ -55,5 +55,65 @@
   },
   "bytedance/seedream/v5/pro/edit": {
     "price_summary": "≤1536² $0.0675 + $0.0045×extra inputs · ≤2048² $0.135 + $0.0045×extra (tentative)"
+  },
+  "bytedance/seedance-2.5/text-to-video": {
+    "price_summary": "720p per-second (see fal.ai model page)"
+  },
+  "bytedance/seedance-2.5/reference-to-video": {
+    "price_summary": "720p per-second (see fal.ai model page)"
+  },
+  "fal-ai/veo3.1": {
+    "price_summary": "720p $0.20/s no audio · $0.40/s with audio"
+  },
+  "fal-ai/veo3.1/image-to-video": {
+    "price_summary": "720p $0.20/s no audio · $0.40/s with audio"
+  },
+  "fal-ai/veo3.1/fast": {
+    "price_summary": "720p fast variant (see fal.ai model page)"
+  },
+  "fal-ai/veo3.1/fast/image-to-video": {
+    "price_summary": "720p fast i2v (see fal.ai model page)"
+  },
+  "fal-ai/kling-video/v2.5-turbo/pro/text-to-video": {
+    "price_summary": "per-second (see fal.ai model page)"
+  },
+  "fal-ai/kling-video/v2.5-turbo/pro/image-to-video": {
+    "price_summary": "per-second (see fal.ai model page)"
+  },
+  "fal-ai/minimax/hailuo-02/standard/text-to-video": {
+    "price_summary": "standard 768p (see fal.ai model page)"
+  },
+  "fal-ai/minimax/hailuo-02/standard/image-to-video": {
+    "price_summary": "standard 768p i2v (see fal.ai model page)"
+  },
+  "openai/gpt-image-2": {
+    "price_summary": "per image (see fal.ai model page)"
+  },
+  "openai/gpt-image-2/edit": {
+    "price_summary": "per image edit (see fal.ai model page)"
+  },
+  "openai/gpt-image-2.5/flare/text-to-image": {
+    "price_summary": "per image (see fal.ai model page)"
+  },
+  "openai/gpt-image-2.5/sunburst/text-to-image": {
+    "price_summary": "per image (see fal.ai model page)"
+  },
+  "fal-ai/nano-banana-2": {
+    "price_summary": "per image (see fal.ai model page)"
+  },
+  "fal-ai/nano-banana-2/edit": {
+    "price_summary": "per edit (see fal.ai model page)"
+  },
+  "fal-ai/ideogram/v3": {
+    "price_summary": "TURBO $0.03 · BALANCED $0.06 · QUALITY $0.09"
+  },
+  "fal-ai/ace-step": {
+    "price_summary": "per generation (see fal.ai model page)"
+  },
+  "fal-ai/elevenlabs/music": {
+    "price_summary": "per generation (see fal.ai model page)"
+  },
+  "fal-ai/stable-audio-25/text-to-audio": {
+    "price_summary": "per generation (see fal.ai model page)"
   }
 }

@@ -1,0 +1,78 @@
+{
+  "fal_model": "openai/gpt-image-2/edit",
+  "source": "https://fal.ai/models/openai/gpt-image-2/edit/llms.txt",
+  "fetched_at": "2026-10-06",
+  "required": [
+    "prompt",
+    "image_urls"
+  ],
+  "properties": {
+    "prompt": {
+      "type": "string"
+    },
+    "image_urls": {
+      "type": "list<string>",
+      "default": "auto"
+    },
+    "image_size": {
+      "type": "ImageSize | Enum",
+      "enum": [
+        "auto"
+      ],
+      "default": "auto"
+    },
+    "background": {
+      "type": "BackgroundEnum",
+      "enum": [
+        "auto"
+      ],
+      "default": "auto"
+    },
+    "quality": {
+      "type": "QualityEnum",
+      "enum": [
+        "auto",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default": "high"
+    },
+    "num_images": {
+      "type": "integer",
+      "enum": [
+        "jpeg"
+      ],
+      "default": "1"
+    },
+    "output_format": {
+      "type": "OutputFormatEnum",
+      "enum": [
+        "jpeg",
+        "png",
+        "webp"
+      ],
+      "default": "png"
+    },
+    "sync_mode": {
+      "type": "boolean",
+      "default": "false"
+    },
+    "mask_url": {
+      "type": "string"
+    }
+  },
+  "output_example": {
+    "images": [
+      {
+        "height": 1024,
+        "width": 1024,
+        "file_name": "yUt7tifLSbg1WzWWgfj2o.png",
+        "content_type": "image/png",
+        "url": "https://v3b.fal.media/files/b/0a8691b0/yUt7tifLSbg1WzWWgfj2o.png"
+      }
+    ]
+  }
+}
