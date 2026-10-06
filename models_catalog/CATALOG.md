@@ -28,21 +28,23 @@ Units differ by model (per image / per second / per token / per megapixel). Comp
 | Ассистент · GPT-5.4 | replicate | openai/gpt-5.4 | llm | text, image | text | $2.50 per million input tokens (or 400,000 tokens for $1) · $0.015 per thousand output tokens (or around 66,666 tokens for $1) |
 | GPT-5.6 Sol | replicate | openai/gpt-5.6-sol | llm | text, image | text | $2 per million input tokens (or 500,000 tokens for $1) · $0.01 per thousand output tokens (or 100,000 tokens for $1) |
 | Runway Gen-4.5 | replicate | runwayml/gen-4.5 | video | text, image | video | $0.12 per second of output video (or around 83 seconds for $10) |
+| Gen-4 Turbo | replicate | runwayml/gen4-turbo | video | image, text | video | $0.05/s |
 | Veo 3.1 | replicate | google/veo-3.1 | video | text, image | video | $0.20/s without audio · $0.40/s with audio |
 | Veo 3.1 Fast | replicate | google/veo-3.1-fast | video | text, image | video | $0.10/s without audio · $0.15/s with audio |
 | Veo 3.1 Lite | replicate | google/veo-3.1-lite | video | text, image | video | $0.05 per second of output video (or 20 seconds for $1) |
 | Sora 2 | replicate | openai/sora-2 | video | text, image | video | $0.10 per second of output video (or 10 seconds for $1) |
 | Hailuo 2.3 Fast | replicate | minimax/hailuo-2.3-fast | video | image, text | video | $0.19 per output video (or around 52 videos for $10) |
+| Hailuo 02 | replicate | minimax/hailuo-02 | video | text, image | video | $0.10/vid 512p6s · $0.15 512p10s · $0.27 768p6s · $0.45 768p10s · $0.48 1080p6s |
 | DreamActor M2.0 | replicate | bytedance/dreamactor-m2.0 | video | image, video | video | $0.05 per second of output video (or 20 seconds for $1) |
 | Nano Banana Pro | replicate | google/nano-banana-pro | image | text, image | image | $0.15 per output image (or around 66 images for $10) |
-| Nano Banana 2 | replicate | google/nano-banana-2 | image | text, image | image | $0.067 per output image (or around 14 images for $1) |
+| Nano Banana 2 | replicate | google/nano-banana-2 | image | text, image | image | $0.067/img 1K · $0.101 2K · $0.151 4K |
 | Nano Banana 2 Lite | replicate | google/nano-banana-2-lite | image | text, image | image | $0.034 per output image (or around 29 images for $1) |
 | Gemini 3.1 Flash TTS | replicate | google/gemini-3.1-flash-tts | audio | text | audio | $2 per million input tokens (or 500,000 tokens for $1) · $0.04 per thousand output tokens (or 25,000 tokens for $1) |
 | ElevenLabs v3 | replicate | elevenlabs/v3 | audio | text | audio | $0.10 per thousand input characters (or 10,000 characters for $1) |
-| ElevenLabs Music | replicate | elevenlabs/music | audio | text | audio | $8.30 per thousand seconds of output audio (or around 120 seconds for $1) |
+| ElevenLabs Music | replicate | elevenlabs/music | audio | text | audio | $0.0083/s |
 | Lyria 2 | replicate | google/lyria-2 | audio | text | audio | $2 per thousand seconds of output audio (or 500 seconds for $1) |
 | MiniMax Music-01 | replicate | minimax/music-01 | audio | text, audio | audio | $0.035 per output audio file (or around 28 files for $1) |
-| ACE-Step | replicate | lucataco/ace-step | audio | text | audio | $0.000975 per second; typical ~$0.030 |
+| ACE-Step | replicate | lucataco/ace-step | audio | text | audio | ~$0.022 / run |
 | Flux Music | replicate | zsxkib/flux-music | audio | text | audio | $0.000975 per second; typical ~$0.0022 |
 | MiniMax Music 2.5 | replicate | minimax/music-2.5 | audio | text | audio | $0.15 per output audio file (or around 66 files for $10) |
 | ElevenLabs Scribe v2 | replicate | elevenlabs/scribe-v2 | text | audio | text | $3.667 per thousand outputs (or around 272 outputs for $1) |

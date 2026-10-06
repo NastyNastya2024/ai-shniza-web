@@ -1081,6 +1081,17 @@ INTEGRATED_MODELS = {
         "inputs": ["text", "image"],
         "outputs": ["video"],
     },
+    "gen4-turbo": {
+        "id": "gen4-turbo",
+        "name": "Gen-4 Turbo",
+        "provider": "replicate",
+        "kind": "video",
+        "group": "video",
+        "replicate_model": "runwayml/gen4-turbo",
+        "inputs": ["image", "text"],
+        "outputs": ["video"],
+        "notes": "i2v · image required · 5/10 с · 720p",
+    },
     "veo-3-1-lite": {
         "id": "veo-3-1-lite",
         "name": "Veo 3.1 Lite",
@@ -1136,6 +1147,17 @@ INTEGRATED_MODELS = {
         "outputs": ["video"],
         "notes": "image required (i2v)",
     },
+    "hailuo-02": {
+        "id": "hailuo-02",
+        "name": "Hailuo 02",
+        "provider": "replicate",
+        "kind": "video",
+        "group": "video",
+        "replicate_model": "minimax/hailuo-02",
+        "inputs": ["text", "image"],
+        "outputs": ["video"],
+        "notes": "t2v/i2v · 512p/768p/1080p · 6/10 с · физика",
+    },
     "dreamactor-m2": {
         "id": "dreamactor-m2",
         "name": "DreamActor M2.0",
@@ -1166,6 +1188,7 @@ INTEGRATED_MODELS = {
         "replicate_model": "google/nano-banana-2",
         "inputs": ["text", "image"],
         "outputs": ["image"],
+        "notes": "t2i/edit · 1K/2K/4K · до 14 референсов",
     },
     "nano-banana-2-lite": {
         "id": "nano-banana-2-lite",
@@ -1206,6 +1229,7 @@ INTEGRATED_MODELS = {
         "replicate_model": "elevenlabs/music",
         "inputs": ["text"],
         "outputs": ["audio"],
+        "notes": "text→music · до 5 мин · vocals/instrumental",
     },
     "lyria-2": {
         "id": "lyria-2",
@@ -1238,7 +1262,7 @@ INTEGRATED_MODELS = {
         "replicate_model": "lucataco/ace-step",
         "inputs": ["text"],
         "outputs": ["audio"],
-        "notes": "tags→music; instrumental default",
+        "notes": "tags→music · ~60 с · instrumental",
     },
     "flux-music": {
         "id": "flux-music",
@@ -1334,6 +1358,7 @@ INTEGRATED_MODELS = {
         "replicate_model": "ideogram-ai/ideogram-v3-turbo",
         "inputs": ["text", "image"],
         "outputs": ["image"],
+        "notes": "t2i · текст в кадре · style ref · $0.03",
     },
     "gen4-image": {
         "id": "gen4-image",
@@ -1753,6 +1778,12 @@ STUDIO_ONBOARD_IDS = frozenset({
     "gpt-image-2",
     "gpt-image-2-5-flare",
     "gpt-image-2-5-sunburst",
+    "nano-banana-2",
+    "gen4-turbo",
+    "hailuo-02",
+    "ideogram-v3-turbo",
+    "ace-step",
+    "elevenlabs-music",
 })
 
 
@@ -2174,6 +2205,7 @@ def _build_replicate_input(
         payload = {
             "prompt": prompt,
             "aspect_ratio": "match_input_image" if image else "1:1",
+            "resolution": "1K",
             "output_format": "jpg",
         }
         if image:
@@ -2468,6 +2500,16 @@ def _build_replicate_input(
             payload["image"] = image
         return payload
 
+    if model_id == "gen4-turbo":
+        if not image:
+            raise ValueError("Gen-4 Turbo requires an attached start-frame image")
+        return {
+            "prompt": prompt,
+            "image": image,
+            "duration": 5,
+            "aspect_ratio": "16:9",
+        }
+
     if model_id == "veo-3-1":
         payload = {
             "prompt": prompt,
@@ -2554,6 +2596,17 @@ def _build_replicate_input(
             "resolution": "768p",
             "prompt_optimizer": True,
         }
+
+    if model_id == "hailuo-02":
+        payload = {
+            "prompt": prompt,
+            "duration": 6,
+            "resolution": "768p",
+            "prompt_optimizer": True,
+        }
+        if image:
+            payload["first_frame_image"] = image
+        return payload
 
     if model_id == "dreamactor-m2":
         if not image:
@@ -3573,7 +3626,7 @@ def api_generate():
     elif model_id == "wan-3-0-i2v-fal":
         if not (image_data_url or "").strip():
             return jsonify({"error": "bad_model", "detail": "image required"}), 400
-    elif model_id in {"grok-imagine-video-1-5", "grok-imagine-video-1-5-i2v-fal"}:
+    elif model_id in {"grok-imagine-video-1-5", "grok-imagine-video-1-5-i2v-fal", "gen4-turbo"}:
         if not (image_data_url or "").strip():
             return jsonify({"error": "bad_model", "detail": "image required"}), 400
     elif model_id == "seedance-2-5":

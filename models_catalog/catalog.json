@@ -145,6 +145,19 @@
       "notes": "p50 $0.0096"
     },
     {
+      "id": "gen4-turbo",
+      "name": "Gen-4 Turbo",
+      "provider": "replicate",
+      "upstream": "runwayml/gen4-turbo",
+      "category": "video",
+      "inputs": "image, text",
+      "outputs": "video",
+      "price": "$0.05 per second of output video (or 20 seconds for $1)",
+      "price_source": "replicate.com page",
+      "url": "https://replicate.com/runwayml/gen4-turbo",
+      "notes": "i2v · image required · 5/10s · 720p"
+    },
+    {
       "id": "veo-3-1",
       "name": "Veo 3.1",
       "provider": "replicate",
@@ -210,6 +223,19 @@
       "notes": "p50 $0.0081"
     },
     {
+      "id": "hailuo-02",
+      "name": "Hailuo 02",
+      "provider": "replicate",
+      "upstream": "minimax/hailuo-02",
+      "category": "video",
+      "inputs": "text, image",
+      "outputs": "video",
+      "price": "$0.10 per output video at 512p 6s · $0.15 at 512p 10s · $0.27 at 768p 6s · $0.45 at 768p 10s · $0.48 at 1080p 6s",
+      "price_source": "replicate.com page",
+      "url": "https://replicate.com/minimax/hailuo-02",
+      "notes": "t2v/i2v · first/last frame · 6/10s"
+    },
+    {
       "id": "dreamactor-m2",
       "name": "DreamActor M2.0",
       "provider": "replicate",
@@ -243,10 +269,10 @@
       "category": "image",
       "inputs": "text, image",
       "outputs": "image",
-      "price": "$0.067 per output image (or around 14 images for $1)",
+      "price": "$0.067 per output image at 1K · $0.101 at 2K · $0.151 at 4K",
       "price_source": "replicate.com page",
       "url": "https://replicate.com/google/nano-banana-2",
-      "notes": "p50 $0.0011"
+      "notes": "t2i/edit · multi-ref · 1K/2K/4K"
     },
     {
       "id": "nano-banana-2-lite",
@@ -295,10 +321,10 @@
       "category": "audio",
       "inputs": "text",
       "outputs": "audio",
-      "price": "$8.30 per thousand seconds of output audio (or around 120 seconds for $1)",
+      "price": "$0.0083 per second of output audio (or around 120 seconds for $1)",
       "price_source": "replicate.com page",
       "url": "https://replicate.com/elevenlabs/music",
-      "notes": "p50 $0.00074"
+      "notes": "text→music · vocals/instrumental · up to 5 min"
     },
     {
       "id": "lyria-2",
@@ -334,10 +360,10 @@
       "category": "audio",
       "inputs": "text",
       "outputs": "audio",
-      "price": "$0.000975 per second; typical ~$0.030",
+      "price": "$0.022 per run (approx)",
       "price_source": "replicate.com page",
       "url": "https://replicate.com/lucataco/ace-step",
-      "notes": "p50 $0.030"
+      "notes": "tags→music · ~60s instrumental"
     },
     {
       "id": "flux-music",
@@ -454,7 +480,7 @@
       "price": "$0.03 per output image (or around 33 images for $1)",
       "price_source": "replicate.com page",
       "url": "https://replicate.com/ideogram-ai/ideogram-v3-turbo",
-      "notes": "p50 $0.00098"
+      "notes": "t2i · text in image · optional style ref"
     },
     {
       "id": "gen4-image",

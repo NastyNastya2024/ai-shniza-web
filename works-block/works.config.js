@@ -12,10 +12,16 @@ window.AISHNITSA_WORKS = [
   'works/kling25turbopro.mp4',
   'works/pixversev6.mp4',
   'works/pvideo.mp4',
+  'works/gen4turbo.mp4',
+  'works/hailuo02.mp4',
   'works/seedream5pro.jpg',
   'works/gptimage2.jpg',
   'works/gptimage25flare.jpg',
-  'works/gptimage25sunburst.jpg'
+  'works/gptimage25sunburst.jpg',
+  'works/nanobanana2.jpg',
+  'works/ideogramv3turbo.jpg',
+  'works/acestep.jpg',
+  'works/elevenlabsmusic.jpg'
 ];
 
 window.AISHNITSA_WORK_IDS = [
@@ -27,10 +33,16 @@ window.AISHNITSA_WORK_IDS = [
   'ex-kling-v2-5-turbo-pro',
   'ex-pixverse-v6',
   'ex-p-video',
+  'ex-gen4-turbo',
+  'ex-hailuo-02',
   'ex-seedream-5-pro',
   'ex-gpt-image-2',
   'ex-gpt-image-2-5-flare',
-  'ex-gpt-image-2-5-sunburst'
+  'ex-gpt-image-2-5-sunburst',
+  'ex-nano-banana-2',
+  'ex-ideogram-v3-turbo',
+  'ex-ace-step',
+  'ex-elevenlabs-music'
 ];
 
 window.AISHNITSA_LENS = {

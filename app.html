@@ -92,9 +92,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .model-toolbar #tabs{flex:1 1 auto;min-width:0;display:flex;gap:2px;padding:3px;border-radius:12px;background:var(--seg-bg);overflow:hidden;transition:opacity .2s ease,flex-basis .28s ease,max-width .28s ease,padding .2s ease}
 .model-toolbar.search-on #tabs{flex:0 0 0;max-width:0;opacity:0;padding-left:0;padding-right:0;pointer-events:none}
 .model{border-radius:14px!important;padding:9px 11px!important;gap:10px!important;align-items:flex-start!important}
-.model .m-logo{flex:0 0 44px;width:44px;height:44px;border-radius:12px;overflow:hidden;background:var(--seg-bg);border:1px solid var(--field-brd);display:flex;align-items:center;justify-content:center;position:relative}
-.model .m-logo img{width:100%;height:100%;object-fit:contain;display:block;background:#fff}
-.model .m-logo .m-logo-fallback{font-size:15px;font-weight:800;color:var(--accent-ink);letter-spacing:-0.02em}
 .model .m-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:6px}
 .model .m-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-width:0}
 .model .m-meta{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
@@ -118,7 +115,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 }
 .model .m-ex:hover{color:var(--ink);border-color:rgba(255,162,53,.4);background:rgba(255,162,53,.12)}
 .model-on .m-kind,.model-on .m-ex{border-color:rgba(255,162,53,.35);background:rgba(255,162,53,.1);color:var(--ink)}
-.t-dark .model .m-logo{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
 .t-dark .model .m-kind,.t-dark .model .m-ex{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
 .ttl{scrollbar-width:thin}
 .ttl{-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 26px),transparent);padding-bottom:18px!important}
@@ -622,10 +618,16 @@ class Component extends DCLogic {
       { slug: 'kling-v2-5-turbo-pro', model_key: 'kling-v2-5-turbo-pro', name: 'Kling 2.5 Turbo Pro', kindKey: 'studio.kind.imageToVideo', type: 'video', cost: 30, rub: 6, perSec: true },
       { slug: 'pixverse-v6', model_key: 'pixverse-v6', name: 'PixVerse V6', kindKey: 'studio.kind.videoSound', type: 'video', cost: 22, rub: 4.3, perSec: true },
       { slug: 'p-video', model_key: 'p-video', name: 'P-Video', kindKey: 'studio.kind.videoSound', type: 'video', cost: 9, rub: 1.7, perSec: true },
+      { slug: 'gen4-turbo', model_key: 'gen4-turbo', name: 'Gen-4 Turbo', kindKey: 'studio.kind.imageToVideo', type: 'video', cost: 60, rub: 12, perSec: true },
+      { slug: 'hailuo-02', model_key: 'hailuo-02', name: 'Hailuo 02', kindKey: 'studio.kind.imageToVideo', type: 'video', cost: 24, rub: 24 },
       { slug: 'seedream-5-pro', model_key: 'seedream-5-pro', name: 'Seedream 5.0 Pro', kindKey: 'studio.kind.image', type: 'image', cost: 4, rub: 4 },
       { slug: 'gpt-image-2', model_key: 'gpt-image-2', name: 'GPT Image 2', kindKey: 'studio.kind.image', type: 'image', cost: 1, rub: 1 },
       { slug: 'gpt-image-2-5-flare', model_key: 'gpt-image-2-5-flare', name: 'GPT Image 2.5 Flare', kindKey: 'studio.kind.image', type: 'image', cost: 1, rub: 1 },
-      { slug: 'gpt-image-2-5-sunburst', model_key: 'gpt-image-2-5-sunburst', name: 'GPT Image 2.5 Sunburst', kindKey: 'studio.kind.image', type: 'image', cost: 1, rub: 1 }
+      { slug: 'gpt-image-2-5-sunburst', model_key: 'gpt-image-2-5-sunburst', name: 'GPT Image 2.5 Sunburst', kindKey: 'studio.kind.image', type: 'image', cost: 1, rub: 1 },
+      { slug: 'nano-banana-2', model_key: 'nano-banana-2', name: 'Nano Banana 2', kindKey: 'studio.kind.image', type: 'image', cost: 15, rub: 15 },
+      { slug: 'ideogram-v3-turbo', model_key: 'ideogram-v3-turbo', name: 'Ideogram v3 Turbo', kindKey: 'studio.kind.image', type: 'image', cost: 8, rub: 8 },
+      { slug: 'ace-step', model_key: 'ace-step', name: 'ACE-Step', kindKey: 'studio.kind.audio', type: 'music', cost: 8, rub: 8 },
+      { slug: 'elevenlabs-music', model_key: 'elevenlabs-music', name: 'ElevenLabs Music', kindKey: 'studio.kind.audio', type: 'music', cost: 60, rub: 2, perSec: true }
     ].map(this.priceModel);
     if (URL_MODEL && this.MODELS.some((m) => m.slug === URL_MODEL)) this.state.sel = URL_MODEL;
     else this.state.sel = 'wan-3-0';
@@ -1162,16 +1164,12 @@ function render() {
     v.models.forEach((m) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'model ' + m.cls; b.setAttribute('aria-pressed', m.on);
       b.style.cssText = 'flex:0 0 auto;display:flex;';
-      const logo = m.thumb
-        ? '<img src="' + esc(m.thumb) + '" alt="" loading="lazy" decoding="async">'
-        : '<span class="m-logo-fallback" aria-hidden="true">' + esc(m.letter) + '</span>';
       const hasExamples = !!(m.exampleVideo || m.example);
       const ex = hasExamples
         ? '<span class="m-ex" data-examples role="button" title="' + esc(tr('studio.model.examples')) + '">' + esc(tr('studio.model.examples')) + '</span>'
         : '';
       b.innerHTML =
-        '<span class="m-logo">' + logo + '</span>'
-        + '<span class="m-main">'
+        '<span class="m-main">'
         + '<span class="m-top">'
         + '<span class="m-meta">'
         + '<span class="m-name" style="color:var(--ink)">' + esc(m.name) + '</span>'
@@ -1483,6 +1481,8 @@ loadIntegrations();
     'kling-v2-5-turbo-pro': 'Kling 2.5 Turbo Pro',
     'pixverse-v6': 'PixVerse V6',
     'p-video': 'P-Video',
+    'gen4-turbo': 'Gen-4 Turbo',
+    'hailuo-02': 'Hailuo 02',
     'wan-3-0': 'Wan 3.0',
     'grok-imagine-video-1-5': 'Grok Imagine Video 1.5',
     'seedance-2-5': 'Seedance 2.5',
@@ -1491,7 +1491,11 @@ loadIntegrations();
     'seedream-5-pro': 'Seedream 5.0 Pro',
     'gpt-image-2': 'GPT Image 2',
     'gpt-image-2-5-flare': 'GPT Image 2.5 Flare',
-    'gpt-image-2-5-sunburst': 'GPT Image 2.5 Sunburst'
+    'gpt-image-2-5-sunburst': 'GPT Image 2.5 Sunburst',
+    'nano-banana-2': 'Nano Banana 2',
+    'ideogram-v3-turbo': 'Ideogram v3 Turbo',
+    'ace-step': 'ACE-Step',
+    'elevenlabs-music': 'ElevenLabs Music'
   };
   // MOBILE/TABLET/SHEET — из внешнего scope
   const wTitle = (w) => L.workTitle(w);
@@ -1510,11 +1514,17 @@ loadIntegrations();
     if (/kling/i.test(slug) && /^Kling/i.test(wm)) return true;
     if (/pixverse/i.test(slug) && /^PixVerse/i.test(wm)) return true;
     if (/p-video|pvideo/i.test(slug) && /^P-?Video/i.test(wm)) return true;
+    if (/gen4-turbo/i.test(slug) && /Gen-?4\s*Turbo/i.test(wm)) return true;
+    if (/hailuo-02/i.test(slug) && /Hailuo\s*0?2/i.test(wm)) return true;
+    if (/ideogram-v3-turbo/i.test(slug) && /Ideogram/i.test(wm)) return true;
+    if (/ace-step/i.test(slug) && /ACE-?Step/i.test(wm)) return true;
+    if (/elevenlabs-music/i.test(slug) && /ElevenLabs\s*Music/i.test(wm)) return true;
     if (/seedream-5-pro|seedream-5-pro-/i.test(slug) && /Seedream 5 Pro/i.test(wm)) return true;
     if (/seedream-5-lite|seedream-5-lite-/i.test(slug) && /Seedream 5 Lite/i.test(wm)) return true;
     if (/gpt-image-2-5-flare/i.test(slug) && /GPT\s*Image\s*2\.5\s*Flare/i.test(wm)) return true;
     if (/gpt-image-2-5-sunburst/i.test(slug) && /GPT\s*Image\s*2\.5\s*Sunburst/i.test(wm)) return true;
     if (/(^|[^\w-])gpt-image-2($|[^\w-])/i.test(slug) && /^GPT\s*Image\s*2(?!\.5)/i.test(wm)) return true;
+    if (/nano-banana-2/i.test(slug) && /Nano\s*Banana\s*2/i.test(wm)) return true;
     if (/seedream/i.test(slug) && /Seedream/i.test(wm)) return true;
     const token = String(m.name || '').trim().split(/\s+/)[0];
     if (token && token.length >= 3 && new RegExp('^' + token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(wm)) return true;
@@ -1677,7 +1687,7 @@ loadIntegrations();
     const resBadge = '<p class="vc-res">' + esc2(videoMetaText(w, null)) + '</p>';
     const slug = w.model_slug
       || Object.keys(MODEL_OF).find((k) => MODEL_OF[k] === w.model)
-      || (/^Wan/i.test(w.model) ? 'wan-3-0' : /^Grok/i.test(w.model) ? 'grok-imagine-video-1-5' : /^Seedance/i.test(w.model) ? 'seedance-2-5' : /Veo\s*3\.1\s*Fast/i.test(w.model) ? 'veo-3-1-fast' : /^Veo/i.test(w.model) ? 'veo-3-1' : /^Kling/i.test(w.model) ? 'kling-v2-5-turbo-pro' : /^PixVerse/i.test(w.model) ? 'pixverse-v6' : /^P-?Video/i.test(w.model) ? 'p-video' : /Seedream/i.test(w.model) ? 'seedream-5-pro' : /GPT\s*Image\s*2\.5\s*Flare/i.test(w.model) ? 'gpt-image-2-5-flare' : /GPT\s*Image\s*2\.5\s*Sunburst/i.test(w.model) ? 'gpt-image-2-5-sunburst' : /^GPT\s*Image\s*2(?!\.5)/i.test(w.model) ? 'gpt-image-2' : null);
+      || (/^Wan/i.test(w.model) ? 'wan-3-0' : /^Grok/i.test(w.model) ? 'grok-imagine-video-1-5' : /^Seedance/i.test(w.model) ? 'seedance-2-5' : /Veo\s*3\.1\s*Fast/i.test(w.model) ? 'veo-3-1-fast' : /^Veo/i.test(w.model) ? 'veo-3-1' : /^Kling/i.test(w.model) ? 'kling-v2-5-turbo-pro' : /^PixVerse/i.test(w.model) ? 'pixverse-v6' : /^P-?Video/i.test(w.model) ? 'p-video' : /Gen-?4\s*Turbo/i.test(w.model) ? 'gen4-turbo' : /Hailuo\s*0?2/i.test(w.model) ? 'hailuo-02' : /Seedream/i.test(w.model) ? 'seedream-5-pro' : /GPT\s*Image\s*2\.5\s*Flare/i.test(w.model) ? 'gpt-image-2-5-flare' : /GPT\s*Image\s*2\.5\s*Sunburst/i.test(w.model) ? 'gpt-image-2-5-sunburst' : /^GPT\s*Image\s*2(?!\.5)/i.test(w.model) ? 'gpt-image-2' : /Nano\s*Banana\s*2/i.test(w.model) ? 'nano-banana-2' : /Ideogram/i.test(w.model) ? 'ideogram-v3-turbo' : /ACE-?Step/i.test(w.model) ? 'ace-step' : /ElevenLabs\s*Music/i.test(w.model) ? 'elevenlabs-music' : null);
     const slugName = slug ? (app.MODELS.find((m) => m.slug === slug) || {}).name : '';
     const handle = c.nick || c.handle || '';
     const cHref = handle
