@@ -480,7 +480,7 @@ function openPublish(workId, card) {
 }
 
 function openTopup() {
-  location.href = "/balance";
+  location.href = "/account#balance";
 }
 
 function appendBubble(role, text, options) {

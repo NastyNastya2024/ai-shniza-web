@@ -50,6 +50,7 @@ window.AISH_DICT_EN = {
   /* ================= nav ================= */
   'nav.studio': 'Studio',
   'nav.showcase': 'Showcase',
+  'nav.cabinet': 'Cabinet',
   'nav.models': 'Models',
   'nav.profile': 'My profile',
   'nav.creatorCabinet': 'Creator dashboard',
@@ -417,12 +418,14 @@ window.AISH_DICT_EN = {
   'studio.vit.sub': 'Similar works—see how others did it and borrow the model or style',
   'studio.vit.topic': 'Topic: {topic}',
   'studio.vit.model': 'Model: {model}',
+  'studio.vit.clearModel': 'Clear model filter',
   'studio.vit.empty.start': 'Start describing your idea—similar works will show up here.',
   'studio.vit.empty.none': 'No similar works yet—yours could be the first.',
   'studio.vit.empty.music': 'Music works are coming to the showcase soon.',
   'studio.vit.empty.text': 'The assistant writes text and prompts—it has no showcase works.',
   'studio.vit.back': '← Similar works',
   'studio.vit.generateIn': 'Generate with {model}',
+  'studio.vit.goChat': 'Open conversation',
   'studio.hint.go': 'View →',
   'studio.hint.dismiss': 'Dismiss hint',
   'studio.hint.count': {
@@ -462,6 +465,7 @@ window.AISH_DICT_EN = {
   'vitrina.nav.counter': '{n} of {total}',
   'vitrina.creator.aria': 'Creator',
   'vitrina.creator.fallback': 'Creator',
+  'vitrina.creator.viewProfile': 'View profile',
   'vitrina.creator.works': {
     one: '{n} work',
     other: '{n} works'
@@ -470,7 +474,7 @@ window.AISH_DICT_EN = {
   'vitrina.req.promptOrOriginal': 'Request prompt or original',
   'vitrina.req.title': 'Request to {name}',
   'vitrina.req.fallbackName': 'the creator',
-  'vitrina.req.note': 'The creator gets your request in {brand} and by email. You agree on terms and payment directly.',
+  'vitrina.req.note': 'You chat with the creator in {brand}. Agree on terms and payment there.',
   'vitrina.req.kind': 'What you need',
   'vitrina.req.kind.prompt': 'Prompt and generation settings',
   'vitrina.req.kind.originalVideo': 'Max-quality video',
@@ -481,12 +485,16 @@ window.AISH_DICT_EN = {
   'vitrina.req.format.source': 'Source files and all takes',
   'vitrina.req.message': 'Message to the creator',
   'vitrina.req.message.default': "Hi! I love “{title}”. I'd like to request …",
-  'vitrina.req.contact': 'Where to reply',
+  'vitrina.req.contact': 'External contact',
   'vitrina.req.contact.placeholder': 'Telegram or email',
   'vitrina.req.send': 'Send request',
   'vitrina.req.sent.title': 'Request sent',
-  'vitrina.req.sent.text': '{name} will get it in {brand} and by email. The reply goes where you asked.',
+  'vitrina.req.sent.text': 'Continue with {name} in the {brand} chat.',
+  'vitrina.req.sent.goChat': 'Open chat',
+  'vitrina.req.sent.goAuth': 'Log in to open the chat',
   'vitrina.req.sent.back': 'Back to the work',
+  'vitrina.req.err.create': 'Could not create the chat',
+  'vitrina.req.err.self': 'You cannot message yourself',
 
   /* ================= creator ================= */
   'creator.title': 'Creator — {brand}',
@@ -551,10 +559,10 @@ window.AISH_DICT_EN = {
 
   /* order / request form on a profile */
   'creator.order.title': 'Order from {name}',
-  'creator.order.note': "The creator gets your request in their dashboard and by email. You'll agree on terms and payment directly—the platform isn't involved.",
+  'creator.order.note': 'You chat with the creator in {brand}. Agree on terms and payment there.',
   'creator.order.message': "Hi! I love your style. I'd like to order: …",
   'creator.order.contact.placeholder': '@telegram or email',
-  'creator.sent.text': '{name} will get it in {brand} and by email.',
+  'creator.sent.text': 'Continue with {name} in the {brand} chat.',
 
   /* profile and contacts */
   'creator.settings.title': 'Profile & contacts',
@@ -640,13 +648,17 @@ window.AISH_DICT_EN = {
   'auth.err.consentGoogle': "Accept the policy and we'll continue with Google",
   'auth.err.enterPassword': 'Enter your password',
   'auth.err.wrongCredentials': 'Wrong email or password.',
-  'auth.err.sendFailed': "Couldn't send the code. Check your connection and try again.",
+  'auth.err.sendFailed': "Couldn't send the email. Outbound SMTP is often blocked on home networks — use Google sign-in, or try from a server/VPN.",
   'auth.err.wrongCode': {
     one: 'Wrong code—{n} attempt left',
     other: 'Wrong code—{n} attempts left'
   },
   'auth.err.locked': 'Too many attempts. Request a new code.',
   'auth.err.googleFailed': "Google sign-in wasn't completed. Try again or use email.",
+  'auth.err.googleCancelled': 'You cancelled Google sign-in. Try again or use email.',
+  'auth.err.googleExpired': 'Sign-in timed out. Tap Continue with Google again.',
+  'auth.err.googleBadState': "Couldn't verify sign-in. Tap Continue with Google again.",
+  'auth.err.googleNotConfigured': 'Google sign-in is not configured on the server yet.',
 
   /* Eggy on the login screen */
   'auth.say.hello': "Hi! I'm Eggy. Let's get acquainted",

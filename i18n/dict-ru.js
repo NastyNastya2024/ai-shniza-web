@@ -49,6 +49,7 @@ window.AISH_DICT_RU = {
   /* ================= nav ================= */
   'nav.studio': 'Студия',
   'nav.showcase': 'Витрина',
+  'nav.cabinet': 'Кабинет',
   'nav.models': 'Модели',
   'nav.profile': 'Мой профиль',
   'nav.creatorCabinet': 'Кабинет креатора',
@@ -416,12 +417,14 @@ window.AISH_DICT_RU = {
   'studio.vit.sub': 'Похожие работы — посмотрите, как это уже сделали, и возьмите модель или стиль',
   'studio.vit.topic': 'Тема: {topic}',
   'studio.vit.model': 'Модель: {model}',
+  'studio.vit.clearModel': 'Убрать фильтр по модели',
   'studio.vit.empty.start': 'Начните описывать идею — здесь появятся похожие работы.',
   'studio.vit.empty.none': 'Похожих работ пока нет — ваша может стать первой на витрине.',
   'studio.vit.empty.music': 'Музыкальные работы на витрине появятся скоро.',
   'studio.vit.empty.text': 'Помощник пишет тексты и промпты — у него нет работ на витрине.',
   'studio.vit.back': '← Похожие работы',
   'studio.vit.generateIn': 'Генерировать в {model}',
+  'studio.vit.goChat': 'Перейти в переписку',
   'studio.hint.go': 'Смотреть →',
   'studio.hint.dismiss': 'Скрыть подсказку',
   'studio.hint.count': {
@@ -467,6 +470,7 @@ window.AISH_DICT_RU = {
   'vitrina.nav.counter': '{n} из {total}',
   'vitrina.creator.aria': 'Креатор',
   'vitrina.creator.fallback': 'Креатор',
+  'vitrina.creator.viewProfile': 'Посмотреть профиль',
   'vitrina.creator.works': {
     one: '{n} работа',
     few: '{n} работы',
@@ -477,7 +481,7 @@ window.AISH_DICT_RU = {
   'vitrina.req.promptOrOriginal': 'Запросить промпт или оригинал',
   'vitrina.req.title': 'Запрос к {name}',
   'vitrina.req.fallbackName': 'креатору',
-  'vitrina.req.note': 'Запрос придёт креатору в {brandAcc} и на почту. Условия и оплату обсуждаете напрямую.',
+  'vitrina.req.note': 'Общение с креатором — во внутреннем чате {brandGen}. Условия и оплату обсуждаете там же.',
   'vitrina.req.kind': 'Что нужно',
   'vitrina.req.kind.prompt': 'Промпт и настройки генерации',
   'vitrina.req.kind.originalVideo': 'Видео в максимальном качестве',
@@ -488,12 +492,16 @@ window.AISH_DICT_RU = {
   'vitrina.req.format.source': 'Исходники и все дубли',
   'vitrina.req.message': 'Сообщение креатору',
   'vitrina.req.message.default': 'Здравствуйте! Очень понравилась работа «{title}». Хочу запросить …',
-  'vitrina.req.contact': 'Куда ответить',
+  'vitrina.req.contact': 'Внешний контакт',
   'vitrina.req.contact.placeholder': 'Telegram или почта',
   'vitrina.req.send': 'Отправить запрос',
   'vitrina.req.sent.title': 'Запрос отправлен',
-  'vitrina.req.sent.text': '{name} получит его в {brandPrep} и на почту. Ответ придёт туда, куда вы указали.',
+  'vitrina.req.sent.text': 'Переписка с {name} продолжается во внутреннем чате {brandGen}.',
+  'vitrina.req.sent.goChat': 'Открыть чат',
+  'vitrina.req.sent.goAuth': 'Войти, чтобы открыть чат',
   'vitrina.req.sent.back': 'Вернуться к работе',
+  'vitrina.req.err.create': 'Не удалось создать чат',
+  'vitrina.req.err.self': 'Нельзя писать самому себе',
 
   /* ================= creator ================= */
   'creator.title': 'Креатор — {brand}',
@@ -558,10 +566,10 @@ window.AISH_DICT_RU = {
 
   /* форма заказа / запроса в профиле */
   'creator.order.title': 'Заказ у {name}',
-  'creator.order.note': 'Запрос придёт креатору в личный кабинет и на почту. Условия и оплату вы обсудите с ним напрямую — платформа в этом не участвует.',
+  'creator.order.note': 'Общение с креатором — во внутреннем чате {brandGen}. Условия и оплату обсуждаете там же.',
   'creator.order.message': 'Здравствуйте! Нравится ваш стиль. Хочу заказать работу: …',
   'creator.order.contact.placeholder': '@telegram или почта',
-  'creator.sent.text': '{name} получит его в {brandPrep} и на почту.',
+  'creator.sent.text': 'Переписка с {name} продолжается во внутреннем чате {brandGen}.',
 
   /* профиль и контакты */
   'creator.settings.title': 'Профиль и контакты',
@@ -647,7 +655,7 @@ window.AISH_DICT_RU = {
   'auth.err.consentGoogle': 'Отметьте согласие — и войдём через Google',
   'auth.err.enterPassword': 'Введите пароль',
   'auth.err.wrongCredentials': 'Неверная почта или пароль.',
-  'auth.err.sendFailed': 'Не удалось отправить код. Проверьте интернет и попробуйте ещё раз.',
+  'auth.err.sendFailed': 'Не удалось отправить письмо. С этой сети SMTP часто блокируют — войдите через Google или повторите с сервера/VPN.',
   'auth.err.wrongCode': {
     one: 'Код не подошёл — осталось попыток: {n}',
     few: 'Код не подошёл — осталось попыток: {n}',
@@ -656,6 +664,10 @@ window.AISH_DICT_RU = {
   },
   'auth.err.locked': 'Слишком много попыток. Запросите новый код.',
   'auth.err.googleFailed': 'Вход через Google не завершён. Попробуйте ещё раз или войдите по почте.',
+  'auth.err.googleCancelled': 'Вы отменили вход через Google. Попробуйте ещё раз или войдите по почте.',
+  'auth.err.googleExpired': 'Окно входа устарело. Нажмите «Продолжить с Google» ещё раз.',
+  'auth.err.googleBadState': 'Не получилось проверить вход. Нажмите «Продолжить с Google» ещё раз.',
+  'auth.err.googleNotConfigured': 'Вход через Google ещё не настроен на сервере.',
 
   /* реплики яишенки на входе */
   'auth.say.hello': 'Привет! Я {brand}. Давай знакомиться',

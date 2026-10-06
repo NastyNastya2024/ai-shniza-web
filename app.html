@@ -110,8 +110,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .t-dark{--user-bg:#EDE8FF;--user-ink:#1E1238;--purple:#7A55FF;--purple2:#9B7BFF;--purple-soft:rgba(155,123,255,.14);--purple-soft-h:rgba(155,123,255,.22);--purple-brd:rgba(155,123,255,.25);--purple-ink:#D2C4FF}
 .btn-purple{border:1px solid var(--purple-brd);background:var(--purple-soft);color:var(--purple-ink);font-family:'Onest',sans-serif;font-weight:700;cursor:pointer}
 .btn-purple:hover{background:var(--purple-soft-h)}
-.btn-login{border:none;background:#6758A0;color:#FFFFFF;font-family:'Onest',sans-serif;font-weight:700;cursor:pointer;box-shadow:0 8px 18px -12px rgba(103,88,160,.7)}
-.btn-login:hover{background:#5C4E93}
+.btn-login{border:none;background:var(--user-bg);color:var(--user-ink);font-family:'Onest',sans-serif;font-weight:700;cursor:pointer;box-shadow:0 8px 18px -12px var(--shadow)}
+.btn-login:hover{filter:brightness(1.08)}
+.t-dark .btn-login:hover{filter:brightness(0.96)}
 .icon-btn{width:44px;height:44px;border-radius:14px;border:1px solid var(--glass-brd);background:var(--glass);backdrop-filter:blur(14px);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
 .icon-btn:hover{color:var(--ink)}
 .icon-on{color:var(--ink);background:var(--nav-on)}
@@ -179,9 +180,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .modal-egg .eye-p{width:8.5%;height:27%;top:34.5%}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 /* ---- адаптив панелей (studio-responsive-guide) ---- */
-#scrim{position:fixed;inset:0;z-index:44;background:rgba(20,12,45,.35);backdrop-filter:blur(3px);animation:ovIn .2s ease both}
-.t-dark #scrim{background:rgba(0,0,0,.55)}
-#vit{flex:0 0 380px;max-width:380px;box-sizing:border-box;border-radius:28px;padding:18px 14px 14px;display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 32px);height:calc(100vh - 32px);overflow:hidden;box-shadow:0 20px 50px -30px var(--shadow);animation:vitIn .35s cubic-bezier(.3,.7,.3,1);touch-action:pan-y}
+#scrim{position:fixed;inset:0;z-index:44;background:transparent;animation:ovIn .2s ease both}
+.t-dark #scrim{background:transparent}
+#vit{flex:0 1 380px;min-width:260px;max-width:380px;box-sizing:border-box;border-radius:28px;padding:18px 14px 14px;display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 32px);height:calc(100vh - 32px);overflow:hidden;box-shadow:0 20px 50px -30px var(--shadow);animation:vitIn .35s cubic-bezier(.3,.7,.3,1);touch-action:pan-y;background:var(--glass)}
+/* Desktop: left · main · vit in one row */
+@media (min-width:980px){
+  #root{flex-wrap:nowrap!important}
+  #left{flex:0 1 300px;max-width:320px;min-width:220px}
+  main{flex:1 1 360px!important;min-width:280px!important}
+}
 @keyframes vitIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
 .vit-btn{position:relative;width:auto;padding:0 14px 0 12px;gap:8px;font-family:'Onest',sans-serif;font-size:14px;font-weight:600;color:var(--ink)}
 .vit-btn[aria-pressed=true]{background:var(--seg-on);color:var(--accent-ink);box-shadow:0 8px 20px -12px var(--shadow)}
@@ -192,8 +199,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .vit-h .vit-full{flex:1 1 auto;min-width:0;padding:0 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vit-h #vitClose{flex:0 0 auto;margin-left:0}
 .vit-ctx{display:flex;flex-wrap:wrap;gap:6px;padding:0 4px}
-.vit-ctx span{max-width:100%;height:28px;padding:0 10px;border-radius:999px;background:var(--seg-bg);font-size:12.5px;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;gap:5px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.vit-ctx span{max-width:100%;height:28px;padding:0 6px 0 10px;border-radius:999px;background:var(--seg-bg);font-size:12.5px;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;gap:5px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .vit-ctx b{color:var(--ink);font-weight:700;overflow:hidden;text-overflow:ellipsis}
+.vit-ctx .vit-chip-x{flex:0 0 auto;width:22px;height:22px;margin:0;padding:0;border:none;border-radius:50%;background:transparent;color:var(--muted2);font-size:16px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.vit-ctx .vit-chip-x:hover{background:var(--soft-hover);color:var(--ink)}
 .vit-body{flex:1;min-height:0;overflow-y:auto;margin:0 -4px;padding:0 4px 4px;-webkit-overflow-scrolling:touch}
 .vit-sec{margin-top:6px}
 .vit-sec h3{margin:8px 4px 10px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted2)}
@@ -227,11 +236,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .vit-pv .c-name:hover{color:var(--purple-ink)}
 .vit-pv .c-name .c-go{flex:0 0 auto;display:inline-flex;color:var(--purple-ink);line-height:0}
 .vit-pv .c-sub{font-size:13px;color:var(--muted);font-weight:600;margin-top:2px}
-.vit-pv .c-act{padding:4px 16px 14px}
-.vit-pv .c-act .btn-primary{height:48px;border-radius:14px;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;box-sizing:border-box;border:none;width:100%;cursor:pointer;font-family:'Onest',sans-serif;font-weight:700;background:linear-gradient(135deg,#7A55FF,#5B35E0);box-shadow:0 14px 30px -14px rgba(91,53,224,.65);color:#fff}
+.vit-pv .c-act{padding:4px 16px 14px;display:flex;flex-direction:column;gap:8px}
+.vit-pv .c-act .btn-primary,.vit-pv .c-act .btn-profile{height:48px;border-radius:14px;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;box-sizing:border-box;width:100%;cursor:pointer;font-family:'Onest',sans-serif;font-weight:700}
+.vit-pv .c-act .btn-primary{border:none;background:linear-gradient(135deg,#7A55FF,#5B35E0);box-shadow:0 14px 30px -14px rgba(91,53,224,.65);color:#fff}
 .vit-pv .c-act .btn-primary:hover{background:linear-gradient(135deg,#8763FF,#6340EA);filter:none}
+.vit-pv .c-act .btn-profile{border:1.5px solid rgba(80,60,160,.18);background:rgba(255,255,255,.75);color:var(--ink,#1B0D3A)}
+.vit-pv .c-act .btn-profile:hover{background:#fff}
 .t-dark .vit-pv .c-act .btn-primary{background:linear-gradient(135deg,#8763FF,#5B35E0);box-shadow:0 14px 30px -14px rgba(122,85,255,.7)}
 .t-dark .vit-pv .c-act .btn-primary:hover{background:linear-gradient(135deg,#9474FF,#6743F0)}
+.t-dark .vit-pv .c-act .btn-profile{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12);color:#eee}
 .vit-pv .c-more{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:0;border-top:1px solid var(--field-brd)}
 .vit-pv .c-more button{padding:0;border:none;border-radius:0;overflow:hidden;aspect-ratio:1;cursor:pointer;background:var(--field);max-height:none}
 .vit-pv .c-more button:first-child{border-radius:0 0 0 18px}
@@ -269,18 +282,27 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 @keyframes vitInR{from{transform:translateX(105%)}to{transform:none}}
 @keyframes drawerIn{from{transform:translateX(-100%)}to{transform:none}}
 
-/* планшет горизонтально: витрина колонкой уже, меню сворачивается по JS */
-@media (min-width:980px) and (max-width:1180px){
-  #vit{flex:0 0 340px;max-width:340px}
-  #left{flex:1 1 280px;max-width:300px;min-width:240px}
+/* уже экран: колонки сжимаются, витрина остаётся в ряду */
+@media (min-width:980px) and (max-width:1320px){
+  #vit{flex:0 1 300px;max-width:300px;min-width:240px}
+  #left{flex:0 1 260px;max-width:280px;min-width:220px}
+  main{flex:1 1 300px!important;min-width:260px!important}
 }
 
-/* планшет вертикально: витрина — шторка поверх справа */
+/* планшет: пока витрина и слева не пересекаются — обе в ряду; центр прячется */
 @media (min-width:761px) and (max-width:979px){
-  #vit{position:fixed!important;top:12px!important;right:12px!important;bottom:12px!important;left:auto!important;height:auto!important;max-height:none!important;width:min(400px,calc(100vw - 96px))!important;max-width:none!important;z-index:46!important;border-radius:26px!important;padding:16px 12px!important;animation:vitInR .32s cubic-bezier(.3,.7,.3,1) both}
+  #root{flex-wrap:nowrap!important}
+  #root.vit-open main{display:none!important}
+  #root.vit-open #left{flex:1 1 42%!important;max-width:none!important;min-width:200px!important}
+  #root.vit-open #vit{
+    position:relative!important;top:auto!important;right:auto!important;bottom:auto!important;left:auto!important;
+    flex:1 1 58%!important;width:auto!important;max-width:none!important;min-width:240px!important;
+    height:calc(100vh - 32px)!important;max-height:calc(100vh - 32px)!important;
+    border-radius:28px!important;z-index:auto!important;animation:vitIn .35s cubic-bezier(.3,.7,.3,1)!important
+  }
 }
 
-/* телефон */
+/* телефон / когда колонки уже не вмещаются: витрина на весь экран, без блюра */
 @media (max-width:760px){
   #root{padding:0!important;gap:0!important}
   #left{position:fixed;left:0;top:0;bottom:0;z-index:45;width:min(84vw,330px);max-width:none!important;min-width:0!important;border-radius:0 26px 26px 0!important;max-height:none!important;padding:max(18px,env(safe-area-inset-top)) 14px 14px!important;animation:drawerIn .3s cubic-bezier(.3,.7,.3,1) both}
@@ -302,7 +324,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
   #selEst{display:none}
   .composer button[type=submit]{padding:0 14px!important;min-width:44px;min-height:44px}
   .composer button[type=submit] .sub-t{display:none}
-  #vit{position:fixed!important;top:0!important;right:0!important;bottom:0!important;left:auto!important;width:min(88vw,360px)!important;max-width:none!important;height:auto!important;max-height:none!important;border-radius:26px 0 0 26px!important;z-index:46!important;padding:max(14px,env(safe-area-inset-top)) 12px max(14px,env(safe-area-inset-bottom))!important;animation:vitInR .32s cubic-bezier(.3,.7,.3,1) both}
+  #vit{
+    position:fixed!important;inset:0!important;width:100%!important;max-width:none!important;min-width:0!important;flex:none!important;
+    height:auto!important;max-height:none!important;border-radius:0!important;z-index:46!important;
+    padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom))!important;
+    background:var(--bg)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+    animation:vitInR .32s cubic-bezier(.3,.7,.3,1) both
+  }
+  .t-dark #vit{background:#15122A!important}
+  .t-light #vit{background:#EEEAF8!important}
   .vit-grid{columns:2}
   .vit-hint{padding:0 8px;margin-bottom:8px}
   #vitHintBtn{flex:1 1 auto;height:44px}
@@ -324,7 +354,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 <div id="root" class="page-bg t-light bg-light" style="min-height:100vh;box-sizing:border-box;display:flex;flex-wrap:wrap;gap:16px;padding:16px;font-family:'Onest',system-ui,sans-serif">
 <script>(function(){try{var t=localStorage.getItem('aish-vitrina-theme')||localStorage.getItem('theme')||new URLSearchParams(location.search).get('theme')||'light';var d=t==='dark';var r=document.getElementById('root');if(!r)return;r.classList.toggle('t-dark',d);r.classList.toggle('bg-dark',d);r.classList.toggle('t-light',!d);r.classList.toggle('bg-light',!d);document.body.style.background=d?'#15122A':'#EEEAF8';}catch(e){}})();</script>
 
-  <aside id="left" class="panel" style="flex:1 1 300px;max-width:320px;min-width:260px;box-sizing:border-box;border-radius:28px;padding:18px 12px 14px;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 32px);overflow:hidden">
+  <aside id="left" class="panel" style="flex:0 1 300px;max-width:320px;min-width:220px;box-sizing:border-box;border-radius:28px;padding:18px 12px 14px;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 32px);overflow:hidden">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding-left:6px">
       <a href="/" aria-label="{AI}-шница — на главную" data-i18n-attr="aria-label:common.home.aria" style="display:flex;align-items:center;text-decoration:none;flex:0 0 auto"><img class="brand-mark brand-mark-light" src="/assets/brand/svg/icon-light.svg" alt="{AI}-шница" data-i18n-attr="alt:common.brand.alt"><img class="brand-mark brand-mark-dark" src="/assets/brand/svg/icon-dark.svg" alt="{AI}-шница" data-i18n-attr="alt:common.brand.alt"></a>
       <span style="display:flex;align-items:center;gap:2px;margin-left:auto"><a href="#" class="icon-btn icon-ghost" aria-label="Помощь" title="Помощь" data-i18n-attr="aria-label:common.help;title:common.help"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01"></path></svg></a><button type="button" class="icon-btn icon-ghost lang" data-lang-toggle aria-label="Язык: русский" title="Язык">RU</button><button type="button" id="themeBtn" class="icon-btn icon-ghost" aria-label="Тёмная тема" title="Тёмная тема"></button><button type="button" class="icon-btn icon-ghost" aria-label="Скрыть панель" data-i18n-attr="aria-label:studio.panel.hide" data-toggle-left><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"></rect><path d="M9 4v16"></path></svg></button></span>
@@ -352,26 +382,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
           <span id="userLetter" class="cab-tile" style="background:linear-gradient(135deg,var(--purple2),var(--purple));color:#FFFFFF;font-weight:700;font-size:14px">?</span>
           <span style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px">
             <span id="userName" style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Гость</span>
-            <a id="userBalance" href="/balance" style="font-size:12px;color:var(--muted2);text-decoration:none">Баланс: 0 ₽</a>
+            <a id="userBalance" href="/account#balance" style="font-size:12px;color:var(--muted2);text-decoration:none">Баланс: 0 ₽</a>
           </span>
-          <button type="button" aria-label="Выйти" title="Выйти" data-i18n-attr="aria-label:common.logout;title:common.logout" data-logout class="cab-end icon-btn icon-ghost"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l5-5-5-5M15 12H3"></path></svg></button>
         </div>
-        <div style="height:1px;background:var(--field-brd);margin:0 12px"></div>
-        <a href="/creator?me=1" class="cab-row cab-link" data-cabinet>
-          <span class="cab-tile" style="background:var(--seg-bg);color:var(--accent-ink)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="8" r="3.5"></circle></svg></span>
-          <span style="flex:1 1 auto;font-size:14px;font-weight:600" data-i18n="studio.cabinet.profile">Профиль</span>
-          <span class="cab-end"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span>
-        </a>
       </div>
     </div>
   </aside>
 
-  <main style="flex:999 1 520px;min-width:0;box-sizing:border-box;display:flex;flex-direction:column;height:calc(100vh - 32px);min-height:560px">
+  <main style="flex:1 1 360px;min-width:280px;box-sizing:border-box;display:flex;flex-direction:column;height:calc(100vh - 32px);min-height:560px">
     <div style="display:flex;align-items:center;gap:8px;padding:0 4px;min-height:44px">
       <button type="button" id="vitBtn" class="icon-btn vit-btn" aria-pressed="false" aria-controls="vit" title="Похожие работы на витрине" data-i18n-attr="title:studio.vitBtn.title" style="order:2;margin-left:auto"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect></svg><span class="vb-t" data-i18n="studio.vitBtn.label">Витрина</span><span class="cnt hidden" id="vitCnt"></span></button>
       <span id="leftReopen" class="hidden" style="display:flex;align-items:center;gap:6px">
+        <a href="/" aria-label="{AI}-шница — на главную" data-i18n-attr="aria-label:common.home.aria" style="display:flex;align-items:center;text-decoration:none"><img class="brand-mark brand-mark-light" src="/assets/brand/svg/icon-light.svg" alt="{AI}-шница" data-i18n-attr="alt:common.brand.alt" style="height:30px;width:30px"><img class="brand-mark brand-mark-dark" src="/assets/brand/svg/icon-dark.svg" alt="{AI}-шница" data-i18n-attr="alt:common.brand.alt" style="height:30px;width:30px"></a>
         <button type="button" class="icon-btn" aria-label="Показать панель" data-i18n-attr="aria-label:studio.panel.show" data-toggle-left><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"></rect><path d="M9 4v16"></path></svg></button>
-        <a href="/" style="margin-left:10px;display:flex;align-items:center;text-decoration:none"><img class="brand-mark brand-mark-light" src="/assets/brand/svg/icon-light.svg" alt="{AI}-шница" data-i18n-attr="alt:common.brand.alt" style="height:30px;width:30px"><img class="brand-mark brand-mark-dark" src="/assets/brand/svg/icon-dark.svg" alt="{AI}-шница" data-i18n-attr="alt:common.brand.alt" style="height:30px;width:30px"></a>
         <button type="button" class="icon-btn lang" data-lang-toggle aria-label="Язык: русский" title="Язык">RU</button>
       </span>
     </div>
@@ -474,13 +497,23 @@ const URL_MODEL = (new URLSearchParams(location.search).get('model') || '').trim
 const mq = (q) => typeof matchMedia === 'function' && matchMedia(q).matches;
 const IS_MOBILE = mq('(max-width:760px)');
 const MOBILE = () => mq('(max-width:760px)');
-const TABLET = () => mq('(min-width:980px) and (max-width:1180px)');
-const SHEET = () => mq('(max-width:979px)');
+const TABLET = () => mq('(min-width:761px) and (max-width:979px)');
+/* Full-screen vit sheet: only when left+vit would overlap (phone) */
+const SHEET = () => mq('(max-width:760px)');
+/* Phone sheet, or tablet with both shutters open (main hidden by CSS) */
+const SHUTTERS_COVER = () => {
+  if (SHEET()) return true;
+  if (!TABLET()) return false;
+  const leftOpen = !!(window.app && app.state && app.state.leftOpen);
+  const vitOpen = !!(window.vitIsOpen && window.vitIsOpen());
+  return leftOpen && vitOpen;
+};
 function updateStudioScrim() {
   const scrim = document.getElementById('scrim'); if (!scrim) return;
-  const vitOpen = window.vitIsOpen && window.vitIsOpen();
+  /* No blur/dim for vitrina. Scrim only catches taps behind mobile left drawer. */
   const leftOpen = !!(window.app && app.state && app.state.leftOpen);
-  const show = (SHEET() && vitOpen) || (MOBILE() && leftOpen);
+  const vitOpen = window.vitIsOpen && window.vitIsOpen();
+  const show = MOBILE() && leftOpen && !vitOpen;
   scrim.hidden = !show;
   scrim.setAttribute('aria-hidden', show ? 'false' : 'true');
 }
@@ -804,12 +837,12 @@ class Component extends DCLogic {
       this.setState({ dark: dark });
     };
     this.openPanel = () => {
-      if ((MOBILE() || TABLET()) && window.vitIsOpen && window.vitIsOpen() && window.vitClose) window.vitClose();
+      if (MOBILE() && window.vitIsOpen && window.vitIsOpen() && window.vitClose) window.vitClose();
       if (!this.state.leftOpen) this.setState({ leftOpen: true });
     };
     this.toggleLeft = () => {
       const next = !this.state.leftOpen;
-      if (next && (MOBILE() || TABLET()) && window.vitIsOpen && window.vitIsOpen() && window.vitClose) {
+      if (next && MOBILE() && window.vitIsOpen && window.vitIsOpen() && window.vitClose) {
         if (window.vitMarkLeftRestore) window.vitMarkLeftRestore(false);
         window.vitClose();
       }
@@ -1027,7 +1060,7 @@ function msgEl(m) {
     + media
     + (likeChip ? '<div style="display:flex;flex-wrap:wrap;gap:8px">' + likeChip + '</div>' : '')
     + (m.loginCta ? '<button type="button" class="btn-login" data-cta data-login style="height:40px;padding:0 18px;border-radius:12px;font-size:14px">' + esc(tr('studio.chat.loginRun')) + '</button>' : '')
-    + (m.topup ? '<a href="/balance" class="btn-purple" style="height:40px;padding:0 18px;border-radius:12px;font-size:14px;display:inline-flex;align-items:center;text-decoration:none">' + esc(tr('studio.chat.toBalance')) + '</a>' : '')
+    + (m.topup ? '<a href="/account#balance" class="btn-purple" style="height:40px;padding:0 18px;border-radius:12px;font-size:14px;display:inline-flex;align-items:center;text-decoration:none">' + esc(tr('studio.chat.toBalance')) + '</a>' : '')
     + '</div>';
   return el;
 }
@@ -1060,7 +1093,7 @@ document.addEventListener('click', async (e) => {
     } finally { likeBtn.disabled = false; }
     return;
   }
-  const t = e.target.closest('[data-home],[data-login],[data-logout],[data-toggle-left],[data-toggle-right],[data-toggle-right-open],[data-works],[data-cabinet]');
+  const t = e.target.closest('[data-home],[data-login],[data-logout],[data-toggle-left],[data-toggle-right],[data-toggle-right-open],[data-works]');
   if (!t) return;
   if (t.hasAttribute('data-home')) app.goHome(e);
   else if (t.hasAttribute('data-login')) app.login();
@@ -1069,9 +1102,6 @@ document.addEventListener('click', async (e) => {
   else if (t.hasAttribute('data-toggle-right')) app.toggleRight();
   else if (t.hasAttribute('data-toggle-right-open')) app.openPanel();
   else if (t.hasAttribute('data-works')) { e.preventDefault(); app.showWorks(); }
-  else if (t.hasAttribute('data-cabinet')) {
-    if (!app.state.authed) { e.preventDefault(); app.login(); }
-  }
 });
 $('themeBtn').addEventListener('click', () => app.toggleTheme());
 $('scrim').addEventListener('click', () => { if (window.vitIsOpen && window.vitIsOpen() && window.vitClose) window.vitClose(); else if (app.state.leftOpen) app.toggleLeft(); });
@@ -1185,7 +1215,8 @@ syncPricing();
     if (/^seedream-5-lite/.test(m.slug) && /Seedream 5 Lite/i.test(w.model || '')) return true;
     return false;
   }
-  let open = false, preview = null, pvMode = 'view', lastKey = '', timer = 0, hintOff = false, hinted = false;
+  let open = false, preview = null, pvMode = 'view', lastKey = '', timer = 0, hintOff = false, hinted = false, lastSent = null;
+  let modelFilter = true, lastSel = '';
   const $ = (id) => document.getElementById(id);
   const esc2 = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const topicText = () => { const st = app.state; if (st.text && st.text.trim()) return st.text.trim(); const u = (st.msgs || []).filter((m) => m.role === 'user'); return u.length ? u[u.length - 1].text : ''; };
@@ -1193,10 +1224,17 @@ syncPricing();
   const card = (w) => '<button class="vit-card" data-w="' + w.id + '" aria-label="' + esc2(wTitle(w)) + '"><img src="' + esc2(w.src) + '" alt="" loading="lazy" width="' + (w.w || 400) + '" height="' + (w.h || 400) + '">'
     + (w.type === 'video' ? '<span class="vc-p">▶ ' + esc2(w.dur || '') + '</span>' : '') + '<span class="vc-t">' + esc2(wTitle(w)) + '</span></button>';
   function compute() {
+    if (app.state.sel !== lastSel) { lastSel = app.state.sel; modelFilter = true; }
     const topic = topicText(), m = modelObj(), mName = MODEL_OF[m.slug];
     const t = byTopic(topic);
-    const mw = WORKS.filter((w) => sameModel(w, m, mName) && !t.includes(w)).sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 8);
-    return { topic, m, mName, t, mw };
+    let mw = [];
+    if (modelFilter) {
+      mw = WORKS.filter((w) => sameModel(w, m, mName) && !t.includes(w)).sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 8);
+    } else if (!topic) {
+      /* нет фильтров — вся витрина */
+      mw = WORKS.slice().sort((a, b) => (b.likes || 0) - (a.likes || 0));
+    }
+    return { topic, m, mName, t, mw, modelFilter };
   }
   function syncScrim() { if (typeof updateStudioScrim === 'function') updateStudioScrim(); }
   function draw() {
@@ -1216,13 +1254,20 @@ syncPricing();
     if (!open) return;
     if (preview) return drawPreview(preview);
     const boldVal = (key, name, val) => esc2(tr(key, { [name]: '\u0000' })).replace('\u0000', '<b>' + esc2(val) + '</b>');
-    $('vitCtx').innerHTML = (r.topic ? '<span title="' + esc2(r.topic) + '">' + boldVal('studio.vit.topic', 'topic', r.topic.length > 34 ? r.topic.slice(0, 34) + '…' : r.topic) + '</span>' : '') + '<span>' + boldVal('studio.vit.model', 'model', r.m.name) + '</span>';
+    const topicChip = r.topic
+      ? '<span title="' + esc2(r.topic) + '">' + boldVal('studio.vit.topic', 'topic', r.topic.length > 34 ? r.topic.slice(0, 34) + '…' : r.topic) + '</span>'
+      : '';
+    const modelChip = r.modelFilter
+      ? '<span>' + boldVal('studio.vit.model', 'model', r.m.name)
+        + '<button type="button" class="vit-chip-x" data-clear-model aria-label="' + esc2(tr('studio.vit.clearModel')) + '" title="' + esc2(tr('studio.vit.clearModel')) + '">×</button></span>'
+      : '';
+    $('vitCtx').innerHTML = topicChip + modelChip;
     const list = r.t.concat(r.mw);
     let h = '<section class="vit-sec">';
     if (list.length) h += '<div class="vit-grid">' + list.map(card).join('') + '</div>';
-    else if (!r.topic) h += '<div class="vit-empty">' + esc2(tr('studio.vit.empty.start')) + '</div>';
-    else if (r.m.type === 'music') h += '<div class="vit-empty">' + esc2(tr('studio.vit.empty.music')) + '</div>';
-    else if (r.m.type === 'text') h += '<div class="vit-empty">' + esc2(tr('studio.vit.empty.text')) + '</div>';
+    else if (r.modelFilter && r.m.type === 'music') h += '<div class="vit-empty">' + esc2(tr('studio.vit.empty.music')) + '</div>';
+    else if (r.modelFilter && r.m.type === 'text') h += '<div class="vit-empty">' + esc2(tr('studio.vit.empty.text')) + '</div>';
+    else if (!r.topic && r.modelFilter) h += '<div class="vit-empty">' + esc2(tr('studio.vit.empty.start')) + '</div>';
     else h += '<div class="vit-empty">' + esc2(tr('studio.vit.empty.none')) + '</div>';
     h += '</section>';
     $('vitBody').innerHTML = h;
@@ -1254,18 +1299,23 @@ syncPricing();
       lower = '<form class="req" id="vitReqForm"><h3>' + esc2(tr('vitrina.req.title', { name: cName || tr('vitrina.req.fallbackName') })) + '</h3>'
         + '<p>' + esc2(tr('vitrina.req.note')) + '</p>'
         + '<label>' + esc2(tr('vitrina.req.kind')) + '<select name="kind"><option value="prompt">' + esc2(tr('vitrina.req.kind.prompt')) + '</option><option value="original">' + esc2(tr(w.type === 'video' ? 'vitrina.req.kind.originalVideo' : 'vitrina.req.kind.originalImage')) + '</option></select></label>'
-        + '<label id="vitFmtWrap" class="hidden">' + esc2(tr('vitrina.req.format')) + '<select name="fmt"><option value="Видео в максимальном качестве">' + esc2(tr('vitrina.req.format.video')) + '</option><option value="Картинка PNG / 4K">' + esc2(tr('vitrina.req.format.image')) + '</option><option value="Исходники и все дубли">' + esc2(tr('vitrina.req.format.source')) + '</option></select></label>'
         + '<label>' + esc2(tr('vitrina.req.message')) + '<textarea name="msg" required>' + esc2(tr('vitrina.req.message.default', { title: wTitle(w) })) + '</textarea></label>'
-        + '<label>' + esc2(tr('vitrina.req.contact')) + '<input name="contact" type="text" placeholder="' + esc2(tr('vitrina.req.contact.placeholder')) + '" required></label>'
+        + '<label>' + esc2(tr('vitrina.req.contact')) + '<input name="contact" type="text" placeholder="' + esc2(tr('vitrina.req.contact.placeholder')) + '"></label>'
         + '<div class="row2"><button type="button" class="btn-purple" data-vact="back">' + esc2(tr('common.back')) + '</button><button type="submit" class="btn-primary">' + esc2(tr('vitrina.req.send')) + '</button></div></form>';
     } else if (pvMode === 'sent') {
+      const authed = !!(lastSent && lastSent.authed);
+      const chatHref = lastSent && lastSent.threadId
+        ? '/account#messages/' + encodeURIComponent(lastSent.threadId)
+        : (authed ? '/account#messages' : '/auth?next=' + encodeURIComponent('/account'));
+      const chatLbl = (lastSent && lastSent.threadId) || authed ? tr('vitrina.req.sent.goChat') : tr('vitrina.req.sent.goAuth');
       lower = '<div class="req"><div class="ok"><span class="check">' + check + '</span><h3>' + esc2(tr('vitrina.req.sent.title')) + '</h3><p>' + esc2(tr('vitrina.req.sent.text', { name: cName || tr('vitrina.creator.fallback') })) + '</p>'
-        + '<button type="button" class="btn-purple" data-vact="back" style="width:100%;margin-top:6px;min-height:46px;border-radius:14px">' + esc2(tr('vitrina.req.sent.back')) + '</button></div></div>';
+        + '<a class="btn-primary" href="' + chatHref + '" style="width:100%;margin-top:12px;min-height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-sizing:border-box">' + esc2(chatLbl) + '</a>'
+        + '<button type="button" class="btn-purple" data-vact="back" style="width:100%;margin-top:8px;min-height:46px;border-radius:14px">' + esc2(tr('vitrina.req.sent.back')) + '</button></div></div>';
     }
     const creatorCard = '<section class="creator" aria-label="' + esc2(tr('vitrina.creator.aria')) + '"><div class="c-head">' + ava
       + '<div class="c-main"><a class="c-name" href="' + cHref + '"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc2(cName || tr('vitrina.creator.fallback')) + '</span><span class="c-go" aria-hidden="true">' + chevron + '</span></a>'
       + '<div class="c-sub">' + (handle ? '@' + esc2(handle) : '') + (c.works ? (handle ? ' · ' : '') + esc2(tr('vitrina.creator.works', { n: c.works })) : '') + '</div></div></div>'
-      + (pvMode === 'view' ? '<div class="c-act"><button type="button" class="btn-primary" data-vreq>' + spark + reqLbl + '</button></div>' : '')
+      + (pvMode === 'view' ? '<div class="c-act"><a class="btn-profile" href="' + cHref + '">' + esc2(tr('vitrina.creator.viewProfile')) + '</a><button type="button" class="btn-primary" data-vreq>' + spark + reqLbl + '</button></div>' : '')
       + moreRow + '</section>';
     const modelLabel = slugName || w.model || '';
     const genBtn = modelLabel
@@ -1280,15 +1330,57 @@ syncPricing();
       + genBtn + creatorCard + lower + '</div>';
     const f = $('vitReqForm');
     if (f) {
-      const kindSel = f.querySelector('[name=kind]');
-      const fmtWrap = $('vitFmtWrap');
-      const syncFmt = () => { if (fmtWrap) fmtWrap.classList.toggle('hidden', !(kindSel && kindSel.value === 'original')); };
-      if (kindSel) { kindSel.addEventListener('change', syncFmt); syncFmt(); }
-      f.addEventListener('submit', (e) => {
+      f.addEventListener('submit', async (e) => {
         e.preventDefault();
         const fd = new FormData(f);
         const kind = fd.get('kind') || 'prompt';
-        if (window.AISH_REQ) window.AISH_REQ.add({ creator: w.creator, work: w.id, kind: kind, fmt: fd.get('fmt') || '', msg: fd.get('msg') || '', contact: fd.get('contact') || '' });
+        const creatorKey = (c.handle || c.nick || w.creator || '').toString().replace(/^@/, '');
+        const payload = {
+          creator: creatorKey,
+          creatorName: cName || '',
+          work: w.id,
+          workTitle: wTitle(w),
+          workSrc: w.src || '',
+          kind: kind,
+          fmt: '',
+          msg: fd.get('msg') || '',
+          contact: fd.get('contact') || '',
+        };
+        if (window.AISH_REQ) window.AISH_REQ.add(payload);
+        let threadId = null;
+        let authed = false;
+        try {
+          const me = await api('/api/auth/me');
+          if (!me.data || !me.data.user) {
+            try { sessionStorage.setItem('aish-pending-req', JSON.stringify(payload)); } catch (_) {}
+            lastSent = { threadId: null, authed: false };
+            pvMode = 'sent';
+            drawPreview(w.id);
+            $('vitBody').scrollTop = 0;
+            return;
+          }
+          authed = true;
+          const text = payload.msg + (payload.contact ? '\n\nВнешний контакт: ' + payload.contact : '');
+          const { res, data } = await api('/api/threads', {
+            method: 'POST',
+            body: JSON.stringify({
+              workId: w.id,
+              workTitle: payload.workTitle || '',
+              workSrc: payload.workSrc || '',
+              kind: kind,
+              text,
+              fmt: '',
+              creator: creatorKey,
+              creatorName: payload.creatorName,
+            }),
+          });
+          if (res.ok && data.threadId) threadId = String(data.threadId);
+        } catch (_) {}
+        if (authed && threadId) {
+          location.assign('/account#messages/' + encodeURIComponent(threadId));
+          return;
+        }
+        lastSent = { threadId: threadId || null, authed: authed };
         pvMode = 'sent';
         drawPreview(w.id);
         $('vitBody').scrollTop = 0;
@@ -1297,13 +1389,10 @@ syncPricing();
   }
   let leftWasOpen = false;
   function setOpen(v) {
-    if (v && (MOBILE() || TABLET()) && app.state.leftOpen) {
-      leftWasOpen = TABLET();
-      app.setState({ leftOpen: false });
-    }
-    if (!v && leftWasOpen && TABLET()) {
+    /* Phone: vit covers full screen — close left drawer. Tablet: both stay side-by-side. */
+    if (v && MOBILE() && app.state.leftOpen) {
       leftWasOpen = false;
-      app.setState({ leftOpen: true });
+      app.setState({ leftOpen: false });
     }
     open = v;
     preview = null;
@@ -1311,6 +1400,8 @@ syncPricing();
     $('vit').classList.toggle('hidden', !v);
     $('vitBtn').classList.toggle('hidden', !!v);
     $('vitBtn').setAttribute('aria-pressed', v ? 'true' : 'false');
+    const root = document.getElementById('root');
+    if (root) root.classList.toggle('vit-open', !!v);
     lastKey = '';
     syncScrim();
     draw();
@@ -1320,7 +1411,7 @@ syncPricing();
     } catch (e) {}
   }
   window.renderVit = function () {
-    const key = topicText() + '|' + app.state.sel + '|' + open + '|' + app.state.chat;
+    const key = topicText() + '|' + app.state.sel + '|' + open + '|' + app.state.chat + '|' + modelFilter;
     if (key === lastKey) return; lastKey = key;
     clearTimeout(timer); timer = setTimeout(draw, 250);
   };
@@ -1331,6 +1422,12 @@ syncPricing();
   $('vitClose').addEventListener('click', () => setOpen(false));
   $('vitHintBtn').addEventListener('click', () => setOpen(true));
   $('vitHintX').addEventListener('click', () => { hintOff = true; draw(); });
+  $('vitCtx').addEventListener('click', (e) => {
+    if (!e.target.closest('[data-clear-model]')) return;
+    modelFilter = false;
+    lastKey = '';
+    draw();
+  });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && open && !app.state.modal) setOpen(false); });
 
   function swipe(el, dir, close) {
@@ -1373,7 +1470,23 @@ syncPricing();
     if (e.target.closest('[data-vback]')) { preview = null; pvMode = 'view'; draw(); return; }
     if (e.target.closest('[data-vreq]')) { pvMode = 'request'; if (preview) drawPreview(preview); $('vitBody').scrollTop = $('vitBody').scrollHeight; return; }
     if (e.target.closest('[data-vact="back"]')) { pvMode = 'view'; if (preview) drawPreview(preview); return; }
-    const u = e.target.closest('[data-vuse]'); if (u) { const m = app.MODELS.find((x) => x.slug === u.dataset.vuse); if (m) { app.setState({ sel: m.slug }); app.speak(tr('studio.eggy.sameModel', { model: m.name })); } return; }
+    const u = e.target.closest('[data-vuse]');
+    if (u) {
+      const m = app.MODELS.find((x) => x.slug === u.dataset.vuse);
+      if (m) {
+        /* Close only when shutters fully cover the studio (phone sheet / tablet both open). */
+        if (SHUTTERS_COVER()) {
+          setOpen(false);
+          leftWasOpen = false;
+          app.setState({ sel: m.slug, leftOpen: false, chat: false });
+        } else {
+          app.setState({ sel: m.slug, chat: false });
+        }
+        app.speak(tr('studio.eggy.sameModel', { model: m.name }));
+        try { $('prompt').focus({ preventScroll: true }); } catch (err) {}
+      }
+      return;
+    }
   });
   draw();
 })();

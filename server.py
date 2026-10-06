@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import List, Tuple
 
 import requests
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, redirect, request, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 
 from auth import load_env, register_auth
@@ -3031,17 +3031,22 @@ def explore_page():
     return send_from_directory(BASE_DIR, "explore.html")
 
 
+@app.route("/account")
+def account_page():
+    ensure_csrf_token()
+    return send_from_directory(BASE_DIR, "account.html")
+
+
 @app.route("/settings")
 def settings_page():
     ensure_csrf_token()
-    # Личный кабинет креатора (демо UI из ai-shnitsa 3)
-    return send_from_directory(BASE_DIR, "creator.html")
+    return redirect("/account#settings")
 
 
 @app.route("/balance")
 def balance_page():
     ensure_csrf_token()
-    return send_from_directory(BASE_DIR, "balance.html")
+    return redirect("/account#balance")
 
 
 @app.route("/admin")
@@ -3080,4 +3085,5 @@ if __name__ == "__main__":
         seed()
     debug = (os.getenv("FLASK_DEBUG") or "").strip().lower() in {"1", "true", "yes"}
     # Production: gunicorn -c deploy/gunicorn.conf.py wsgi:app
-    app.run(host="127.0.0.1", port=int(os.getenv("PORT") or 8000), debug=debug)
+    host = (os.getenv("HOST") or "0.0.0.0").strip() or "0.0.0.0"
+    app.run(host=host, port=int(os.getenv("PORT") or 8000), debug=debug)

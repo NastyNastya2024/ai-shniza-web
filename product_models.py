@@ -41,6 +41,7 @@ def init_product_models(db: SQLAlchemy):
         show_vk = db.Column(db.Boolean, default=False)
         show_website = db.Column(db.Boolean, default=True)
         show_email = db.Column(db.Boolean, default=False)
+        contacts_extra = db.Column(db.Text, nullable=True)  # JSON: [{net, label?, login, show}]
         referral_code = db.Column(db.String(32), unique=True, nullable=True, index=True)
         referred_by = db.Column(db.Integer, nullable=True)
         consent_152 = db.Column(db.Boolean, default=False)
@@ -108,6 +109,32 @@ def init_product_models(db: SQLAlchemy):
         created_at = db.Column(db.DateTime, default=datetime.utcnow)
         __table_args__ = (db.UniqueConstraint("work_id", "user_id", name="uq_work_like_user"),)
 
+    class Thread(db.Model):
+        __tablename__ = "threads"
+        id = db.Column(db.Integer, primary_key=True)
+        kind = db.Column(db.String(20), nullable=False, default="prompt")  # prompt|original|order|assistant
+        work_id = db.Column(db.Integer, db.ForeignKey("works.id"), nullable=True, index=True)
+        buyer_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+        seller_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+        status = db.Column(db.String(20), nullable=False, default="new")  # new|answered
+        created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+        updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, index=True)
+
+    class ThreadMessage(db.Model):
+        __tablename__ = "thread_messages"
+        id = db.Column(db.Integer, primary_key=True)
+        thread_id = db.Column(db.Integer, db.ForeignKey("threads.id"), nullable=False, index=True)
+        sender_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+        is_system = db.Column(db.Boolean, default=False)
+        text = db.Column(db.Text, nullable=True)
+        prompt = db.Column(db.Text, nullable=True)
+        file_name = db.Column(db.String(255), nullable=True)
+        file_size = db.Column(db.String(40), nullable=True)
+        file_url = db.Column(db.String(700), nullable=True)
+        read_by_buyer = db.Column(db.Boolean, default=False)
+        read_by_seller = db.Column(db.Boolean, default=False)
+        created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
     class AssistantMetric(db.Model):
         __tablename__ = "assistant_metrics"
         id = db.Column(db.Integer, primary_key=True)
@@ -125,5 +152,7 @@ def init_product_models(db: SQLAlchemy):
         "LoginCode": LoginCode,
         "Complaint": Complaint,
         "WorkLike": WorkLike,
+        "Thread": Thread,
+        "ThreadMessage": ThreadMessage,
         "AssistantMetric": AssistantMetric,
     }

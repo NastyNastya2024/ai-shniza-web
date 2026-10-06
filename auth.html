@@ -57,6 +57,7 @@ h1{margin:0;font-family:'Days One',sans-serif;font-weight:400;font-size:clamp(28
 .gbtn{width:100%;height:54px;border-radius:16px;border:1.5px solid var(--field-brd);background:var(--field);color:var(--ink);display:flex;align-items:center;justify-content:center;gap:12px;font-weight:600;font-size:16px;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s;margin-top:18px}
 .gbtn:hover{border-color:var(--field-hover);box-shadow:0 10px 24px -16px var(--shadow)}
 .gbtn[disabled]{cursor:progress;opacity:.8}
+.consent-wrap{display:flex;flex-direction:column;gap:8px;margin-top:16px}
 
 /* поля */
 form{display:flex;flex-direction:column;gap:16px}
@@ -143,12 +144,12 @@ form{display:flex;flex-direction:column;gap:16px}
 @keyframes wob{25%{transform:rotate(-7deg)}75%{transform:rotate(7deg)}}
 @keyframes cook{25%{transform:rotate(-6deg) scale(1.03,.97)}75%{transform:rotate(6deg) scale(1.03,.97)}}
 .badges{position:absolute;inset:0;pointer-events:none}
-.badges span{position:absolute;display:inline-flex;align-items:center;gap:7px;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.75);backdrop-filter:blur(10px);font-weight:700;font-size:14px;color:#9A8BB8;box-shadow:0 12px 26px -16px rgba(60,30,140,.5);animation:float 6s ease-in-out infinite}
+.badges > span{position:absolute;display:inline-flex;align-items:center;gap:7px;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.75);backdrop-filter:blur(10px);font-weight:700;font-size:14px;color:#9A8BB8;box-shadow:0 12px 26px -16px rgba(60,30,140,.5);animation:float 6s ease-in-out infinite}
 .badges .badge-ic{flex:0 0 auto;width:16px;height:16px;color:currentColor;opacity:.92}
-:root[data-theme=dark] .badges span{background:rgba(46,38,78,.8);color:#D4CBF0;border:1px solid rgba(255,255,255,.12)}
+:root[data-theme=dark] .badges > span{background:rgba(46,38,78,.8);color:#D4CBF0;border:1px solid rgba(255,255,255,.12)}
 .badges .b1{left:9%;top:14%}.badges .b2{right:7%;top:8%;animation-delay:1s}.badges .b3{left:12%;bottom:14%;animation-delay:2s}
 
-/* ---------- планшет и телефон: сверху шапка, под ней яишенка с репликой, ниже форма ---------- */
+/* ---------- планшет и телефон: сверху шапка, под ней яишенка по центру (без реплики), ниже форма ---------- */
 @media (max-width:980px){
   .auth{display:flex;flex-direction:column}
   .left{display:contents}
@@ -156,17 +157,16 @@ form{display:flex;flex-direction:column;gap:16px}
   .top{order:0;padding:max(14px,env(safe-area-inset-top)) 128px 0 20px}
   .top .logo{height:38px}
   .right{order:1;margin:14px 16px 0;border-radius:26px;flex:0 0 auto}
-  .stage{flex-direction:row-reverse;align-items:center;gap:14px;padding:16px 18px;width:100%}
-  .orb{width:92px;flex:0 0 auto}
+  .stage{flex-direction:column;align-items:center;justify-content:center;gap:0;padding:22px 18px;width:100%}
+  .orb{width:100px;flex:0 0 auto;margin:0 auto}
   .halo{inset:-25%}
-  .bubble{flex:1;max-width:none;font-size:16px;padding:12px 16px;border-radius:20px 20px 6px 20px;text-align:left}
-  .bubble:after{left:auto;right:-6px;bottom:12px;margin:0;width:14px;height:14px;border-radius:0 4px 0 0}
+  .bubble{display:none!important}
   .badges{display:none}
   .form-wrap{order:2;flex:1;align-items:flex-start;padding:24px 20px 8px}
   .foot{order:3;padding:0 20px max(18px,env(safe-area-inset-bottom))}
 }
 @media (max-width:420px){
-  .orb{width:76px}.bubble{font-size:15px}
+  .orb{width:84px}
   .otp{gap:7px}.otp .c{height:54px;font-size:21px}
   h1{font-size:26px}
 }
@@ -233,7 +233,7 @@ const authApi = {
   sendCode: async (email) => {
     const { res, data } = await api('/api/auth/email-code/request', { method: 'POST', body: JSON.stringify({ email: email.trim(), consent_152: true }) });
     if (!res.ok) { const err = new Error(data.error || 'send'); err.code = data.error; throw err; }
-    if (data.dev_code) console.info('dev code', data.dev_code);
+    return data;
   },
   checkCode: async (email, code) => {
     const { res, data } = await api('/api/auth/email-code/verify', { method: 'POST', body: JSON.stringify({ email: email.trim(), code }) });
@@ -300,11 +300,11 @@ function render() {
       + (eErr ? '<div class="msg" id="emE" role="alert">' + ICON.alert + esc(S.err) + '</div>' : '') + '</div>';
     if (S.pwMode) h += '<div class="fld' + (pErr ? ' err' : '') + '"><div class="lbl"><label for="pw">' + esc(tr('auth.password.label')) + '</label><button type="button" class="link" id="forgot">' + esc(tr('auth.password.forgot')) + '</button></div><div class="inp pw"><input id="pw" type="' + (S.showPw ? 'text' : 'password') + '" autocomplete="current-password" placeholder="' + esc(tr('auth.password.placeholder')) + '" value="' + esc(S.pw) + '"' + (pErr ? ' aria-invalid="true" aria-describedby="pwE"' : '') + '><button type="button" class="eye" id="showPw" aria-label="' + esc(S.showPw ? tr('auth.password.hide') : tr('auth.password.show')) + '">' + (S.showPw ? ICON.eyeOff : ICON.eye) + '</button></div>'
       + (pErr ? '<div class="msg" id="pwE" role="alert">' + ICON.alert + '<span>' + esc(S.err) + ' <button type="button" class="link" id="toCode">' + esc(tr('auth.mode.toCode')) + '</button></span></div>' : '') + '</div>';
-    h += '<label class="chk' + (cErr ? ' bad' : '') + '"><input type="checkbox" id="cs"' + (S.consent ? ' checked' : '') + '><span>' + tr('auth.consent.html') + '</span></label>'
-      + (cErr ? '<div class="msg" role="alert" style="margin-top:-8px">' + ICON.alert + esc(S.err) + '</div>' : '');
     h += '<button class="btn btn-p' + (S.busy ? ' busy' : '') + '" type="submit"' + (S.busy ? ' disabled' : '') + '>' + (S.busy ? '<span class="spin"></span>' + esc(S.pwMode ? tr('auth.submit.checking') : tr('auth.submit.sending')) : esc(S.pwMode ? tr('auth.submit.login') : S.errField === 'send' ? tr('auth.submit.retry') : tr('auth.submit.getCode'))) + '</button>'
       + '<button type="button" class="link center" id="mode" style="min-height:44px">' + esc(S.pwMode ? tr('auth.mode.viaCode') : tr('auth.mode.havePassword')) + '</button></form>';
     h += '<button class="gbtn" type="button" id="g"' + (S.google ? ' disabled' : '') + '>' + (S.google ? '<span class="spin" style="color:var(--muted)"></span>' + esc(tr('auth.google.busy')) : ICON.g + esc(tr('auth.google'))) + '</button>';
+    h += '<div class="consent-wrap"><label class="chk' + (cErr ? ' bad' : '') + '"><input type="checkbox" id="cs"' + (S.consent ? ' checked' : '') + '><span>' + tr('auth.consent.html') + '</span></label>'
+      + (cErr ? '<div class="msg" role="alert">' + ICON.alert + esc(S.err) + '</div>' : '') + '</div>';
   } else if (S.step === 'code') {
     const bad = S.err && !S.locked;
     h += '<button class="back" type="button" id="bk">' + (tr('auth.code.back').charAt(0) === '\u2190' ? '' : ICON.back) + esc(tr('auth.code.back')) + '</button><h1 id="t">' + esc(tr('auth.code.title')) + '</h1><p class="sub">' + tr('auth.code.sub.html', { email: esc(S.email) }) + '</p>';
@@ -362,7 +362,7 @@ async function submitEmail(e) {
   S.busy = true; S.err = ''; S.errField = ''; render(); speak('sending', '', 'cook');
   try {
     await authApi.sendCode(S.email);
-    Object.assign(S, { busy: false, step: 'code', code: '', attempts: 0, locked: false });
+    Object.assign(S, { busy: false, step: 'code', code: '', attempts: 0, locked: false, err: '', errField: '' });
     tick(); render(); speak('code', 'happy', 'jump'); $('cd').focus();
   } catch (err) {
     if (err && err.code === 'consent_required') fail('consent', tr('auth.err.consent'), 'consent');
@@ -382,7 +382,10 @@ async function submitCode() {
 function google() {
   if (!S.consent) return fail('consent', tr('auth.err.consentGoogle'), 'consent');
   S.google = true; S.err = ''; S.errField = ''; render(); speak('google', '', 'cook');
-  location.href = '/api/auth/google?next=' + encodeURIComponent(NEXT);
+  const q = new URLSearchParams({ next: NEXT, consent: '1' });
+  if (validEmail(S.email)) q.set('hint', S.email.trim());
+  // короткая пауза — яишенка успевает сказать «Стучусь в Google…»
+  setTimeout(() => { location.href = '/api/auth/google?' + q; }, 350);
 }
 function success() {
   Object.assign(S, { busy: false, google: false, step: 'done', err: '' });
@@ -431,19 +434,34 @@ const STATES = {
   'done':           [{ step: 'done' }, 'done', 'happy']
 };
 
-/* oauth / already-authed */
+/* oauth / already-authed — возврат с Google: /auth?error=… */
+const GERR = {
+  cancelled: () => tr('auth.err.googleCancelled'),
+  google_error: () => tr('auth.err.googleFailed'),
+  expired: () => tr('auth.err.googleExpired'),
+  bad_state: () => tr('auth.err.googleBadState'),
+  not_configured: () => tr('auth.err.googleNotConfigured'),
+  oauth_not_configured: () => tr('auth.err.googleNotConfigured'),
+  oauth_denied: () => tr('auth.err.googleCancelled'),
+  oauth_failed: () => tr('auth.err.googleFailed'),
+  oauth_state: () => tr('auth.err.googleBadState'),
+  oauth_code: () => tr('auth.err.googleFailed'),
+  oauth_token: () => tr('auth.err.googleFailed'),
+};
 (async function boot() {
-  const authErr = qs.get('auth_error');
-  if (authErr) {
-    Object.assign(S, { err: tr('auth.err.googleFailed'), errField: 'google' });
+  const qerr = qs.get('error') || qs.get('auth_error');
+  if (qerr) {
+    const msg = (GERR[qerr] ? GERR[qerr]() : null) || tr('auth.err.googleFailed');
+    Object.assign(S, { consent: true, err: msg, errField: 'google' });
+    try { history.replaceState(null, '', location.pathname + (NEXT !== '/app' ? '?next=' + encodeURIComponent(NEXT) : '')); } catch (_) {}
   }
   try {
     const { data } = await api('/api/auth/me');
-    if (data && data.user && !qs.get('state')) { location.replace(NEXT); return; }
+    if (data && data.user && !qs.get('state') && !qerr) { location.replace(NEXT); return; }
   } catch (_) {}
   const st = qs.get('state');
   if (st && STATES[st]) { const [p, say, face, anim] = STATES[st]; Object.assign(S, p); render(); speak(say, face || '', anim || ''); if (p.resendIn) clearInterval(T.rs); }
-  else { render(); speak(authErr ? 'googleErr' : 'hello', authErr ? 'squint' : ''); }
+  else { render(); speak(qerr ? 'googleErr' : 'hello', qerr ? 'squint' : ''); }
 })();
 </script>
 </body>

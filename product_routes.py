@@ -22,8 +22,43 @@ from product_models import init_product_models
 from robokassa import get_payment_provider
 from security import ensure_csrf_token, rate_limit
 
-HANDLE_RE = re.compile(r"^[a-zA-Z0-9_]{3,20}$")
-BANNED_HANDLES = {"admin", "support", "api", "explore", "settings", "balance", "root", "ai", "shnica"}
+HANDLE_RE = re.compile(r"^[a-zA-Z0-9_]{3,24}$")
+BANNED_HANDLES = {"admin", "support", "api", "explore", "settings", "balance", "account", "root", "ai", "shnica"}
+CONTACT_NET_RE = re.compile(r"^[a-z][a-z0-9_]{0,23}$")
+
+
+def _parse_contacts_extra(raw: Any) -> list[dict[str, Any]]:
+    if raw is None or raw == "":
+        return []
+    try:
+        data = json.loads(raw) if isinstance(raw, str) else raw
+    except (json.JSONDecodeError, TypeError):
+        return []
+    if not isinstance(data, list):
+        return []
+    out: list[dict[str, Any]] = []
+    for item in data[:24]:
+        if not isinstance(item, dict):
+            continue
+        login = str(item.get("login") or "").strip()[:250]
+        if not login:
+            continue
+        net = str(item.get("net") or "custom").strip().lower()[:32]
+        if net != "custom" and not CONTACT_NET_RE.match(net):
+            net = "custom"
+        label = str(item.get("label") or "").strip()[:40]
+        if net == "custom" and not label:
+            label = "Соцсеть"
+        row: dict[str, Any] = {"net": net, "login": login, "show": bool(item.get("show", True))}
+        if label:
+            row["label"] = label
+        out.append(row)
+    return out
+
+
+def _dump_contacts_extra(items: Any) -> Optional[str]:
+    normalized = _parse_contacts_extra(items)
+    return json.dumps(normalized, ensure_ascii=False) if normalized else None
 
 
 def register_product(app, db, User):
@@ -36,6 +71,8 @@ def register_product(app, db, User):
     LoginCode = models["LoginCode"]
     Complaint = models["Complaint"]
     WorkLike = models["WorkLike"]
+    Thread = models["Thread"]
+    ThreadMessage = models["ThreadMessage"]
     AssistantMetric = models["AssistantMetric"]
 
     def current_user():
@@ -74,6 +111,27 @@ def register_product(app, db, User):
             db.session.add(p)
             db.session.commit()
         return p
+
+    def ensure_profile_schema():
+        from sqlalchemy import inspect, text
+
+        try:
+            with app.app_context():
+                insp = inspect(db.engine)
+                if "creator_profiles" not in insp.get_table_names():
+                    return
+                cols = {c["name"] for c in insp.get_columns("creator_profiles")}
+                if "contacts_extra" not in cols:
+                    db.session.execute(text("ALTER TABLE creator_profiles ADD COLUMN contacts_extra TEXT"))
+                    db.session.commit()
+        except Exception:
+            try:
+                with app.app_context():
+                    db.session.rollback()
+            except Exception:
+                pass
+
+    ensure_profile_schema()
 
     def pricing_row(model_key: str):
         for row in PRICING_SEED:
@@ -132,6 +190,8 @@ def register_product(app, db, User):
                     "show_website": prof.show_website,
                     "show_email": prof.show_email,
                     "referral_code": prof.referral_code,
+                    "avatar_url": prof.avatar_url,
+                    "contacts_extra": _parse_contacts_extra(getattr(prof, "contacts_extra", None)),
                 },
             }
         )
@@ -416,6 +476,17 @@ def register_product(app, db, User):
             db.session.commit()
         return jsonify({"ok": True, "work": _work_public(work, owner_view=True, viewer_id=user.id)})
 
+    @app.post("/api/works/<int:work_id>/unpublish")
+    @require_user
+    def api_works_unpublish(user, work_id):
+        work = Work.query.filter_by(id=work_id, owner_id=user.id).first()
+        if not work:
+            return jsonify({"error": "not_found"}), 404
+        if work.status == "published":
+            work.status = "saved"
+            db.session.commit()
+        return jsonify({"ok": True, "work": _work_public(work, owner_view=True, viewer_id=user.id)})
+
     @app.post("/api/works/<int:work_id>/publish")
     @require_user
     def api_works_publish(user, work_id):
@@ -557,6 +628,11 @@ def register_product(app, db, User):
             contacts["website"] = prof.website
         if prof.show_email and user:
             contacts["email"] = user.email
+        extra_public = []
+        for item in _parse_contacts_extra(getattr(prof, "contacts_extra", None)):
+            if not item.get("show"):
+                continue
+            extra_public.append(item)
         viewer = current_user()
         return jsonify(
             {
@@ -565,6 +641,7 @@ def register_product(app, db, User):
                 "bio": prof.bio,
                 "avatar_url": prof.avatar_url,
                 "contacts": contacts,
+                "contacts_extra": extra_public,
                 "works": [
                     _work_public(w, owner_view=False, viewer_id=viewer.id if viewer else None)
                     for w in works
@@ -595,8 +672,72 @@ def register_product(app, db, User):
         for field in ("show_telegram", "show_vk", "show_website", "show_email"):
             if field in data:
                 setattr(prof, field, bool(data.get(field)))
+        if "contacts_extra" in data:
+            prof.contacts_extra = _dump_contacts_extra(data.get("contacts_extra"))
         if data.get("consent_152"):
             prof.consent_152 = True
+        db.session.commit()
+        return jsonify({"ok": True})
+
+    @app.post("/api/me/avatar")
+    @require_user
+    @rate_limit(10, 60, "avatar_up")
+    def api_me_avatar(user):
+        f = request.files.get("file") or request.files.get("avatar")
+        if not f or not f.filename:
+            return jsonify({"error": "no_file"}), 400
+        raw = f.read()
+        if not raw:
+            return jsonify({"error": "empty"}), 400
+        if len(raw) > 10 * 1024 * 1024:
+            return jsonify({"error": "too_large"}), 400
+        ctype = (f.mimetype or "").lower().split(";")[0].strip()
+        name = (f.filename or "").lower()
+        ok_ext = name.endswith((".jpg", ".jpeg", ".png", ".webp", ".gif"))
+        # browsers sometimes send empty / octet-stream for canvas blobs
+        if ctype not in {"image/jpeg", "image/png", "image/webp", "image/gif", "image/jpg"} and not (
+            ok_ext or ctype in {"", "application/octet-stream"}
+        ):
+            return jsonify({"error": "bad_type"}), 400
+        try:
+            from PIL import Image
+            im = Image.open(__import__("io").BytesIO(raw)).convert("RGB")
+            im.thumbnail((400, 400))
+            side = 400
+            canvas = Image.new("RGB", (side, side), (30, 18, 56))
+            x = (side - im.width) // 2
+            y = (side - im.height) // 2
+            canvas.paste(im, (x, y))
+            buf = __import__("io").BytesIO()
+            canvas.save(buf, format="JPEG", quality=86)
+            data = buf.getvalue()
+        except Exception:
+            app.logger.exception("avatar decode failed")
+            return jsonify({"error": "bad_image"}), 400
+        key = f"avatars/{user.id}/{int(time.time())}.jpg"
+        try:
+            stored = media_store.upload_bytes(key, data, "image/jpeg")
+        except Exception:
+            app.logger.exception("avatar upload failed")
+            return jsonify({"error": "upload_failed"}), 502
+        # Keep durable path in DB (not a short-lived presigned URL)
+        durable = stored if stored.startswith(("/media/", "s3://")) else stored
+        public = media_store.presign(stored) if stored.startswith("s3://") else stored
+        try:
+            prof = profile_for(user.id)
+            prof.avatar_url = durable[:500]
+            db.session.commit()
+        except Exception:
+            app.logger.exception("avatar profile save failed")
+            db.session.rollback()
+            return jsonify({"error": "save_failed"}), 500
+        return jsonify({"ok": True, "url": public})
+
+    @app.delete("/api/me/avatar")
+    @require_user
+    def api_me_avatar_delete(user):
+        prof = profile_for(user.id)
+        prof.avatar_url = None
         db.session.commit()
         return jsonify({"ok": True})
 
@@ -610,6 +751,26 @@ def register_product(app, db, User):
         if not data.get("consent_152"):
             return jsonify({"error": "consent_required"}), 400
         code = f"{secrets.randbelow(1000000):06d}"
+        from mailer import send_login_code, smtp_configured
+
+        is_prod = (os.getenv("FLASK_ENV") or "development") == "production"
+        testing = bool(app.config.get("TESTING"))
+        use_smtp = smtp_configured() and not testing
+
+        if use_smtp:
+            try:
+                send_login_code(email, code)
+            except Exception:
+                app.logger.exception("email code send failed for %s", email)
+                return jsonify({"error": "send_failed"}), 502
+        elif is_prod:
+            app.logger.error("SMTP not configured in production")
+            return jsonify({"error": "send_failed"}), 503
+        elif not testing:
+            # SMTP not set up: refuse to pretend the letter was sent
+            app.logger.error("SMTP not configured — refuse email-code request")
+            return jsonify({"error": "send_failed"}), 503
+
         row = LoginCode(
             email=email,
             code_hash=generate_password_hash(code),
@@ -617,10 +778,12 @@ def register_product(app, db, User):
         )
         db.session.add(row)
         db.session.commit()
-        # Dev: return code when not production mail configured
         payload = {"ok": True}
-        if (os.getenv("FLASK_ENV") or "development") != "production":
+        # Tests only: return code so pytest can verify login without SMTP
+        if testing:
             payload["dev_code"] = code
+        elif not use_smtp:
+            app.logger.info("[mail] login code generated for %s (no SMTP)", email)
         return jsonify(payload)
 
     @app.post("/api/auth/email-code/verify")
@@ -869,6 +1032,366 @@ def register_product(app, db, User):
                 }
             )
         return jsonify({"items": items})
+
+    # --- internal chat / threads ---
+    KIND_LABEL = {"prompt": "промпт", "original": "оригинал", "order": "заказ", "assistant": "помощник"}
+
+    ASSISTANT_HELP = [
+        (re.compile(r"баланс|пополн|оплат|деньг|руб|сбп|карт", re.I),
+         "Баланс нужен для генераций в Студии. Откройте вкладку «Баланс», выберите сумму от 100 ₽ и нажмите «Пополнить»."),
+        (re.compile(r"студи|генерац|модел|seedance|kling|seedream|создать|сгенер", re.I),
+         "Студия — раздел в шапке: выбираете модель, задаёте промпт и запускаете генерацию. Списание только за готовый результат."),
+        (re.compile(r"витрин|опублик|explore|подборк", re.I),
+         "Витрина — публичная лента работ. После генерации можно опубликовать работу; во вкладке «Работы» видно статус."),
+        (re.compile(r"чат|сообщен|диалог|запрос|промпт|оригинал|заказ", re.I),
+         "Во вкладке «Чат» — помощник и переписка по запросам клиентов. Отвечайте прямо в {AI}-шнице."),
+        (re.compile(r"профиль|ник|контакт|фото|о себе|кабинет|заполн", re.I),
+         "Вкладка «Профиль» — имя, ник, описание, фото и контакты. Можно заполнить вручную или спросить меня здесь."),
+        (re.compile(r"лайк|сердеч", re.I),
+         "Лайки ставят на витрине. В шапке кабинета видно сумму лайков по вашим работам."),
+        (re.compile(r"помощ|что умеешь|как польз|справка|help|faq", re.I),
+         "Я первый чат у каждого: помогаю с профилем и отвечаю про Студию, Витрину, баланс и чаты."),
+    ]
+
+    def _assistant_reply(text: str) -> str:
+        for rx, ans in ASSISTANT_HELP:
+            if rx.search(text or ""):
+                return ans
+        return "Могу подсказать про баланс, Студию, Витрину, чат и профиль. Спросите своими словами."
+
+    def _ensure_assistant_thread(user) -> Thread:
+        th = (
+            Thread.query.filter_by(kind="assistant", buyer_id=user.id)
+            .order_by(Thread.id.asc())
+            .first()
+        )
+        if th:
+            return th
+        th = Thread(
+            kind="assistant",
+            work_id=None,
+            buyer_id=user.id,
+            seller_id=user.id,
+            status="answered",
+        )
+        db.session.add(th)
+        db.session.flush()
+        db.session.add(
+            ThreadMessage(
+                thread_id=th.id,
+                sender_id=None,
+                text="Привет! Я помощник {AI}-шницы — всегда первый чат в списке. Помогу заполнить профиль или отвечу про Студию, Витрину, баланс и чаты. О чём спросить?",
+                read_by_buyer=False,
+                read_by_seller=True,
+            )
+        )
+        db.session.commit()
+        return th
+
+    def _peer_card(user_id: int) -> dict:
+        u = User.query.get(user_id)
+        prof = CreatorProfile.query.filter_by(user_id=user_id).first()
+        name = (prof.display_name if prof and prof.display_name else None) or (u.name if u else None) or (u.email.split("@")[0] if u and u.email else "Пользователь")
+        return {"name": name, "grad": "#8A66FF,#5B35E0", "handle": prof.handle if prof else None}
+
+    def _thread_payload(th: Thread, viewer_id: int) -> dict:
+        if th.kind == "assistant":
+            peer = {"name": "{AI}-шница", "grad": "#FFA235,#F2668B", "handle": None, "assistant": True}
+        else:
+            peer_id = th.seller_id if viewer_id == th.buyer_id else th.buyer_id
+            peer = _peer_card(peer_id)
+        msgs = (
+            ThreadMessage.query.filter_by(thread_id=th.id)
+            .order_by(ThreadMessage.created_at.asc())
+            .limit(200)
+            .all()
+        )
+        unread = 0
+        for m in msgs:
+            if m.is_system:
+                continue
+            if viewer_id == th.buyer_id and not m.read_by_buyer and m.sender_id != viewer_id:
+                unread += 1
+            if viewer_id == th.seller_id and not m.read_by_seller and m.sender_id != viewer_id:
+                unread += 1
+        work_card = None
+        if th.work_id:
+            w = Work.query.get(th.work_id)
+            if w:
+                work_card = {
+                    "title": w.title or w.model_key or "Работа",
+                    "src": w.thumb_url or w.watermarked_url or w.original_url or "/assets/bg-light.jpg",
+                }
+        out_msgs = []
+        for m in msgs:
+            if m.is_system:
+                out_msgs.append({"sys": m.text or "", "ts": int((m.created_at or datetime.utcnow()).timestamp() * 1000)})
+                continue
+            item = {
+                "from": "me" if m.sender_id == viewer_id else "them",
+                "text": m.text or "",
+                "ts": int((m.created_at or datetime.utcnow()).timestamp() * 1000),
+                "read": bool(m.read_by_buyer and m.read_by_seller) if m.sender_id == viewer_id else False,
+            }
+            if m.prompt:
+                item["prompt"] = m.prompt
+            if m.file_name:
+                item["file"] = {"name": m.file_name, "size": m.file_size or ""}
+            out_msgs.append(item)
+        role = "assistant" if th.kind == "assistant" else ("buyer" if viewer_id == th.buyer_id else "seller")
+        return {
+            "id": str(th.id),
+            "with": peer,
+            "kind": th.kind,
+            "role": role,
+            "work": work_card,
+            "status": "answered" if th.status == "answered" else "new",
+            "unread": unread,
+            "msgs": out_msgs,
+        }
+
+    @app.get("/api/threads")
+    @require_user
+    def api_threads_list(user):
+        _ensure_assistant_thread(user)
+        filt = str(request.args.get("filter") or "all")
+        rows = (
+            Thread.query.filter((Thread.buyer_id == user.id) | (Thread.seller_id == user.id))
+            .order_by(Thread.updated_at.desc())
+            .limit(100)
+            .all()
+        )
+        # assistant always first
+        rows = sorted(rows, key=lambda t: (0 if t.kind == "assistant" else 1, -(t.updated_at.timestamp() if t.updated_at else 0)))
+        items = [_thread_payload(t, user.id) for t in rows]
+        if filt == "unread":
+            items = [i for i in items if i["unread"]]
+        elif filt == "assistant":
+            items = [i for i in items if i["kind"] == "assistant"]
+        elif filt in {"prompt", "original", "order"}:
+            items = [i for i in items if i["kind"] == filt]
+        return jsonify({"items": items})
+
+    @app.get("/api/threads/unread")
+    @require_user
+    def api_threads_unread(user):
+        rows = Thread.query.filter((Thread.buyer_id == user.id) | (Thread.seller_id == user.id)).all()
+        total = sum(_thread_payload(t, user.id)["unread"] for t in rows)
+        return jsonify({"unread": total})
+
+    def _resolve_seller_id(creator: str, creator_name: str = "") -> Optional[int]:
+        """Find seller by handle / numeric id, or provision a demo seller for showcase creators."""
+        raw = str(creator or "").strip()
+        if not raw:
+            return None
+        handle = raw.lstrip("@").strip()[:32]
+        if not handle:
+            return None
+        prof = CreatorProfile.query.filter_by(handle=handle).first()
+        if prof:
+            return prof.user_id
+        if handle.isdigit():
+            return int(handle)
+        # Showcase/demo creators (c3, zheltok_demo, …) — create a shadow seller so chat works
+        safe = re.sub(r"[^a-zA-Z0-9_]", "", handle).lower()[:24] or f"c{abs(hash(handle)) % 100000}"
+        email = f"demo+{safe}@aishnitsa.local"
+        u = User.query.filter_by(email=email).first()
+        if not u:
+            u = User(
+                email=email,
+                name=(creator_name or handle)[:200],
+                provider="demo",
+                provider_id=safe,
+                password_hash=None,
+            )
+            db.session.add(u)
+            db.session.flush()
+        prof = profile_for(u.id)
+        if not prof.handle:
+            taken = CreatorProfile.query.filter_by(handle=safe).first()
+            prof.handle = safe if not taken or taken.user_id == u.id else f"{safe[:18]}_{u.id}"[:24]
+            if creator_name:
+                prof.display_name = str(creator_name)[:120]
+            elif not prof.display_name:
+                prof.display_name = handle[:120]
+            db.session.commit()
+        return u.id
+
+    @app.post("/api/threads")
+    @require_user
+    @rate_limit(20, 60, "threads_create")
+    def api_threads_create(user):
+        data = request.get_json(silent=True) or {}
+        kind = str(data.get("kind") or "prompt").strip()
+        if kind == "custom":
+            kind = "order"
+        if kind not in {"prompt", "original", "order"}:
+            return jsonify({"error": "bad_kind"}), 400
+        work_id = data.get("workId") or data.get("work_id")
+        work = None
+        seller_id = None
+        if work_id not in (None, ""):
+            try:
+                work = Work.query.get(int(work_id))
+            except (TypeError, ValueError):
+                # demo string ids like w01 — resolve owner by creator handle later
+                work = None
+            if work:
+                seller_id = work.owner_id
+        if not seller_id:
+            creator = str(data.get("creator") or data.get("creatorNick") or "").strip()
+            creator_name = str(data.get("creatorName") or data.get("creator_name") or "").strip()
+            seller_id = _resolve_seller_id(creator, creator_name)
+        if not seller_id:
+            return jsonify({"error": "seller_not_found"}), 404
+        if seller_id == user.id:
+            return jsonify({"error": "self"}), 400
+        text = str(data.get("text") or data.get("msg") or "").strip()[:4000]
+        fmt = str(data.get("fmt") or "").strip()[:200]
+        work_title = str(data.get("workTitle") or data.get("work_title") or "").strip()[:200]
+        work_src = str(data.get("workSrc") or data.get("work_src") or "").strip()[:700]
+
+        # One shared dialog buyer ↔ seller (both sides see the same thread)
+        th = (
+            Thread.query.filter(
+                Thread.buyer_id == user.id,
+                Thread.seller_id == seller_id,
+                Thread.kind != "assistant",
+            )
+            .order_by(Thread.id.desc())
+            .first()
+        )
+        created = False
+        if not th:
+            created = True
+            th = Thread(
+                kind=kind,
+                work_id=work.id if work else None,
+                buyer_id=user.id,
+                seller_id=seller_id,
+                status="new",
+            )
+            db.session.add(th)
+            db.session.flush()
+        else:
+            # Keep dialog kind current; attach work if thread had none
+            th.kind = kind
+            if work and work.id and not th.work_id:
+                th.work_id = work.id
+
+        buyer = _peer_card(user.id)
+        label = KIND_LABEL.get(kind, kind)
+        title = (work.title if work and work.title else None) or work_title or None
+        sys = f"{buyer['name']} запросил(а) {label}"
+        if title:
+            sys += f" к «{title}»"
+        if fmt:
+            sys += f" · {fmt}"
+        db.session.add(
+            ThreadMessage(
+                thread_id=th.id,
+                sender_id=None,
+                is_system=True,
+                text=sys,
+                read_by_buyer=True,
+                read_by_seller=False,
+            )
+        )
+        if text:
+            db.session.add(
+                ThreadMessage(
+                    thread_id=th.id,
+                    sender_id=user.id,
+                    text=text,
+                    read_by_buyer=True,
+                    read_by_seller=False,
+                )
+            )
+        th.status = "new"
+        th.updated_at = datetime.utcnow()
+        db.session.commit()
+        payload = _thread_payload(th, user.id)
+        # Soft work card for showcase/demo requests without a DB work row
+        if not payload.get("work") and (work_title or work_src):
+            payload["work"] = {
+                "title": work_title or "Работа",
+                "src": work_src or "/assets/bg-light.jpg",
+            }
+        return jsonify({"ok": True, "threadId": str(th.id), "created": created, "thread": payload})
+
+    @app.get("/api/threads/<int:thread_id>/messages")
+    @require_user
+    def api_threads_messages(user, thread_id):
+        th = Thread.query.get(thread_id)
+        if not th or user.id not in {th.buyer_id, th.seller_id}:
+            return jsonify({"error": "not_found"}), 404
+        return jsonify(_thread_payload(th, user.id))
+
+    @app.post("/api/threads/<int:thread_id>/messages")
+    @require_user
+    @rate_limit(60, 60, "threads_msg")
+    def api_threads_post_message(user, thread_id):
+        th = Thread.query.get(thread_id)
+        if not th or user.id not in {th.buyer_id, th.seller_id}:
+            return jsonify({"error": "not_found"}), 404
+        data = request.get_json(silent=True) or {}
+        text = str(data.get("text") or "").strip()[:4000]
+        prompt = str(data.get("prompt") or "").strip()[:8000] or None
+        file_meta = data.get("file") if isinstance(data.get("file"), dict) else None
+        if not text and not prompt and not file_meta:
+            return jsonify({"error": "empty"}), 400
+        msg = ThreadMessage(
+            thread_id=th.id,
+            sender_id=user.id,
+            text=text,
+            prompt=prompt,
+            file_name=(str(file_meta.get("name") or "")[:255] if file_meta else None) or None,
+            file_size=(str(file_meta.get("size") or "")[:40] if file_meta else None) or None,
+            file_url=(str(file_meta.get("url") or "")[:700] if file_meta else None) or None,
+            read_by_buyer=user.id == th.buyer_id,
+            read_by_seller=user.id == th.seller_id,
+        )
+        db.session.add(msg)
+        if th.kind == "assistant":
+            db.session.add(
+                ThreadMessage(
+                    thread_id=th.id,
+                    sender_id=None,
+                    text=_assistant_reply(text),
+                    read_by_buyer=False,
+                    read_by_seller=True,
+                )
+            )
+            th.status = "answered"
+        else:
+            th.status = "new" if user.id == th.buyer_id else th.status
+        th.updated_at = datetime.utcnow()
+        db.session.commit()
+        return jsonify({"ok": True, "thread": _thread_payload(th, user.id)})
+
+    @app.patch("/api/threads/<int:thread_id>")
+    @require_user
+    def api_threads_patch(user, thread_id):
+        th = Thread.query.get(thread_id)
+        if not th or user.id not in {th.buyer_id, th.seller_id}:
+            return jsonify({"error": "not_found"}), 404
+        data = request.get_json(silent=True) or {}
+        if "status" in data:
+            st = str(data.get("status") or "")
+            if st in {"open", "new"}:
+                th.status = "new"
+            elif st == "answered":
+                th.status = "answered"
+        if data.get("read"):
+            msgs = ThreadMessage.query.filter_by(thread_id=th.id).all()
+            for m in msgs:
+                if user.id == th.buyer_id:
+                    m.read_by_buyer = True
+                else:
+                    m.read_by_seller = True
+        th.updated_at = datetime.utcnow()
+        db.session.commit()
+        return jsonify({"ok": True, "thread": _thread_payload(th, user.id)})
 
     # expose models on app for tests
     app.extensions["product_models"] = models

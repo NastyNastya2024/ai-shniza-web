@@ -286,6 +286,22 @@ html[data-theme="dark"] .hdr-tag,html[data-theme="dark"] .hdr-btn{color:#D7CCFF!
     flex-shrink:0;
   }
 }
+/* Narrow phones: reply chips = icons only */
+@media (max-width:390px){
+  #replies{gap:6px}
+  .reply,
+  .reply--free{
+    flex:1 1 0!important;
+    min-width:0!important;
+    padding:0!important;
+    gap:0!important;
+    min-height:40px!important;
+    justify-content:center;
+  }
+  .reply-label,
+  .reply-free{display:none!important}
+  .reply svg{width:18px;height:18px}
+}
 @media (prefers-reduced-motion:reduce){.orb-idle,.orb-listen,.orb-type,.orb-cook,.orb-poke,.orb-done,.orb-talk,.caret,.reply,.glow-idle,.glow-listen,.glow-type,.glow-cook,.glow-poke,.glow-done,.eye-open .eye-shape{animation:none}}
 
 .orb-wrap{position:relative;width:var(--S);height:var(--S)}
@@ -557,18 +573,18 @@ class Component extends DCLogic {
     };
     this.focusInput = () => { const el = document.getElementById('prompt'); if (el) el.focus(); };
     const own = { icon: 'own', label: tr('index.reply.own'), go: () => { this.speak('index.say.own', 'free'); this.focusInput(); } };
-    const pick = (id, say, next) => ({ label: tr('index.chip.' + id + '.label'), go: () => { this.append(tr('index.chip.' + id + '.prompt')); this.speak('index.say.' + id, next); } });
-    const opt = (labelKey, promptKey) => ({ label: tr(labelKey), go: () => { this.append(tr(promptKey)); this.ready(); } });
+    const pick = (id, say) => ({ label: tr('index.chip.' + id + '.label'), go: () => { this.append(tr('index.chip.' + id + '.prompt')); this.goStudio(); } });
+    const opt = (labelKey, promptKey) => ({ label: tr(labelKey), go: () => { this.append(tr(promptKey)); this.goStudio(); } });
     this.flows = {
       start: [
-        { icon: 'seedance', label: tr('index.reply.seedance'), free: true, go: () => { this.setState({ text: tr('index.prompt.prefix.seedance') }); this.speak('index.say.seedance', 'video'); } },
-        { icon: 'video', label: tr('index.reply.video'), go: () => { this.setState({ text: tr('index.prompt.prefix.video') }); this.speak('index.say.video', 'video'); } },
-        { icon: 'image', label: tr('index.reply.image'), go: () => { this.setState({ text: tr('index.prompt.prefix.image') }); this.speak('index.say.image', 'image'); } },
-        { icon: 'music', label: tr('index.reply.music'), go: () => { this.setState({ text: tr('index.prompt.prefix.music') }); this.speak('index.say.music', 'music'); } }
+        { icon: 'seedance', label: tr('index.reply.seedance'), free: true, go: () => { this.setState({ text: tr('index.prompt.prefix.seedance') }); this.goStudio(); } },
+        { icon: 'video', label: tr('index.reply.video'), go: () => { this.setState({ text: tr('index.prompt.prefix.video') }); this.goStudio(); } },
+        { icon: 'image', label: tr('index.reply.image'), go: () => { this.setState({ text: tr('index.prompt.prefix.image') }); this.goStudio(); } },
+        { icon: 'music', label: tr('index.reply.music'), go: () => { this.setState({ text: tr('index.prompt.prefix.music') }); this.goStudio(); } }
       ],
-      video: [pick('cat', 'cat', 'mood'), pick('city', 'city', 'mood'), pick('pancakes', 'pancakes', 'mood'), own],
-      image: [pick('glossy', 'glossy', 'style'), pick('kitchen', 'kitchen', 'style'), pick('burger', 'burger', 'style'), own],
-      music: [pick('lofi', 'lofi', 'purpose'), pick('synth', 'synth', 'purpose'), pick('jazz', 'jazz', 'purpose'), own],
+      video: [pick('cat', 'cat'), pick('city', 'city'), pick('pancakes', 'pancakes'), own],
+      image: [pick('glossy', 'glossy'), pick('kitchen', 'kitchen'), pick('burger', 'burger'), own],
+      music: [pick('lofi', 'lofi'), pick('synth', 'synth'), pick('jazz', 'jazz'), own],
       mood: [
         opt('index.reply.mood.cozy', 'index.prompt.mood.cozy'), opt('index.reply.mood.epic', 'index.prompt.mood.epic'),
         opt('index.reply.mood.funny', 'index.prompt.mood.funny'), opt('index.reply.mood.juicy', 'index.prompt.mood.juicy')
@@ -630,7 +646,7 @@ class Component extends DCLogic {
     };
     this.onSubmit = (e) => {
       if (e && e.preventDefault) e.preventDefault();
-      if (!this.state.text.trim()) { this.setMode('poke'); this.speak(this.P.empty); this.later('poke', 1100, () => this.setMode(this.restMode())); return; }
+      if (!this.state.text.trim()) { this.goStudio(); return; }
       this.setMode('cook');
       this.speak(this.P.cook, 'cooking');
       this.later('cook', 1600, () => {
@@ -737,6 +753,7 @@ function render() {
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'reply' + (r.free ? ' reply--free' : '');
+        b.setAttribute('aria-label', r.label);
         b.style.cssText = `min-height:44px;padding:0 16px;border-radius:999px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;animation-delay:${r.delay}ms`;
         if (ICONS[r.icon]) b.insertAdjacentHTML('beforeend', ICONS[r.icon]);
         const label = document.createElement('span');
@@ -797,7 +814,7 @@ async function refreshLoginUi() {
   const { data } = await api('/api/auth/me');
   if (data.user) {
     loginBtn.textContent = (data.user.name || data.user.email || tr('studio.cabinet.profile')).split('@')[0].slice(0, 16);
-    loginBtn.onclick = () => { location.href = '/app'; };
+    loginBtn.onclick = () => { location.href = '/account'; };
   } else {
     loginBtn.textContent = tr('common.login');
     loginBtn.onclick = goAuth;

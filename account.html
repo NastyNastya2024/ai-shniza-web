@@ -1,0 +1,1172 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Личный кабинет — {AI}-шница</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>(function(){try{var q=new URLSearchParams(location.search).get('theme');var t=q||localStorage.getItem('aish-vitrina-theme')||localStorage.getItem('aish-theme')||localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t;}catch(e){}})();</script>
+<style>
+/* ================= токены ================= */
+:root{--bg:#EEEAF8;--panel:rgba(255,255,255,.78);--panel-solid:#fff;--brd:rgba(255,255,255,.95);--line:rgba(80,60,160,.12);--line2:rgba(80,60,160,.2);
+  --ink:#1E1238;--muted:#5B4D93;--muted2:#8A80B5;--card:#F4F1FC;--card2:#ECE7FA;--field:#fff;
+  --violet:#5B35E0;--violet2:#7A55FF;--violet-ink:#4A2CC0;--violet-bg:rgba(91,53,224,.08);--orange:#E8691C;--ok:#16794C;--ok-bg:rgba(22,121,76,.1);--err:#C2305F;
+  --shadow:rgba(75,43,184,.22);--bubble-me:#1E1238;--bubble-me-ink:#fff;--bubble:#fff;--page:url(/assets/bg-light.jpg);--hdr:73px;--prof-h:176px;color-scheme:light}
+:root[data-theme=dark]{--bg:#15122A;--panel:rgba(44,37,74,.86);--panel-solid:#2A2346;--brd:rgba(255,255,255,.13);--line:rgba(255,255,255,.1);--line2:rgba(255,255,255,.18);
+  --ink:#F6F3FF;--muted:#C9C0EE;--muted2:#A79DD6;--card:rgba(255,255,255,.07);--card2:rgba(255,255,255,.11);--field:rgba(255,255,255,.08);
+  --violet:#7A55FF;--violet2:#9B7BFF;--violet-ink:#D4C8FF;--violet-bg:rgba(155,123,255,.14);--orange:#FF9A3D;--ok:#7BE3B0;--ok-bg:rgba(123,227,176,.12);--err:#FF8DB3;
+  --shadow:rgba(0,0,0,.6);--bubble-me:#EDE8FF;--bubble-me-ink:#1E1238;--bubble:#2A2346;--page:url(/assets/bg-dark.jpg);color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{min-height:100vh;background:var(--bg) var(--page) center/cover fixed;color:var(--ink);font-family:'Onest',system-ui,sans-serif;font-size:15px}
+:root[data-theme=dark] body{box-shadow:inset 0 0 0 100vmax rgba(70,48,150,.12)}
+button,input,textarea,select{font:inherit;color:inherit}
+a{color:var(--violet-ink)}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.glass{background:var(--panel);border:1px solid var(--brd);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:26px;box-shadow:0 24px 60px -40px var(--shadow)}
+:root[data-theme=dark] .glass{box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 24px 60px -36px rgba(0,0,0,.8)}
+.btn{height:44px;padding:0 18px;border-radius:14px;border:1px solid transparent;font-weight:700;font-size:14.5px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}
+.btn-p{background:linear-gradient(135deg,var(--violet2),var(--violet));color:#fff;box-shadow:0 12px 26px -14px rgba(91,53,224,.7)}
+.btn-p:hover{filter:brightness(1.06)}
+.btn-s{background:var(--field);border-color:var(--line2);color:var(--ink)}
+.btn-s:hover{border-color:var(--violet2)}
+.btn-g{background:transparent;color:var(--violet-ink)}
+.btn-gen{background:radial-gradient(90% 130% at 12% 0%,rgba(255,214,110,.95),rgba(255,214,110,0) 55%),linear-gradient(110deg,#FFA235,#FF7B2C 42%,#FF8F7E 74%,#F6AACF);color:#fff}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.ib{width:42px;height:42px;border-radius:13px;border:1px solid var(--line2);background:var(--field);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);flex:0 0 auto}
+.ib:hover{border-color:var(--violet2)}
+.chip{height:34px;padding:0 13px;border-radius:999px;border:1px solid var(--line2);background:var(--field);font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+:root[data-theme=dark] .chip[aria-pressed=true]{color:#1E1238}
+.badge{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#FF8A2B;color:#fff;font-size:11.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+input.inp,textarea.inp,select.inp{width:100%;min-height:48px;border-radius:14px;border:1.5px solid var(--line2);background:var(--field);padding:12px 14px;font-size:15px}
+textarea.inp{resize:vertical;min-height:84px;line-height:1.5}
+.inp:focus{outline:none;border-color:var(--violet2);box-shadow:0 0 0 4px rgba(122,85,255,.18)}
+.lbl{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:0 0 6px}
+.hint{font-size:12.5px;color:var(--muted2);margin-top:6px}
+
+/* ================= шапка ================= */
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;padding:12px clamp(14px,3vw,32px);background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.top .logo img{height:40px;display:block}
+.nav{display:flex;gap:4px;margin-left:18px}
+.nav a{height:40px;padding:0 14px;border-radius:999px;display:flex;align-items:center;text-decoration:none;color:var(--muted);font-weight:700}
+.nav a[aria-current]{background:var(--panel-solid);color:var(--ink);box-shadow:0 6px 16px -10px var(--shadow)}
+.top .sp{flex:1}
+.ava{flex:0 0 auto;aspect-ratio:1;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;color:#fff;background:linear-gradient(135deg,#FF9A3D,#F05A7E);overflow:hidden}
+.ava img{width:100%;height:100%;object-fit:cover;display:block}
+.prof-top{display:grid;grid-template-columns:1fr 1fr;gap:16px 28px;align-items:stretch;margin:18px 0 22px;width:100%}
+.ph-identity{display:flex;flex-direction:column;gap:12px;min-width:0}
+.ph-about{display:flex;flex-direction:column;gap:6px;min-width:0;min-height:0}
+.ph-about .inp{flex:1;min-height:118px;resize:vertical;line-height:1.45;width:100%;box-sizing:border-box}
+.phbtns{display:flex;gap:8px;flex-wrap:wrap}
+.crop-bg{position:fixed;inset:0;z-index:80;background:rgba(20,12,40,.45);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px}
+.crop-bg[hidden]{display:none}
+.crop{width:min(420px,100%);padding:18px;background:var(--panel-solid)}
+.crop-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.crop-h b{font-size:17px}
+.crop-stage{position:relative;width:100%;aspect-ratio:1;border-radius:20px;overflow:hidden;background:#111;touch-action:none;cursor:grab}
+.crop-stage:active{cursor:grabbing}
+.crop-stage canvas{width:100%;height:100%;display:block}
+.crop-ring{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle closest-side at center,transparent calc(100% - 12px),rgba(10,6,24,.55) calc(100% - 11px))}
+.crop-ring::after{content:"";position:absolute;inset:12px;border-radius:50%;border:2px solid rgba(255,255,255,.9)}
+.crop-zoom{display:flex;align-items:center;gap:10px;margin:6px 4px 14px;font-weight:800;color:var(--muted)}
+.crop-zoom input{flex:1;accent-color:var(--violet)}
+.crop-f{display:flex;gap:8px;align-items:center}.crop-f .sp{flex:1}
+@media (max-width:640px){.crop-bg{align-items:flex-end;padding:0}.crop{border-radius:26px 26px 0 0;padding-bottom:max(18px,env(safe-area-inset-bottom))}.crop-f [data-crop=other]{padding:0 12px}}
+.ava.ava-e{background:var(--card2);color:var(--muted2)}
+
+/* ================= раскладка (как публичный профиль) ================= */
+.wrap{max-width:1320px;margin:0 auto;padding:22px clamp(14px,3vw,32px) 80px;display:flex;flex-direction:column;box-sizing:border-box}
+.main{min-width:0;flex:1 1 auto}
+html{scrollbar-gutter:stable}
+
+/* профиль — одна высота на всех вкладках, чтобы табы не прыгали */
+.prof{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:20px 36px;padding:20px 28px;margin:0;flex:0 0 auto;height:var(--prof-h);min-height:var(--prof-h);max-height:var(--prof-h);overflow:hidden;box-sizing:border-box}
+.prof-row{display:flex;flex-wrap:nowrap;gap:20px 36px;align-items:center;min-width:0;flex:1 1 auto}
+.prof .ava{width:88px;height:88px;font-size:34px;box-shadow:0 0 0 4px var(--panel-solid),0 14px 28px -12px rgba(232,105,28,.45)}
+.avabtn{position:relative;display:block;flex:0 0 auto;width:88px;height:88px;border:none;padding:0;background:none;cursor:pointer;border-radius:50%;line-height:0;overflow:visible;z-index:1}
+.avabtn .ava{width:100%!important;height:100%!important;font-size:inherit!important;pointer-events:none}
+.avabtn .cam{position:absolute;right:-2px;bottom:-2px;width:28px;height:28px;border-radius:50%;background:var(--violet);color:#fff;display:flex;align-items:center;justify-content:center;border:3px solid var(--panel-solid);font-size:11px;z-index:2;box-sizing:border-box;line-height:0;pointer-events:none}
+.p-main{flex:1 1 auto;min-width:0}
+.prof h1,.p-name{margin:0;font-weight:800;font-size:clamp(22px,2.6vw,34px);letter-spacing:-.03em;line-height:1.12}
+.prof .nick{color:var(--muted2);font-weight:700;font-size:14px;margin-top:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prof .about{margin:10px 0 0;max-width:640px;line-height:1.4;color:var(--muted);font-size:14px;font-weight:500;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.prof .ph{color:var(--muted2);font-style:italic}
+.pcs{display:none}
+.stats{display:flex;gap:24px 28px;margin-top:14px;flex-wrap:wrap}
+.stats b{display:block;font-size:20px;font-weight:800;letter-spacing:-.02em}
+.stats span{font-size:12.5px;color:var(--muted2);font-weight:700;display:inline-flex;align-items:center;gap:4px}
+.stats .heart{color:#E0457B;flex:0 0 auto}
+.p-side{display:flex;flex-direction:column;gap:10px;flex:0 0 240px;width:240px;max-width:240px;align-self:center;margin-left:auto;padding-left:8px}
+.p-side .btn{height:42px;padding:0 16px;font-size:14px;width:100%;box-sizing:border-box}
+.p-side .btn-logout{height:38px;font-size:13.5px;font-weight:700;color:var(--ink);border:1.5px solid var(--line2);background:var(--field);gap:8px}
+.p-side .btn-logout svg{flex:0 0 auto;opacity:.85}
+.p-side .btn-logout:hover{color:var(--err);border-color:rgba(194,48,95,.35)}
+.p-side .btn-logout:hover svg{opacity:1}
+.p-side .btn-gen{white-space:nowrap}
+.p-side .btn-g{width:auto;height:auto;padding:0;justify-content:flex-start;font-size:13px}
+.p-side .hint-side{margin:0;font-size:12px;line-height:1.35;color:var(--muted2);font-weight:600;font-style:italic;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* вкладки — в рамке, как раньше */
+.tabs{display:flex;gap:4px;padding:5px;border-radius:999px;width:max-content;max-width:100%;overflow-x:auto;scrollbar-width:none;margin:14px 0 18px;background:var(--panel);border:1px solid var(--brd);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 24px 60px -40px var(--shadow);box-sizing:border-box;flex:0 0 auto}
+.tabs.glass{border-radius:999px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button,.tab{height:40px;padding:0 16px;border-radius:999px;border:none;background:transparent;font-weight:800;font-size:14.5px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;flex:0 0 auto}
+.tabs button:hover,.tab:hover{color:var(--ink)}
+.tabs button[aria-selected=true],.tab[aria-selected=true]{background:var(--ink);color:var(--bg)}
+:root[data-theme=dark] .tabs button[aria-selected=true],:root[data-theme=dark] .tab[aria-selected=true]{color:#1E1238}
+.tabs .tab-ico{display:inline-flex;flex:0 0 auto;opacity:.9}
+.tabs .tab-ico svg{display:block}
+.tabs .tab-lbl{display:inline}
+.tabs .tab-bal{font-weight:800;opacity:.85}
+.tabs .badge{min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#FF8A2B;color:#fff;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+.tabs button[aria-selected=true] .badge{background:#fff;color:var(--ink)}
+:root[data-theme=dark] .tabs button[aria-selected=true] .badge{background:#1E1238;color:#fff}
+
+@media (min-width:901px){
+  .tabs{gap:14px;padding:8px 12px;margin:16px 0 20px}
+  .tabs button,.tab{padding:0 22px;gap:9px}
+}
+
+/* работы */
+.grid{columns:3;column-gap:14px}
+.wk{break-inside:avoid;margin:0 0 14px;padding:5px;border-radius:22px;background:var(--panel-solid);box-shadow:0 14px 30px -24px var(--shadow);position:relative}
+.wk img{display:block;width:100%;border-radius:17px}
+.wk .st{position:absolute;left:14px;bottom:14px;height:28px;padding:0 12px;border-radius:999px;border:none;background:rgba(255,255,255,.95);color:#16794C;font:800 12px inherit;display:inline-flex;align-items:center;gap:6px;cursor:pointer;z-index:2;box-shadow:0 6px 16px -10px rgba(20,12,40,.35)}
+.wk .st:hover{filter:brightness(1.05);transform:translateY(-1px)}
+.wk .st.h{background:rgba(30,18,56,.78);color:#E6E0FA}
+.wk .st:before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor;flex:0 0 auto}
+.wk .st[disabled]{opacity:.6;cursor:wait;transform:none}
+.empty{padding:44px 28px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+.empty .ill{width:96px;height:96px;border-radius:28px;background:var(--card);display:flex;align-items:center;justify-content:center}
+.empty h3{margin:4px 0 0;font-size:20px;font-weight:800}
+.empty p{margin:0;max-width:440px;color:var(--muted);line-height:1.55}
+.empty .btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+
+/* ================= сообщения ================= */
+.msgs{display:grid;grid-template-columns:330px minmax(0,1fr);min-height:320px;height:auto;max-height:min(520px,calc(100dvh - var(--hdr, 73px) - var(--prof-h) - 88px));overflow:hidden;padding:0}
+.ml{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.ml-h{padding:14px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line)}
+.ml-f{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.ml-list{flex:1;overflow-y:auto}
+.cv{display:flex;gap:11px;width:100%;padding:12px 14px;border:none;background:none;text-align:left;cursor:pointer;border-bottom:1px solid var(--line);position:relative}
+.cv:hover{background:var(--card)}
+.cv[aria-current=true]{background:var(--violet-bg)}
+.cv .ava{width:42px;height:42px;font-size:16px}
+.cv .b{flex:1;min-width:0}
+.cv .r1{display:flex;align-items:center;gap:6px}
+.cv .n{font-weight:800;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cv .t{margin-left:auto;font-size:12px;color:var(--muted2);flex:0 0 auto}
+.cv .k{display:inline-flex;margin-top:3px;font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--card2);color:var(--violet-ink)}
+.cv .k.o{background:rgba(255,138,43,.14);color:var(--orange)}
+.cv .k.c{background:var(--ok-bg);color:var(--ok)}
+.cv .p{display:block;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}
+.ava.ava-orb{background:transparent!important;box-shadow:none!important;padding:0}
+.ava.ava-orb img{width:100%;height:100%;object-fit:contain;display:block}
+.cv.unread .n:after{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#FF8A2B;margin-left:6px;vertical-align:2px}
+.th{display:flex;flex-direction:column;min-width:0;min-height:0;height:100%;overflow:hidden}
+.th-h{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);flex:0 0 auto}
+.th-h .ava{width:40px;height:40px;font-size:15px}
+.th-h b{display:block;font-size:15.5px}.th-h span{font-size:12.5px;color:var(--muted2);font-weight:700}
+.th-h .sp{flex:1}
+.th-who{min-width:0}.th-who b,.th-who span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.back{display:none}
+.ref{display:flex;align-items:center;gap:12px;margin:12px 16px 0;padding:10px;border-radius:16px;background:var(--card);border:1px solid var(--line);flex:0 0 auto}
+.ref img{width:54px;height:54px;border-radius:12px;object-fit:cover}
+.ref b{display:block;font-size:14px}.ref span{font-size:12.5px;color:var(--muted)}
+.feed>*{flex-shrink:0}
+.feed{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;display:flex;flex-direction:column;gap:10px;background-color:#FAF7FF;background-image:url(/assets/chat-pattern-light.svg);background-size:480px 480px;background-repeat:repeat}
+:root[data-theme=dark] .feed{background-color:#0F0B16;background-image:url(/assets/chat-pattern-dark.svg)}
+.feed-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;padding-top:4px}
+.feed-chips .chip{height:32px;padding:0 12px;font-size:12.5px;background:rgba(255,255,255,.88);border-color:var(--line);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+:root[data-theme=dark] .feed-chips .chip{background:rgba(42,35,70,.88)}
+.day{align-self:center;font-size:12px;font-weight:700;color:var(--muted2);padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+:root[data-theme=dark] .day{background:rgba(42,35,70,.72)}
+.sys{align-self:center;max-width:86%;text-align:center;font-size:13px;color:var(--muted);line-height:1.45;padding:6px 12px;border-radius:12px;background:rgba(255,255,255,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+:root[data-theme=dark] .sys{background:rgba(42,35,70,.62)}
+.bb{max-width:72%;padding:10px 14px;border-radius:18px 18px 18px 6px;background:var(--bubble);border:1px solid var(--line);line-height:1.5;font-size:14.5px;align-self:flex-start;white-space:pre-wrap;overflow-wrap:anywhere;min-width:0}
+.bb.me{align-self:flex-end;background:var(--bubble-me);color:var(--bubble-me-ink);border-color:transparent;border-radius:18px 18px 6px 18px}
+.bb small{display:block;margin-top:4px;font-size:11px;opacity:.6;text-align:right}
+.att{display:flex;align-items:center;gap:10px;margin-top:6px;padding:8px 10px;border-radius:12px;background:rgba(127,110,200,.14)}
+.att .fi{width:36px;height:36px;border-radius:10px;background:var(--violet);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+.att b{display:block;font-size:13px}.att span{font-size:11.5px;opacity:.75}
+.promptcard{white-space:normal;overflow-wrap:anywhere;margin-top:6px;padding:10px 12px;border-radius:12px;background:rgba(255,162,53,.14);border:1px dashed rgba(232,105,28,.4);font-size:13.5px}
+.promptcard em{display:block;font-style:normal;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--orange);margin-bottom:4px}
+.th-foot{flex:0 0 auto;background:var(--panel-solid);border-top:1px solid var(--line);padding-bottom:max(8px,env(safe-area-inset-bottom));z-index:2}
+.comp{display:block;padding:10px 16px 8px}
+.comp-box{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:16px;border:1.5px solid var(--line2);background:var(--field)}
+.comp-box:focus-within{border-color:var(--violet2);box-shadow:0 0 0 3px rgba(122,85,255,.12)}
+.comp-row{display:flex;align-items:flex-end;gap:8px}
+.comp textarea{flex:1;min-height:40px;max-height:140px;border:none;background:transparent;padding:6px 2px;resize:none;font-size:15px;line-height:1.4;color:var(--ink)}
+.comp textarea:focus{outline:none}
+.comp .comp-send{flex:0 0 auto;width:40px;height:40px;border-radius:12px;background:var(--violet);color:#fff;border:none;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.comp .comp-attach{flex:0 0 auto}
+.note{font-size:12px;color:var(--muted2);padding:0 16px 8px;text-align:center;margin:0}
+.no-th{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);text-align:center;padding:30px}
+
+/* ================= баланс ================= */
+.bal{padding:24px}
+.bal h2,.sec h2{margin:0 0 4px;font-size:22px;font-weight:800;letter-spacing:-.02em}
+.bal .nums{display:flex;gap:26px;flex-wrap:wrap;margin:14px 0 20px}
+.bal .nums b{display:block;font-size:34px;font-weight:800;letter-spacing:-.02em}
+.bal .nums span{font-size:13px;font-weight:700;color:var(--muted)}
+.amts{display:flex;gap:8px;flex-wrap:wrap}
+.amt{height:48px;padding:0 20px;border-radius:14px;border:1.5px solid var(--line2);background:var(--field);font-weight:800;font-size:16px;cursor:pointer}
+.amt[aria-pressed=true]{border-color:var(--violet2);background:var(--violet-bg);color:var(--violet-ink);box-shadow:0 0 0 3px rgba(122,85,255,.14)}
+.amt small{display:block;font-size:11px;font-weight:700;color:var(--ok);margin-top:-2px}
+.topup{display:flex;flex-direction:column;gap:10px;margin-top:16px;max-width:320px}
+.topup .btn-p{width:100%;height:48px}
+.ck2{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:13.5px;color:var(--muted);line-height:1.45}
+.ck2 input{width:18px;height:18px;accent-color:var(--violet);margin:1px 0 0}
+.hist{margin-top:22px;padding:20px 22px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12.5px;color:var(--muted2);font-weight:800;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:12px 10px;border-bottom:1px solid var(--line)}
+td.sum{text-align:right;font-weight:800;white-space:nowrap}
+th.sum{text-align:right}
+.plus{color:var(--ok)}
+.tp{display:inline-flex;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;background:var(--card2)}
+.tp.in{background:var(--ok-bg);color:var(--ok)}.tp.hold{background:rgba(255,138,43,.14);color:var(--orange)}
+
+/* ================= настройки профиля ================= */
+.sec{padding:24px}
+.form{display:grid;grid-template-columns:1fr;gap:16px;margin-top:0}
+.form .full{grid-column:1/-1}
+.form .full.contacts-block{margin-top:10px;padding-top:6px}
+.crow{display:grid;grid-template-columns:minmax(0,168px) minmax(0,1fr) 110px 40px;gap:8px;align-items:center;margin-bottom:8px}
+.crow-net{position:relative;min-width:0}
+.crow-net .crow-lbl{width:100%;min-height:40px;font-size:13.5px;font-weight:700;padding-right:34px}
+.crow-net-custom select{position:absolute;right:0;top:0;bottom:0;width:36px;opacity:0;cursor:pointer;z-index:2;margin:0;padding:0;border:none;background:transparent}
+.crow-net-custom::after{content:'';position:absolute;right:12px;top:50%;width:8px;height:8px;border-right:2px solid var(--muted2);border-bottom:2px solid var(--muted2);transform:translateY(-65%) rotate(45deg);pointer-events:none;z-index:1}
+.sw{position:relative;width:46px;height:28px;border-radius:999px;border:none;background:var(--line2);cursor:pointer;flex:0 0 auto}
+.sw:after{content:'';position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .2s}
+.sw[aria-checked=true]{background:#16C47F}.sw[aria-checked=true]:after{transform:translateX(18px)}
+.vis{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--muted)}
+.save{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);opacity:0;z-index:90;background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:14px;font-weight:700;transition:.25s;pointer-events:none}
+:root[data-theme=dark] .toast{color:#1E1238}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.hl{animation:hl 1.4s ease}
+@keyframes hl{0%,60%{box-shadow:0 0 0 4px rgba(255,162,53,.5)}100%{box-shadow:none}}
+.cv .k.a{background:linear-gradient(110deg,#FFA235,#F2668B);color:#fff;border:none}
+
+/* чат: та же шапка и те же отступы — сжимается только блок сообщений */
+body.is-chat{overflow:hidden}
+body.is-chat .wrap{height:calc(100dvh - var(--hdr, 73px));padding-bottom:max(16px,env(safe-area-inset-bottom));overflow:hidden}
+body.is-chat .main{min-height:0;display:flex;flex-direction:column;overflow:hidden}
+body.is-chat .msgs{position:static;flex:1 1 0;min-height:0!important;height:auto!important;max-height:none!important}
+
+/* ================= планшет и телефон ================= */
+@media (max-width:1100px){.grid{columns:2}}
+@media (max-width:900px){
+  .msgs{grid-template-columns:1fr}
+  .msgs.open .ml{display:none}.msgs:not(.open) .th{display:none}
+  .back{display:inline-flex}
+  .prof{flex-direction:column;align-items:stretch;gap:12px;height:auto;min-height:0;max-height:none;overflow:visible;padding:14px 16px}
+  .prof-row{flex-direction:column;align-items:center;text-align:center;gap:16px;width:100%}
+  .p-main{width:100%;text-align:center}
+  .stats{justify-content:center}
+  .p-side{flex:0 0 auto;width:100%;max-width:none;margin-left:0;align-self:stretch}
+  .p-side .btn{width:100%}
+  .prof .about{-webkit-line-clamp:1}
+  .p-side .hint-side{-webkit-line-clamp:1}
+  .tabs{width:100%;max-width:100%;justify-content:stretch;margin:12px 0 14px}
+  .tabs .tab{flex:1 1 0;justify-content:center;padding:0 8px;min-width:0;gap:5px;font-size:13px}
+  .tabs .tab-bal{display:none}
+}
+@media (max-width:480px){
+  .tabs .tab{padding:0 6px;gap:0}
+  .tabs .tab-lbl{display:none}
+}
+@media (max-width:640px){
+  .nav{display:none}
+  .wrap{padding:12px 12px 24px}
+  :root{--prof-h:auto}
+  .prof{padding:14px 14px 16px;gap:12px;height:auto;min-height:0;max-height:none;overflow:visible}
+  .prof-row{flex-direction:column;align-items:center;text-align:center;gap:16px}
+  .prof .ava,.avabtn{width:96px;height:96px;font-size:36px}
+  .avabtn .cam{width:30px;height:30px;right:-2px;bottom:-2px}
+  .p-main{width:100%;text-align:center}
+  .prof h1,.p-name{font-size:22px}
+  .prof .nick{white-space:normal;overflow:visible;text-overflow:unset}
+  .stats{gap:14px 18px;justify-content:center;margin-top:10px}
+  .stats b{font-size:18px}
+  .stats span{font-size:11.5px;justify-content:center}
+  .p-side{max-width:none;align-self:stretch}
+  .p-side .btn{height:40px;padding:0 12px;font-size:13.5px}
+  .p-side .hint-side{display:none}
+  .grid{columns:2;column-gap:10px}
+  .prof-top{grid-template-columns:1fr;max-width:none}
+  .form{grid-template-columns:1fr}
+  .crow{grid-template-columns:1fr 1fr;}
+  .crow .vis{grid-column:1}.crow .del{justify-self:end}
+  .topup{grid-template-columns:1fr}
+  .bb{max-width:86%}
+  .feed{background-size:360px 360px}
+  .th-h{gap:8px;padding:10px 12px}
+  table thead{display:none}
+  table,tbody,tr,td{display:block;width:100%}
+  tr{display:grid;grid-template-columns:1fr auto;padding:10px 0;border-bottom:1px solid var(--line)}
+  td{border:none;padding:2px 0}
+  td.sum{grid-row:1/3;grid-column:2;align-self:center}
+  .msgs{border-radius:20px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="/" aria-label="{AI}-шница — на главную"><img id="logo" src="/assets/brand/svg/lockup-light.svg" alt="{AI}-шница"></a>
+  <nav class="nav" aria-label="Разделы"><a href="/app">Студия</a><a href="/explore">Витрина</a><a href="/account" aria-current="page">Кабинет</a></nav>
+  <span class="sp"></span>
+  <button class="ib" id="themeBtn" type="button" aria-label="Сменить тему"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+</header>
+
+<div class="wrap">
+  <section class="glass prof" id="prof" aria-label="Профиль"></section>
+  <div class="tabs glass" role="tablist" id="tabs"></div>
+  <main class="main" id="view"></main>
+</div>
+
+<input type="file" id="avaFile" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+<div class="crop-bg" id="crop" hidden>
+  <section class="glass crop" role="dialog" aria-modal="true" aria-labelledby="cropT">
+    <div class="crop-h"><b id="cropT">Фото профиля</b><button class="ib" type="button" data-crop="cancel" aria-label="Закрыть" style="border:none;background:none">✕</button></div>
+    <div class="crop-stage" id="cropStage"><canvas id="cropCv" width="560" height="560"></canvas><div class="crop-ring"></div></div>
+    <p class="hint" style="text-align:center;margin:10px 0 4px">Перетащите фото, чтобы выбрать, что будет в круге</p>
+    <label class="crop-zoom"><span aria-hidden="true">−</span><input type="range" id="cropZ" min="1" max="3" step="0.01" value="1" aria-label="Масштаб"><span aria-hidden="true">+</span></label>
+    <div class="crop-f"><button class="btn btn-s" type="button" data-crop="other">Другое фото</button><span class="sp"></span><button class="btn btn-s" type="button" data-crop="cancel">Отмена</button><button class="btn btn-p" type="button" data-crop="ok">Сохранить</button></div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* =====================================================================
+   ДАННЫЕ. В демо всё хранится в браузере (localStorage). На сайте — ваш API:
+   GET/PUT /api/me/profile · GET /api/me/balance · POST /api/payments/topup
+   GET /api/threads · GET/POST /api/threads/:id/messages (лучше WebSocket/SSE для живых сообщений)
+   ===================================================================== */
+const $ = (id) => document.getElementById(id);
+const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const KEY = 'aish-account-v1';
+const NET = { telegram: ['Telegram', 'TG'], vk: ['ВКонтакте', 'VK'], instagram: ['Instagram', 'IG'], youtube: ['YouTube', 'YT'], tiktok: ['TikTok', 'TT'], behance: ['Behance', 'Be'], dribbble: ['Dribbble', 'Dr'], pinterest: ['Pinterest', 'Pi'], email: ['Почта', '@'], site: ['Сайт', 'www'] };
+function contactSelectNet(c) { return (c.net === 'custom' || !NET[c.net]) ? 'custom' : c.net; }
+function contactBadge(c) {
+  if (contactSelectNet(c) === 'custom') { const t = (c.label || '').trim(); return t ? t.slice(0, 2).toUpperCase() : '•'; }
+  return (NET[c.net] || ['', '?'])[1];
+}
+function contactTitle(c) {
+  if (contactSelectNet(c) === 'custom') return (c.label || '').trim() || 'Другое';
+  return (NET[c.net] || [c.net, ''])[0];
+}
+function contactOptions(c) {
+  const cur = contactSelectNet(c);
+  const customLbl = (c.label || '').trim() || 'Другая…';
+  return Object.entries(NET).map(([k, v]) => '<option value="' + k + '"' + (k === cur ? ' selected' : '') + '>' + v[0] + '</option>').join('')
+    + '<option value="custom"' + (cur === 'custom' ? ' selected' : '') + '>' + esc(customLbl) + '</option>';
+}
+function contactRowHtml(c, i) {
+  const custom = contactSelectNet(c) === 'custom';
+  const netCell = custom
+    ? '<div class="crow-net crow-net-custom"><input class="inp crow-lbl" data-ci="' + i + '" data-cf="clabel" value="' + esc(c.label || '') + '" placeholder="Название соцсети" aria-label="Название соцсети"><select data-ci="' + i + '" data-cf="net" aria-label="Сменить соцсеть" title="Сменить соцсеть">' + contactOptions(c) + '</select></div>'
+    : '<div class="crow-net"><select class="inp" data-ci="' + i + '" data-cf="net" aria-label="Соцсеть">' + contactOptions(c) + '</select></div>';
+  return '<div class="crow">' + netCell
+    + '<input class="inp" data-ci="' + i + '" data-cf="login" value="' + esc(c.login) + '" placeholder="@логин или ссылка" aria-label="Логин"><span class="vis"><button type="button" class="sw" role="switch" aria-checked="' + c.show + '" data-ci="' + i + '" data-cf="show" aria-label="Показывать посетителям"></button>' + (c.show ? 'Видно' : 'Скрыт') + '</span>'
+    + '<button type="button" class="ib del" data-del="' + i + '" aria-label="Удалить контакт" style="width:40px;height:40px">✕</button></div>';
+}
+const H = 3600e3, NOW = Date.now();
+
+const EMPTY = () => ({
+  user: { name: '', nick: '', about: '', avatar: '', contacts: [], email: 'anna@gmail.com', askMode: 'ask' },
+  balance: { available: 0, hold: 0, history: [] },
+  works: [],
+  threads: []
+});
+const FILLED = () => ({
+  user: { name: 'Мира Свет', nick: 'mira_svet', about: 'Неон, ночные города, кино-свет. Делаю видео для клипов и рекламы.', avatar: '', email: 'mira@gmail.com', askMode: 'ask',
+    contacts: [{ net: 'telegram', login: '@mira_svet', show: true }, { net: 'instagram', login: 'mira.svet', show: true }, { net: 'site', login: 'mirasvet.ru', show: true }, { net: 'behance', login: 'mira-svet', show: false }] },
+  balance: { available: 1240, hold: 100, history: [
+    { ts: NOW - 2 * H, type: 'gen', model: 'Kling O3', sum: -100, note: 'Видео 5 с · «Неоновый город»' },
+    { ts: NOW - 3 * H, type: 'hold', model: 'Kling O3', sum: -100, note: 'Генерация в процессе' },
+    { ts: NOW - 26 * H, type: 'in', model: '', sum: 999, note: 'Пополнение картой' },
+    { ts: NOW - 27 * H, type: 'gen', model: 'Seedream 5 Pro', sum: -16, note: 'Картинка 4K' },
+    { ts: NOW - 50 * H, type: 'gen', model: 'Seedance Lite', sum: 0, note: 'Видео со звуком · бесплатно' },
+    { ts: NOW - 74 * H, type: 'in', model: '', sum: 499, note: 'Пополнение картой' }
+  ] },
+  works: [
+    { id: 'w01', title: 'Неоновый город под дождём', src: '/works/neon.webp', pub: true, likes: 42 }, { id: 'w17', title: 'Боке ночного города', src: '/works/bokeh.webp', pub: true, likes: 18 },
+    { id: 'w11', title: 'Спектр на графите', src: '/works/spectrum.webp', pub: true, likes: 9 }, { id: 'w23', title: 'Капли на стекле', src: '/works/rain.webp', pub: false, likes: 3 },
+    { id: 'w30', title: 'Северное сияние', src: '/works/aurora.webp', pub: true, likes: 27 }, { id: 'w31', title: 'Парусник под розовым небом', src: '/works/sail.webp', pub: false, likes: 1 }
+  ],
+  threads: [
+    { id: 'assistant', with: { name: '{AI}-шница', grad: '#FFA235,#F2668B', assistant: true }, kind: 'assistant', work: null, status: 'answered', unread: 0, msgs: [
+      { from: 'them', text: 'Привет! Я помощник {AI}-шницы — всегда первый чат в списке. Помогу заполнить профиль или отвечу про Студию, Витрину, баланс и чаты.', ts: NOW - 80 * H }
+    ] },
+    { id: 't1', with: { name: 'Анна К.', grad: '#5FC8E8,#4A7BEA' }, kind: 'original', work: { title: 'Неоновый город под дождём', src: '/works/neon.webp' }, status: 'new', unread: 2, msgs: [
+      { sys: 'Анна К. запросила оригинал работы «Неоновый город под дождём» · Видео в максимальном качестве', ts: NOW - 5 * H },
+      { from: 'them', text: 'Здравствуйте! Хочу этот ролик в полном качестве для фона на концерте. Какие условия?', ts: NOW - 5 * H },
+      { from: 'them', text: 'Концерт 18 октября, нужен до 15-го 🙏', ts: NOW - 4.8 * H }
+    ] },
+    { id: 't2', with: { name: '@neo_art', grad: '#8A66FF,#5B35E0' }, kind: 'prompt', work: { title: 'Спектр на графите', src: '/works/spectrum.webp' }, status: 'answered', unread: 0, msgs: [
+      { sys: '@neo_art запросил промпт к работе «Спектр на графите»', ts: NOW - 30 * H },
+      { from: 'them', text: 'Очень круто! Поделитесь промптом и настройками?', ts: NOW - 30 * H },
+      { from: 'me', text: 'Спасибо! Держите:', prompt: 'Rainbow spectrum light leaking through graphite slabs, macro, soft volumetric haze, 85mm, f/1.8 · Seedream 5 Pro · 4K', ts: NOW - 28 * H },
+      { from: 'them', text: 'Огонь, спасибо большое!', ts: NOW - 27 * H }
+    ] },
+    { id: 't3', with: { name: 'Coffee Lab', grad: '#FFB23F,#F2668B' }, kind: 'order', work: null, status: 'new', unread: 0, msgs: [
+      { sys: 'Coffee Lab хочет заказать работу', ts: NOW - 72 * H },
+      { from: 'them', text: 'Нужна серия из 5 коротких видео в вашем стиле для рекламы кофейни. Готовы обсудить сроки и бюджет.', ts: NOW - 72 * H },
+      { from: 'me', text: 'Здравствуйте! С радостью. Пришлите, пожалуйста, бриф и примеры, которые нравятся.', ts: NOW - 70 * H },
+      { from: 'them', text: 'Бриф во вложении 👇', file: { name: 'brief-coffee-lab.pdf', size: '1,2 МБ' }, ts: NOW - 69 * H }
+    ] }
+  ]
+});
+
+let D; try { D = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+const qs = new URLSearchParams(location.search);
+const DEMO = qs.get('state');
+if (DEMO) D = /^(empty|assistant|manual)/.test(DEMO) ? EMPTY() : FILLED();
+if (!D) D = EMPTY();
+const saveLocal = () => { if (!DEMO) try { localStorage.setItem(KEY, JSON.stringify(D)); } catch (e) {} };
+let save = saveLocal;
+let LIVE = false;
+let tab = qs.get('tab') || 'settings', openThread = null, filter = 'all', pickAmt = 499, editing = null;
+
+/* ================= утилиты ================= */
+const rub = (n) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(n);
+const ago = (ts) => { const m = Math.round((Date.now() - ts) / 60000); if (m < 1) return 'сейчас'; if (m < 60) return m + ' мин'; const h = Math.round(m / 60); if (h < 24) return h + ' ч'; const d = Math.round(h / 24); return d === 1 ? 'вчера' : d + ' дн'; };
+const hm = (ts) => new Date(ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+const dt = (ts) => new Date(ts).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) + ', ' + hm(ts);
+const initials = (n) => (n || '?').trim()[0].toUpperCase();
+const photo = (src) => src && src !== 'demo' ? src : '';
+const ava = (name, grad, size, img) => img ? '<span class="ava" style="width:' + size + 'px;height:' + size + 'px"><img src="' + esc(img) + '" alt=""></span>' : '<span class="ava' + (name ? '' : ' ava-e') + '" style="width:' + size + 'px;height:' + size + 'px;font-size:' + Math.round(size * .4) + 'px' + (grad ? ';background:linear-gradient(135deg,' + grad + ')' : '') + '">' + (name ? esc(initials(name)) : '<svg width="45%" height="45%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>') + '</span>';
+const toast = (t) => { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 2200); };
+const unread = () => D.threads.filter((t) => t.kind !== 'assistant').reduce((s, t) => s + (t.unread || 0), 0);
+const clientThreads = () => D.threads.filter((t) => t.kind !== 'assistant');
+const KIND = { assistant: ['Помощник', 'a'], prompt: ['Запрос промпта', ''], original: ['Запрос оригинала', 'o'], order: ['Заказ работы', 'c'] };
+const I = {
+  edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
+  spark: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg>',
+  clip: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg>',
+  send: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  pen: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>',
+  cam: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+  img: '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted2)"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>',
+  chat: '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted2)"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
+  wallet: '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted2)"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/></svg>',
+  heart: '<svg class="heart" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.5-9.3C1 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 6 3.5 4.5 7.2C19.5 16.4 12 21 12 21z"/></svg>',
+  tabUser: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="8" r="3.5"/></svg>',
+  tabWallet: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/></svg>',
+  tabWorks: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+  tabChat: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
+  logout: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>'
+};
+
+/* ================= отрисовка: шапка профиля ================= */
+function likesTotal() { return D.works.reduce((s, w) => s + (w.likes || 0), 0); }
+function renderSide() {
+  const u = D.user;
+  const aboutHtml = u.about
+    ? '<p class="about">' + esc(u.about) + '</p>'
+    : '';
+  const sideHint = !u.about
+    ? '<p class="hint-side">Расскажите, что вы создаёте — так клиенты быстрее вас найдут.</p>'
+    : '';
+  $('prof').innerHTML = '<div class="prof-row"><button class="avabtn" type="button" data-act="avatar" aria-label="' + (photo(u.avatar) ? 'Сменить фото' : 'Загрузить фото') + '">' + ava(u.name, '', 88, photo(u.avatar)) + '<span class="cam">' + (photo(u.avatar) ? I.pen : I.cam) + '</span></button>'
+    + '<div class="p-main">'
+    + (u.name ? '<h1 class="p-name">' + esc(u.name) + '</h1>' : '<h1 class="p-name ph" style="font-style:normal;color:var(--muted2)">Ваше имя</h1>')
+    + '<div class="nick">' + (u.nick ? '@' + esc(u.nick) : esc(u.email)) + '</div>'
+    + aboutHtml
+    + (u.contacts.length ? '<div class="pcs">' + u.contacts.filter((c) => c.login).map((c) => '<span class="pc' + (c.show ? '' : ' off') + '" title="' + esc(contactTitle(c)) + ' · ' + (c.show ? 'Видно всем' : 'Скрыт от посетителей') + '"><i>' + esc(contactBadge(c)) + '</i>' + esc(c.login) + '</span>').join('') + '</div>' : '')
+    + '<div class="stats"><div><b>' + D.works.filter((w) => w.pub).length + '</b><span>на витрине</span></div><div><b>' + D.works.length + '</b><span>всего работ</span></div><div><b>' + clientThreads().length + '</b><span>диалогов</span></div><div><b>' + likesTotal() + '</b><span>' + I.heart + 'лайков</span></div></div>'
+    + '</div></div>'
+    + '<div class="p-side">'
+    + '<button class="btn btn-logout" type="button" data-act="logout">' + I.logout + 'Выйти</button>'
+    + '<button class="btn btn-gen" data-act="assistant">' + I.spark + 'Заполнить с помощником</button>'
+    + sideHint
+    + (u.nick ? '<a class="btn btn-g" href="/@' + encodeURIComponent(u.nick) + '">Как видят другие →</a>' : '')
+    + '</div>';
+}
+
+/* ================= вкладки ================= */
+function renderTabs() {
+  const nChat = clientThreads().length;
+  const bal = rub(D.balance.available);
+  const T = [
+    ['settings', 'Профиль', I.tabUser, ''],
+    ['balance', 'Баланс ' + bal, I.tabWallet, '<span class="tab-bal">' + bal + '</span>'],
+    ['works', 'Работы', I.tabWorks, ''],
+    ['messages', 'Чат', I.tabChat, '<span class="badge">' + nChat + '</span>']
+  ];
+  $('tabs').innerHTML = T.map(([id, label, ico, extra]) => {
+    const name = id === 'balance' ? 'Баланс' : label;
+    return '<button class="tab" role="tab" aria-selected="' + (tab === id) + '" data-go="' + id + '" aria-label="' + esc(label) + '" title="' + esc(label) + '"><span class="tab-ico" aria-hidden="true">' + ico + '</span><span class="tab-lbl">' + esc(name) + '</span>' + (extra ? ' ' + extra : '') + '</button>';
+  }).join('');
+}
+function render() {
+  const top = document.querySelector('.top');
+  if (top) document.documentElement.style.setProperty('--hdr', top.offsetHeight + 'px');
+  document.body.classList.toggle('is-chat', tab === 'messages');
+  if (tab === 'messages') {
+    ensureAssistant();
+    if (!openThread) openThread = String(ensureAssistant().id);
+  }
+  renderSide(); renderTabs();
+  ({ works: vWorks, messages: vMsgs, balance: vBalance, settings: vSettings })[tab]();
+  if (tab === 'messages') {
+    const f = $('feed');
+    if (f) f.scrollTop = f.scrollHeight;
+    window.scrollTo(0, 0);
+  }
+}
+
+/* ---------- Работы ---------- */
+function vWorks() {
+  if (!D.works.length) return $('view').innerHTML = '<div class="glass empty"><div class="ill">' + I.img + '</div><h3>Здесь появятся ваши работы</h3><p>Создайте первую генерацию в студии и опубликуйте лучшее на витрине — клиенты смогут запросить у вас промпт, оригинал или заказать работу.</p><div class="btns"><a class="btn btn-gen" href="/app">' + I.spark + 'Создать первую работу</a><a class="btn btn-s" href="/explore">Посмотреть витрину</a></div><p class="hint">Совет: Seedance сейчас бесплатно — попробуйте видео со звуком.</p></div>';
+  $('view').innerHTML = '<div class="grid">' + D.works.map((w) => '<div class="wk"><img src="' + esc(w.src) + '" alt="' + esc(w.title) + '"><button type="button" class="st' + (w.pub ? '' : ' h') + '" data-pub="' + esc(String(w.id)) + '" aria-pressed="' + (w.pub ? 'true' : 'false') + '" title="' + (w.pub ? 'Скрыть с витрины' : 'Опубликовать на витрине') + '">' + (w.pub ? 'На витрине' : 'Скрыта') + '</button></div>').join('') + '</div>';
+}
+async function toggleWorkPub(w, btn) {
+  if (!w || w._busy) return;
+  const next = !w.pub;
+  w._busy = true;
+  if (btn) btn.disabled = true;
+  try {
+    if (LIVE) {
+      const path = next ? '/api/works/' + encodeURIComponent(w.id) + '/publish' : '/api/works/' + encodeURIComponent(w.id) + '/unpublish';
+      const body = next ? JSON.stringify({ agree_rules: true, title: w.title || '' }) : '{}';
+      const { res, data } = await api(path, { method: 'POST', body });
+      if (!res.ok) {
+        if (data && data.error === 'handle_required') {
+          toast('Сначала укажите ник в профиле');
+          tab = 'settings';
+          render();
+          return;
+        }
+        toast(next ? 'Не удалось опубликовать' : 'Не удалось скрыть');
+        return;
+      }
+      w.pub = next;
+      if (data && data.work) {
+        w.title = data.work.title || w.title;
+        w.src = data.work.thumb_url || data.work.media_url || w.src;
+      }
+    } else {
+      w.pub = next;
+      saveLocal();
+    }
+    renderSide();
+    if (tab === 'works') vWorks();
+    toast(next ? 'Опубликовано на витрине' : 'Скрыто с витрины');
+  } finally {
+    w._busy = false;
+    if (btn) btn.disabled = false;
+  }
+}
+
+/* ---------- Сообщения (внутренний чат) ---------- */
+const HELP_CHIPS = ['Как пополнить баланс?', 'Как опубликовать работу?', 'Что такое Витрина?', 'Как работает чат?', 'Заполнить профиль'];
+const HELP = [
+  { re: /баланс|пополн|оплат|деньг|руб|сбп|карт/i, a: 'Баланс нужен для генераций в Студии. Откройте вкладку «Баланс», выберите сумму от 100 ₽ и нажмите «Пополнить». Пока генерация идёт, сумма резервируется; если что-то не вышло — вернётся.' },
+  { re: /студи|генерац|модел|seedance|kling|seedream|создать|сгенер/i, a: 'Студия — раздел «Студия» в шапке: выбираете модель, задаёте промпт и запускаете генерацию. Списание только за готовый результат.' },
+  { re: /витрин|опублик|explore|подборк/i, a: 'Витрина — публичная лента работ. После генерации можно опубликовать работу; во вкладке «Работы» видно, что на витрине, а что скрыто.' },
+  { re: /чат|сообщен|диалог|запрос|промпт|оригинал|заказ/i, a: 'Здесь, во вкладке «Чат», — я и переписка по запросам клиентов (промпт, оригинал, заказ). Отвечайте прямо в {AI}-шнице.' },
+  { re: /профиль|ник|контакт|фото|о себе|кабинет|заполн/i, a: 'Вкладка «Профиль» — имя, ник, описание, фото и контакты. Можете заполнить вручную или отвечать мне здесь — подскажу по шагам.' },
+  { re: /лайк|сердеч/i, a: 'Лайки ставят на витрине. В шапке кабинета видно сумму лайков по вашим работам.' },
+  { re: /цена|стоим|сколько|тариф|бесплат/i, a: 'Стоимость зависит от модели — она видна в Студии перед запуском. Деньги списываются только за успешную генерацию.' },
+  { re: /помощ|что умеешь|как польз|справка|help|faq/i, a: 'Я первый чат у каждого: помогаю с профилем и отвечаю про Студию, Витрину, баланс и чаты. Спросите своими словами или выберите подсказку.' }
+];
+function helpReply(text) {
+  const hit = HELP.find((h) => h.re.test(text));
+  return hit ? hit.a : 'Могу подсказать про баланс, Студию, Витрину, чат и профиль. Выберите подсказку ниже или спросите своими словами.';
+}
+function makeAssistantThread() {
+  return {
+    id: 'assistant',
+    with: { name: '{AI}-шница', grad: '#FFA235,#F2668B', assistant: true },
+    kind: 'assistant',
+    work: null,
+    status: 'answered',
+    unread: 0,
+    msgs: [
+      { from: 'them', text: 'Привет! Я помощник {AI}-шницы — всегда первый чат в списке. Помогу заполнить профиль или отвечу про Студию, Витрину, баланс и чаты. О чём спросить?', ts: Date.now() - 60e3 }
+    ]
+  };
+}
+function ensureAssistant() {
+  D.threads = D.threads || [];
+  let t = D.threads.find((x) => x.kind === 'assistant' || x.id === 'assistant' || (x.with && x.with.assistant));
+  if (!t) {
+    t = makeAssistantThread();
+    D.threads.unshift(t);
+  } else {
+    t.kind = 'assistant';
+    if (t.with) t.with.assistant = true;
+    D.threads = [t].concat(D.threads.filter((x) => x !== t));
+  }
+  return t;
+}
+function openAssistant() {
+  const t = ensureAssistant();
+  tab = 'messages';
+  openThread = String(t.id);
+  render();
+}
+function previewLine(s, max) {
+  s = String(s || '').replace(/\s+/g, ' ').trim();
+  if (!s) return '';
+  if (s.length <= max) return s.endsWith('…') || s.endsWith('...') ? s : s;
+  return s.slice(0, max - 1).replace(/\s+\S*$/, '').replace(/[.,;:!?…]+$/, '') + '…';
+}
+function threadAva(t, size) {
+  if (t.kind === 'assistant' || (t.with && t.with.assistant))
+    return '<span class="ava ava-orb" style="width:' + size + 'px;height:' + size + 'px"><img src="/assets/orb.png" alt=""></span>';
+  return ava(t.with.name, t.with.grad, size);
+}
+function vMsgs() {
+  ensureAssistant();
+  const list = D.threads.slice();
+  const th = D.threads.find((t) => String(t.id) === String(openThread));
+  $('view').innerHTML = '<div class="glass msgs' + (th ? ' open' : '') + '"><div class="ml"><div class="ml-h"><label class="sr" for="mq">Поиск по сообщениям</label><input class="inp" id="mq" placeholder="Поиск по сообщениям" style="min-height:42px;padding:9px 14px"></div>'
+    + '<div class="ml-list">' + (list.length ? list.map((t) => {
+      const last = t.msgs.filter((m) => !m.sys).slice(-1)[0] || t.msgs[0];
+      const kn = KIND[t.kind] || ['Диалог', ''];
+      const raw = (last.from === 'me' ? 'Вы: ' : '') + (last.text || last.sys || (last.file ? '📎 ' + last.file.name : ''));
+      return '<button class="cv' + (t.unread ? ' unread' : '') + '" data-th="' + t.id + '" aria-current="' + (String(t.id) === String(openThread)) + '">' + threadAva(t, 42)
+        + '<span class="b"><span class="r1"><span class="n">' + esc(t.with.name) + '</span><span class="t">' + ago(last.ts) + '</span></span>'
+        + (t.kind === 'assistant' ? '' : '<span class="k ' + kn[1] + '">' + (t.role === 'seller' ? 'Входящий · ' : '') + kn[0] + '</span>')
+        + '<span class="p">' + esc(previewLine(raw, 52)) + '</span></span></button>';
+    }).join('') : '<p class="note" style="padding:20px">Ничего не нашлось</p>') + '</div></div>'
+    + '<div class="th">' + (th ? thread(th) : '<div class="no-th">' + I.chat + '<b>Выберите диалог</b><span>Слева — помощник и переписка по вашим работам</span></div>') + '</div></div>';
+  if (th) { const f = $('feed'); if (f) f.scrollTop = f.scrollHeight; }
+}
+function thread(t) {
+  let day = '';
+  const feed = t.msgs.map((m) => {
+    const d = new Date(m.ts).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }); let h = '';
+    if (d !== day) { day = d; h += '<div class="day">' + d + '</div>'; }
+    if (m.sys) return h + '<div class="sys">' + esc(m.sys) + '</div>';
+    return h + '<div class="bb' + (m.from === 'me' ? ' me' : '') + '">' + esc(m.text || '')
+      + (m.prompt ? '<div class="promptcard"><em>Промпт</em>' + esc(m.prompt) + '</div>' : '')
+      + (m.file ? '<div class="att"><span class="fi">' + esc(m.file.name.split('.').pop().toUpperCase()) + '</span><span><b>' + esc(m.file.name) + '</b><span>' + esc(m.file.size) + '</span></span></div>' : '')
+      + '<small>' + hm(m.ts) + (m.from === 'me' ? ' · ' + (m.read ? 'прочитано' : 'доставлено') : '') + '</small></div>';
+  }).join('');
+  if (t.kind === 'assistant') {
+    const chips = '<div class="feed-chips">' + HELP_CHIPS.map((c) => '<button type="button" class="chip" data-ac="' + esc(c) + '">' + esc(c) + '</button>').join('') + '</div>';
+    return '<div class="th-h"><button class="ib back" data-act="back" aria-label="К списку диалогов">←</button>' + threadAva(t, 40) + '<div class="th-who"><b>' + esc(t.with.name) + '</b><span>Помощник · профиль и приложение</span></div><span class="sp"></span></div>'
+      + '<div class="feed" id="feed">' + feed + chips + '</div>'
+      + '<div class="th-foot"><form class="comp" id="cForm"><div class="comp-box"><div class="comp-row"><label class="sr" for="cIn">Сообщение</label><textarea id="cIn" rows="1" placeholder="Спросите про профиль, баланс, студию…"></textarea><button class="comp-send" type="submit" aria-label="Отправить">' + I.send + '</button></div></div></form>'
+      + '<p class="note">Этот чат есть у каждого — здесь можно спросить про приложение или заполнить профиль вместе.</p></div>';
+  }
+  const qa = t.kind === 'prompt' ? [['prompt', 'Поделиться промптом'], ['decline', 'Вежливо отказать']] : t.kind === 'original' ? [['file', 'Отправить оригинал'], ['terms', 'Предложить условия'], ['decline', 'Вежливо отказать']] : [['terms', 'Предложить условия'], ['file', 'Прикрепить файл']];
+  const kn = KIND[t.kind] || ['Диалог', ''];
+  const isSeller = t.role === 'seller';
+  const whoSub = isSeller ? ('Входящий · ' + kn[0]) : kn[0];
+  const qaChips = isSeller ? '<div class="feed-chips">' + qa.map(([k, l]) => '<button type="button" class="chip" data-qa="' + k + '">' + l + '</button>').join('') + '</div>' : '';
+  return '<div class="th-h"><button class="ib back" data-act="back" aria-label="К списку диалогов">←</button>' + threadAva(t, 40) + '<div class="th-who"><b>' + esc(t.with.name) + '</b><span>' + esc(whoSub) + '</span></div><span class="sp"></span></div>'
+    + (t.work ? '<div class="ref"><img src="' + esc(t.work.src) + '" alt=""><div><b>' + esc(t.work.title) + '</b><span>' + kn[0] + '</span></div></div>' : '')
+    + '<div class="feed" id="feed">' + feed + qaChips + '</div>'
+    + '<div class="th-foot"><form class="comp" id="cForm"><div class="comp-box"><div class="comp-row"><button type="button" class="ib comp-attach" data-act="attach" aria-label="Прикрепить файл">' + I.clip + '</button><label class="sr" for="cIn">Сообщение</label><textarea id="cIn" rows="1" placeholder="Написать сообщение…"></textarea><button class="comp-send" type="submit" aria-label="Отправить">' + I.send + '</button></div></div></form>'
+    + '<p class="note">Условия и оплату работы вы обсуждаете между собой — платформа не участвует в расчётах и не берёт комиссию.</p></div>';
+}
+function send(t, msg) {
+  if (!t) return;
+  t.msgs.push(Object.assign({ from: 'me', ts: Date.now() }, msg));
+  saveLocal();
+  vMsgs();
+  if (t.kind === 'assistant') {
+    if (LIVE && String(t.id) !== 'assistant') {
+      api('/api/threads/' + encodeURIComponent(t.id) + '/messages', {
+        method: 'POST',
+        body: JSON.stringify({ text: msg.text || '' }),
+      }).then(({ res, data }) => {
+        if (res.ok && data.thread) {
+          const i = D.threads.findIndex((x) => String(x.id) === String(t.id));
+          if (i >= 0) D.threads[i] = data.thread;
+          ensureAssistant();
+          vMsgs();
+        }
+      }).catch(() => {});
+    } else {
+      const reply = helpReply(msg.text || '');
+      setTimeout(() => {
+        t.msgs.push({ from: 'them', text: reply, ts: Date.now() });
+        saveLocal();
+        if (tab === 'messages' && String(openThread) === String(t.id)) vMsgs();
+      }, 450);
+    }
+    return;
+  }
+  if (LIVE && t.id) {
+    api('/api/threads/' + encodeURIComponent(t.id) + '/messages', {
+      method: 'POST',
+      body: JSON.stringify({ text: msg.text || '', prompt: msg.prompt || null, file: msg.file || null }),
+    }).then(({ res, data }) => {
+      if (res.ok && data.thread) {
+        const i = D.threads.findIndex((x) => String(x.id) === String(t.id));
+        if (i >= 0) D.threads[i] = data.thread;
+        ensureAssistant();
+        vMsgs();
+      }
+    }).catch(() => {});
+  }
+}
+
+/* ---------- Баланс ---------- */
+function vBalance() {
+  const b = D.balance, AM = [[199, ''], [499, ''], [999, '+5% бонус'], [2490, '+10% бонус']];
+  const TY = { in: ['Пополнение', 'in'], gen: ['Генерация', ''], hold: ['Резерв', 'hold'] };
+  $('view').innerHTML = '<section class="glass bal"><h2>Баланс</h2><p class="hint" style="margin:0">Деньги на балансе тратятся только на генерации. Пока генерация идёт, сумма резервируется, а если что-то не получилось — возвращается.</p>'
+    + '<div class="nums"><div><b>' + rub(b.available) + '</b><span>Доступно</span></div></div>'
+    + '<div class="lbl">Пополнить на</div><div class="amts" role="group" aria-label="Сумма пополнения">' + AM.map(([a, n]) => '<button class="amt" data-amt="' + a + '" aria-pressed="' + (pickAmt === a) + '">' + rub(a) + (n ? '<small>' + n + '</small>' : '') + '</button>').join('') + '</div>'
+    + '<div class="topup"><div><label class="lbl" for="amt">Своя сумма, от 100 ₽</label><input class="inp" id="amt" inputmode="numeric" value="' + pickAmt + '"></div><button class="btn btn-p" id="pay" type="button">Пополнить на ' + rub(pickAmt) + '</button></div>'
+    + '<div id="amtErr" class="hint" style="color:var(--err)" hidden>Минимальная сумма — 100 ₽</div>'
+    + '<label class="ck2"><input type="checkbox" id="auto"><span>Автопополнение: когда на балансе меньше 100 ₽, пополнять на выбранную сумму. Я соглашаюсь на <a href="#">рекуррентные платежи</a> и могу отключить их в любой момент.</span></label>'
+    + '<p class="hint">Оплата картой или через СБП. Нажимая «Пополнить», вы принимаете <a href="#">публичную оферту</a>.</p></section>'
+    + '<section class="glass hist"><h2 style="font-size:18px">История платежей</h2>' + (b.history.length ? '<table><thead><tr><th>Дата</th><th>Тип</th><th>Описание</th><th>Модель</th><th class="sum">Сумма</th></tr></thead><tbody>'
+      + b.history.map((h) => '<tr><td>' + dt(h.ts) + '</td><td><span class="tp ' + TY[h.type][1] + '">' + TY[h.type][0] + '</span></td><td>' + esc(h.note) + '</td><td>' + esc(h.model || '—') + '</td><td class="sum' + (h.sum > 0 ? ' plus' : '') + '">' + (h.sum > 0 ? '+' : h.sum < 0 ? '−' : '') + rub(Math.abs(h.sum)) + '</td></tr>').join('') + '</tbody></table>'
+      : '<div class="empty" style="padding:28px 10px"><div class="ill">' + I.wallet + '</div><p>Здесь появятся пополнения и списания за генерации.</p></div>') + '</section>';
+}
+
+/* ---------- Профиль и контакты (ручное заполнение) ---------- */
+function vSettings() {
+  const u = editing || (editing = JSON.parse(JSON.stringify(D.user)));
+  if (!u.contacts.length) u.contacts.push({ net: 'telegram', login: '', show: true });
+  $('view').innerHTML = '<section class="glass sec"><h2>Профиль и контакты</h2><p class="hint" style="margin:0">Это видят посетители витрины и вашего профиля. Можно заполнить вручную или <button class="btn-g" data-act="assistant" style="border:none;background:none;padding:0;font-weight:800;cursor:pointer">с помощником</button>.</p>'
+    + '<div class="prof-top"><div class="ph-identity"><div><label class="lbl" for="fName">Имя</label><input class="inp" id="fName" value="' + esc(u.name) + '" placeholder="Например, Мира Свет"></div>'
+    + '<div><label class="lbl" for="fNick">Ник</label><input class="inp" id="fNick" value="' + esc(u.nick) + '" placeholder="mira_svet"><div class="hint">Адрес профиля: aishnitsa.ru/@' + esc(u.nick || 'ник') + '</div></div></div>'
+    + '<div class="ph-about"><label class="lbl" for="fAbout">О себе</label><textarea class="inp" id="fAbout" maxlength="160" placeholder="Что вы создаёте и для кого. До 160 символов">' + esc(u.about) + '</textarea></div></div>'
+    + '<div class="form"><div class="full contacts-block"><div class="lbl">Контакты</div><p class="hint" style="margin:-2px 0 10px">Переключатель решает, увидят ли контакт посетители. Переписка по запросам всё равно идёт во внутреннем чате.</p><div id="crows">'
+    + u.contacts.map((c, i) => contactRowHtml(c, i)).join('')
+    + '</div><button class="btn btn-g" data-act="addc" style="padding:0">+ Добавить контакт</button></div></div>'
+    + '<div class="save"><button class="btn btn-s" data-act="cancel">Отмена</button><button class="btn btn-p" data-act="save">Сохранить</button></div></section>';
+}
+function syncForm() { const u = editing; if (!u || !$('fName')) return; u.name = $('fName').value.trim(); u.nick = $('fNick').value.trim().replace(/^@/, ''); u.about = $('fAbout').value.trim(); u.askMode = 'ask'; document.querySelectorAll('[data-cf=login]').forEach((el) => { u.contacts[+el.dataset.ci].login = el.value.trim(); }); document.querySelectorAll('[data-cf=clabel]').forEach((el) => { u.contacts[+el.dataset.ci].label = el.value.trim(); }); }
+function highlight(k) { const map = { avatar: '#prof .avabtn', name: '#prof h1', nick: '#prof .nick', about: '#prof .about', contacts: '#prof .pcs' }; const el = document.querySelector(map[k] || '#prof'); if (el) { el.classList.remove('hl'); void el.offsetWidth; el.classList.add('hl'); } }
+
+/* ================= события ================= */
+document.addEventListener('click', (e) => {
+  const pubBtn = e.target.closest('[data-pub]');
+  if (pubBtn) {
+    const w = D.works.find((x) => String(x.id) === String(pubBtn.dataset.pub));
+    if (w) toggleWorkPub(w, pubBtn);
+    return;
+  }
+  const g = e.target.closest('[data-go]'); if (g) { e.preventDefault(); syncForm(); if (g.dataset.go !== 'settings') editing = null; tab = g.dataset.go; if (tab !== 'messages') openThread = null; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  const a = e.target.closest('[data-act]'); const act = a && a.dataset.act;
+  if (act === 'assistant') return openAssistant();
+  if (act === 'logout') {
+    if (LIVE) {
+      api('/api/auth/logout', { method: 'POST' }).finally(() => { location.href = '/auth?next=/account'; });
+    } else {
+      location.href = '/auth?next=/account';
+    }
+    return;
+  }
+  if (act === 'avatar') return pickPhoto();
+  if (act === 'ava-del') { setPhoto('').then((ok) => { if (ok) toast('Фото удалено'); }); return; }
+  if (act === 'cancel') { editing = null; tab = 'works'; return render(); }
+  if (act === 'save') {
+    syncForm();
+    if (!editing.name) { $('fName').focus(); return toast('Укажите имя'); }
+    for (const c of editing.contacts) {
+      if (contactSelectNet(c) === 'custom' && c.login && !(c.label || '').trim()) return toast('Укажите название своей соцсети');
+    }
+    editing.contacts = editing.contacts.filter((c) => c.login).map((c) => {
+      if (contactSelectNet(c) === 'custom') return { net: 'custom', label: (c.label || '').trim(), login: c.login, show: !!c.show };
+      const o = { net: c.net, login: c.login, show: !!c.show };
+      if (c.label) o.label = c.label;
+      return o;
+    });
+    D.user = editing; editing = null; save(); tab = 'works'; render(); return toast('Профиль сохранён');
+  }
+  if (act === 'addc') { syncForm(); editing.contacts.push({ net: 'custom', label: '', login: '', show: true }); vSettings(); const l = document.querySelectorAll('[data-cf=clabel]'); const last = l[l.length - 1]; if (last) last.focus(); return; }
+  if (act === 'back') { openThread = null; return vMsgs(); }
+  if (act === 'attach') { const t = D.threads.find((x) => x.id === openThread); return send(t, { text: '', file: { name: 'original-4k.mp4', size: '48 МБ' } }); }
+  const sw = e.target.closest('.sw[data-cf=show]'); if (sw) { syncForm(); const c = editing.contacts[+sw.dataset.ci]; c.show = !c.show; return vSettings(); }
+  const del = e.target.closest('[data-del]'); if (del) { syncForm(); editing.contacts.splice(+del.dataset.del, 1); return vSettings(); }
+  const th = e.target.closest('[data-th]'); if (th) {
+    openThread = th.dataset.th;
+    const t = D.threads.find((x) => String(x.id) === String(openThread));
+    if (t) t.unread = 0;
+    saveLocal();
+    renderTabs();
+    vMsgs();
+    if (LIVE && t && t.kind !== 'assistant') api('/api/threads/' + encodeURIComponent(t.id), { method: 'PATCH', body: JSON.stringify({ read: true }) }).catch(() => {});
+    return;
+  }
+  const f = e.target.closest('[data-f]'); if (f) return;
+  const qa = e.target.closest('[data-qa]'); if (qa) { const t = D.threads.find((x) => String(x.id) === String(openThread)); const k = qa.dataset.qa;
+    if (k === 'prompt') return send(t, { text: 'Делюсь промптом:', prompt: 'Вставьте сюда свой промпт и настройки генерации' });
+    if (k === 'file') return send(t, { text: 'Отправляю оригинал в полном качестве, без водяного знака.', file: { name: 'original-4k.mp4', size: '48 МБ' } });
+    if (k === 'terms') { $('cIn').value = 'Здравствуйте! Могу сделать. Стоимость — … ₽, срок — … дней. Оплата: …'; return $('cIn').focus(); }
+    if (k === 'decline') { $('cIn').value = 'Спасибо за интерес! К сожалению, сейчас не могу поделиться — надеюсь на понимание.'; return $('cIn').focus(); } }
+  const am = e.target.closest('[data-amt]'); if (am) { pickAmt = +am.dataset.amt; return vBalance(); }
+  if (e.target.id === 'pay') { const v = +$('amt').value.replace(/\D/g, ''); if (!v || v < 100) { $('amtErr').hidden = false; return $('amt').focus(); }
+    const b = e.target; b.disabled = true; b.innerHTML = '<span class="typing" style="padding:0;border:none;background:none"><i></i><i></i><i></i></span>Переходим к оплате…';
+    (async () => {
+      if (LIVE) {
+        const { res, data } = await api('/api/balance/topup', { method: 'POST', body: JSON.stringify({ amount_rub: v, autopay: !!($('auto') && $('auto').checked) }) });
+        if (!res.ok) { b.disabled = false; b.textContent = 'Пополнить на ' + rub(v); return toast(data.error === 'min_100' ? 'Минимум 100 ₽' : 'Не удалось начать оплату'); }
+        if (data.pay_url) { location.href = data.pay_url; return; }
+        await loadLive(); render(); toast('Баланс пополнен на ' + rub(v)); return;
+      }
+      setTimeout(() => { D.balance.available += v; D.balance.history.unshift({ ts: Date.now(), type: 'in', model: '', sum: v, note: 'Пополнение картой' }); save(); render(); toast('Баланс пополнен на ' + rub(v)); }, 1200);
+    })(); return; }
+  const ac = e.target.closest('[data-ac]'); if (ac) {
+    const t = D.threads.find((x) => String(x.id) === String(openThread));
+    if (t && t.kind === 'assistant') {
+      if (/заполнить профиль/i.test(ac.dataset.ac)) { tab = 'settings'; render(); toast('Откройте поля профиля — или спросите меня в чате'); return; }
+      return send(t, { text: ac.dataset.ac });
+    }
+  }
+});
+document.addEventListener('input', (e) => { if (e.target.id === 'amt') { const v = +e.target.value.replace(/\D/g, '') || 0; pickAmt = v; $('amtErr').hidden = v >= 100 || !v; $('pay').textContent = 'Пополнить на ' + rub(v); document.querySelectorAll('[data-amt]').forEach((b) => b.setAttribute('aria-pressed', +b.dataset.amt === v)); }
+  if (e.target.id === 'mq') { const q = e.target.value.toLowerCase(); document.querySelectorAll('.cv').forEach((c) => { c.hidden = q && !c.textContent.toLowerCase().includes(q); }); } });
+document.addEventListener('change', (e) => {
+  if (e.target.dataset.cf === 'net' && editing) {
+    syncForm();
+    const idx = +e.target.dataset.ci;
+    const c = editing.contacts[idx];
+    const prev = c.net;
+    c.net = e.target.value;
+    if (c.net === 'custom') { if (c.label == null) c.label = ''; }
+    else delete c.label;
+    vSettings();
+    if (c.net === 'custom' && prev !== 'custom') {
+      const lbl = document.querySelector('[data-cf=clabel][data-ci="' + idx + '"]');
+      if (lbl) { lbl.focus(); lbl.select && lbl.select(); }
+    }
+  }
+});
+document.addEventListener('submit', (e) => {
+  if (e.target.id === 'cForm') { e.preventDefault(); const v = $('cIn').value.trim(); if (!v) return; $('cIn').value = ''; send(D.threads.find((x) => String(x.id) === String(openThread)), { text: v }); }
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey && e.target.id === 'cIn') { e.preventDefault(); e.target.form.requestSubmit(); }
+  if (e.key === 'Escape' && $('crop') && !$('crop').hidden) return closeCrop();
+});
+$('themeBtn').addEventListener('click', () => { const n = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = n; try { localStorage.setItem('aish-vitrina-theme', n);localStorage.setItem('aish-theme', n);localStorage.setItem('theme', n); } catch (e) {} $('logo').src = '/assets/brand/svg/lockup-' + n + '.svg'; });
+if (document.documentElement.dataset.theme === 'dark') $('logo').src = '/assets/brand/svg/lockup-dark.svg';
+
+
+/* ================= фото профиля: выбор файла → кадрирование по кругу → 400×400 JPEG ================= */
+const CROP = { img: null, z: 1, x: 0, y: 0, drag: null };
+function pickPhoto() { const f = $('avaFile'); f.value = ''; f.click(); }
+async function csrf(force) {
+  if (!force && window.__csrf) return window.__csrf;
+  if (!force) {
+    const m = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
+    if (m) { window.__csrf = decodeURIComponent(m[1]); return window.__csrf; }
+  }
+  window.__csrf = '';
+  const r = await fetch('/api/csrf', { credentials: 'same-origin' });
+  window.__csrf = (await r.json().catch(() => ({}))).csrf_token || '';
+  return window.__csrf;
+}
+async function uploadAvatarBlob(blob) {
+  const post = async (token) => {
+    const fd = new FormData();
+    fd.append('file', blob, 'avatar.jpg');
+    return fetch('/api/me/avatar', { method: 'POST', credentials: 'same-origin', headers: { 'X-CSRF-Token': token }, body: fd });
+  };
+  let res = await post(await csrf());
+  if (res.status === 403) res = await post(await csrf(true));
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error || 'upload_failed');
+    err.code = data.error || 'upload_failed';
+    throw err;
+  }
+  return data.url;
+}
+function avatarErrText(code) {
+  return ({
+    csrf_failed: 'Сессия устарела — обновите страницу и попробуйте снова',
+    auth_required: 'Войдите в аккаунт, чтобы сохранить фото',
+    bad_type: 'Нужен файл JPG, PNG или WebP',
+    bad_image: 'Не удалось обработать фото — попробуйте другой файл',
+    too_large: 'Файл больше 10 МБ',
+    upload_failed: 'Не удалось загрузить файл на сервер',
+    save_failed: 'Не удалось записать фото в профиль',
+  })[code] || 'Не удалось сохранить фото';
+}
+async function setPhoto(src) {
+  let url = src;
+  if (LIVE) {
+    try {
+      if (!src) {
+        let res = await fetch('/api/me/avatar', { method: 'DELETE', credentials: 'same-origin', headers: { 'X-CSRF-Token': await csrf() } });
+        if (res.status === 403) res = await fetch('/api/me/avatar', { method: 'DELETE', credentials: 'same-origin', headers: { 'X-CSRF-Token': await csrf(true) } });
+        if (!res.ok) throw Object.assign(new Error('delete_failed'), { code: 'save_failed' });
+        url = '';
+      } else if (String(src).startsWith('data:') || src instanceof Blob) {
+        const blob = src instanceof Blob ? src : await (await fetch(src)).blob();
+        url = await uploadAvatarBlob(blob);
+      }
+    } catch (err) {
+      toast(avatarErrText(err && err.code));
+      return false;
+    }
+  }
+  D.user.avatar = url; if (editing) editing.avatar = url; saveLocal();
+  renderSide(); if (tab === 'settings') vSettings(); highlight('avatar');
+  return true;
+}
+$('avaFile').addEventListener('change', (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  if (!/^image\/(jpeg|png|webp|gif)$/.test(f.type)) return toast('Нужен файл JPG, PNG или WebP');
+  if (f.size > 10 * 1024 * 1024) return toast('Файл больше 10 МБ — выберите поменьше');
+  const url = URL.createObjectURL(f), img = new Image();
+  img.onload = () => { CROP.img = img; CROP.z = 1; CROP.x = 0; CROP.y = 0; $('cropZ').value = 1; $('crop').hidden = false; drawCrop(); setTimeout(() => $('cropZ').focus(), 30); };
+  img.onerror = () => { URL.revokeObjectURL(url); toast('Не удалось открыть фото — попробуйте JPG или PNG'); };
+  img.src = url;
+});
+function cropGeom(W) {
+  const { img, z } = CROP, s = Math.max(W / img.width, W / img.height) * z, w = img.width * s, h = img.height * s;
+  const mx = (w - W) / 2, my = (h - W) / 2; CROP.x = Math.max(-mx, Math.min(mx, CROP.x)); CROP.y = Math.max(-my, Math.min(my, CROP.y));
+  return { w, h, dx: (W - w) / 2 + CROP.x, dy: (W - h) / 2 + CROP.y };
+}
+function drawCrop() { const cv = $('cropCv'), c = cv.getContext('2d'), W = cv.width, g = cropGeom(W); c.clearRect(0, 0, W, W); c.drawImage(CROP.img, g.dx, g.dy, g.w, g.h); }
+function closeCrop() { $('crop').hidden = true; if (CROP.img) URL.revokeObjectURL(CROP.img.src); CROP.img = null; }
+$('cropZ').addEventListener('input', (e) => { CROP.z = +e.target.value; drawCrop(); });
+const stage = $('cropStage');
+stage.addEventListener('pointerdown', (e) => { stage.setPointerCapture(e.pointerId); CROP.drag = { x: e.clientX, y: e.clientY }; });
+stage.addEventListener('pointermove', (e) => { if (!CROP.drag) return; const k = $('cropCv').width / stage.clientWidth; CROP.x += (e.clientX - CROP.drag.x) * k; CROP.y += (e.clientY - CROP.drag.y) * k; CROP.drag = { x: e.clientX, y: e.clientY }; drawCrop(); });
+['pointerup', 'pointercancel'].forEach((ev) => stage.addEventListener(ev, () => { CROP.drag = null; }));
+stage.addEventListener('wheel', (e) => { e.preventDefault(); CROP.z = Math.max(1, Math.min(3, CROP.z - e.deltaY * 0.002)); $('cropZ').value = CROP.z; drawCrop(); }, { passive: false });
+$('crop').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-crop]'); if (e.target === $('crop')) return closeCrop(); if (!b) return;
+  if (b.dataset.crop === 'cancel') return closeCrop();
+  if (b.dataset.crop === 'other') { closeCrop(); return pickPhoto(); }
+  if (b.dataset.crop !== 'ok') return;
+  const src = $('cropCv'), S = src.width;
+  const stageW = Math.max(1, stage.clientWidth || S);
+  const inset = Math.max(0, 12 * S / stageW);
+  const out = document.createElement('canvas'); out.width = out.height = 400;
+  out.getContext('2d').drawImage(src, inset, inset, S - 2 * inset, S - 2 * inset, 0, 0, 400, 400);
+  b.disabled = true;
+  const blob = await new Promise((resolve) => out.toBlob(resolve, 'image/jpeg', 0.86));
+  const ok = blob ? await setPhoto(blob) : false;
+  if (!blob) toast('Не удалось обработать кадр');
+  b.disabled = false;
+  if (ok) { closeCrop(); toast('Фото обновлено ✓'); }
+});
+
+/* ===== прямые ссылки: /account#messages/t2, #balance, #settings ===== */
+function fromHash() {
+  const [h, id] = location.hash.slice(1).split('/');
+  if (!['works', 'messages', 'balance', 'settings'].includes(h)) return;
+  tab = h;
+  openThread = null;
+  if (h === 'messages' && id) {
+    const found = D.threads.find((t) => String(t.id) === String(id));
+    if (found) {
+      openThread = String(id);
+      found.unread = 0;
+    } else if (LIVE) {
+      openThread = String(id);
+      api('/api/threads/' + encodeURIComponent(id) + '/messages').then(({ res, data }) => {
+        if (!res.ok || !data || !data.id) return;
+        const i = D.threads.findIndex((x) => String(x.id) === String(data.id));
+        if (i >= 0) D.threads[i] = data;
+        else D.threads.push(data);
+        ensureAssistant();
+        if (tab === 'messages' && String(openThread) === String(data.id)) render();
+      }).catch(() => {});
+    }
+  }
+  render();
+}
+window.addEventListener('hashchange', fromHash);
+
+/* ================= Live API (когда нет ?state=) ================= */
+async function api(path, opts = {}) {
+  const method = (opts.method || 'GET').toUpperCase();
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (method !== 'GET' && method !== 'HEAD') headers['X-CSRF-Token'] = await csrf();
+  const res = await fetch(path, { credentials: 'same-origin', ...opts, headers });
+  let data = {};
+  try { data = await res.json(); } catch (_) {}
+  return { res, data };
+}
+function contactsFromProfile(p, email, showEmail) {
+  const out = [];
+  if (p.telegram) out.push({ net: 'telegram', login: p.telegram, show: !!p.show_telegram });
+  if (p.vk) out.push({ net: 'vk', login: p.vk, show: !!p.show_vk });
+  if (p.website) out.push({ net: 'site', login: p.website, show: !!p.show_website });
+  if (showEmail && email) out.push({ net: 'email', login: email, show: true });
+  (p.contacts_extra || []).forEach((x) => {
+    const net = x.net === 'custom' ? 'custom' : (x.net || 'custom');
+    out.push({ net, label: x.label || '', login: x.login || '', show: x.show !== false });
+  });
+  return out;
+}
+function profileBodyFromUser(u) {
+  const body = {
+    display_name: u.name || '',
+    handle: u.nick || '',
+    bio: u.about || '',
+    show_email: false,
+    contacts_extra: [],
+  };
+  const primary = new Set(['telegram', 'vk', 'site', 'email']);
+  const by = Object.fromEntries((u.contacts || []).filter((c) => primary.has(c.net)).map((c) => [c.net, c]));
+  if (by.telegram) { body.telegram = by.telegram.login; body.show_telegram = !!by.telegram.show; }
+  if (by.vk) { body.vk = by.vk.login; body.show_vk = !!by.vk.show; }
+  if (by.site) { body.website = by.site.login; body.show_website = !!by.site.show; }
+  if (by.email) body.show_email = !!by.email.show;
+  for (const c of u.contacts || []) {
+    if (primary.has(c.net) || !String(c.login || '').trim()) continue;
+    const row = { login: c.login.trim(), show: !!c.show };
+    if (contactSelectNet(c) === 'custom') {
+      row.net = 'custom';
+      row.label = String(c.label || '').trim().slice(0, 40) || 'Соцсеть';
+    } else {
+      row.net = c.net;
+    }
+    body.contacts_extra.push(row);
+  }
+  return body;
+}
+async function loadLive() {
+  const { res, data } = await api('/api/auth/me');
+  if (!res.ok || !data.user) {
+    location.replace('/auth?next=' + encodeURIComponent(location.pathname + location.search + location.hash));
+    return false;
+  }
+  const p = data.profile || {};
+  D.user = {
+    name: p.display_name || data.user.name || '',
+    nick: p.handle || '',
+    about: p.bio || '',
+    avatar: p.avatar_url || '',
+    email: data.user.email || '',
+    askMode: 'ask',
+    contacts: contactsFromProfile(p, data.user.email, p.show_email),
+  };
+  D.balance = {
+    available: Math.round((data.available_kop || data.balance_kop || 0) / 100),
+    hold: Math.round((data.held_kop || 0) / 100),
+    history: [],
+  };
+  try {
+    const bal = await api('/api/balance');
+    if (bal.res.ok) {
+      D.balance.available = Math.round((bal.data.available_kop || bal.data.balance_kop || 0) / 100);
+      D.balance.hold = Math.round((bal.data.held_kop || 0) / 100);
+      D.balance.history = (bal.data.ledger || []).map((e) => ({
+        ts: e.created_at ? Date.parse(e.created_at) : Date.now(),
+        type: e.kind === 'topup' ? 'in' : e.kind === 'hold' ? 'hold' : 'gen',
+        model: e.model_key || '',
+        sum: Math.round((e.amount_kop || 0) / 100),
+        note: e.kind === 'topup' ? 'Пополнение' : e.kind === 'hold' ? 'Резерв' : 'Генерация',
+      }));
+    }
+  } catch (_) {}
+  try {
+    const w = await api('/api/works/mine');
+    if (w.res.ok) {
+      D.works = (w.data.items || []).map((x) => ({
+        id: String(x.id),
+        title: x.title || x.model_key || 'Работа',
+        src: x.thumb_url || x.media_url || '/assets/bg-light.jpg',
+        pub: x.status === 'published',
+        likes: x.likes || 0,
+      }));
+    }
+  } catch (_) {}
+  try {
+    const th = await api('/api/threads');
+    if (th.res.ok) {
+      D.threads = (th.data.items || []).map((x) => {
+        if (x.kind === 'assistant') {
+          x.with = x.with || {};
+          x.with.name = x.with.name || '{AI}-шница';
+          x.with.grad = x.with.grad || '#FFA235,#F2668B';
+          x.with.assistant = true;
+        }
+        return x;
+      });
+    }
+  } catch (_) { D.threads = D.threads || []; }
+  ensureAssistant();
+  return true;
+}
+async function flushPendingReq() {
+  let raw;
+  try { raw = sessionStorage.getItem('aish-pending-req'); } catch (_) { return null; }
+  if (!raw) return null;
+  try { sessionStorage.removeItem('aish-pending-req'); } catch (_) {}
+  let payload;
+  try { payload = JSON.parse(raw); } catch (_) { return null; }
+  const kind = payload.kind === 'custom' ? 'order' : (payload.kind || 'prompt');
+  const base = payload.msg || payload.text || '';
+  const text = base + (payload.contact ? '\n\nВнешний контакт: ' + payload.contact : '');
+  const { res, data } = await api('/api/threads', {
+    method: 'POST',
+    body: JSON.stringify({
+      workId: payload.work || payload.workId || null,
+      workTitle: payload.workTitle || '',
+      workSrc: payload.workSrc || '',
+      kind,
+      text,
+      fmt: payload.fmt || '',
+      creator: payload.creator,
+      creatorName: payload.creatorName || '',
+    }),
+  });
+  if (!res.ok || !data.threadId) return null;
+  const tid = String(data.threadId);
+  if (data.thread) {
+    const x = data.thread;
+    if (!D.threads.some((t) => String(t.id) === tid)) D.threads.unshift(x);
+  } else {
+    try {
+      const th = await api('/api/threads');
+      if (th.res.ok) D.threads = th.data.items || D.threads;
+    } catch (_) {}
+  }
+  return tid;
+}
+async function persistProfile() {
+  const { res, data } = await api('/api/settings/profile', { method: 'POST', body: JSON.stringify(profileBodyFromUser(D.user)) });
+  if (!res.ok) {
+    toast(data.error === 'handle_taken' ? 'Ник уже занят' : data.error === 'bad_handle' ? 'Ник: 3–24 символа, латиница' : 'Не удалось сохранить');
+    return false;
+  }
+  return true;
+}
+const _saveLocal = saveLocal;
+save = () => {
+  _saveLocal();
+  if (LIVE) persistProfile().catch(() => {});
+};
+
+/* ================= старт ================= */
+(async function boot() {
+  if (!DEMO) {
+    LIVE = true;
+    const ok = await loadLive();
+    if (!ok) return;
+    const pendingId = await flushPendingReq().catch(() => null);
+    if (pendingId) {
+      try { history.replaceState(null, '', '#messages/' + encodeURIComponent(pendingId)); } catch (_) {}
+      toast('Чат с креатором открыт');
+    }
+  }
+  render(); fromHash();
+  ensureAssistant();
+  const S = DEMO;
+  if (S === 'assistant' || S === 'assistant-mid') { openAssistant(); }
+  if (S === 'manual') { tab = 'settings'; render(); }
+  if (S === 'messages' || S === 'thread') { tab = 'messages'; if (S === 'thread') openThread = 't1'; render(); }
+  if (S === 'thread-prompt') { tab = 'messages'; openThread = 't2'; render(); }
+  if (S === 'thread-order') { tab = 'messages'; openThread = 't3'; render(); }
+  if (S === 'balance' || S === 'empty-balance') { tab = 'balance'; render(); }
+  if (S === 'empty-messages') { tab = 'messages'; openAssistant(); }
+})();
+</script>
+</body>
+</html>
