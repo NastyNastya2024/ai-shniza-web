@@ -52,7 +52,7 @@ window.AISHNITSA_LENS = {
   axis: 'x',
   speed: 0.018,
   hoverSpeed: 0.005,
-  cols: 5, rows: 1,
+  cols: 4, rows: 3,
   gap: 30, radius: 34,
   tileRatio: 0.74
 };

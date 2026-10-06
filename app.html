@@ -740,12 +740,53 @@ class Component extends DCLogic {
       if (start.data.status === 'succeeded') { await this.finishJob(jobId, workId); return; }
       this.watchJob(jobId, workId);
     };
+    this.pollGenerate = async (jobId, pollUrl) => {
+      const url = pollUrl || ('/api/generate/jobs/' + encodeURIComponent(jobId));
+      const maxMs = 12 * 60 * 1000;
+      const start = Date.now();
+      let interval = 2000;
+      let errors = 0;
+      while (Date.now() - start < maxMs) {
+        let res, data;
+        try {
+          ({ res, data } = await api(url, { cache: 'no-store' }));
+        } catch (_) {
+          errors += 1;
+          if (errors >= 5) return { res: { ok: false, status: 502 }, data: { error: 'network' } };
+          await new Promise((r) => setTimeout(r, Math.min(10000, interval * Math.pow(2, errors - 1))));
+          continue;
+        }
+        if (res.status === 404) return { res: { ok: false, status: 404 }, data: data || { error: 'not_found' } };
+        if (res.status >= 500) {
+          errors += 1;
+          if (errors >= 5) return { res: { ok: false, status: res.status }, data: data || {} };
+          await new Promise((r) => setTimeout(r, Math.min(10000, 2000 * errors)));
+          continue;
+        }
+        errors = 0;
+        const st = data && data.status;
+        if (st === 'running') this.patchLastBot({ text: tr('studio.chat.almost'), job: true });
+        if (st === 'queued' || st === 'dispatched') this.patchLastBot({ text: tr('studio.chat.queued'), job: true });
+        if (st === 'succeeded') return { res: { ok: true, status: 200 }, data: data };
+        if (st === 'failed' || st === 'error') {
+          return { res: { ok: false, status: (data && data.http_status) || 502 }, data: data || {} };
+        }
+        const elapsed = Date.now() - start;
+        interval = elapsed < 20000 ? 2000 : Math.min(5000, interval + 1000);
+        await new Promise((r) => setTimeout(r, interval));
+      }
+      return { res: { ok: false, status: 504 }, data: { error: 'timeout' } };
+    };
     this.runGenerate = async (m, prompt) => {
       this.patchLastBot({ text: tr('studio.chat.cooking'), job: true });
-      const { res, data } = await api('/api/generate', {
+      let { res, data } = await api('/api/generate', {
         method: 'POST',
         body: JSON.stringify({ model: m.model_key || m.slug, prompt: prompt || '' })
       });
+      if (res.status === 202 && data && data.job_id) {
+        this.patchLastBot({ text: tr('studio.chat.queued'), job: true });
+        ({ res, data } = await this.pollGenerate(data.job_id, data.poll_url));
+      }
       if (!res.ok) {
         const detail = (data && (data.detail || data.error)) || '';
         this.botSay({ text: tr('studio.chat.failedRetry') + (detail ? ('\n\n' + String(detail).slice(0, 180)) : '') }, 200);
@@ -794,12 +835,12 @@ class Component extends DCLogic {
       } catch (_) { this.pollJob(jobId, workId, finish); }
     };
     this.pollJob = async (jobId, workId, finish) => {
-      for (let i = 0; i < 40; i++) {
+      for (let i = 0; i < 160; i++) {
         const { data } = await api('/api/jobs/' + jobId);
         const st = data.job && data.job.status;
         if (st === 'running') this.patchLastBot({ text: tr('studio.chat.almost') });
         if (st === 'succeeded' || st === 'failed' || st === 'error' || (data.work && data.work.media_url)) { await finish(data); return; }
-        await new Promise((r) => setTimeout(r, 3000));
+        await new Promise((r) => setTimeout(r, i < 10 ? 3000 : 5000));
       }
       this.patchLastBot({ text: tr('studio.chat.stillRunning') });
     };

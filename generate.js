@@ -1062,6 +1062,55 @@ async function sendChat(opts = {}) {
   return data;
 }
 
+async function pollGenerateJob(jobId, pollUrl) {
+  const url = pollUrl || `/api/generate/jobs/${encodeURIComponent(jobId)}`;
+  const maxMs = 12 * 60 * 1000;
+  const start = Date.now();
+  let interval = 2000;
+  let errors = 0;
+  while (Date.now() - start < maxMs) {
+    let response;
+    let data = {};
+    try {
+      response = await fetch(url, { credentials: "same-origin", cache: "no-store" });
+      data = await response.json().catch(() => ({}));
+    } catch (_) {
+      errors += 1;
+      if (errors >= 5) {
+        return { response: { ok: false, status: 502 }, data: { error: "network" } };
+      }
+      await new Promise((r) => setTimeout(r, Math.min(10000, interval * Math.pow(2, errors - 1))));
+      continue;
+    }
+    if (response.status === 404) {
+      return { response: { ok: false, status: 404 }, data };
+    }
+    if (response.status >= 500) {
+      errors += 1;
+      if (errors >= 5) {
+        return { response: { ok: false, status: response.status }, data };
+      }
+      await new Promise((r) => setTimeout(r, Math.min(10000, 2000 * errors)));
+      continue;
+    }
+    errors = 0;
+    const st = data.status;
+    if (st === "succeeded") {
+      return { response: { ok: true, status: 200 }, data };
+    }
+    if (st === "failed" || st === "error") {
+      return {
+        response: { ok: false, status: data.http_status || 502 },
+        data,
+      };
+    }
+    const elapsed = Date.now() - start;
+    interval = elapsed < 20000 ? 2000 : Math.min(5000, interval + 1000);
+    await new Promise((r) => setTimeout(r, interval));
+  }
+  return { response: { ok: false, status: 504 }, data: { error: "timeout" } };
+}
+
 async function sendReplicateGenerate(model, overridePrompt) {
   const lastUser = chatHistory.filter((m) => m.role === "user").slice(-1)[0]?.content || "";
   const promptForApi =
@@ -1078,7 +1127,7 @@ async function sendReplicateGenerate(model, overridePrompt) {
           ? ""
           : lastUser;
 
-  const response = await fetch("/api/generate", {
+  let response = await fetch("/api/generate", {
     method: "POST",
     headers: await csrfHeaders(),
     credentials: "same-origin",
@@ -1097,7 +1146,10 @@ async function sendReplicateGenerate(model, overridePrompt) {
     }),
   });
 
-  const data = await response.json().catch(() => ({}));
+  let data = await response.json().catch(() => ({}));
+  if (response.status === 202 && data.job_id) {
+    ({ response, data } = await pollGenerateJob(data.job_id, data.poll_url));
+  }
   removeLoadingMessage();
 
   if (!response.ok) {

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import List, Tuple
 
 import requests
-from flask import Flask, jsonify, redirect, request, send_from_directory
+from flask import Flask, jsonify, redirect, request, send_from_directory, session
 from flask_sqlalchemy import SQLAlchemy
 
 from auth import load_env, register_auth
@@ -764,9 +764,16 @@ def api_chat():
 
     system_prompt = f"{_build_chat_system_prompt()}\n\n{_ui_model_context(data)}"
     chat_messages = [{"role": "system", "content": system_prompt}, *messages]
-    session = _chat_session()
+    http = _chat_session()
     last_detail = ""
     last_status = 502
+    deadline = time.monotonic() + float(os.getenv("CHAT_DEADLINE_SEC") or "45")
+
+    def _left() -> float:
+        return deadline - time.monotonic()
+
+    def _budget(cap: float) -> float:
+        return max(2.0, min(cap, _left() - 1.0))
 
     def _chat_ok(reply: str, used_model: str, channel: str):
         if _looks_like_chain_of_thought(reply):
@@ -796,8 +803,10 @@ def api_chat():
             if candidate and candidate not in groq_models:
                 groq_models.append(candidate)
         for groq_model in groq_models:
+            if _left() < 4:
+                break
             try:
-                resp = session.post(
+                resp = http.post(
                     "https://api.groq.com/openai/v1/chat/completions",
                     headers={
                         "Authorization": f"Bearer {groq_key}",
@@ -810,7 +819,7 @@ def api_chat():
                         "max_tokens": 420,
                         "stream": False,
                     },
-                    timeout=25,
+                    timeout=_budget(25),
                 )
             except requests.RequestException as exc:
                 last_detail = str(exc)
@@ -848,6 +857,8 @@ def api_chat():
                 omni_models.append(candidate)
         omni_timeout = float(os.getenv("OMNIROUTE_CHAT_TIMEOUT") or "8")
         for model in omni_models[:2]:
+            if _left() < 4:
+                break
             payload = {
                 "model": model,
                 "messages": chat_messages,
@@ -856,14 +867,14 @@ def api_chat():
                 "stream": False,
             }
             try:
-                resp = session.post(
+                resp = http.post(
                     f"{_omniroute_base()}/v1/chat/completions",
                     headers={
                         "Authorization": f"Bearer {omni_key}",
                         "Content-Type": "application/json",
                     },
                     json=payload,
-                    timeout=omni_timeout,
+                    timeout=_budget(omni_timeout),
                 )
             except requests.RequestException as exc:
                 last_detail = str(exc.__class__.__name__)
@@ -886,14 +897,14 @@ def api_chat():
             return _chat_ok(reply, used_model, "omniroute")
 
     # Late Groq if prefer_groq was off or earlier attempt failed
-    if groq_key and not prefer_groq:
+    if groq_key and not prefer_groq and _left() >= 4:
         groq_model = (
             (os.getenv("GROQ_CHAT_MODEL") or "").strip()
             or (os.getenv("GROQ_MODEL") or "").strip()
             or "openai/gpt-oss-20b"
         )
         try:
-            resp = session.post(
+            resp = http.post(
                 "https://api.groq.com/openai/v1/chat/completions",
                 headers={
                     "Authorization": f"Bearer {groq_key}",
@@ -906,7 +917,7 @@ def api_chat():
                     "max_tokens": 420,
                     "stream": False,
                 },
-                timeout=25,
+                timeout=_budget(25),
             )
             if resp.status_code < 400:
                 body = resp.json()
@@ -925,7 +936,7 @@ def api_chat():
             last_status = 502
 
     # Fallback: DeepSeek on Replicate if OmniRoute / Groq unavailable
-    if _replicate_token():
+    if _replicate_token() and _left() >= 15:
         deepseek_model = (
             os.getenv("CHAT_FALLBACK_REPLICATE_MODEL") or "deepseek-ai/deepseek-v3.1"
         ).strip()
@@ -941,7 +952,7 @@ def api_chat():
         result = _run_replicate_prediction(
             deepseek_model,
             {"prompt": prompt},
-            wait_seconds=60,
+            wait_seconds=int(max(5, min(60, (_left() - 6) / 2))),
         )
         if result.get("ok"):
             prediction = result["prediction"]
@@ -2698,12 +2709,13 @@ def _run_replicate_prediction(replicate_model: str, input_payload: dict, wait_se
             "prediction": body,
         }
 
-    # Prefer:wait may return early — poll a few times
+    # Prefer:wait may return early — poll until wait_seconds deadline
     get_url = body.get("urls", {}).get("get") or f"https://api.replicate.com/v1/predictions/{body.get('id')}"
-    for _ in range(40):
+    deadline = time.time() + max(int(wait_seconds or 60), 5)
+    while time.time() < deadline:
         time.sleep(2)
         try:
-            poll = requests.get(get_url, headers={"Authorization": f"Bearer {token}"}, timeout=30)
+            poll = requests.get(get_url, headers={"Authorization": f"Bearer {token}"}, timeout=20)
             pdata = poll.json()
         except (requests.RequestException, ValueError):
             continue
@@ -3624,6 +3636,47 @@ def api_integrations():
     })
 
 
+_JOB_ID_RE = re.compile(r"^[a-f0-9]{16,64}$")
+
+
+def _generate_job_fields(model_id: str, prompt: str) -> dict | None:
+    spec = INTEGRATED_MODELS.get(model_id)
+    if not spec:
+        return None
+    return {
+        "model_id": model_id,
+        "provider": spec["provider"],
+        "kind": spec["kind"],
+        "upstream_model": _provider_model_ref(spec),
+        "replicate_model": spec.get("replicate_model"),
+        "fal_model": spec.get("fal_model"),
+        "input_payload": _build_provider_input(spec, prompt, None, None, None),
+    }
+
+
+@app.route("/api/generate/jobs/<job_id>", methods=["GET"])
+def api_generate_job(job_id: str):
+    if not _JOB_ID_RE.match(job_id or ""):
+        return jsonify({"error": "not_found"}), 404
+    try:
+        from queue_runtime.jobs import generate_job_public, get_job
+
+        job = get_job(job_id)
+        if not job:
+            return jsonify({"error": "not_found"}), 404
+        owner = job.get("owner_id") or job.get("user_id")
+        if owner and owner != session.get("user_id"):
+            return jsonify({"error": "not_found"}), 404
+        public = generate_job_public(job_id)
+    except Exception as exc:  # noqa: BLE001
+        return jsonify({"error": "queue_unavailable", "detail": str(exc)}), 503
+    if not public:
+        return jsonify({"error": "not_found"}), 404
+    resp = jsonify(public)
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
 @app.route("/api/generate", methods=["POST"])
 def api_generate():
     data = request.get_json(silent=True) or {}
@@ -3722,6 +3775,7 @@ def api_generate():
                 "replicate_model": spec.get("replicate_model"),
                 "fal_model": spec.get("fal_model"),
                 "input_payload": input_payload,
+                "owner_id": session.get("user_id"),
             })
         except Exception as exc:  # noqa: BLE001
             return jsonify({"error": "queue_unavailable", "detail": str(exc)}), 503
@@ -3737,6 +3791,8 @@ def api_generate():
                 "provider": provider,
                 "kind": spec["kind"],
                 "upstream_model": upstream_model,
+                "poll_url": f"/api/generate/jobs/{job_id}",
+                "poll_after_ms": 2000,
             }), 202
 
         try:
@@ -3912,6 +3968,7 @@ def api_assistant():
 
 register_auth(app, db, User)
 app.config["INTEGRATED_MODELS"] = INTEGRATED_MODELS
+app.config["GENERATE_JOB_FIELDS"] = _generate_job_fields
 register_product(app, db, User)
 apply_rate_limits(app)
 

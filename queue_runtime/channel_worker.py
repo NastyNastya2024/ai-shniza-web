@@ -135,7 +135,7 @@ def _run_omniroute(job: dict[str, Any]) -> dict[str, Any]:
     wait = _wait_seconds(job["model_id"], job.get("kind") or "llm")
     upstream = job.get("upstream_model") or "auto/chat"
     payload = job.get("input_payload") or {}
-    set_job(job["id"], status="running", chosen_channel="omniroute")
+    set_job(job["id"], status="running", chosen_channel="omniroute", started_at=time.time())
     result = srv._run_omniroute_prediction(upstream, payload, wait_seconds=wait)
     if not result.get("ok"):
         write_health("omniroute", False, str(result.get("detail") or result.get("error") or "upstream"))
@@ -172,7 +172,7 @@ def process_job(channel: str, job: dict[str, Any]) -> dict[str, Any]:
     wait = _wait_seconds(job["model_id"], job["kind"])
     upstream = job["upstream_model"]
     payload = job["input_payload"]
-    set_job(job["id"], status="running", chosen_channel=channel)
+    set_job(job["id"], status="running", chosen_channel=channel, started_at=time.time())
 
     if channel == "fal":
         result = srv._run_fal_prediction(upstream, payload, wait_seconds=wait)
@@ -218,7 +218,18 @@ def run_channel_worker(channel: str) -> None:
             if not job:
                 continue
             print(f"[worker:{channel}] job={job_id} model={job.get('model_id')}", flush=True)
-            result = process_job(channel, job)
+            try:
+                result = process_job(channel, job)
+            except Exception as exc:  # noqa: BLE001
+                print(f"[worker:{channel}] job={job_id} worker_error: {exc}", flush=True)
+                result = {
+                    "ok": False,
+                    "error": "worker_error",
+                    "detail": str(exc)[:300],
+                    "status": 500,
+                    "provider": channel,
+                    "job_id": job_id,
+                }
             publish_result(job_id, result)
         except Exception as exc:  # noqa: BLE001
             print(f"[worker:{channel}] error: {exc}", flush=True)

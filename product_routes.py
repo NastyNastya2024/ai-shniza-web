@@ -305,12 +305,19 @@ def register_product(app, db, User):
 
             if integrated_id:
                 spec = integrated[integrated_id]
-                inbound_id = enqueue_inbound(
-                    {
+                fields_fn = app.config.get("GENERATE_JOB_FIELDS")
+                gen_fields = fields_fn(integrated_id, prompt) if callable(fields_fn) else None
+                if not gen_fields:
+                    gen_fields = {
                         "model_id": integrated_id,
                         "provider": spec.get("provider"),
+                    }
+                inbound_id = enqueue_inbound(
+                    {
+                        **gen_fields,
                         "prompt": prompt,
                         "user_id": user.id,
+                        "owner_id": user.id,
                         "price_kop": price_kop,
                         "billing_job_id": job_id,
                     }
@@ -382,8 +389,9 @@ def register_product(app, db, User):
     @require_user
     def api_jobs_get(user, job_id):
         try:
-            from queue_runtime.jobs import get_job
+            from queue_runtime.jobs import generate_job_public, get_job
 
+            generate_job_public(job_id)
             job = get_job(job_id) or {}
         except Exception:
             job = {}
@@ -401,11 +409,13 @@ def register_product(app, db, User):
 
         @stream_with_context
         def gen():
-            from queue_runtime.jobs import get_job
+            from queue_runtime.jobs import generate_job_public, get_job
 
-            for _ in range(60):
+            yield "retry: 3000\n\n"
+            for _ in range(8):
                 job = {}
                 try:
+                    generate_job_public(job_id)
                     job = get_job(job_id) or {}
                 except Exception:
                     job = {}

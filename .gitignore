@@ -11,7 +11,7 @@ config.js
 .env
 .env.local
 .env.production
-env.example
+dump.rdb
 
 # Временные файлы
 *.tmp
