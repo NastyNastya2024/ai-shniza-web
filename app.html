@@ -757,6 +757,17 @@ class Component extends DCLogic {
           continue;
         }
         if (res.status === 404) return { res: { ok: false, status: 404 }, data: data || { error: 'not_found' } };
+        if (res.status === 401 || res.status === 403) {
+          return { res: { ok: false, status: res.status }, data: { error: 'auth_required', ...(data || {}) } };
+        }
+        if (res.status === 429) {
+          const ra = parseInt(res.headers.get('Retry-After') || '', 10);
+          await new Promise((r) => setTimeout(r, Number.isFinite(ra) && ra > 0 ? ra * 1000 : 5000));
+          continue;
+        }
+        if (res.status >= 400 && res.status < 500) {
+          return { res: { ok: false, status: res.status }, data: data || { error: 'client_error' } };
+        }
         if (res.status >= 500) {
           errors += 1;
           if (errors >= 5) return { res: { ok: false, status: res.status }, data: data || {} };
@@ -788,6 +799,10 @@ class Component extends DCLogic {
         ({ res, data } = await this.pollGenerate(data.job_id, data.poll_url));
       }
       if (!res.ok) {
+        if (res.status === 401 || res.status === 403 || (data && data.error === 'auth_required')) {
+          this.botSay({ text: tr('studio.chat.needLogin'), loginCta: true }, 200);
+          return;
+        }
         const detail = (data && (data.detail || data.error)) || '';
         this.botSay({ text: tr('studio.chat.failedRetry') + (detail ? ('\n\n' + String(detail).slice(0, 180)) : '') }, 200);
         return;

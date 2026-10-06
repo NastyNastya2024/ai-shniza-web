@@ -1085,6 +1085,25 @@ async function pollGenerateJob(jobId, pollUrl) {
     if (response.status === 404) {
       return { response: { ok: false, status: 404 }, data };
     }
+    if (response.status === 401 || response.status === 403) {
+      return {
+        response: { ok: false, status: response.status },
+        data: { error: "auth_required", ...data },
+      };
+    }
+    if (response.status === 429) {
+      const ra = parseInt(response.headers.get("Retry-After") || "", 10);
+      await new Promise((r) =>
+        setTimeout(r, Number.isFinite(ra) && ra > 0 ? ra * 1000 : 5000)
+      );
+      continue;
+    }
+    if (response.status >= 400 && response.status < 500) {
+      return {
+        response: { ok: false, status: response.status },
+        data: data.error ? data : { error: "client_error", ...data },
+      };
+    }
     if (response.status >= 500) {
       errors += 1;
       if (errors >= 5) {
