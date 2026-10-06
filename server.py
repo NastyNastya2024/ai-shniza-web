@@ -2670,73 +2670,166 @@ def _build_provider_input(
     return _build_replicate_input(spec, prompt, image_data_url, audio_data_url, video_data_url)
 
 
-def _run_replicate_prediction(replicate_model: str, input_payload: dict, wait_seconds: int = 120) -> dict:
+def _replicate_submit(replicate_model: str, input_payload: dict) -> dict:
+    """POST prediction without long Prefer:wait. Returns prediction_id + get_url."""
     token = _replicate_token()
     if not token:
-        return {"error": "not_configured", "status": 503}
+        return {"ok": False, "error": "not_configured", "status": 503, "phase": "submit"}
 
-    # Replicate Prefer: wait must be 1..60; longer jobs continue via polling below.
-    prefer_wait = max(1, min(int(wait_seconds or 60), 60))
     owner, name = replicate_model.split("/", 1)
     url = f"https://api.replicate.com/v1/models/{owner}/{name}/predictions"
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
-        "Prefer": f"wait={prefer_wait}",
+        "Prefer": "wait=1",
     }
     try:
-        resp = requests.post(url, headers=headers, json={"input": input_payload}, timeout=prefer_wait + 30)
+        resp = requests.post(url, headers=headers, json={"input": input_payload}, timeout=30)
     except requests.RequestException as exc:
-        return {"error": "upstream", "detail": str(exc.__class__.__name__), "status": 502}
+        return {
+            "ok": False,
+            "error": "upstream",
+            "detail": str(exc.__class__.__name__),
+            "status": 502,
+            "phase": "submit",
+        }
 
     try:
         body = resp.json()
     except ValueError:
-        return {"error": "bad_response", "detail": resp.text[:300], "status": 502}
+        return {
+            "ok": False,
+            "error": "bad_response",
+            "detail": resp.text[:300],
+            "status": 502,
+            "phase": "submit",
+        }
 
     if resp.status_code >= 400:
         detail = body.get("detail") or body.get("error") or resp.text[:300]
-        return {"error": "upstream", "detail": detail, "status": resp.status_code, "body": body}
+        return {
+            "ok": False,
+            "error": "upstream",
+            "detail": detail,
+            "status": resp.status_code,
+            "body": body,
+            "phase": "submit",
+        }
+
+    prediction_id = body.get("id")
+    get_url = (body.get("urls") or {}).get("get") or (
+        f"https://api.replicate.com/v1/predictions/{prediction_id}" if prediction_id else None
+    )
+    if not prediction_id or not get_url:
+        return {
+            "ok": False,
+            "error": "bad_response",
+            "detail": "missing prediction id",
+            "status": 502,
+            "body": body,
+            "phase": "submit",
+        }
 
     status = body.get("status")
-    if status == "succeeded":
-        return {"ok": True, "prediction": body}
     if status in {"failed", "canceled"}:
         return {
+            "ok": False,
             "error": "failed",
             "detail": body.get("error") or status,
             "status": 502,
             "prediction": body,
+            "prediction_id": prediction_id,
+            "get_url": get_url,
+            "phase": "run",
         }
 
-    # Prefer:wait may return early — poll until wait_seconds deadline
-    get_url = body.get("urls", {}).get("get") or f"https://api.replicate.com/v1/predictions/{body.get('id')}"
-    deadline = time.time() + max(int(wait_seconds or 60), 5)
+    return {
+        "ok": True,
+        "prediction_id": prediction_id,
+        "get_url": get_url,
+        "prediction": body,
+        "phase": "submit",
+    }
+
+
+def _replicate_wait(get_url: str, deadline: float) -> dict:
+    token = _replicate_token()
+    if not token:
+        return {"ok": False, "error": "not_configured", "status": 503, "phase": "run"}
+    headers = {"Authorization": f"Bearer {token}"}
+    last_body = None
     while time.time() < deadline:
         time.sleep(2)
         try:
-            poll = requests.get(get_url, headers={"Authorization": f"Bearer {token}"}, timeout=20)
+            poll = requests.get(get_url, headers=headers, timeout=20)
             pdata = poll.json()
-        except (requests.RequestException, ValueError):
+            last_body = pdata
+        except (requests.RequestException, ValueError) as exc:
+            if time.time() >= deadline:
+                return {
+                    "ok": False,
+                    "error": "upstream",
+                    "detail": str(exc.__class__.__name__),
+                    "status": 502,
+                    "phase": "run",
+                }
             continue
         st = pdata.get("status")
         if st == "succeeded":
-            return {"ok": True, "prediction": pdata}
+            return {"ok": True, "prediction": pdata, "phase": "run"}
         if st in {"failed", "canceled"}:
             return {
+                "ok": False,
                 "error": "failed",
                 "detail": pdata.get("error") or st,
                 "status": 502,
                 "prediction": pdata,
+                "phase": "run",
             }
-    return {"error": "timeout", "detail": "prediction still running", "status": 504, "prediction": body}
+    return {
+        "ok": False,
+        "error": "timeout",
+        "detail": "prediction still running",
+        "status": 504,
+        "prediction": last_body,
+        "phase": "run",
+    }
 
 
-def _run_fal_prediction(fal_model: str, input_payload: dict, wait_seconds: int = 120) -> dict:
-    """Submit to fal.ai queue and poll until COMPLETED (or timeout)."""
+def _replicate_cancel(prediction_id: str | None) -> None:
+    if not prediction_id:
+        return
+    token = _replicate_token()
+    if not token:
+        return
+    try:
+        requests.post(
+            f"https://api.replicate.com/v1/predictions/{prediction_id}/cancel",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10,
+        )
+    except requests.RequestException:
+        pass
+
+
+def _run_replicate_prediction(replicate_model: str, input_payload: dict, wait_seconds: int = 120) -> dict:
+    submitted = _replicate_submit(replicate_model, input_payload)
+    if not submitted.get("ok"):
+        return submitted
+    prediction = submitted.get("prediction") or {}
+    if prediction.get("status") == "succeeded":
+        return {"ok": True, "prediction": prediction}
+    deadline = time.time() + max(int(wait_seconds or 60), 5)
+    result = _replicate_wait(submitted["get_url"], deadline)
+    if result.get("error") == "timeout":
+        _replicate_cancel(submitted.get("prediction_id"))
+    return result
+
+
+def _fal_submit(fal_model: str, input_payload: dict) -> dict:
     key = _fal_key()
     if not key:
-        return {"error": "not_configured", "status": 503}
+        return {"ok": False, "error": "not_configured", "status": 503, "phase": "submit"}
 
     headers = {
         "Authorization": f"Key {key}",
@@ -2744,64 +2837,178 @@ def _run_fal_prediction(fal_model: str, input_payload: dict, wait_seconds: int =
     }
     submit_url = f"https://queue.fal.run/{fal_model.lstrip('/')}"
     try:
-        resp = requests.post(submit_url, headers=headers, json=input_payload, timeout=60)
+        resp = requests.post(submit_url, headers=headers, json=input_payload, timeout=30)
     except requests.RequestException as exc:
-        return {"error": "upstream", "detail": str(exc.__class__.__name__), "status": 502}
+        return {
+            "ok": False,
+            "error": "upstream",
+            "detail": str(exc.__class__.__name__),
+            "status": 502,
+            "phase": "submit",
+        }
 
     try:
         body = resp.json()
     except ValueError:
-        return {"error": "bad_response", "detail": resp.text[:300], "status": 502}
+        return {
+            "ok": False,
+            "error": "bad_response",
+            "detail": resp.text[:300],
+            "status": 502,
+            "phase": "submit",
+        }
 
     if resp.status_code >= 400:
         detail = body.get("detail") or body.get("error") or resp.text[:300]
-        return {"error": "upstream", "detail": detail, "status": resp.status_code, "body": body}
+        return {
+            "ok": False,
+            "error": "upstream",
+            "detail": detail,
+            "status": resp.status_code,
+            "body": body,
+            "phase": "submit",
+        }
 
     status_url = body.get("status_url")
     response_url = body.get("response_url")
     request_id = body.get("request_id")
     if not status_url or not response_url:
-        # Some endpoints may return the result immediately
         if any(k in body for k in ("images", "image", "video", "audio", "output", "text")):
-            return {"ok": True, "prediction": body}
-        return {"error": "bad_response", "detail": "missing fal queue urls", "status": 502, "body": body}
+            return {
+                "ok": True,
+                "request_id": request_id,
+                "status_url": status_url,
+                "response_url": response_url,
+                "prediction": body,
+                "phase": "submit",
+            }
+        return {
+            "ok": False,
+            "error": "bad_response",
+            "detail": "missing fal queue urls",
+            "status": 502,
+            "body": body,
+            "phase": "submit",
+        }
 
-    deadline = time.time() + max(wait_seconds, 30)
+    return {
+        "ok": True,
+        "request_id": request_id,
+        "status_url": status_url,
+        "response_url": response_url,
+        "prediction": body,
+        "phase": "submit",
+    }
+
+
+def _fal_wait(status_url: str, response_url: str, deadline: float) -> dict:
+    key = _fal_key()
+    if not key:
+        return {"ok": False, "error": "not_configured", "status": 503, "phase": "run"}
+    headers = {
+        "Authorization": f"Key {key}",
+        "Content-Type": "application/json",
+    }
+    last_body = None
+    request_id = None
     while time.time() < deadline:
         try:
-            poll = requests.get(f"{status_url}?logs=0", headers=headers, timeout=30)
+            poll = requests.get(f"{status_url}?logs=0", headers=headers, timeout=20)
             pdata = poll.json()
-        except (requests.RequestException, ValueError):
+            last_body = pdata
+        except (requests.RequestException, ValueError) as exc:
+            if time.time() >= deadline:
+                return {
+                    "ok": False,
+                    "error": "upstream",
+                    "detail": str(exc.__class__.__name__),
+                    "status": 502,
+                    "phase": "run",
+                }
             time.sleep(2)
             continue
 
         status = pdata.get("status")
+        request_id = pdata.get("request_id") or request_id
         if status == "COMPLETED":
             try:
                 result = requests.get(response_url, headers=headers, timeout=60)
                 rbody = result.json()
             except (requests.RequestException, ValueError) as exc:
-                return {"error": "upstream", "detail": str(exc.__class__.__name__), "status": 502}
+                return {
+                    "ok": False,
+                    "error": "upstream",
+                    "detail": str(exc.__class__.__name__),
+                    "status": 502,
+                    "phase": "run",
+                }
             if result.status_code >= 400:
                 return {
+                    "ok": False,
                     "error": "upstream",
                     "detail": rbody.get("detail") or rbody.get("error") or result.text[:300],
                     "status": result.status_code,
                     "body": rbody,
+                    "phase": "run",
                 }
             if isinstance(rbody, dict):
                 rbody.setdefault("request_id", request_id)
-            return {"ok": True, "prediction": rbody}
+            return {"ok": True, "prediction": rbody, "phase": "run"}
         if status in {"FAILED", "CANCELLED", "CANCELED"}:
             return {
+                "ok": False,
                 "error": "failed",
                 "detail": pdata.get("error") or status,
                 "status": 502,
                 "prediction": pdata,
+                "phase": "run",
             }
         time.sleep(2)
 
-    return {"error": "timeout", "detail": "fal request still running", "status": 504, "prediction": body}
+    return {
+        "ok": False,
+        "error": "timeout",
+        "detail": "fal request still running",
+        "status": 504,
+        "prediction": last_body,
+        "phase": "run",
+    }
+
+
+def _fal_cancel(fal_model: str | None = None, request_id: str | None = None, **_kwargs) -> None:
+    """Best-effort cancel for fal queue; ignore errors if unsupported."""
+    if not fal_model or not request_id:
+        return
+    key = _fal_key()
+    if not key:
+        return
+    try:
+        requests.put(
+            f"https://queue.fal.run/{fal_model.lstrip('/')}/requests/{request_id}/cancel",
+            headers={"Authorization": f"Key {key}"},
+            timeout=10,
+        )
+    except requests.RequestException:
+        pass
+
+
+def _run_fal_prediction(fal_model: str, input_payload: dict, wait_seconds: int = 120) -> dict:
+    """Submit to fal.ai queue and poll until COMPLETED (or timeout)."""
+    submitted = _fal_submit(fal_model, input_payload)
+    if not submitted.get("ok"):
+        return submitted
+    prediction = submitted.get("prediction") or {}
+    if any(k in prediction for k in ("images", "image", "video", "audio", "output", "text")) and not submitted.get(
+        "status_url"
+    ):
+        return {"ok": True, "prediction": prediction}
+    if not submitted.get("status_url") or not submitted.get("response_url"):
+        return {"ok": True, "prediction": prediction}
+    deadline = time.time() + max(int(wait_seconds or 60), 30)
+    result = _fal_wait(submitted["status_url"], submitted["response_url"], deadline)
+    if result.get("error") == "timeout":
+        _fal_cancel(fal_model, submitted.get("request_id"))
+    return result
 
 
 def _run_omniroute_prediction(omni_model: str, input_payload: dict, wait_seconds: int = 120) -> dict:
@@ -2883,9 +3090,55 @@ def _run_omniroute_prediction(omni_model: str, input_payload: dict, wait_seconds
 def api_channels_health():
     try:
         from queue_runtime.health import read_all_health
-        return jsonify({"channels": read_all_health()})
+        from queue_runtime import (
+            CHANNELS,
+            PROCESSING_BY_CHANNEL,
+            QUEUE_BY_CHANNEL,
+            QUEUE_INBOUND,
+            get_redis,
+            inflight_key,
+        )
+
+        r = get_redis()
+        queues = {
+            "inbound": int(r.llen(QUEUE_INBOUND) or 0),
+        }
+        for ch, key in QUEUE_BY_CHANNEL.items():
+            queues[ch] = int(r.llen(key) or 0)
+        processing = {
+            ch: int(r.llen(PROCESSING_BY_CHANNEL[ch]) or 0) for ch in CHANNELS
+        }
+        inflight = {
+            ch: int(r.get(inflight_key(ch)) or 0) for ch in CHANNELS
+        }
+        return jsonify({
+            "channels": read_all_health(),
+            "queues": queues,
+            "processing": processing,
+            "inflight": inflight,
+        })
     except Exception as exc:  # noqa: BLE001
         return jsonify({"error": "health_unavailable", "detail": str(exc)}), 503
+
+
+@app.route("/api/admin/queues", methods=["GET"])
+def api_admin_queues():
+    emails = {
+        e.strip().lower()
+        for e in (os.getenv("ADMIN_EMAILS") or "").split(",")
+        if e.strip()
+    }
+    user_email = ""
+    try:
+        uid = session.get("user_id")
+        if uid:
+            u = User.query.get(uid)
+            user_email = (u.email or "").lower() if u else ""
+    except Exception:  # noqa: BLE001
+        user_email = ""
+    if user_email not in emails:
+        return jsonify({"error": "forbidden"}), 403
+    return api_channels_health()
 
 
 _INTEGRATION_PRICE_CACHE: dict[str, object] = {"mtime": None, "rate": None, "map": {}}
