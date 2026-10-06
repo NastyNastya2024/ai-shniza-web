@@ -16,6 +16,12 @@ QUEUE_BY_CHANNEL = {
     "fal": "ai_shniza:queue:fal",
     "omniroute": "ai_shniza:queue:omniroute",
 }
+PROCESSING_BY_CHANNEL = {
+    "replicate": "ai_shniza:processing:replicate",
+    "fal": "ai_shniza:processing:fal",
+    "omniroute": "ai_shniza:processing:omniroute",
+}
+INFLIGHT_KEY = "ai_shniza:inflight:{channel}"
 HEALTH_KEY = "ai_shniza:health:{channel}"
 JOB_KEY = "ai_shniza:job:{job_id}"
 RESULT_KEY = "ai_shniza:result:{job_id}"
@@ -27,6 +33,13 @@ HEALTH_INTERVAL_SEC = int(os.getenv("HEALTH_INTERVAL_SEC", "30"))
 HEALTH_FAIL_THRESHOLD = int(os.getenv("HEALTH_FAIL_THRESHOLD", "2"))
 JOB_WAIT_SEC = int(os.getenv("JOB_WAIT_SEC", "360"))
 JOB_TTL_SEC = int(os.getenv("JOB_TTL_SEC", "3600"))
+WORKER_SHUTDOWN_GRACE_SEC = int(os.getenv("WORKER_SHUTDOWN_GRACE_SEC", "20"))
+_DEFAULT_CONCURRENCY = {"replicate": 10, "fal": 6, "omniroute": 3}
+_CONCURRENCY_ENV = {
+    "replicate": "WORKER_CONCURRENCY_REPLICATE",
+    "fal": "WORKER_CONCURRENCY_FAL",
+    "omniroute": "WORKER_CONCURRENCY_OMNIROUTE",
+}
 
 
 def redis_url() -> str:
@@ -51,6 +64,25 @@ def job_key(job_id: str) -> str:
 
 def result_key(job_id: str) -> str:
     return RESULT_KEY.format(job_id=job_id)
+
+
+def inflight_key(channel: str) -> str:
+    return INFLIGHT_KEY.format(channel=channel)
+
+
+def processing_key(channel: str) -> str:
+    return PROCESSING_BY_CHANNEL[channel]
+
+
+def worker_concurrency(channel: str) -> int:
+    env_name = _CONCURRENCY_ENV.get(channel)
+    default = _DEFAULT_CONCURRENCY.get(channel, 1)
+    if not env_name:
+        return default
+    try:
+        return max(1, int(os.getenv(env_name, str(default))))
+    except ValueError:
+        return default
 
 
 def dumps(data: Any) -> str:

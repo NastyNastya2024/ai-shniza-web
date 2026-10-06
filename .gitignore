@@ -53,3 +53,6 @@ deploy/omniroute/.env
 node_modules/
 package-lock.json
 .venv-img/
+
+# Local test tooling (e.g. redis-memory-server)
+.tools/

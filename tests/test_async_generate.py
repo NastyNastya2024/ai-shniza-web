@@ -232,6 +232,9 @@ def test_chat_respects_deadline_no_deepseek(app_ctx, client, monkeypatch):
     monkeypatch.setattr(app_ctx, "_chat_session", lambda: FakeHttp())
     monkeypatch.setattr(app_ctx, "_run_replicate_prediction", deepseek)
     monkeypatch.setattr(app_ctx, "_omniroute_key", lambda: "")
+    # Prompt assembly can be slow on cold FS; isolate deadline logic from I/O.
+    monkeypatch.setattr(app_ctx, "_build_chat_system_prompt", lambda: "test system")
+    monkeypatch.setattr(app_ctx, "_ui_model_context", lambda _data: "")
 
     csrf = _csrf(client)
     t0 = time.monotonic()
@@ -241,7 +244,7 @@ def test_chat_respects_deadline_no_deepseek(app_ctx, client, monkeypatch):
         headers={"X-CSRF-Token": csrf},
     )
     elapsed = time.monotonic() - t0
-    assert elapsed < 8.0
+    assert elapsed < 8.0, f"chat exceeded deadline window: {elapsed:.2f}s"
     assert r.status_code == 502
     assert timeouts_seen
     assert all(t <= 6.0 for t in timeouts_seen if t is not None)
