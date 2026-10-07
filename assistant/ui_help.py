@@ -5,28 +5,28 @@ from typing import Any
 
 HELP: dict[str, dict[str, Any]] = {
     "topup": {
-        "ru": ["Баланс — в кабинете, вкладка «Баланс», кнопка «Пополнить».", "Списание — только после успешной генерации."],
-        "en": ["Balance is in your account → “Balance”, button “Top up”.", "You are charged only after a successful generation."],
+        "ru": ["Баланс — в кабинете, кнопка «Пополнить».", "Списание — только после успешной генерации."],
+        "en": ["Balance is in your account, button “Top up”.", "You are charged only after a successful generation."],
         "chips": [("topup", "open_topup")],
     },
     "publish": {
-        "ru": ["В кабинете у работы нажмите «Опубликовать на витрине» (или статус «Скрыта»).", "Публикацию можно снять в любой момент."],
-        "en": ["In your account, on a work tap “Publish to showcase”.", "You can unpublish any time."],
+        "ru": ["Откройте готовую работу → «Опубликовать на витрине».", "Публикацию можно снять в любой момент."],
+        "en": ["Open a finished work → “Publish to showcase”.", "You can unpublish any time."],
         "chips": [("vitrina", "open_vitrina")],
     },
     "vitrina": {
-        "ru": ["Витрина — лучшие работы пользователей (кнопка «Витрина» в студии или /explore).", "У каждой работы видна модель — можно повторить."],
-        "en": ["Showcase — best works by users (studio “Showcase” or /explore).", "Each work shows its model — you can repeat it."],
+        "ru": ["Витрина — лучшие работы пользователей.", "У каждой работы видна модель и промпт — можно повторить."],
+        "en": ["Showcase — best works by users.", "Each work shows its model and prompt — you can repeat it."],
         "chips": [("vitrina", "open_vitrina")],
     },
     "download": {
-        "ru": ["Откройте результат в чате или на странице работы → сохраните файл.", "На телефоне: долгое нажатие → «Сохранить»."],
-        "en": ["Open the result in chat or on the work page → save the file.", "On phone: long press → “Save”."],
+        "ru": ["Наведите на результат → значок «Скачать».", "На телефоне: долгое нажатие → «Сохранить»."],
+        "en": ["Hover the result → “Download” icon.", "On phone: long press → “Save”."],
         "chips": [],
     },
     "history": {
-        "ru": ["Все ваши генерации — в кабинете, вкладка «Работы»."],
-        "en": ["All your generations are in your account → “Works”."],
+        "ru": ["Все ваши генерации — в кабинете, раздел «Мои работы»."],
+        "en": ["All your generations are in your account → “My works”."],
         "chips": [],
     },
     "login": {
@@ -35,13 +35,13 @@ HELP: dict[str, dict[str, Any]] = {
         "chips": [("login", "login")],
     },
     "attach": {
-        "ru": ["Нажмите «Прикрепить файл» (скрепка слева от поля ввода) и выберите фото.", "Подходят JPG/PNG/WebP."],
-        "en": ["Tap “Attach file” (paperclip left of the input) and choose a photo.", "JPG/PNG/WebP are supported."],
+        "ru": ["Нажмите скрепку слева от поля ввода и выберите фото.", "Подходят JPG/PNG/WebP."],
+        "en": ["Tap the paperclip left of the input and choose a photo.", "JPG/PNG/WebP are supported."],
         "chips": [("attach", "attach")],
     },
     "models": {
-        "ru": ["Модели — кнопка «Сменить модель» под полем ввода (или панель справа).", "Или опишите задачу — я подберу сама."],
-        "en": ["Models — “Change model” under the input (or the right panel).", "Or describe the task — I'll pick for you."],
+        "ru": ["Модели — кнопка «Модели» над полем ввода.", "Или опишите задачу — я подберу сама."],
+        "en": ["Models — the “Models” button above the input.", "Or describe the task — I'll pick for you."],
         "chips": [("open_models", "open_models")],
     },
     "profile": {

@@ -7,6 +7,7 @@
 <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/assets/brand/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/assets/brand/png/apple-touch-icon-180.png">
+<link rel="stylesheet" href="/assistant-ui.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -498,7 +499,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 <script src="/i18n/dict-en.js"></script>
 <script src="/i18n/runtime.js"></script>
 <script src="/vitrina-data.js"></script>
-<script src="/assistant-chat.js"></script>
+<script src="/assistant-ui.js"></script>
 <script>
 /* Тема общая со витриной/профилем: localStorage aish-vitrina-theme (+ theme). ?theme= перекрывает. */
 function readSharedTheme() {
@@ -916,17 +917,14 @@ class Component extends DCLogic {
       this.pendingPrompt = text;
       this.pendingSel = sel;
       this.setState({ chat: true, text: '', sel: sel });
-      this.push({ role: 'user', text: text });
-      this.setState({ typing: true });
       if (!this.eggy) {
-        this.setState({ typing: false });
+        this.push({ role: 'user', text: text });
         this.botSay({ text: tr('studio.chat.failedRetry') }, 200);
         return;
       }
       try {
         await this.eggy.send(text);
       } catch (_) {
-        this.setState({ typing: false });
         this.botSay({ text: tr('studio.chat.failedRetry') }, 200);
       }
     };
@@ -1142,48 +1140,49 @@ const ORB_SRC = document.querySelector('#hero img').src;
 const ICONS = { sun: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>`, moon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>` };
 const app = new Component({ theme: DEFAULT_THEME });
 window.app = app;
-app.eggy = (typeof AssistantChat === 'function') ? AssistantChat({
+app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? AssistantUI.controller({
   api: api,
+  avatarHTML: '<span class="bot-av" style="position:relative;width:38px;height:38px"><img src="' + ORB_SRC + '" alt="" style="position:absolute;inset:0;width:100%;height:100%"></span>',
   getContext: () => {
     const m = app.MODELS.find((x) => x.slug === app.state.sel) || {};
     return Object.assign({
       selected_model_id: m.model_key || m.slug || '',
-      has_image: !!app.state.hasImage,
+      has_image: !!(app.attachedImage || app.state.hasImage),
       draft: app.state.text || '',
     }, app.lastJobCtx || {});
   },
-  onReply: (data) => {
-    app.setState({ typing: false });
+  onUser: (text) => app.push({ role: 'user', text: text }),
+  onBot: (data) => {
     if (!data) return;
+    const chips = Array.isArray(data.chips) ? data.chips : [];
     app.push({
       role: 'bot',
-      text: String(data.reply || ''),
-      chips: Array.isArray(data.chips) ? data.chips : [],
-      topup: !!(data.chips || []).some((c) => c && c.action === 'open_topup'),
-      loginCta: !!(data.chips || []).some((c) => c && c.action === 'login'),
+      assistant: data,
+      text: String(data.text || data.reply || ''),
+      chips: chips,
+      topup: chips.some((c) => c && c.action === 'open_topup'),
+      loginCta: chips.some((c) => c && c.action === 'login'),
     });
   },
-  onFillForm: ({ model, prompt, params, ready }) => {
+  onTyping: (on) => app.setState({ typing: on }),
+  onFillForm: ({ model, prompt, params }) => {
     if (model) {
       const byKey = app.MODELS.find((x) => x.model_key === model || x.slug === model);
       if (byKey) { app.pendingSel = byKey.slug; app.setState({ sel: byKey.slug }); }
     }
-    if (prompt) {
-      app.pendingPrompt = String(prompt);
-      app.setState({ text: String(prompt) });
-    }
+    if (prompt) app.pendingPrompt = String(prompt);
     app.pendingParams = params && typeof params === 'object' ? params : {};
-    app.assistReady = !!ready;
+  },
+  onGenerate: ({ model, prompt, params }) => {
+    if (model) {
+      const byKey = app.MODELS.find((x) => x.model_key === model || x.slug === model);
+      if (byKey) { app.pendingSel = byKey.slug; app.setState({ sel: byKey.slug }); }
+    }
+    if (prompt) app.pendingPrompt = String(prompt);
+    app.pendingParams = params && typeof params === 'object' ? params : {};
+    app.cook();
   },
   onUiAction: (action, value) => {
-    if (action === 'generate') {
-      if (value) {
-        const byKey = app.MODELS.find((x) => x.model_key === value || x.slug === value);
-        if (byKey) { app.pendingSel = byKey.slug; app.setState({ sel: byKey.slug }); }
-      }
-      app.cook();
-      return;
-    }
     if (action === 'open_models') { app.openPanel(); return; }
     if (action === 'open_topup') { location.href = '/account#balance'; return; }
     if (action === 'open_vitrina') { location.href = value || '/explore'; return; }
@@ -1193,17 +1192,10 @@ app.eggy = (typeof AssistantChat === 'function') ? AssistantChat({
       if (btn) btn.click();
       return;
     }
-    if (action === 'retry') {
-      const lastUser = [...(app.state.msgs || [])].reverse().find((m) => m.role === 'user' && m.text);
-      if (lastUser) app.eggy.send(lastUser.text);
-      return;
+    if (action === 'support') {
+      const a = document.querySelector('[data-support]');
+      if (a) a.click();
     }
-    if (action === 'edit_prompt') {
-      const ta = document.getElementById('prompt');
-      if (ta) { ta.focus(); if (app.pendingPrompt) app.setState({ text: app.pendingPrompt }); }
-      return;
-    }
-    if (action === 'wait' || action === 'support') return;
   }
 }) : null;
 const $ = (id) => document.getElementById(id);
@@ -1258,7 +1250,7 @@ function render() {
   if (v.msgs.length !== lastMsgs) {
     const box = $('msgs');
     if (v.msgs.length < lastMsgs || lastMsgs < 0) box.innerHTML = '';
-    for (let i = box.children.length; i < v.msgs.length; i++) box.appendChild(msgEl(v.msgs[i]));
+    for (let i = box.children.length; i < v.msgs.length; i++) box.appendChild(msgEl(app.state.msgs[i]));
     lastMsgs = v.msgs.length;
     requestAnimationFrame(() => { $('chat').scrollTop = $('chat').scrollHeight; });
   }
@@ -1333,8 +1325,14 @@ function render() {
 }
 
 function msgEl(m) {
+  if (m.assistant && app.eggy && app.eggy.render) {
+    const node = app.eggy.render(m.assistant);
+    node.classList.add('msg-in');
+    node.style.cssText = 'display:flex;align-items:flex-end;gap:10px;max-width:100%';
+    return node;
+  }
   const el = document.createElement('div');
-  if (m.user) {
+  if (m.role === 'user' || m.user) {
     el.className = 'msg-in';
     el.style.cssText = 'align-self:flex-end;max-width:78%;padding:12px 16px;border-radius:20px 20px 6px 20px;background:var(--user-bg);color:var(--user-ink);font-size:15px;line-height:1.45;white-space:pre-wrap';
     el.textContent = m.text; return el;
@@ -1379,10 +1377,8 @@ document.addEventListener('click', async (e) => {
     const chips = wrap && wrap._assistChips;
     const idx = +chipBtn.getAttribute('data-assist-chip');
     const chip = chips && chips[idx];
-    if (chip && app.eggy) {
-      app.setState({ typing: true });
+    if (chip && app.eggy && app.eggy.chip) {
       await app.eggy.chip(chip);
-      if (app.state.typing) app.setState({ typing: false });
     }
     return;
   }

@@ -28,6 +28,8 @@ def empty_session() -> dict[str, Any]:
         "tokens": 0,         # потрачено LLM-токенов за сессию
         "llm_calls": 0,
         "turns": 0,
+        "await": None,       # чего ждём от пользователя: type | model | params | refine | idea
+        "last_chips": [],    # кнопки прошлого ответа — чтобы понять, если их label пришёл текстом
     }
 
 

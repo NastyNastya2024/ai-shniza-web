@@ -30,6 +30,7 @@ class Card:
     ask_first: list[str]
     prompt_style: str
     avoid: str = ""
+    defaults: dict[str, Any] = field(default_factory=dict)  # что сейчас ставит builder на сервере
     extra: dict[str, Any] = field(default_factory=dict)
 
     def text(self, key: str, lang: str) -> str:
@@ -82,6 +83,9 @@ def validate(cards: Iterable[Card], integrated_ids: Iterable[str] | None = None)
         for name, opts in c.params.items():
             if not isinstance(opts, list) or len(opts) < 2:
                 raise CardError(f"{c.id}: param {name} needs >= 2 options")
+        for name, val in c.defaults.items():
+            if name not in c.params or val not in c.params[name]:
+                raise CardError(f"{c.id}: default {name}={val!r} not in options")
         if not c.prompt_style:
             raise CardError(f"{c.id}: prompt_style is empty")
         if ids is not None and c.id not in ids:

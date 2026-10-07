@@ -4418,6 +4418,23 @@ def api_integrations():
 _JOB_ID_RE = re.compile(r"^[a-f0-9]{16,64}$")
 
 
+# Пока hold/estimate не учитывают duration/resolution/quality/size — в генерацию только «нейтральные» ключи.
+_ASSIST_PARAMS_BILLING_NEUTRAL = frozenset({
+    "aspect_ratio",
+    "generate_audio",
+    "generate_audio_switch",
+    "style_type",
+})
+
+
+def _assist_params_for_generate(safe_params: dict | None) -> dict:
+    if not safe_params:
+        return {}
+    if (os.getenv("ASSIST_BILLING_USE_PARAMS") or "").strip().lower() in {"1", "true", "yes"}:
+        return dict(safe_params)
+    return {k: v for k, v in safe_params.items() if k in _ASSIST_PARAMS_BILLING_NEUTRAL}
+
+
 def _apply_assist_params(
     input_payload: dict,
     safe_params: dict | None,
@@ -4453,7 +4470,7 @@ def _generate_job_fields(model_id: str, prompt: str, params: dict | None = None)
         card = getattr(getattr(assist, "d", None), "cards", {}).get(model_id) if assist else None
         if card is not None:
             from assistant.params import validate as _assist_params_validate
-            safe = _assist_params_validate(card, params)
+            safe = _assist_params_for_generate(_assist_params_validate(card, params))
     payload = _apply_assist_params(payload, safe, has_image=False)
     return {
         "model_id": model_id,
@@ -4510,7 +4527,7 @@ def api_generate():
             from assistant.params import validate as _assist_params_validate
             card = assist.d.cards.get(model_id)
             if card is not None:
-                safe_params = _assist_params_validate(card, raw_params)
+                safe_params = _assist_params_for_generate(_assist_params_validate(card, raw_params))
         except Exception:
             safe_params = {}
 

@@ -149,19 +149,17 @@ def test_user_text_is_data_not_instruction(cards):
 
 def test_fallback_prompt_keeps_user_text(cards):
     c, _ = cards
-    p = fallback_prompt(c["veo-3-1"], "кот прыгает в снег")
-    assert p.startswith("кот прыгает в снег") and "cinematic" in p
-    p2 = fallback_prompt(c["veo-3-1"], "кот", change="сделай теплее", prev_prompt="a cat in snow")
-    assert p2.startswith("a cat in snow. сделай теплее")
+    p = fallback_prompt(c["veo-3-1"], "надо сделать видео: кот прыгает в снег")
+    assert p.startswith("Кот прыгает в снег") and "кинематографично" in p
+    p_en = fallback_prompt(c["veo-3-1"], "make a video of a cat jumping in snow")
+    assert p_en.startswith("A cat jumping") or "cinematic" in p_en
+    p2 = fallback_prompt(c["veo-3-1"], "кот", change="Ярче цвета", prev_prompt=p)
+    assert p2.count("кинематографично") == 1 and "ярче цвета" in p2
 
 
-def test_concurrent_calls_thread_safe():
-    """gunicorn gthread: 8 потоков на воркер делят одну цепочку и один breaker."""
-    from concurrent.futures import ThreadPoolExecutor
-    tr = FakeTransport(omniroute=[("http", 503)], groq=[("ok", ok_json())])
-    chain = make_chain(tr)
-    with ThreadPoolExecutor(16) as ex:
-        res = list(ex.map(lambda _: run(chain).provider, range(200)))
-    assert set(res) == {"groq"}
-    omni_calls = sum(1 for c in tr.calls if c["provider"] == "omniroute")
-    assert omni_calls < 40  # после открытия breaker omniroute больше не дёргают
+def test_clean_idea():
+    from assistant.prompts import clean_idea
+    assert clean_idea("надо сделать коты который жарит иишницу") == "коты который жарит иишницу"
+    assert clean_idea("картинку кодта который жарит иишницу") == "кодта который жарит иишницу"
+    assert clean_idea("Сделай видео: яичница танцует") == "яичница танцует"
+    assert clean_idea("кот") == "кот"

@@ -12,7 +12,12 @@ def nonempty_lines(r):
 
 def assert_short(r):
     assert len(nonempty_lines(r)) <= 12 and len(r["reply"]) <= 1200
-    assert len(r["chips"]) <= 5
+    assert len(r["chips"]) <= 6
+    assert "**" not in r["reply"] and "](" not in r["reply"]  # старый фронт markdown не рисует
+
+
+def block(r, typ):
+    return next((bl for bl in r["blocks"] if bl["type"] == typ), None)
 
 
 def test_full_video_flow_ru(make_assistant):
@@ -20,42 +25,47 @@ def test_full_video_flow_ru(make_assistant):
     a = make_assistant(tr)
     r = a.handle("Сделай видео: яичница танцует на сковородке", {}, SID)
     assert r["intent"] == "generate_task" and r["lang"] == "ru"
-    assert len(r["models"]) >= 2
-    assert "/vitrina.html?model=" in r["reply"]
+    models = block(r, "models")["items"]
+    assert len(models) >= 2 and all(m["vitrina_url"].startswith("/vitrina.html?model=") for m in models)
+    assert all(m["price"] and m["why"] for m in models)
+    prices = [float(m["price"].split()[0].replace(",", ".")) for m in models if m["price"][0].isdigit()]
+    assert prices == sorted(prices)  # карточки по цене
     assert r["llm"]["used"] is False and not tr.calls  # подбор — 0 токенов
-    assert [c["action"] for c in r["chips"]].count("pick_model") >= 2
     assert_short(r)
 
-    first = r["models"][0]["id"]
+    first = models[0]["id"]
     r2 = a.handle("", {}, SID, action={"type": "pick_model", "value": first})
     assert r2["generate_model"] == first and r2["generate_prompt"].startswith("A fried egg")
+    assert block(r2, "prompt")["text"] == r2["generate_prompt"] and block(r2, "prompt")["note"]
     assert r2["llm"]["used"] and r2["llm"]["provider"] == "omniroute" and r2["llm"]["tokens"] == 360
-    assert len(tr.calls) == 1
+    groups = block(r2, "params")["groups"]
+    assert groups and all(sum(o["selected"] for o in g["options"]) == 1 for g in groups)
+    assert r2["ready"] is True and r2["chips"][0]["action"] == "generate" and r2["chips"][0].get("primary")
     assert_short(r2)
-    # у видео-моделей в карточках ask_first = aspect_ratio → спросим формат кнопками
-    assert r2["ready"] is False
-    pchips = [c for c in r2["chips"] if c["action"] == "param"]
-    assert pchips and pchips[0]["value"]["name"] == "aspect_ratio"
 
-    r3 = a.handle("", {}, SID, action={"type": "param", "value": pchips[0]["value"]})
-    assert r3["ready"] is True and r3["generate_params"] == {"aspect_ratio": pchips[0]["value"]["value"]}
-    assert any(c["action"] == "generate" and c["value"] == first for c in r3["chips"])
+    g = groups[0]
+    other = next(o for o in g["options"] if not o["selected"])
+    r3 = a.handle("", {}, SID, action={"type": "param", "value": {"name": g["name"], "value": other["value"]}})
+    assert r3["generate_params"][g["name"]] == other["value"]
+    assert block(r3, "summary")["prompt"] == r2["generate_prompt"]
     assert len(tr.calls) == 1  # выбор параметра — без LLM
 
 
-def test_params_from_text_skip_question(make_assistant):
+def test_params_from_text_preselected(make_assistant):
     a = make_assistant()
-    a.handle("вертикальное видео для рилс: кот в снегу", {}, SID)
+    a.handle("вертикальное видео 10 секунд без звука: кот в снегу", {}, SID)
     r = a.handle("", {}, SID, action={"type": "pick_model", "value": "veo-3-1"})
-    assert r["generate_params"] == {"aspect_ratio": "9:16"} and r["ready"] is True
+    assert r["generate_params"] == {"aspect_ratio": "9:16", "duration": 8, "resolution": "720p", "generate_audio": False}
+    assert "8 с" in r["text"]  # честно: 10 с у Veo нет
+    assert block(r, "summary")["estimate"] is None or "8 с" in block(r, "summary")["estimate"]
 
 
 def test_english_flow(make_assistant):
     a = make_assistant()
     r = a.handle("make a short video of a cat surfing", {}, SID)
-    assert r["lang"] == "en" and "models for" in r["reply"]
+    assert r["lang"] == "en" and "models for" in r["text"]
     r2 = a.handle("", {}, SID, action={"type": "pick_model", "value": r["models"][0]["id"]})
-    assert r2["lang"] == "en" and "Prompt for" in r2["reply"]
+    assert r2["lang"] == "en" and "prompt for" in r2["text"].lower()
 
 
 def test_degraded_when_all_llm_fail(make_assistant):
@@ -63,8 +73,8 @@ def test_degraded_when_all_llm_fail(make_assistant):
     a = make_assistant(tr)
     a.handle("нарисуй логотип кофейни Утро", {}, SID)
     r = a.handle("", {}, SID, action={"type": "pick_model", "value": "ideogram-v3-turbo"})
-    assert r["degraded"] is True and r["generate_prompt"].startswith("нарисуй логотип кофейни Утро")
-    assert "упрощённый" in r["reply"] and r["llm"]["error"] == "all_failed"
+    assert r["degraded"] is True and r["generate_prompt"].startswith("Логотип кофейни Утро")
+    assert "базовый вариант" in r["text"] and r["llm"]["error"] == "all_failed"
     assert r["ready"] is True  # пользователь всё равно может генерировать
 
 
@@ -202,8 +212,10 @@ def test_compare_and_price(make_assistant):
     a = make_assistant()
     r = a.handle("Veo 3.1 или Kling 2.5 Turbo Pro — что лучше?", {}, SID)
     assert r["intent"] == "compare" and {m["id"] for m in r["models"]} == {"veo-3-1", "kling-v2-5-turbo-pro"}
-    r2 = a.handle("сколько стоит?", {}, SID)
+    r2 = a.handle("сколько стоит?", {}, "fresh")
     assert r2["intent"] == "price" and r2["models"][0]["price"] == "бесплатно"
+    r3 = a.handle("сколько стоит?", {}, SID)  # в сессии уже видео — дешёвые видео
+    assert r3["models"][0]["id"] == "p-video"
 
 
 def test_generate_now_returns_form_not_job(make_assistant):
@@ -236,7 +248,7 @@ def test_unknown_action_noop_and_bad_model(make_assistant):
 
 def test_example_chip_send(make_assistant):
     a = make_assistant()
-    r = a.handle("привет", {}, SID)
+    r = a.handle("напиши код на python", {}, SID)
     ex = next(c for c in r["chips"] if c["action"] == "send")
     r2 = a.handle("", {}, SID, action={"type": "send", "value": ex["value"]})
     assert r2["intent"] == "generate_task"
@@ -274,8 +286,10 @@ def test_three_models_fit_without_truncation(make_assistant):
     for text in ("Сделай вертикальное видео 10 секунд со звуком: яичница танцует на сковородке под джаз",
                  "make a cinematic realistic video with dialogue of an astronaut cooking eggs on the moon"):
         r = a.handle(text, {}, "s-" + text[:5])
+        items = block(r, "models")["items"]
+        assert len(items) == len(r["models"]) >= 2
         for m in r["models"]:
-            assert f"model={m['id']}" in r["reply"], m
+            assert m["title"] in r["reply"], m  # и в простом тексте для старого фронта
 
 
 def test_concurrent_sessions(make_assistant):
@@ -292,3 +306,84 @@ def test_concurrent_sessions(make_assistant):
     with ThreadPoolExecutor(16) as ex:
         out = list(ex.map(flow, range(100)))
     assert out == ["видео: кот номер %d" % i for i in range(100)]
+
+
+
+# ---------- сценарий со скриншота пользователя ----------
+def test_screenshot_scenario_typos_and_buttons(make_assistant):
+    a = make_assistant()
+    r = a.handle("привет", {}, SID)
+    assert {c["value"] for c in r["chips"] if c["action"] == "choose_type"} >= {"image", "video", "music"}
+    r = a.handle("надо сделать коты который жарит иишницу", {}, SID)
+    assert r["intent"] == "ask_type" and "картинку, видео или музыку" in r["text"]
+    assert [c["action"] for c in r["chips"]].count("choose_type") == 4  # вопрос + кнопки, не «открытый»
+    r = a.handle("карттинку", {}, SID)                                     # опечатка — понимаем
+    assert r["intent"] == "choose_type" and block(r, "models") and all(
+        a.d.cards[m["id"]].kind in ("image", "edit") for m in r["models"])
+    assert "коты" in r["text"]                                             # идею не потеряли
+
+
+def test_model_name_typed_is_pick_and_keeps_russian(make_assistant):
+    a = make_assistant()
+    a.handle("картинку кот жарит яичницу", {}, SID)
+    r = a.handle(". GPT Image 2", {}, SID)
+    assert r["intent"] == "pick_model" and r["generate_model"] == "gpt-image-2" and r["lang"] == "ru"
+    r = a.handle("беру seedream 5.0 pro", {}, SID)
+    assert r["generate_model"] == "seedream-5-pro"
+
+
+def test_chip_label_sent_as_text_is_action(make_assistant):
+    a = make_assistant()
+    a.handle("котик в космосе", {}, SID)
+    r = a.handle("Видео", {}, SID)
+    assert r["intent"] == "choose_type" and block(r, "models")
+    r = a.handle("ещё варианты", {}, SID)
+    assert r["intent"] == "more"
+
+
+def test_unclear_answer_reasks_with_buttons(make_assistant):
+    a = make_assistant()
+    a.handle("котик в космосе", {}, SID)
+    r = a.handle("ну не знаю", {}, SID)
+    assert r["intent"] == "ask_type" and len(r["chips"]) == 4
+    assert a.handle("2", {}, SID)["intent"] == "choose_type"  # номер варианта тоже понимаем
+
+
+def test_text_params_and_free_refine_after_pick(make_assistant):
+    tr = FakeTransport(omniroute=[("ok", ok_json("a cat")), ("ok", ok_json("a ginger cat"))])
+    a = make_assistant(tr)
+    a.handle("видео кот жарит яичницу", {}, SID)
+    a.handle("", {}, SID, action={"type": "pick_model", "value": "kling-v2-5-turbo-pro"})
+    r = a.handle("вертикально 10 секунд", {}, SID)
+    assert r["intent"] == "param" and r["generate_params"]["aspect_ratio"] == "9:16" and r["generate_params"]["duration"] == 10
+    assert len(tr.calls) == 1
+    r = a.handle("пусть кот будет рыжий", {}, SID)
+    assert r["intent"] == "prompt_improve" and r["generate_prompt"] == "a ginger cat"
+
+
+def test_improve_gives_suggestion_buttons(make_assistant):
+    tr = FakeTransport(omniroute=[("ok", ok_json("a cat")), ("ok", ok_json("a cat, vivid colors"))])
+    a = make_assistant(tr)
+    a.handle("картинка кот", {}, SID)
+    a.handle("", {}, SID, action={"type": "pick_model", "value": "seedream-5-pro"})
+    r = a.handle("", {}, SID, action={"type": "improve"})
+    assert len(r["chips"]) == 4 and all(c["action"] == "refine" for c in r["chips"])
+    r = a.handle("", {}, SID, action={"type": "refine", "value": r["chips"][1]["value"]})
+    assert r["generate_prompt"] == "a cat, vivid colors"
+
+
+def test_new_task_after_pick_is_not_refine(make_assistant):
+    a = make_assistant()
+    a.handle("картинка кот", {}, SID)
+    a.handle("", {}, SID, action={"type": "pick_model", "value": "seedream-5-pro"})
+    r = a.handle("а теперь сделай музыку для рилса про лето", {}, SID)
+    assert r["intent"] == "generate_task" and block(r, "models")
+
+
+def test_video_estimate_on_cards(make_assistant, cards):
+    c, nb = cards
+    from assistant.engine import Assistant, AssistantDeps
+    a = Assistant(AssistantDeps(cards=c, neighbors=nb, price_fn=lambda m: "4,3 ₽ / секунда" if m == "wan-3-0" else "10 ₽ / секунда"))
+    r = a.handle("дешевое видео 10 секунд кот", {}, SID)
+    wan = next(i for i in block(r, "models")["items"] if i["id"] == "wan-3-0")
+    assert wan["estimate"] == "≈ 43 ₽ за 10 с" and wan["price"] == "4,3 ₽/сек"

@@ -208,9 +208,8 @@ def register_assistant(app: Any, assistant: Assistant, url: str = "/api/assistan
                 uid = user_id_fn()
             except Exception:
                 uid = None
-        # app.config["ASSISTANT"] — чтобы тесты/горячая пересборка могли подменить инстанс
-        active = app.config.get("ASSISTANT") or assistant
-        resp = jsonify(handle_request(active, body, session, uid, legacy_autostart))
+        asst = app.config.get("ASSISTANT") or assistant
+        resp = jsonify(handle_request(asst, body, session, uid, legacy_autostart))
         resp.headers["Cache-Control"] = "no-store"
         return resp
 

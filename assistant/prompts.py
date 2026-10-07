@@ -16,6 +16,7 @@ SYSTEM = (
     "Rules:\n"
     "- Follow `model.prompt_style`; avoid `model.avoid`.\n"
     "- Write the prompt in English. Keep any text that must appear in the output (signs, logos, lyrics) verbatim in its original language, in quotes.\n"
+    "- The idea may have typos or slang (e.g. 'кодта' = cat); infer the intended meaning.\n"
     "- Keep the user's subject and intent; add only concrete visual/audio detail. No new people, brands or text the user didn't ask for.\n"
     "- Respect `params` (aspect, duration) in composition; do not write them as tech flags.\n"
     "- If `prev_prompt` and `change` are given, apply the change to prev_prompt.\n"
@@ -61,19 +62,50 @@ def validate_output(data: dict[str, Any]) -> dict[str, Any]:
 
 
 KIND_SUFFIX = {
-    "video": "cinematic, smooth camera motion, detailed, high quality",
-    "image": "highly detailed, sharp focus, balanced composition",
-    "edit": "keep everything else unchanged, natural result",
-    "music": "well-produced, clear mix",
-    "sfx": "clean recording, no music",
+    "en": {
+        "video": "cinematic, smooth camera motion, detailed, high quality",
+        "image": "highly detailed, sharp focus, balanced composition",
+        "edit": "keep everything else unchanged, natural result",
+        "music": "well-produced, clear mix",
+        "sfx": "clean recording, no music",
+    },
+    "ru": {
+        "video": "кинематографично, плавное движение камеры, высокая детализация",
+        "image": "высокая детализация, чёткий фокус, гармоничная композиция",
+        "edit": "всё остальное без изменений, естественный результат",
+        "music": "качественное сведение, чистый звук",
+        "sfx": "чистая запись, без музыки",
+    },
 }
 
+_CMD = re.compile(
+    r"^\s*(?:(?:надо|нужно|нужен|нужна|хочу|давай(?:те)?|пожалуйста|мне|можешь|можно|please|i want|i need|can you)\s+)*"
+    r"(?:(?:сделай(?:те)?|сделать|создай(?:те)?|создать|нарисуй(?:те)?|нарисовать|сгенерируй(?:те)?|сгенерировать|"
+    r"make|create|draw|generate)\s+)?"
+    r"(?:(?:мне\s+)?(?:картинку|картинка|изображение|фото|видео|видос|ролик|клип|музыку|трек|песню|звук|"
+    r"an?\s+)?(?:image|picture|video|clip|song|track|music)?\s*(?:с|про|где|of|about|with)?\s*)?[:\-—]?\s*",
+    re.I)
 
-def fallback_prompt(card: Card, idea: str, change: str = "", prev_prompt: str = "") -> str:
-    """Режим без LLM: не переводим и не выдумываем — текст пользователя + безопасный хвост по типу модели."""
-    base = (prev_prompt or idea or "").strip().rstrip(".")
+
+def clean_idea(idea: str) -> str:
+    """«надо сделать картинку: кот жарит яичницу» → «кот жарит яичницу». Тему не трогаем."""
+    s = (idea or "").strip()
+    out = _CMD.sub("", s, count=1).strip()
+    return out if len(out) >= 3 else s
+
+
+def fallback_prompt(card: Card, idea: str, change: str = "", prev_prompt: str = "", lang: str = "ru") -> str:
+    """Режим без LLM: не переводим и не выдумываем — идея пользователя без команд + стиль по типу модели."""
+    base = (prev_prompt or clean_idea(idea) or "").strip().rstrip(".")
+    cyr = len(re.findall(r"[а-яё]", base, re.I))
+    L = "ru" if cyr > len(base) // 4 else "en"
+    suffix = card.extra.get("fallback_suffix") or KIND_SUFFIX[L].get(card.kind, "")
+    if suffix and base.lower().endswith(suffix.lower()):
+        base = base[: -len(suffix)].rstrip(" .,")
+    if base:
+        base = base[0].upper() + base[1:]
     if change:
-        base = f"{base}. {change.strip().rstrip('.')}"
-    suffix = card.extra.get("fallback_suffix") or KIND_SUFFIX.get(card.kind, "")
-    out = f"{base}. {suffix}" if suffix and suffix.lower() not in base.lower() else base
+        ch = change.strip().rstrip(".")
+        base = f"{base}, {ch[0].lower() + ch[1:]}" if ch else base
+    out = f"{base}. {suffix}" if suffix else base
     return out[:MAX_PROMPT_CHARS]

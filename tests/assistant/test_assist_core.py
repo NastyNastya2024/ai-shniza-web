@@ -37,23 +37,47 @@ def test_card_validation_errors():
 @pytest.mark.parametrize("text,key,val", [
     ("вертикальное видео", "aspect_ratio", "9:16"), ("для рилс", "aspect_ratio", "9:16"), ("16:9 ролик", "aspect_ratio", "16:9"),
     ("квадратная картинка", "aspect_ratio", "1:1"), ("10 секунд", "duration", 10), ("5с", "duration", 5),
-    ("2 минуты музыки", "duration", 120), ("в 4к", "resolution", "4k"), ("1080p", "resolution", "1080p"),
-    ("без звука", "generate_audio", False), ("со звуком", "generate_audio", True), ("инструментал", "instrumental", True),
+    ("2 минуты музыки", "duration", 120), ("в 4к", "quality", "4k"), ("1080p", "quality", "1080p"),
+    ("без звука", "audio", False), ("со звуком", "audio", True), ("инструментал", "instrumental", True),
+    ("черновик", "quality", "draft"), ("песня с вокалом", "instrumental", False),
     ("vertical 8 sec", "aspect_ratio", "9:16"),
 ])
 def test_extract(text, key, val):
     assert P.extract(text)[key] == val
 
 
-def test_fit_only_whitelisted(cards):
+def test_fit_maps_to_model_param_names(cards):
     c, _ = cards
     veo = c["veo-3-1"]
-    params, adj = P.fit({"aspect_ratio": "1:1", "duration": 10, "resolution": "4k"}, veo)
-    assert params == {}  # у Veo в карточке 1:1 нет, duration/resolution не выбираются
-    params, _ = P.fit({"aspect_ratio": "9:16"}, veo)
-    assert params == {"aspect_ratio": "9:16"}
-    assert P.missing(veo, {}) == ["aspect_ratio"]
-    assert P.missing(veo, params) == []
+    params, adj = P.fit({"aspect_ratio": "1:1", "duration": 10, "quality": "4k", "audio": False}, veo)
+    assert "aspect_ratio" not in params           # у Veo нет 1:1 — не отправляем
+    assert params["duration"] == 8 and adj[0]["got"] == 8
+    assert params["resolution"] == "1080p"        # 4k нет → максимум доступного
+    assert params["generate_audio"] is False
+    px, _ = P.fit({"quality": "1080p", "audio": True}, c["pixverse-v6"])
+    assert px == {"quality": "1080p", "generate_audio_switch": True}
+    el, _ = P.fit({"duration": 30, "instrumental": True}, c["elevenlabs-music"])
+    assert el == {"music_length_ms": 30000, "force_instrumental": True}
+    gi, adj = P.fit({"aspect_ratio": "9:16", "quality": "draft"}, c["gpt-image-2"])
+    assert gi == {"aspect_ratio": "2:3", "quality": "low"}
+    sd, _ = P.fit({"quality": "4k"}, c["seedream-5-pro"])
+    assert sd == {"size": "4K"}
+
+
+def test_defaults_and_groups(cards):
+    c, _ = cards
+    for card in c.values():
+        full = P.with_defaults(card, {})
+        assert set(full) == set(card.params), card.id
+        for g in P.groups(card, full, "ru"):
+            assert sum(o["selected"] for o in g["options"]) == 1, (card.id, g["name"])
+    g = P.groups(c["kling-v2-5-turbo-pro"], {}, "ru", has_image=True)
+    assert "aspect_ratio" not in {x["name"] for x in g}  # с фото формат берётся из фото
+
+
+def test_validate_rejects_type_tricks(cards):
+    c, _ = cards
+    assert P.validate(c["veo-3-1"], {"generate_audio": 1, "duration": True, "aspect_ratio": "9:16", "x": 1}) == {"aspect_ratio": "9:16"}
 
 
 def test_fit_nearest_duration():
@@ -136,7 +160,7 @@ def test_render_limits():
 def test_response_dedupes_and_caps_chips():
     chips = [{"label": "a", "action": "more"}] * 3 + [{"label": str(i), "action": "pick_model", "value": i} for i in range(9)]
     r = response(["x"], chips)
-    assert len(r["chips"]) == 5 and [c["action"] for c in r["chips"]].count("more") == 1
+    assert len(r["chips"]) == 6 and [c["action"] for c in r["chips"]].count("more") == 1
 
 
 # ---------------- errors
@@ -181,3 +205,20 @@ def test_vitrina_link_short_and_safe():
     from assistant.render import vitrina_link
     assert vitrina_link("/vitrina.html", "veo-3-1", "кот в снегу") == "/vitrina.html?model=veo-3-1&q=кот+в+снегу"
     assert vitrina_link("/v", "x", 'a")<script>&b') == "/v?model=x&q=a+script+b"
+
+
+def test_short_price_and_estimate():
+    from assistant.render import estimate, short_price
+    assert short_price("3,9 ₽ / изображение at 1K") == "от 3,9 ₽/фото"
+    assert short_price("4,3 ₽ / секунда") == "4,3 ₽/сек"
+    assert short_price("бесплатно") == "бесплатно"
+    assert estimate("4,3 ₽/сек", 5, "ru") == "≈ 22 ₽ за 5 с"
+    assert estimate("0,43 ₽/сек", 5, "ru") == "≈ 2,1 ₽ за 5 с"
+    assert estimate("3 ₽/фото", 5, "ru") is None
+
+
+def test_fuzzy_kind():
+    from assistant.router import detect_kind
+    for txt, k in [("карттинку", "image"), ("картинку", "image"), ("видоео", "video"), ("видос", "video"),
+                   ("музычку", "music"), ("песенку", "music"), ("кролик в шляпе", None), ("кот", None)]:
+        assert detect_kind(txt, False) == k, txt

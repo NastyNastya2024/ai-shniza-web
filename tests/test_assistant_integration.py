@@ -22,7 +22,6 @@ def server(tmp_path, monkeypatch):
         monkeypatch.delenv(k, raising=False)
     import server as srv
 
-    # load_env() при импорте мог снова подтянуть ключи из .env — пересобираем ассистента без LLM
     for k in ("OMNIROUTE_API_KEY", "GROQ_API_KEY"):
         monkeypatch.delenv(k, raising=False)
     env = {k: v for k, v in os.environ.items() if k not in {"OMNIROUTE_API_KEY", "GROQ_API_KEY"}}
@@ -61,17 +60,32 @@ def _post(client, body):
 
 
 def test_cards_match_integrated_models(server):
-    from assistant.cards import load_cards, validate
+    from assistant.cards import load_cards
 
     cards, _ = load_cards()
-    listed = {mid for mid, s in server.INTEGRATED_MODELS.items() if s.get("listed", True) is not False}
     missing = set(cards) - set(server.INTEGRATED_MODELS)
     assert not missing, f"карточки без модели в INTEGRATED_MODELS: {missing}"
-    assert validate(cards.values(), listed) == [] or True
-    # для каждой модели карточки, у которой в карточке есть params, сервер должен принимать эти ключи
-    for mid, c in cards.items():
-        for name in c.params:
-            assert name in {"aspect_ratio", "duration", "resolution", "generate_audio", "instrumental"}, (mid, name)
+
+
+def test_card_params_match_real_builder(server):
+    """Имена params в карточках = ключи payload builder-а; defaults = то, что builder ставит сейчас (без фото)."""
+    from assistant.cards import load_cards
+
+    cards, _ = load_cards()
+    for mid, card in cards.items():
+        if card.needs_image:
+            continue  # i2v-only builder без фото кидает ValueError — проверяем ниже с фото
+        payload = server._build_provider_input(server.INTEGRATED_MODELS[mid], "x", None, None, None)
+        for name in card.params:
+            assert name in payload, f"{mid}: параметра {name} нет в payload builder-а {sorted(payload)}"
+        for name, val in card.defaults.items():
+            if name == "aspect_ratio" and payload.get(name) in ("adaptive", "auto", "match_input_image"):
+                continue
+            assert payload[name] == val, f"{mid}: default {name}={val!r}, а builder ставит {payload[name]!r}"
+    for mid in ("gen4-turbo", "grok-imagine-video-1-5"):
+        payload = server._build_provider_input(server.INTEGRATED_MODELS[mid], "x", "data:image/png;base64,AA==", None, None)
+        for name in cards[mid].params:
+            assert name in payload, (mid, name)
 
 
 def test_old_endpoints_untouched(server):
@@ -99,10 +113,12 @@ def test_flow_without_llm_keys(client, monkeypatch):
 
 
 def test_prices_come_from_catalog(client, server):
+    from assistant.render import short_price
+
     prices = server._integration_prices()
     d = _post(client, {"message": "сделай картинку: логотип кофейни"}).get_json()
     for m in d["models"]:
-        assert m["price"] == prices.get(m["id"])
+        assert m["price"] == (short_price(prices.get(m["id"])) or "цена уточняется")
 
 
 def test_csrf_required(client):

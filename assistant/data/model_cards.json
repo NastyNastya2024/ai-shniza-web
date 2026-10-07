@@ -1,236 +1,945 @@
 {
-  "_about": "Карточки моделей для ассистента. Ключ = id из INTEGRATED_MODELS. Факты — со страниц моделей и notes в server.py. params — ТОЛЬКО то, что /api/generate реально передаёт модели (см. INTEGRATION_PROMPT.md, шаг 3). Цены здесь не хранятся — берутся из прайса в момент ответа.",
-  "_kinds": "video | image | edit | music | sfx",
-  "_modes": "t2v (текст→видео), i2v (фото→видео), t2i (текст→картинка), i2i (правка фото), t2m (текст→музыка/звук)",
-  "models": {
-    "seedance-2-5": {
-      "title": "Seedance 2.5", "kind": "video", "modes": ["t2v", "i2v"],
-      "tags": ["звук", "реклама", "динамика", "длинное", "оживить фото"],
-      "strengths": {"ru": "видео со звуком, до 30 с", "en": "video with synced audio, up to 30 s"},
-      "limits": {"ru": "до 720p", "en": "up to 720p"},
-      "speed": {"ru": "1–4 мин", "en": "1–4 min"},
-      "rank": 8,
-      "params": {"aspect_ratio": ["16:9", "9:16", "1:1"]},
-      "ask_first": ["aspect_ratio"],
-      "prompt_style": "English. Subject, action, setting, lighting, one camera move at the end (e.g. 'slow dolly-in'). Mention sounds briefly if relevant. 1-3 sentences.",
-      "avoid": "negative phrasing, keyword lists"
-    },
-    "wan-3-0": {
-      "title": "Wan 3.0", "kind": "video", "modes": ["t2v", "i2v"],
-      "tags": ["дешево", "длинное", "1080p", "оживить фото"],
-      "strengths": {"ru": "дёшево, 480p–1080p, до 30 с", "en": "cheap, 480p–1080p, up to 30 s"},
-      "limits": {"ru": "детализация ниже топовых", "en": "less detail than top models"},
-      "speed": {"ru": "1–4 мин", "en": "1–4 min"},
-      "rank": 6,
-      "params": {"aspect_ratio": ["16:9", "9:16", "1:1"]},
-      "ask_first": ["aspect_ratio"],
-      "prompt_style": "English. Clear subject + action + setting + light; one camera instruction. Short, concrete sentences.",
-      "avoid": "abstract adjectives"
-    },
-    "veo-3-1": {
-      "title": "Veo 3.1", "kind": "video", "modes": ["t2v", "i2v"],
-      "tags": ["кино", "речь", "звук", "реализм", "реклама"],
-      "strengths": {"ru": "кино-картинка, речь и звук", "en": "cinematic look, speech and sound"},
-      "limits": {"ru": "дорогая, до 8 с", "en": "expensive, up to 8 s"},
-      "speed": {"ru": "1–3 мин", "en": "1–3 min"},
-      "rank": 10,
-      "params": {"aspect_ratio": ["16:9", "9:16"]},
-      "ask_first": ["aspect_ratio"],
-      "prompt_style": "English cinematic shot description: shot type, subject, action, setting, light, mood. Dialogue in double quotes with the speaker. End with a line 'Audio: ...' for ambience/SFX.",
-      "avoid": "keyword lists, negatives"
-    },
-    "veo-3-1-fast": {
-      "title": "Veo 3.1 Fast", "kind": "video", "modes": ["t2v", "i2v"],
-      "tags": ["звук", "речь", "быстро", "реклама"],
-      "strengths": {"ru": "как Veo 3.1, быстрее и дешевле", "en": "like Veo 3.1, faster and cheaper"},
-      "limits": {"ru": "чуть меньше деталей", "en": "slightly less detail"},
-      "speed": {"ru": "до 1–2 мин", "en": "1–2 min"},
-      "rank": 9,
-      "params": {"aspect_ratio": ["16:9", "9:16"]},
-      "ask_first": ["aspect_ratio"],
-      "prompt_style": "English cinematic shot description: shot type, subject, action, setting, light. Dialogue in double quotes with the speaker. Optional line 'Audio: ...'.",
-      "avoid": "keyword lists, negatives"
-    },
-    "kling-v2-5-turbo-pro": {
-      "title": "Kling 2.5 Turbo Pro", "kind": "video", "modes": ["t2v", "i2v"],
-      "tags": ["плавность", "камера", "персонаж", "оживить фото", "динамика"],
-      "strengths": {"ru": "плавное движение и камера", "en": "smooth motion and camera"},
-      "limits": {"ru": "5 или 10 с, без звука", "en": "5 or 10 s, no audio"},
-      "speed": {"ru": "1–3 мин", "en": "1–3 min"},
-      "rank": 8,
-      "params": {"aspect_ratio": ["16:9", "9:16", "1:1"]},
-      "ask_first": ["aspect_ratio"],
-      "prompt_style": "English. Describe motion: what moves, how, and the camera path; keep subject identity. 1-3 short sentences.",
-      "avoid": "re-describing a provided image"
-    },
-    "pixverse-v6": {
-      "title": "PixVerse V6", "kind": "video", "modes": ["t2v", "i2v"],
-      "tags": ["стиль", "эффекты", "1080p", "звук"],
-      "strengths": {"ru": "яркая стилизация, 360p–1080p", "en": "vivid stylization, 360p–1080p"},
-      "limits": {"ru": "до 15 с", "en": "up to 15 s"},
-      "speed": {"ru": "1–3 мин", "en": "1–3 min"},
-      "rank": 7,
-      "params": {"aspect_ratio": ["16:9", "9:16", "1:1"]},
-      "ask_first": ["aspect_ratio"],
-      "prompt_style": "English. Style first (e.g. 'anime', '3D clay'), then subject, action, setting, camera. Short sentences.",
-      "avoid": "long paragraphs"
-    },
-    "p-video": {
-      "title": "P-Video", "kind": "video", "modes": ["t2v", "i2v"],
-      "tags": ["дешево", "черновик", "быстро"],
-      "strengths": {"ru": "очень дёшево, черновики до 20 с", "en": "very cheap drafts, up to 20 s"},
-      "limits": {"ru": "качество черновика", "en": "draft quality"},
-      "speed": {"ru": "до 1 мин", "en": "under 1 min"},
-      "rank": 5,
-      "params": {},
-      "ask_first": [],
-      "prompt_style": "English. One or two simple sentences: subject, action, setting.",
-      "avoid": "complex scenes"
-    },
-    "hailuo-02": {
-      "title": "Hailuo 02", "kind": "video", "modes": ["t2v", "i2v"],
-      "tags": ["динамика", "экшен", "точность промпта", "1080p"],
-      "strengths": {"ru": "динамика, точно по промпту", "en": "dynamic, follows the prompt closely"},
-      "limits": {"ru": "6 или 10 с, без звука", "en": "6 or 10 s, no audio"},
-      "speed": {"ru": "1–4 мин", "en": "1–4 min"},
-      "rank": 7,
-      "params": {},
-      "ask_first": [],
-      "prompt_style": "English, action-first. Camera moves in square brackets, e.g. [Push in], [Pan left].",
-      "avoid": "static descriptions"
-    },
-    "grok-imagine-video-1-5": {
-      "title": "Grok Imagine Video 1.5", "kind": "video", "modes": ["i2v"],
-      "tags": ["оживить фото", "звук"],
-      "strengths": {"ru": "оживляет фото, со звуком", "en": "animates a photo, with audio"},
-      "limits": {"ru": "только из фото, до 15 с", "en": "photo input only, up to 15 s"},
-      "speed": {"ru": "1–3 мин", "en": "1–3 min"},
-      "rank": 6,
-      "params": {},
-      "ask_first": [],
-      "prompt_style": "English. Describe only the motion and sound to add to the image; do not re-describe the image.",
-      "avoid": "re-describing the image"
-    },
-    "gen4-turbo": {
-      "title": "Gen-4 Turbo", "kind": "video", "modes": ["i2v"],
-      "tags": ["оживить фото", "персонаж", "быстро"],
-      "strengths": {"ru": "быстро оживляет фото, 720p", "en": "fast photo animation, 720p"},
-      "limits": {"ru": "только из фото, 5 или 10 с", "en": "photo input only, 5 or 10 s"},
-      "speed": {"ru": "до 1–2 мин", "en": "1–2 min"},
-      "rank": 6,
-      "params": {},
-      "ask_first": [],
-      "prompt_style": "English. Motion only: subject motion + camera motion. Do not re-describe the image.",
-      "avoid": "re-describing the image"
-    },
-    "seedream-5-pro": {
-      "title": "Seedream 5.0 Pro", "kind": "image", "modes": ["t2i", "i2i"],
-      "tags": ["текст на картинке", "детали", "постер", "реклама"],
-      "strengths": {"ru": "детали и текст на картинке, 2K", "en": "detail and on-image text, 2K"},
-      "limits": {"ru": "до 2K", "en": "up to 2K"},
-      "speed": {"ru": "10–40 с", "en": "10–40 s"},
-      "rank": 9,
-      "params": {},
-      "ask_first": [],
-      "prompt_style": "English: subject, materials, composition, lens/light, palette. Exact on-image text in double quotes.",
-      "avoid": "quality buzzwords"
-    },
-    "gpt-image-2": {
-      "title": "GPT Image 2", "kind": "image", "modes": ["t2i", "i2i"],
-      "tags": ["инфографика", "макет", "иллюстрация", "текст на картинке", "дешево"],
-      "strengths": {"ru": "иллюстрации, макеты, инфографика", "en": "illustrations, layouts, infographics"},
-      "limits": {"ru": "фотореализм слабее", "en": "weaker photorealism"},
-      "speed": {"ru": "20–60 с", "en": "20–60 s"},
-      "rank": 8,
-      "params": {},
-      "ask_first": [],
-      "prompt_style": "Natural English brief: purpose, layout (top/center/bottom), elements, style; exact text in double quotes.",
-      "avoid": "tag soup"
-    },
-    "gpt-image-2-5-flare": {
-      "title": "GPT Image 2.5 Flare", "kind": "image", "modes": ["t2i", "i2i"],
-      "tags": ["иллюстрация", "макет", "текст на картинке"],
-      "strengths": {"ru": "линейка GPT Image 2.5, высокое качество", "en": "GPT Image 2.5 line, high quality"},
-      "limits": {"ru": "на максимуме качества дорого", "en": "expensive at max quality"},
-      "speed": {"ru": "20–90 с", "en": "20–90 s"},
-      "rank": 8,
-      "params": {},
-      "ask_first": [],
-      "prompt_style": "Natural English brief: purpose, layout, elements, style; exact text in double quotes.",
-      "avoid": "tag soup"
-    },
-    "gpt-image-2-5-sunburst": {
-      "title": "GPT Image 2.5 Sunburst", "kind": "image", "modes": ["t2i", "i2i"],
-      "tags": ["иллюстрация", "макет", "текст на картинке"],
-      "strengths": {"ru": "линейка GPT Image 2.5, высокое качество", "en": "GPT Image 2.5 line, high quality"},
-      "limits": {"ru": "на максимуме качества дорого", "en": "expensive at max quality"},
-      "speed": {"ru": "20–90 с", "en": "20–90 s"},
-      "rank": 8,
-      "params": {},
-      "ask_first": [],
-      "prompt_style": "Natural English brief: purpose, layout, elements, style; exact text in double quotes.",
-      "avoid": "tag soup"
-    },
-    "nano-banana-2": {
-      "title": "Nano Banana 2", "kind": "edit", "modes": ["i2i", "t2i"],
-      "tags": ["редактирование", "смешать фото", "сохранить лицо", "4k"],
-      "strengths": {"ru": "правит фото словами, смешивает фото", "en": "edits photos by text, blends images"},
-      "limits": {"ru": "на 4K дороже", "en": "pricier at 4K"},
-      "speed": {"ru": "10–40 с", "en": "10–40 s"},
-      "rank": 9,
-      "params": {},
-      "ask_first": [],
-      "prompt_style": "Imperative English edit instruction: what to change and what to keep (face, pose, style). One sentence per change.",
-      "avoid": "describing the whole image again"
-    },
-    "ideogram-v3-turbo": {
-      "title": "Ideogram v3 Turbo", "kind": "image", "modes": ["t2i"],
-      "tags": ["логотип", "текст на картинке", "постер", "типографика", "дешево"],
-      "strengths": {"ru": "логотипы и надписи без ошибок", "en": "logos and lettering without typos"},
-      "limits": {"ru": "фото-реализм не главное", "en": "not focused on photorealism"},
-      "speed": {"ru": "10–30 с", "en": "10–30 s"},
-      "rank": 8,
-      "params": {},
-      "ask_first": [],
-      "prompt_style": "English: design type (logo/poster/banner), exact text in double quotes, font feel, layout, colors, background.",
-      "avoid": "long scene descriptions"
-    },
-    "ace-step": {
-      "title": "ACE-Step", "kind": "music", "modes": ["t2m"],
-      "tags": ["дешево", "инструментал", "фон"],
-      "strengths": {"ru": "дёшево, инструментал ~60 с", "en": "cheap, ~60 s instrumental"},
-      "limits": {"ru": "без вокала", "en": "no vocals"},
-      "speed": {"ru": "до 1 мин", "en": "under 1 min"},
-      "rank": 6,
-      "params": {},
-      "ask_first": [],
-      "prompt_style": "Comma-separated English tags only: genre, mood, instruments, tempo in bpm. No sentences.",
-      "avoid": "sentences, lyrics"
-    },
-    "elevenlabs-music": {
-      "title": "ElevenLabs Music", "kind": "music", "modes": ["t2m"],
-      "tags": ["вокал", "реклама", "коммерция", "качество", "инструментал"],
-      "strengths": {"ru": "треки с вокалом или без, для рекламы", "en": "tracks with or without vocals, ad-ready"},
-      "limits": {"ru": "цена за секунду", "en": "priced per second"},
-      "speed": {"ru": "до 1 мин", "en": "under 1 min"},
-      "rank": 9,
-      "params": {},
-      "ask_first": [],
-      "prompt_style": "Natural English: genre, mood, use-case, instruments, tempo, structure (intro/build/drop), vocals or instrumental.",
-      "avoid": "lyrics without asking"
-    },
-    "stable-audio-2-5": {
-      "title": "Stable Audio 2.5", "kind": "sfx", "modes": ["t2m"],
-      "tags": ["звуковые эффекты", "луп", "эмбиент", "фон"],
-      "strengths": {"ru": "звуки и музыка до 190 с", "en": "sounds and music up to 190 s"},
-      "limits": {"ru": "без вокала", "en": "no vocals"},
-      "speed": {"ru": "до 1 мин", "en": "under 1 min"},
-      "rank": 7,
-      "params": {},
-      "ask_first": [],
-      "prompt_style": "English sound description: source, texture, space/reverb, BPM for loops, length.",
-      "avoid": "lyrics"
-    }
+ "_about": "Карточки моделей для ассистента. Ключ = id из INTEGRATED_MODELS. Факты — со страниц моделей и notes в server.py. params — ТОЛЬКО то, что /api/generate реально передаёт модели (см. INTEGRATION_PROMPT.md, шаг 3). Цены здесь не хранятся — берутся из прайса в момент ответа.",
+ "_kinds": "video | image | edit | music | sfx",
+ "_modes": "t2v (текст→видео), i2v (фото→видео), t2i (текст→картинка), i2i (правка фото), t2m (текст→музыка/звук)",
+ "models": {
+  "seedance-2-5": {
+   "title": "Seedance 2.5",
+   "kind": "video",
+   "modes": [
+    "t2v",
+    "i2v"
+   ],
+   "tags": [
+    "звук",
+    "реклама",
+    "динамика",
+    "длинное",
+    "оживить фото"
+   ],
+   "strengths": {
+    "ru": "видео со звуком, до 30 с",
+    "en": "video with synced audio, up to 30 s"
+   },
+   "limits": {
+    "ru": "до 720p",
+    "en": "up to 720p"
+   },
+   "speed": {
+    "ru": "1–4 мин",
+    "en": "1–4 min"
+   },
+   "rank": 8,
+   "params": {
+    "aspect_ratio": [
+     "16:9",
+     "9:16",
+     "1:1"
+    ],
+    "duration": [
+     5,
+     10
+    ],
+    "resolution": [
+     "480p",
+     "720p",
+     "1080p"
+    ],
+    "generate_audio": [
+     true,
+     false
+    ]
+   },
+   "ask_first": [
+    "aspect_ratio"
+   ],
+   "prompt_style": "English. Subject, action, setting, lighting, one camera move at the end (e.g. 'slow dolly-in'). Mention sounds briefly if relevant. 1-3 sentences.",
+   "avoid": "negative phrasing, keyword lists",
+   "defaults": {
+    "aspect_ratio": "16:9",
+    "duration": 5,
+    "resolution": "720p",
+    "generate_audio": true
+   }
   },
-  "neighbors": {"image": ["edit"], "edit": ["image"], "music": ["sfx"], "sfx": ["music"], "video": []}
+  "wan-3-0": {
+   "title": "Wan 3.0",
+   "kind": "video",
+   "modes": [
+    "t2v",
+    "i2v"
+   ],
+   "tags": [
+    "дешево",
+    "длинное",
+    "1080p",
+    "оживить фото"
+   ],
+   "strengths": {
+    "ru": "дёшево, 480p–1080p, до 30 с",
+    "en": "cheap, 480p–1080p, up to 30 s"
+   },
+   "limits": {
+    "ru": "детализация ниже топовых",
+    "en": "less detail than top models"
+   },
+   "speed": {
+    "ru": "1–4 мин",
+    "en": "1–4 min"
+   },
+   "rank": 6,
+   "params": {
+    "aspect_ratio": [
+     "16:9",
+     "9:16",
+     "1:1"
+    ],
+    "duration": [
+     5,
+     10
+    ],
+    "resolution": [
+     "480p",
+     "720p",
+     "1080p"
+    ]
+   },
+   "ask_first": [
+    "aspect_ratio"
+   ],
+   "prompt_style": "English. Clear subject + action + setting + light; one camera instruction. Short, concrete sentences.",
+   "avoid": "abstract adjectives",
+   "defaults": {
+    "aspect_ratio": "16:9",
+    "duration": 5,
+    "resolution": "720p"
+   }
+  },
+  "veo-3-1": {
+   "title": "Veo 3.1",
+   "kind": "video",
+   "modes": [
+    "t2v",
+    "i2v"
+   ],
+   "tags": [
+    "кино",
+    "речь",
+    "звук",
+    "реализм",
+    "реклама"
+   ],
+   "strengths": {
+    "ru": "кино-картинка, речь и звук",
+    "en": "cinematic look, speech and sound"
+   },
+   "limits": {
+    "ru": "дорогая, до 8 с",
+    "en": "expensive, up to 8 s"
+   },
+   "speed": {
+    "ru": "1–3 мин",
+    "en": "1–3 min"
+   },
+   "rank": 10,
+   "params": {
+    "aspect_ratio": [
+     "16:9",
+     "9:16"
+    ],
+    "duration": [
+     4,
+     6,
+     8
+    ],
+    "resolution": [
+     "720p",
+     "1080p"
+    ],
+    "generate_audio": [
+     true,
+     false
+    ]
+   },
+   "ask_first": [
+    "aspect_ratio"
+   ],
+   "prompt_style": "English cinematic shot description: shot type, subject, action, setting, light, mood. Dialogue in double quotes with the speaker. End with a line 'Audio: ...' for ambience/SFX.",
+   "avoid": "keyword lists, negatives",
+   "defaults": {
+    "aspect_ratio": "16:9",
+    "duration": 8,
+    "resolution": "720p",
+    "generate_audio": true
+   }
+  },
+  "veo-3-1-fast": {
+   "title": "Veo 3.1 Fast",
+   "kind": "video",
+   "modes": [
+    "t2v",
+    "i2v"
+   ],
+   "tags": [
+    "звук",
+    "речь",
+    "быстро",
+    "реклама"
+   ],
+   "strengths": {
+    "ru": "как Veo 3.1, быстрее и дешевле",
+    "en": "like Veo 3.1, faster and cheaper"
+   },
+   "limits": {
+    "ru": "чуть меньше деталей",
+    "en": "slightly less detail"
+   },
+   "speed": {
+    "ru": "до 1–2 мин",
+    "en": "1–2 min"
+   },
+   "rank": 9,
+   "params": {
+    "aspect_ratio": [
+     "16:9",
+     "9:16"
+    ],
+    "duration": [
+     4,
+     6,
+     8
+    ],
+    "resolution": [
+     "720p",
+     "1080p"
+    ],
+    "generate_audio": [
+     true,
+     false
+    ]
+   },
+   "ask_first": [
+    "aspect_ratio"
+   ],
+   "prompt_style": "English cinematic shot description: shot type, subject, action, setting, light. Dialogue in double quotes with the speaker. Optional line 'Audio: ...'.",
+   "avoid": "keyword lists, negatives",
+   "defaults": {
+    "aspect_ratio": "16:9",
+    "duration": 8,
+    "resolution": "720p",
+    "generate_audio": true
+   }
+  },
+  "kling-v2-5-turbo-pro": {
+   "title": "Kling 2.5 Turbo Pro",
+   "kind": "video",
+   "modes": [
+    "t2v",
+    "i2v"
+   ],
+   "tags": [
+    "плавность",
+    "камера",
+    "персонаж",
+    "оживить фото",
+    "динамика"
+   ],
+   "strengths": {
+    "ru": "плавное движение и камера",
+    "en": "smooth motion and camera"
+   },
+   "limits": {
+    "ru": "5 или 10 с, без звука",
+    "en": "5 or 10 s, no audio"
+   },
+   "speed": {
+    "ru": "1–3 мин",
+    "en": "1–3 min"
+   },
+   "rank": 8,
+   "params": {
+    "aspect_ratio": [
+     "16:9",
+     "9:16",
+     "1:1"
+    ],
+    "duration": [
+     5,
+     10
+    ]
+   },
+   "ask_first": [
+    "aspect_ratio"
+   ],
+   "prompt_style": "English. Describe motion: what moves, how, and the camera path; keep subject identity. 1-3 short sentences.",
+   "avoid": "re-describing a provided image",
+   "defaults": {
+    "aspect_ratio": "16:9",
+    "duration": 5
+   }
+  },
+  "pixverse-v6": {
+   "title": "PixVerse V6",
+   "kind": "video",
+   "modes": [
+    "t2v",
+    "i2v"
+   ],
+   "tags": [
+    "стиль",
+    "эффекты",
+    "1080p",
+    "звук"
+   ],
+   "strengths": {
+    "ru": "яркая стилизация, 360p–1080p",
+    "en": "vivid stylization, 360p–1080p"
+   },
+   "limits": {
+    "ru": "до 15 с",
+    "en": "up to 15 s"
+   },
+   "speed": {
+    "ru": "1–3 мин",
+    "en": "1–3 min"
+   },
+   "rank": 7,
+   "params": {
+    "aspect_ratio": [
+     "16:9",
+     "9:16",
+     "1:1"
+    ],
+    "duration": [
+     5,
+     8
+    ],
+    "quality": [
+     "540p",
+     "720p",
+     "1080p"
+    ],
+    "generate_audio_switch": [
+     true,
+     false
+    ]
+   },
+   "ask_first": [
+    "aspect_ratio"
+   ],
+   "prompt_style": "English. Style first (e.g. 'anime', '3D clay'), then subject, action, setting, camera. Short sentences.",
+   "avoid": "long paragraphs",
+   "defaults": {
+    "aspect_ratio": "16:9",
+    "duration": 5,
+    "quality": "720p",
+    "generate_audio_switch": true
+   }
+  },
+  "p-video": {
+   "title": "P-Video",
+   "kind": "video",
+   "modes": [
+    "t2v",
+    "i2v"
+   ],
+   "tags": [
+    "дешево",
+    "черновик",
+    "быстро"
+   ],
+   "strengths": {
+    "ru": "очень дёшево, черновики до 20 с",
+    "en": "very cheap drafts, up to 20 s"
+   },
+   "limits": {
+    "ru": "качество черновика",
+    "en": "draft quality"
+   },
+   "speed": {
+    "ru": "до 1 мин",
+    "en": "under 1 min"
+   },
+   "rank": 5,
+   "params": {
+    "aspect_ratio": [
+     "16:9",
+     "9:16",
+     "1:1"
+    ],
+    "duration": [
+     5,
+     10
+    ],
+    "resolution": [
+     "720p",
+     "1080p"
+    ]
+   },
+   "ask_first": [
+    "aspect_ratio"
+   ],
+   "prompt_style": "English. One or two simple sentences: subject, action, setting.",
+   "avoid": "complex scenes",
+   "defaults": {
+    "aspect_ratio": "16:9",
+    "duration": 5,
+    "resolution": "720p"
+   }
+  },
+  "hailuo-02": {
+   "title": "Hailuo 02",
+   "kind": "video",
+   "modes": [
+    "t2v",
+    "i2v"
+   ],
+   "tags": [
+    "динамика",
+    "экшен",
+    "точность промпта",
+    "1080p"
+   ],
+   "strengths": {
+    "ru": "динамика, точно по промпту",
+    "en": "dynamic, follows the prompt closely"
+   },
+   "limits": {
+    "ru": "6 или 10 с, без звука",
+    "en": "6 or 10 s, no audio"
+   },
+   "speed": {
+    "ru": "1–4 мин",
+    "en": "1–4 min"
+   },
+   "rank": 7,
+   "params": {
+    "duration": [
+     6,
+     10
+    ],
+    "resolution": [
+     "512p",
+     "768p",
+     "1080p"
+    ]
+   },
+   "ask_first": [],
+   "prompt_style": "English, action-first. Camera moves in square brackets, e.g. [Push in], [Pan left].",
+   "avoid": "static descriptions",
+   "defaults": {
+    "duration": 6,
+    "resolution": "768p"
+   }
+  },
+  "grok-imagine-video-1-5": {
+   "title": "Grok Imagine Video 1.5",
+   "kind": "video",
+   "modes": [
+    "i2v"
+   ],
+   "tags": [
+    "оживить фото",
+    "звук"
+   ],
+   "strengths": {
+    "ru": "оживляет фото, со звуком",
+    "en": "animates a photo, with audio"
+   },
+   "limits": {
+    "ru": "только из фото, до 15 с",
+    "en": "photo input only, up to 15 s"
+   },
+   "speed": {
+    "ru": "1–3 мин",
+    "en": "1–3 min"
+   },
+   "rank": 6,
+   "params": {
+    "duration": [
+     5,
+     10
+    ],
+    "resolution": [
+     "480p",
+     "720p"
+    ]
+   },
+   "ask_first": [],
+   "prompt_style": "English. Describe only the motion and sound to add to the image; do not re-describe the image.",
+   "avoid": "re-describing the image",
+   "defaults": {
+    "duration": 5,
+    "resolution": "720p"
+   }
+  },
+  "gen4-turbo": {
+   "title": "Gen-4 Turbo",
+   "kind": "video",
+   "modes": [
+    "i2v"
+   ],
+   "tags": [
+    "оживить фото",
+    "персонаж",
+    "быстро"
+   ],
+   "strengths": {
+    "ru": "быстро оживляет фото, 720p",
+    "en": "fast photo animation, 720p"
+   },
+   "limits": {
+    "ru": "только из фото, 5 или 10 с",
+    "en": "photo input only, 5 or 10 s"
+   },
+   "speed": {
+    "ru": "до 1–2 мин",
+    "en": "1–2 min"
+   },
+   "rank": 6,
+   "params": {
+    "duration": [
+     5,
+     10
+    ]
+   },
+   "ask_first": [],
+   "prompt_style": "English. Motion only: subject motion + camera motion. Do not re-describe the image.",
+   "avoid": "re-describing the image",
+   "defaults": {
+    "duration": 5
+   }
+  },
+  "seedream-5-pro": {
+   "title": "Seedream 5.0 Pro",
+   "kind": "image",
+   "modes": [
+    "t2i",
+    "i2i"
+   ],
+   "tags": [
+    "текст на картинке",
+    "детали",
+    "постер",
+    "реклама"
+   ],
+   "strengths": {
+    "ru": "детали и текст на картинке, 2K",
+    "en": "detail and on-image text, 2K"
+   },
+   "limits": {
+    "ru": "до 2K",
+    "en": "up to 2K"
+   },
+   "speed": {
+    "ru": "10–40 с",
+    "en": "10–40 s"
+   },
+   "rank": 9,
+   "params": {
+    "aspect_ratio": [
+     "1:1",
+     "3:4",
+     "4:3",
+     "9:16",
+     "16:9"
+    ],
+    "size": [
+     "2K",
+     "4K"
+    ]
+   },
+   "ask_first": [
+    "aspect_ratio"
+   ],
+   "prompt_style": "English: subject, materials, composition, lens/light, palette. Exact on-image text in double quotes.",
+   "avoid": "quality buzzwords",
+   "defaults": {
+    "aspect_ratio": "1:1",
+    "size": "2K"
+   }
+  },
+  "gpt-image-2": {
+   "title": "GPT Image 2",
+   "kind": "image",
+   "modes": [
+    "t2i",
+    "i2i"
+   ],
+   "tags": [
+    "инфографика",
+    "макет",
+    "иллюстрация",
+    "текст на картинке",
+    "дешево"
+   ],
+   "strengths": {
+    "ru": "иллюстрации, макеты, инфографика",
+    "en": "illustrations, layouts, infographics"
+   },
+   "limits": {
+    "ru": "фотореализм слабее",
+    "en": "weaker photorealism"
+   },
+   "speed": {
+    "ru": "20–60 с",
+    "en": "20–60 s"
+   },
+   "rank": 8,
+   "params": {
+    "aspect_ratio": [
+     "1:1",
+     "3:2",
+     "2:3"
+    ],
+    "quality": [
+     "low",
+     "medium",
+     "high"
+    ]
+   },
+   "ask_first": [
+    "aspect_ratio"
+   ],
+   "prompt_style": "Natural English brief: purpose, layout (top/center/bottom), elements, style; exact text in double quotes.",
+   "avoid": "tag soup",
+   "defaults": {
+    "aspect_ratio": "1:1",
+    "quality": "medium"
+   }
+  },
+  "gpt-image-2-5-flare": {
+   "title": "GPT Image 2.5 Flare",
+   "kind": "image",
+   "modes": [
+    "t2i",
+    "i2i"
+   ],
+   "tags": [
+    "иллюстрация",
+    "макет",
+    "текст на картинке"
+   ],
+   "strengths": {
+    "ru": "линейка GPT Image 2.5, высокое качество",
+    "en": "GPT Image 2.5 line, high quality"
+   },
+   "limits": {
+    "ru": "на максимуме качества дорого",
+    "en": "expensive at max quality"
+   },
+   "speed": {
+    "ru": "20–90 с",
+    "en": "20–90 s"
+   },
+   "rank": 8,
+   "params": {
+    "aspect_ratio": [
+     "1:1",
+     "3:2",
+     "2:3"
+    ],
+    "quality": [
+     "low",
+     "medium",
+     "high"
+    ]
+   },
+   "ask_first": [
+    "aspect_ratio"
+   ],
+   "prompt_style": "Natural English brief: purpose, layout, elements, style; exact text in double quotes.",
+   "avoid": "tag soup",
+   "defaults": {
+    "aspect_ratio": "1:1",
+    "quality": "medium"
+   }
+  },
+  "gpt-image-2-5-sunburst": {
+   "title": "GPT Image 2.5 Sunburst",
+   "kind": "image",
+   "modes": [
+    "t2i",
+    "i2i"
+   ],
+   "tags": [
+    "иллюстрация",
+    "макет",
+    "текст на картинке"
+   ],
+   "strengths": {
+    "ru": "линейка GPT Image 2.5, высокое качество",
+    "en": "GPT Image 2.5 line, high quality"
+   },
+   "limits": {
+    "ru": "на максимуме качества дорого",
+    "en": "expensive at max quality"
+   },
+   "speed": {
+    "ru": "20–90 с",
+    "en": "20–90 s"
+   },
+   "rank": 8,
+   "params": {
+    "aspect_ratio": [
+     "1:1",
+     "3:2",
+     "2:3"
+    ],
+    "quality": [
+     "low",
+     "medium",
+     "high"
+    ]
+   },
+   "ask_first": [
+    "aspect_ratio"
+   ],
+   "prompt_style": "Natural English brief: purpose, layout, elements, style; exact text in double quotes.",
+   "avoid": "tag soup",
+   "defaults": {
+    "aspect_ratio": "1:1",
+    "quality": "medium"
+   }
+  },
+  "nano-banana-2": {
+   "title": "Nano Banana 2",
+   "kind": "edit",
+   "modes": [
+    "i2i",
+    "t2i"
+   ],
+   "tags": [
+    "редактирование",
+    "смешать фото",
+    "сохранить лицо",
+    "4k"
+   ],
+   "strengths": {
+    "ru": "правит фото словами, смешивает фото",
+    "en": "edits photos by text, blends images"
+   },
+   "limits": {
+    "ru": "на 4K дороже",
+    "en": "pricier at 4K"
+   },
+   "speed": {
+    "ru": "10–40 с",
+    "en": "10–40 s"
+   },
+   "rank": 9,
+   "params": {
+    "aspect_ratio": [
+     "1:1",
+     "3:4",
+     "4:3",
+     "9:16",
+     "16:9"
+    ],
+    "resolution": [
+     "1K",
+     "2K",
+     "4K"
+    ]
+   },
+   "ask_first": [
+    "aspect_ratio"
+   ],
+   "prompt_style": "Imperative English edit instruction: what to change and what to keep (face, pose, style). One sentence per change.",
+   "avoid": "describing the whole image again",
+   "defaults": {
+    "aspect_ratio": "1:1",
+    "resolution": "1K"
+   }
+  },
+  "ideogram-v3-turbo": {
+   "title": "Ideogram v3 Turbo",
+   "kind": "image",
+   "modes": [
+    "t2i"
+   ],
+   "tags": [
+    "логотип",
+    "текст на картинке",
+    "постер",
+    "типографика",
+    "дешево"
+   ],
+   "strengths": {
+    "ru": "логотипы и надписи без ошибок",
+    "en": "logos and lettering without typos"
+   },
+   "limits": {
+    "ru": "фото-реализм не главное",
+    "en": "not focused on photorealism"
+   },
+   "speed": {
+    "ru": "10–30 с",
+    "en": "10–30 s"
+   },
+   "rank": 8,
+   "params": {
+    "aspect_ratio": [
+     "1:1",
+     "3:4",
+     "4:3",
+     "9:16",
+     "16:9"
+    ],
+    "style_type": [
+     "Auto",
+     "General",
+     "Realistic",
+     "Design"
+    ]
+   },
+   "ask_first": [
+    "aspect_ratio"
+   ],
+   "prompt_style": "English: design type (logo/poster/banner), exact text in double quotes, font feel, layout, colors, background.",
+   "avoid": "long scene descriptions",
+   "defaults": {
+    "aspect_ratio": "1:1",
+    "style_type": "Auto"
+   }
+  },
+  "ace-step": {
+   "title": "ACE-Step",
+   "kind": "music",
+   "modes": [
+    "t2m"
+   ],
+   "tags": [
+    "дешево",
+    "инструментал",
+    "фон"
+   ],
+   "strengths": {
+    "ru": "дёшево, инструментал ~60 с",
+    "en": "cheap, ~60 s instrumental"
+   },
+   "limits": {
+    "ru": "без вокала",
+    "en": "no vocals"
+   },
+   "speed": {
+    "ru": "до 1 мин",
+    "en": "under 1 min"
+   },
+   "rank": 6,
+   "params": {
+    "duration": [
+     30,
+     60,
+     120
+    ]
+   },
+   "ask_first": [],
+   "prompt_style": "Comma-separated English tags only: genre, mood, instruments, tempo in bpm. No sentences.",
+   "avoid": "sentences, lyrics",
+   "defaults": {
+    "duration": 60
+   }
+  },
+  "elevenlabs-music": {
+   "title": "ElevenLabs Music",
+   "kind": "music",
+   "modes": [
+    "t2m"
+   ],
+   "tags": [
+    "вокал",
+    "реклама",
+    "коммерция",
+    "качество",
+    "инструментал"
+   ],
+   "strengths": {
+    "ru": "треки с вокалом или без, для рекламы",
+    "en": "tracks with or without vocals, ad-ready"
+   },
+   "limits": {
+    "ru": "цена за секунду",
+    "en": "priced per second"
+   },
+   "speed": {
+    "ru": "до 1 мин",
+    "en": "under 1 min"
+   },
+   "rank": 9,
+   "params": {
+    "music_length_ms": [
+     15000,
+     30000,
+     60000
+    ],
+    "force_instrumental": [
+     false,
+     true
+    ]
+   },
+   "ask_first": [],
+   "prompt_style": "Natural English: genre, mood, use-case, instruments, tempo, structure (intro/build/drop), vocals or instrumental.",
+   "avoid": "lyrics without asking",
+   "defaults": {
+    "music_length_ms": 30000,
+    "force_instrumental": false
+   }
+  },
+  "stable-audio-2-5": {
+   "title": "Stable Audio 2.5",
+   "kind": "sfx",
+   "modes": [
+    "t2m"
+   ],
+   "tags": [
+    "звуковые эффекты",
+    "луп",
+    "эмбиент",
+    "фон"
+   ],
+   "strengths": {
+    "ru": "звуки и музыка до 190 с",
+    "en": "sounds and music up to 190 s"
+   },
+   "limits": {
+    "ru": "без вокала",
+    "en": "no vocals"
+   },
+   "speed": {
+    "ru": "до 1 мин",
+    "en": "under 1 min"
+   },
+   "rank": 7,
+   "params": {
+    "duration": [
+     10,
+     30,
+     60
+    ]
+   },
+   "ask_first": [],
+   "prompt_style": "English sound description: source, texture, space/reverb, BPM for loops, length.",
+   "avoid": "lyrics",
+   "defaults": {
+    "duration": 30
+   }
+  }
+ },
+ "neighbors": {
+  "image": [
+   "edit"
+  ],
+  "edit": [
+   "image"
+  ],
+  "music": [
+   "sfx"
+  ],
+  "sfx": [
+   "music"
+  ],
+  "video": []
+ },
+ "_params_note": "Имена params = ключи payload из server._build_replicate_input. Значения сверить со схемой модели на Replicate перед продом. defaults = то, что сейчас ставит builder."
 }

@@ -1,0 +1,59 @@
+/* Карточки ассистента. Берут цвета студии (--glass, --ink, --muted, --accent-ink …) из .t-light/.t-dark app.html. */
+.aich-row{display:flex;gap:12px;align-items:flex-start;margin:14px 0;font-family:'Onest',system-ui,sans-serif;color:var(--ink,#1E1238)}
+.aich-row--user{justify-content:flex-end}
+.aich-av{flex:0 0 auto;display:flex}
+.aich-avatar{flex:0 0 40px;height:40px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFD27A,#FF9A2E 55%,#F06A1A);box-shadow:0 4px 14px rgba(240,106,26,.35)}
+.aich-col{display:flex;flex-direction:column;gap:10px;min-width:0;max-width:640px;flex:1}
+.aich-bubble{align-self:flex-start;background:var(--glass,rgba(255,255,255,.7));border:1px solid var(--glass-brd,#fff);border-radius:18px;padding:12px 16px;font-size:15px;line-height:1.45;white-space:pre-line;box-shadow:0 2px 10px rgba(75,43,184,.06)}
+.aich-bubble--user{background:#1E1238;color:#fff;border-color:transparent;max-width:70%}
+.t-dark .aich-bubble--user{background:#4B2BB8}
+
+.aich-models{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.aich-model{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-radius:16px;background:var(--card-on,#fff);border:1.5px solid var(--panel-brd,rgba(80,60,160,.10));transition:border-color .15s,transform .15s,box-shadow .15s}
+.aich-model:hover{border-color:var(--accent-ink,#4B2BB8);box-shadow:0 6px 20px rgba(75,43,184,.14);transform:translateY(-1px)}
+.aich-model:focus-visible{outline:2px solid var(--accent-ink,#4B2BB8);outline-offset:2px}
+.aich-model__top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.aich-model__title{font-weight:700;font-size:15px}
+.aich-badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:rgba(232,105,28,.12);color:var(--free,#B5470C)}
+.aich-model__why{font-size:13px;color:var(--muted,#5B4D93);line-height:1.35}
+.aich-model__price{font-size:18px;font-weight:700;margin-top:2px}
+.aich-model__sub{font-size:12px;color:var(--muted2,#6E62A3)}
+.aich-model__link{font-size:13px;font-weight:600;color:var(--accent-ink,#4B2BB8);text-decoration:none;margin-top:2px}
+.aich-model__link:hover{text-decoration:underline}
+
+.aich-prompt{border:1.5px dashed rgba(232,105,28,.55);background:rgba(255,154,61,.07);border-radius:16px;padding:12px 16px}
+.aich-prompt__label{font-size:12px;font-weight:600;color:var(--muted,#5B4D93);margin-bottom:6px}
+.aich-prompt__text{font-size:15px;line-height:1.45;outline:none;border-radius:8px;padding:2px 4px;margin:0 -4px}
+.aich-prompt__text:focus{background:var(--card-on,#fff);box-shadow:0 0 0 2px rgba(75,43,184,.25)}
+.aich-prompt__note{font-size:12px;color:var(--muted2,#6E62A3);margin-top:6px}
+.aich-prompt__hint{font-size:11px;color:var(--muted2,#6E62A3);opacity:.7;margin-top:4px}
+
+.aich-params{display:flex;flex-direction:column;gap:10px;padding:2px 0}
+.aich-param__label{font-size:12px;font-weight:600;color:var(--muted,#5B4D93);margin-bottom:6px}
+.aich-param__opts{display:flex;flex-wrap:wrap;gap:8px}
+.aich-opt{font:500 14px 'Onest',system-ui,sans-serif;cursor:pointer;padding:7px 14px;border-radius:999px;border:1.5px solid var(--field-brd,rgba(80,60,160,.15));background:var(--card,rgba(255,255,255,.6));color:var(--ink,#1E1238);transition:border-color .15s,background .15s}
+.aich-opt:hover{border-color:var(--accent-ink,#4B2BB8)}
+.aich-opt.is-on{border-color:var(--accent-ink,#4B2BB8);background:var(--card-on,#fff);color:var(--accent-ink,#4B2BB8);font-weight:700}
+
+.aich-summary{background:var(--card-on,#fff);border:1px solid var(--panel-brd,rgba(80,60,160,.10));border-radius:16px;padding:12px 16px}
+.aich-summary__head{display:flex;justify-content:space-between;gap:12px;font-size:15px}
+.aich-summary__price{font-weight:700;white-space:nowrap}
+.aich-summary__params{font-size:13px;color:var(--muted,#5B4D93);margin-top:4px}
+
+.aich-chips{display:flex;flex-wrap:wrap;gap:8px}
+.aich-chip{font:500 14px 'Onest',system-ui,sans-serif;cursor:pointer;padding:9px 16px;border-radius:999px;border:1.5px solid var(--field-brd,rgba(80,60,160,.15));background:var(--glass,rgba(255,255,255,.75));color:var(--ink,#1E1238);transition:border-color .15s,transform .1s}
+.aich-chip:hover{border-color:var(--accent-ink,#4B2BB8)}
+.aich-chip:active{transform:scale(.97)}
+.aich-chip--primary{border:none;color:#fff;font-weight:700;background:linear-gradient(90deg,#FF9A3D,#F0602A);box-shadow:0 4px 14px rgba(240,96,42,.35)}
+
+/* устаревшие сообщения: кнопки выбора гасим, чтобы не нажимали старое */
+.aich-row.is-old .aich-chips,.aich-row.is-old .aich-params{opacity:.45;pointer-events:none}
+.aich-row.is-old .aich-model{pointer-events:none;opacity:.7}
+.aich-row.is-old .aich-model__link{pointer-events:auto}
+
+.aich-dots{display:inline-flex;gap:4px}
+.aich-dots i{width:6px;height:6px;border-radius:50%;background:var(--muted,#5B4D93);animation:aichDot 1s infinite ease-in-out}
+.aich-dots i:nth-child(2){animation-delay:.15s}.aich-dots i:nth-child(3){animation-delay:.3s}
+@keyframes aichDot{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.aich-dots i{animation:none}.aich-model{transition:none}}
+@media (max-width:560px){.aich-avatar{flex-basis:32px;height:32px}.aich-models{grid-template-columns:1fr}.aich-bubble--user{max-width:85%}}
