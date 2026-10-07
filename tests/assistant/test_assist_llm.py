@@ -150,11 +150,11 @@ def test_user_text_is_data_not_instruction(cards):
 def test_fallback_prompt_keeps_user_text(cards):
     c, _ = cards
     p = fallback_prompt(c["veo-3-1"], "надо сделать видео: кот прыгает в снег")
-    assert p.startswith("Кот прыгает в снег") and "кинематографично" in p
+    assert p.startswith("Кот прыгает в снег") and "кинематографично" in p.lower()
     p_en = fallback_prompt(c["veo-3-1"], "make a video of a cat jumping in snow")
     assert p_en.startswith("A cat jumping") or "cinematic" in p_en
     p2 = fallback_prompt(c["veo-3-1"], "кот", change="Ярче цвета", prev_prompt=p)
-    assert p2.count("кинематографично") == 1 and "ярче цвета" in p2
+    assert p2.lower().count("кинематографично") == 1 and "яркие насыщенные цвета" in p2
 
 
 def test_clean_idea():
@@ -163,3 +163,46 @@ def test_clean_idea():
     assert clean_idea("картинку кодта который жарит иишницу") == "кодта который жарит иишницу"
     assert clean_idea("Сделай видео: яичница танцует") == "яичница танцует"
     assert clean_idea("кот") == "кот"
+
+
+
+def test_refine_rules_without_llm(cards):
+    c, _ = cards
+    el = c["elevenlabs-music"]
+    p = fallback_prompt(el, "картинку кот жарит яичницу")
+    assert p.startswith("Трек на тему «кот жарит яичницу»")
+    calm = fallback_prompt(el, "", change="Спокойнее", prev_prompt=p)
+    assert "спокойный темп" in calm and "спокойнее" not in calm.lower().split("«")[0]
+    loud = fallback_prompt(el, "", change="Энергичнее", prev_prompt=calm)
+    assert "энергичный ритм" in loud and "спокойный темп" not in loud      # взаимоисключающие правки заменяются
+    assert loud.count("Качественное сведение") == 1
+    free = fallback_prompt(el, "", change="пусть будет джаз", prev_prompt=loud)
+    assert "пусть будет джаз" in free
+
+
+def test_status_shows_why_and_last_error():
+    from assistant.llm import LLMChain, LLMProvider
+    tr = FakeTransport(omniroute=[("http", 401, "Invalid API Key")], groq=[("ok", ok_json())])
+    chain = make_chain(tr)
+    run(chain)
+    st = {x["name"]: x for x in chain.status()}
+    assert st["omniroute"]["last"]["ok"] is False and "Invalid API Key" in st["omniroute"]["last"]["error"]
+    assert st["groq"]["last"]["ok"] is True
+    nokey = LLMChain([LLMProvider("groq", "https://api.groq.com/openai/v1", "", "m")])
+    assert nokey.status()[0]["why_disabled"] == "нет ключа" and not nokey.available
+    assert "k-omni" not in str(chain.status())  # ключи не утекают
+
+
+def test_reasoning_model_gets_more_tokens_and_empty_content_is_reported():
+    from assistant.llm import LLMChain, LLMProvider
+    calls = []
+
+    def tr(url, headers, payload, timeout):
+        calls.append(payload)
+        return 200, {"choices": [{"message": {"content": "", "reasoning": "thinking..."}}], "usage": {}}
+
+    chain = LLMChain([LLMProvider("groq", "https://api.groq.com/openai/v1", "k", "openai/gpt-oss-20b")], transport=tr)
+    with pytest.raises(LLMUnavailable):
+        run(chain)
+    assert calls[0]["max_tokens"] >= 1200
+    assert "reasoning model" in chain.status()[0]["last"]["error"]

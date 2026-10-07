@@ -41,6 +41,7 @@ def app_ctx(tmp_path, monkeypatch):
     monkeypatch.setenv("FLASK_ENV", "development")
     monkeypatch.setenv("SECRET_KEY", "test-secret-key-not-for-prod")
     monkeypatch.setenv("GENERATE_USE_QUEUE", "1")
+    monkeypatch.setenv("GENERATE_REQUIRE_AUTH", "0")  # здесь проверяем очередь; вход и баланс — в test_generate_gate.py
     monkeypatch.delenv("GENERATE_SYNC_WAIT", raising=False)
     monkeypatch.setenv("REPLICATE_API_TOKEN", "test-replicate-token")
     monkeypatch.delenv("OMNIROUTE_API_KEY", raising=False)

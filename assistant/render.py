@@ -16,6 +16,7 @@
 """
 from __future__ import annotations
 
+import math
 import re
 from typing import Any
 from urllib.parse import quote
@@ -80,7 +81,10 @@ def estimate(price: str | None, sec: int | None, lang: str) -> str | None:
     if ps is None or not sec:
         return None
     total = ps * sec
-    num = f"{total:.0f}" if total >= 10 else f"{total:.1f}".replace(".", ",")
+    kop = math.ceil(round(total * 100, 6))   # так же, как считает проверка баланса (вверх до копейки)
+    num = str(kop // 100) if (kop % 100 == 0 or total >= 10) else f"{kop / 100:.2f}".rstrip("0").rstrip(".").replace(".", ",")
+    if total >= 10:
+        num = f"{total:.0f}"
     return f"≈ {num} ₽ " + t("for_sec", lang, sec=sec)
 
 

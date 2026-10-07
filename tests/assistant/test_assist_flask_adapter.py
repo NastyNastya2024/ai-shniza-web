@@ -14,7 +14,7 @@ MODELS["gen4-turbo"] = {"provider": "replicate", "listed": False}
 @pytest.fixture()
 def app():
     tr = FakeTransport(omniroute=[("ok", ok_json())])
-    env = {"OMNIROUTE_API_KEY": "k", "OMNIROUTE_CHAT_MODEL": "free/x", "GROQ_API_KEY": "g"}
+    env = {"OMNIROUTE_API_KEY": "k", "OMNIROUTE_CHAT_MODEL": "free/x", "GROQ_API_KEY": "g", "ASSIST_BRIEF": "0"}
     a = build_from_env(models=MODELS, price_fn=PRICES.get, channel_healthy=lambda ch: True, env=env, transport=tr)
     app = flask.Flask("t")
     app.secret_key = "x"
@@ -73,7 +73,7 @@ def test_providers_from_env_order_and_defaults():
 
 
 def test_no_keys_means_no_llm_and_degraded():
-    a = build_from_env(models=MODELS, price_fn=PRICES.get, env={})
+    a = build_from_env(models=MODELS, price_fn=PRICES.get, env={"ASSIST_BRIEF": "0"})
     assert a.d.llm is None
     a.handle("видео кот", {}, "s")
     r = a.handle("", {}, "s", action={"type": "pick_model", "value": "veo-3-1"})
@@ -164,7 +164,7 @@ def test_metrics_hook():
 def test_legacy_autostart_hides_generate_until_explicit():
     """Старый app.html запускает генерацию, как только видит generate_prompt. Без «запускай» его быть не должно."""
     from assistant.flask_adapter import handle_request
-    a = build_from_env(models=MODELS, price_fn=PRICES.get, env={})
+    a = build_from_env(models=MODELS, price_fn=PRICES.get, env={"ASSIST_BRIEF": "0"})
     sess = {}
     body = {"messages": [{"role": "user", "content": "видео: кот в снегу 9:16"}], "selected_model_id": "veo-3-1"}
     handle_request(a, body, sess, None, legacy_autostart=True)
@@ -176,7 +176,7 @@ def test_legacy_autostart_hides_generate_until_explicit():
 
 def test_top_level_selected_model_id_is_used():
     from assistant.flask_adapter import handle_request
-    a = build_from_env(models=MODELS, price_fn=PRICES.get, env={})
+    a = build_from_env(models=MODELS, price_fn=PRICES.get, env={"ASSIST_BRIEF": "0"})
     d = handle_request(a, {"messages": [{"role": "user", "content": "почему ошибка"}], "selected_model_id": "veo-3-1",
                            "context": {"last_error": "channel_unavailable"}}, {}, None)
     assert "veo-3-1" not in {m["id"] for m in d["models"]} and d["models"]
@@ -189,10 +189,16 @@ def test_uses_app_rate_limiter():
         calls.append((limit, window, prefix))
         return lambda f: f
 
-    a = build_from_env(models=MODELS, price_fn=PRICES.get, env={})
+    a = build_from_env(models=MODELS, price_fn=PRICES.get, env={"ASSIST_BRIEF": "0"})
     app = flask.Flask("t2")
     app.secret_key = "x"
     app.extensions["rate_limit"] = rate_limit
     register_assistant(app, a)
-    assert calls == [(30, 60, "assistant_chat")]
+    assert calls == [(60, 60, "assistant_chat")]
     assert "api_assistant_chat" in app.view_functions
+
+
+
+def test_brief_on_by_default_from_env():
+    a = build_from_env(models=MODELS, price_fn=PRICES.get, env={})
+    assert a.d.brief is True

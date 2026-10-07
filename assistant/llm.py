@@ -114,6 +114,8 @@ def requests_transport(url: str, headers: dict, payload: dict, timeout: float) -
         r = sess.post(url, headers=headers, json=payload, timeout=(min(3.0, timeout), timeout))
     except requests.Timeout as exc:
         raise TransportTimeout(str(exc)) from exc
+    except requests.ConnectionError as exc:
+        raise TransportError("connection_refused (провайдер не запущен или недоступен)") from exc
     except requests.RequestException as exc:
         raise TransportError(type(exc).__name__) from exc
     try:
@@ -168,6 +170,21 @@ def parse_json_object(text: str) -> dict[str, Any]:
     raise ValueError("no json object")
 
 
+# «думающие» модели тратят max_tokens на рассуждение и могут вернуть пустой content
+REASONING_RX = re.compile(r"gpt-oss|qwen3|qwq|deepseek-r1|reason|\bo[134](-|$)", re.I)
+
+
+def _http_error(status: int, body: Any) -> str:
+    msg = ""
+    if isinstance(body, dict):
+        err = body.get("error")
+        msg = (err.get("message") if isinstance(err, dict) else err) or body.get("detail") or ""
+    elif isinstance(body, str):
+        msg = body
+    msg = re.sub(r"\s+", " ", str(msg or "")).strip()[:100]
+    return f"http_{status}" + (f": {msg}" if msg else "")
+
+
 def _estimate_tokens(text: str) -> int:
     return max(1, len(text) // 3)
 
@@ -184,12 +201,32 @@ class LLMChain:
         self.max_tokens = max_tokens
         self.temperature = temperature
         self.min_attempt_sec = min_attempt_sec
+        self.last: dict[str, dict] = {}  # последний результат по провайдеру — для /api/assistant/status
+        self._all = list(providers)       # включая те, у кого нет ключа (для диагностики)
+
+    def _note(self, name: str, ok: bool, error: str = "", ms: int = 0) -> None:
+        self.last[name] = {"ok": ok, "error": error, "ms": ms, "at": int(time.time())}
+
+    def status(self) -> list[dict]:
+        """Диагностика без секретов: какие провайдеры есть, есть ли ключ, состояние breaker, последняя ошибка."""
+        states = self.breaker.state()
+        out = []
+        for p in self._all:
+            out.append({
+                "name": p.name, "model": p.model or None, "url": p.url,
+                "key_set": bool(p.api_key), "enabled": p in self.providers,
+                "breaker": states.get(p.name, "closed"), "last": self.last.get(p.name),
+                "why_disabled": None if p in self.providers else ("нет ключа" if not p.api_key else "не задана модель"),
+            })
+        return out
 
     @property
     def available(self) -> bool:
         return bool(self.providers)
 
     def _call(self, p: LLMProvider, messages: list[dict], timeout: float, max_tokens: int) -> tuple[str, dict]:
+        if REASONING_RX.search(p.model or ""):
+            max_tokens = max(max_tokens, 1200)
         payload: dict[str, Any] = {"model": p.model, "messages": messages, "temperature": self.temperature,
                                    "max_tokens": max_tokens, "stream": False}
         if p.json_mode:
@@ -204,17 +241,21 @@ class LLMChain:
         if status == 429:
             raise TransportError("rate_limited")
         if status >= 400 or not isinstance(body, dict):
-            raise TransportError(f"http_{status}")
+            raise TransportError(_http_error(status, body))
         try:
-            content = body["choices"][0]["message"].get("content") or ""
+            msg = body["choices"][0]["message"]
+            content = msg.get("content") or ""
         except (KeyError, IndexError, TypeError, AttributeError) as exc:
             raise TransportError("bad_shape") from exc
+        if not content.strip() and (msg.get("reasoning") or msg.get("reasoning_content")):
+            content = "<empty: reasoning model spent max_tokens on thinking>"
         return content, body.get("usage") or {}
 
     def complete_json(self, system: str, user: str, validate: Callable[[dict], dict] | None = None,
                       max_tokens: int | None = None, deadline_sec: float | None = None) -> LLMResult:
         if not self.providers:
             raise LLMUnavailable("no_providers")
+        # circuit_open у всех — тоже отметим, чтобы в статусе было видно, почему шаблон
         t0 = self.clock()
         deadline = t0 + (deadline_sec or self.deadline_sec)
         mt = max_tokens or self.max_tokens
@@ -236,10 +277,12 @@ class LLMChain:
                 except TransportTimeout:
                     self.breaker.failure(p.name)
                     attempts.append({"provider": p.name, "error": "timeout"})
+                    self._note(p.name, False, f"timeout > {min(p.timeout, remaining):.1f} с")
                     break
                 except TransportError as exc:
                     self.breaker.failure(p.name)
                     attempts.append({"provider": p.name, "error": str(exc)})
+                    self._note(p.name, False, str(exc))
                     break
                 tin += int(usage.get("prompt_tokens") or _estimate_tokens(system + user))
                 tout += int(usage.get("completion_tokens") or _estimate_tokens(content))
@@ -254,8 +297,10 @@ class LLMChain:
                                                {"role": "user", "content": "Invalid. Reply with ONLY the JSON object."}]
                         continue
                     self.breaker.failure(p.name)
+                    self._note(p.name, False, f"ответ не JSON: {content[:60]!r}")
                     break
                 self.breaker.success(p.name)
+                self._note(p.name, True, ms=int((self.clock() - a0) * 1000))
                 attempts.append({"provider": p.name, "ok": True, "ms": int((self.clock() - a0) * 1000)})
                 return LLMResult(data, p.name, tin, tout, int((self.clock() - t0) * 1000), attempts)
         raise LLMUnavailable("all_failed", attempts, tin + tout)

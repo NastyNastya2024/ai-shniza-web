@@ -336,9 +336,9 @@ html[data-theme="dark"] .hdr-tag,html[data-theme="dark"] .hdr-btn{color:#D7CCFF!
       <div style="width: 110px; height: 12px; border-radius: 50%; background: radial-gradient(closest-side, rgba(75,43,184,0.22), rgba(75,43,184,0)); margin: 10px 0 18px"></div>
     </div>
 
-    <div class="speech glass" style="position: relative; margin: 0 0 26px; max-width: calc(100vw - 40px); box-sizing: border-box; padding: 15px 26px 16px; border-radius: 14px">
+    <div class="speech glass" style="position: relative; margin: 0 0 26px; max-width: min(280px, calc(100vw - 40px)); box-sizing: border-box; padding: 12px 18px 13px; border-radius: 14px">
       <span class="speech-tail" aria-hidden="true" style="position: absolute; left: 50%; top: -8px; width: 16px; height: 16px; margin-left: -8px; transform: rotate(45deg); border-radius: 3px 0 0 0"></span>
-      <h1 id="speech" style="position: relative; margin: 0; min-height: 1.3em; text-align: center; font-family: 'Days One', sans-serif; font-weight: 400; font-size: clamp(16px, 1.6vw, 21px); line-height: 1.3; letter-spacing: -0.01em; white-space: nowrap">
+      <h1 id="speech" style="position: relative; margin: 0; min-height: 1.3em; text-align: center; font-family: 'Days One', sans-serif; font-weight: 400; font-size: clamp(13px, 1.3vw, 15px); line-height: 1.35; letter-spacing: -0.01em; white-space: pre-line; max-width: 280px">
         <span aria-hidden="true"><span id="speechText"></span><span class="caret"></span></span>
       </h1>
     </div>
@@ -454,10 +454,10 @@ html[data-theme="dark"] .hdr-tag,html[data-theme="dark"] .hdr-btn{color:#D7CCFF!
 /* i18n: t() из /i18n/runtime.js */
 const tr = (k, p) => AISH_I18N.t(k, p);
 const GREET_STORAGE = 'aish-greeted';
-const GREET_INTRO_LAST = 6;
-const GREET_REST_FIRST = 7;
+const GREET_INTRO_LAST = 3;
+const GREET_REST_FIRST = 4;
 const GREET_REST_LAST = 20;
-const GREET_INTRO_PAUSE_MS = 3200;
+const GREET_INTRO_PAUSE_MS = 6500;
 
 function minImagePriceRub() {
   let min = Infinity;

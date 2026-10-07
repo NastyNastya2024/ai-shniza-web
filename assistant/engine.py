@@ -15,12 +15,14 @@
 from __future__ import annotations
 
 import logging
+import math
 import re
 import threading
 import time
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
+from . import brief as BR
 from . import errors as err_mod
 from . import params as P
 from .cards import Card, load_cards
@@ -28,7 +30,7 @@ from .lang import detect_lang
 from .llm import LLMChain, LLMUnavailable
 from .prompts import SYSTEM, build_user, fallback_prompt, validate_output
 from .recommend import Pick, cheapest, price_value, recommend
-from .render import chip, estimate, model_item, response, short_price, std_chip
+from .render import chip, estimate, model_item, per_second, response, short_price, std_chip
 from .router import MINORS_SEXUAL, NSFW, VIOLENCE, Intent, detect_kind, detect_needs, lev, route, squeeze, topic_of
 from .session import MAX_SESSION_ID, MemoryStore, load
 from .texts import EXAMPLES, REFINE_SUGGEST, b, t
@@ -52,6 +54,11 @@ class AssistantDeps:
     token_budget: int = 6000
     max_llm_calls: int = 15
     on_event: Callable[[dict], None] | None = None
+    # цена запуска в копейках (как посчитает биллинг); None → из price_fn: «4,3 ₽/сек» × секунды
+    cost_fn: Callable[[str, dict], "int | None"] | None = None
+    llm_diag: Any = None          # цепочка LLM даже без ключей — для /status
+    account_check: bool = False   # True, если адаптер передаёт ctx["_account"]
+    brief: bool = True            # уточнять детали и давать 3 варианта промпта перед параметрами
 
 
 def _norm(s: str) -> str:
@@ -84,6 +91,11 @@ class Assistant:
         ctx = dict(context or {})
         sid = (session_id or "")[:MAX_SESSION_ID]
         ses = load(self.d.store, sid)
+        uid = ctx.get("_uid")
+        if uid and ses.get("owner") and ses["owner"] != uid:   # тот же браузер, другой аккаунт — начинаем заново
+            ses = load(self.d.store, "")
+        if uid:
+            ses["owner"] = uid                                   # анонимный разговор «переезжает» в аккаунт после входа
         msg = (message or "").strip()[:2000]
         lang = self._lang(msg, ses, ctx)
         ses["lang"] = lang
@@ -131,6 +143,47 @@ class Assistant:
         act = self._text_as_action(msg, ses)
         if act:
             return self._action(act[0], act[1], ctx, ses, lang)
+        # 1б) мусор вроде «ооло» никуда не пишем — переспрашиваем по месту
+        if msg and not re.fullmatch(r"\s*\d{1,2}\s*[.)]?\s*", msg) and BR.is_junk(msg):
+            aw = ses.get("await")
+            card = self._current_card(ses, ctx) if ses.get("picked") else None
+            if aw in ("params", "refine") and card:
+                return self._refine(card, msg, ctx, ses, lang)
+            if aw in ("brief", "variants") and card:
+                out = self._brief(card, ses, ctx, lang) if aw == "brief" else self._variants(card, ses, ctx, lang)
+                out["text"] = t("junk", lang) + "\n" + out["text"]
+                out["reply"] = t("junk", lang) + "\n" + out["reply"]
+                return out
+            if ses.get("kind"):
+                return self._ask_subject(ses["kind"], ses, ctx, lang, junk=True)
+            return response([t("junk", lang)], self._type_chips(ctx, lang), intent="junk")
+        # 1в) ждём суть идеи («о чём видео?») — любой осмысленный текст становится идеей
+        if ses.get("await") == "idea" and ses.get("kind") and BR.has_subject(msg):
+            it0 = route(msg, ctx, ses, self.titles)
+            if it0.name in ("ask_type", "off_topic", "generate_task", "smalltalk") and (it0.kind in (None, ses["kind"])):
+                ses.update(idea=msg, topic=topic_of(msg), needs=detect_needs(msg) or ses.get("needs") or [],
+                           brief=None, brief_done=False)
+                if ses.get("picked") and ses["picked"] in self.d.cards:
+                    return self._pick(ses["picked"], ctx, ses, lang)
+                pick = self._recommend(ses["kind"], ses.get("needs") or [], bool(ctx.get("has_image")))
+                return self._show_models(pick, ses, lang, "generate_task")
+        # 1г) бриф / варианты: свободный текст — это деталь или правка, а не новая задача
+        if ses.get("await") in ("brief", "variants") and ses.get("picked") in self.d.cards:
+            it0 = route(msg, ctx, ses, self.titles)
+            card = self.d.cards[ses["picked"]]
+            new_task = it0.name == "generate_task" and (it0.kind not in (None, card.kind) or len(msg.split()) > 8)
+            if not new_task and it0.name not in ("crisis", "safety", "safety_person", "injection", "ui_help", "error_help"):
+                br = ses.get("brief") or {"q": [], "a": {}, "extra": [], "summary": ""}
+                fitted, _adj = P.fit(P.extract(msg), card)
+                if not fitted or len(msg.split()) > 3:
+                    br.setdefault("extra", []).append(msg.strip()[:200])
+                ses["brief"] = br
+                if fitted:
+                    ses["params"] = P.with_defaults(card, {**P.validate(card, ses.get("params")), **fitted})
+                    if len(msg.split()) <= 3 and ses.get("variants"):   # «вертикально» — варианты те же, LLM не зовём
+                        lbl = ", ".join(P.label(k, v, lang) for k, v in fitted.items())
+                        return self._show_variants(card, ses, lang, [t("settings_saved", lang, label=lbl)], False)
+                return self._variants(card, ses, ctx, lang, change=msg if ses.get("await") == "variants" else "")
         # 2) ждём ответ «какой тип» — понимаем коротко и с опечатками
         if ses.get("await") == "type" and len(msg.split()) <= 3:
             k = detect_kind(msg, bool(ctx.get("has_image"))) or _kind_by_number(msg)
@@ -160,7 +213,7 @@ class Assistant:
             return None
         n = _norm(msg)
         for c in ses.get("last_chips") or []:
-            if c.get("label") and _norm(c["label"]) == n and c.get("action") not in {"generate"}:
+            if c.get("label") and _norm(c["label"]) == n and c.get("action") not in {"generate", "send"}:
                 return c["action"], c.get("value")
         bare = _norm(_PICK_WORDS.sub("", msg))
         for mid, title in self.titles.items():
@@ -241,10 +294,11 @@ class Assistant:
                 res = llm.complete_json(SYSTEM, build_user(card, idea, params, lang, change, prev), validate_output)
             except LLMUnavailable as exc:
                 ses["tokens"] = int(ses.get("tokens") or 0) + exc.tokens
-                self._llm_info.update(tokens=exc.tokens, error=exc.reason, attempts=exc.attempts[-4:])
+                self._llm_info.update(tokens=self._llm_info["tokens"] + exc.tokens, error=exc.reason, attempts=exc.attempts[-4:])
             else:
                 ses["tokens"] = int(ses.get("tokens") or 0) + res.tokens
-                self._llm_info.update(used=True, provider=res.provider, tokens=res.tokens, latency_ms=res.latency_ms)
+                self._llm_info.update(used=True, provider=res.provider, tokens=self._llm_info["tokens"] + res.tokens,
+                                      latency_ms=res.latency_ms)
                 prompt = res.data["prompt"]
                 if res.data.get("note") == "unsafe" or not prompt or _unsafe(prompt):
                     return None, "", False
@@ -253,12 +307,37 @@ class Assistant:
             self._llm_info["error"] = "budget"
         return fallback_prompt(card, idea, change, prev, lang), "", True
 
+    def _llm_json(self, system: str, user: str, validate: Callable, ses: dict, max_tokens: int) -> dict | None:
+        """Один JSON-вызов LLM с учётом бюджета сессии. None — LLM нет / не ответила / бюджет кончился."""
+        llm = self.d.llm
+        if llm is None or not llm.available:
+            return None
+        if not self._budget_ok(ses):
+            self._llm_info["error"] = "budget"
+            return None
+        ses["llm_calls"] = int(ses.get("llm_calls") or 0) + 1
+        try:
+            res = llm.complete_json(system, user, validate, max_tokens=max_tokens)
+        except LLMUnavailable as exc:
+            ses["tokens"] = int(ses.get("tokens") or 0) + exc.tokens
+            self._llm_info.update(tokens=self._llm_info["tokens"] + exc.tokens, error=exc.reason, attempts=exc.attempts[-4:])
+            return None
+        ses["tokens"] = int(ses.get("tokens") or 0) + res.tokens
+        self._llm_info.update(used=True, provider=res.provider, tokens=self._llm_info["tokens"] + res.tokens,
+                              latency_ms=res.latency_ms)
+        return res.data
+
     def _current_card(self, ses: dict, ctx: dict) -> Card | None:
         mid = ses.get("picked") or ctx.get("selected_model_id")
         return self.d.cards.get(mid) if mid else None
 
     def _examples(self, lang: str) -> list[dict]:
-        return [chip(b(k, lang), "send", EXAMPLES[k][lang]) for k in ("ex_video", "ex_image", "ex_music")]
+        out = []
+        for k in ("ex_video", "ex_image", "ex_music"):
+            c = chip(b(k, lang), "send", EXAMPLES[k][lang])
+            c["example"] = True
+            out.append(c)
+        return out
 
     def _type_chips(self, ctx: dict, lang: str) -> list[dict]:
         kinds = ["image", "video", "music", "edit" if ctx.get("has_image") else "sfx"]
@@ -281,8 +360,9 @@ class Assistant:
         for a in adj or []:
             if a["param"] in P.DURATION_NAMES:
                 lines.append(t("params_adjusted", lang, asked=a["asked"], got=a["got"]))
-        if degraded and self._llm_info.get("error"):  # LLM настроена, но не ответила — честно скажем
+        if degraded and not ses.get("degraded_told"):  # один раз за разговор, без технических слов
             lines.append(t("degraded", lang))
+            ses["degraded_told"] = True
         price = short_price(self._price(card.id)) or t("price_unknown", lang)
         est = estimate(price, P.seconds(card, params), lang)
         has_image = bool(ctx.get("has_image"))
@@ -293,18 +373,60 @@ class Assistant:
         blocks.append({"type": "summary", "model_id": card.id, "title": card.title, "price": price, "estimate": est,
                        "prompt": prompt, "params": [g["label"] + ": " + next((o["label"] for o in g["options"] if o["selected"]), "—")
                                                      for g in groups]})
+        gate = None
         if card.needs_image and not has_image:
             lines.append(t("needs_image", lang))
             chips = [std_chip("attach", "attach", lang, primary=True), std_chip("no_photo_model", "no_photo_model", lang)]
             ready = False
         else:
-            chips = [std_chip("generate", "generate", lang, card.id, primary=True), std_chip("improve", "improve", lang),
-                     std_chip("mine", "use_mine", lang), std_chip("other_model", "more", lang)]
-            ready = True
+            gate, gate_lines, chips = self._gate(card, params, ctx, lang)
+            lines += gate_lines
+            ready = gate in (None, "ok", "free")
         ses["await"] = "params"
         return response(lines, chips, blocks, lang, intent=intent, generate_model=card.id, generate_prompt=prompt,
-                        generate_params=params, ready=ready, degraded=degraded,
+                        generate_params=params, ready=ready, degraded=degraded, gate=gate,
                         models=[{"id": card.id, "title": card.title, "price": price}])
+
+    # ------------------------------------------- перед запуском: вход → баланс
+    def _cost_kop(self, card: Card, params: dict) -> int | None:
+        if self.d.cost_fn:
+            try:
+                v = self.d.cost_fn(card.id, params)
+                return None if v is None else int(v)
+            except Exception:
+                log.exception("assistant cost_fn failed")
+        price = short_price(self._price(card.id))
+        if not price:
+            return None
+        ps = per_second(price)
+        if ps is not None:
+            sec = P.seconds(card, params) or 5
+            return int(math.ceil(ps * sec * 100))
+        v = price_value(price)
+        return None if v is None else int(math.ceil(v * 100))
+
+    def _gate(self, card: Card, params: dict, ctx: dict, lang: str) -> tuple[str | None, list[str], list[dict]]:
+        """Порядок обязателен: 1) вход, 2) баланс, 3) «Сгенерировать». Сервер /api/generate проверяет то же самое."""
+        tail = [std_chip("improve", "improve", lang), std_chip("other_model", "more", lang)]
+        acct = ctx.get("_account")
+        cost = self._cost_kop(card, params)
+        if acct is None:  # адаптер не передал аккаунт — проверку делает только сервер генерации
+            gen = [std_chip("generate", "generate", lang, card.id, primary=True), std_chip("improve", "improve", lang),
+                   std_chip("mine", "use_mine", lang), std_chip("other_model", "more", lang)]
+            return None, [t("gate_ready", lang)], gen
+        if not acct.get("authed"):
+            return "login", [t("gate_login", lang)], [std_chip("login", "login", lang, primary=True)] + tail
+        if cost == 0:
+            return "free", [t("gate_free", lang)], [std_chip("generate", "generate", lang, card.id, primary=True)] + tail
+        have = int(acct.get("available_kop") or 0)
+        if cost is not None and have < cost:
+            return "topup", [t("gate_topup", lang, have=_rub(have), need=_rub(cost))], [
+                std_chip("topup", "open_topup", lang, primary=True), std_chip("resume_topup", "resume", lang),
+                std_chip("cheaper", "cheaper", lang)]
+        head = t("gate_ready_cost", lang, cost=_rub(cost)) if cost else t("gate_ready", lang)
+        return "ok", [head], [std_chip("generate", "generate", lang, card.id, primary=True),
+                              std_chip("improve", "improve", lang), std_chip("mine", "use_mine", lang),
+                              std_chip("other_model", "more", lang)]
 
     def _pick(self, mid: str, ctx: dict, ses: dict, lang: str, intent: str = "pick_model") -> dict:
         card = self.d.cards.get(mid or "")
@@ -323,6 +445,10 @@ class Assistant:
         if not idea:
             ses["await"] = "idea"
             return response([t("describe_idea", lang)], [], intent=intent, generate_model=card.id)
+        if self.d.brief:
+            if ses.get("brief_done") or BR.detail_level(idea) >= 12:
+                return self._variants(card, ses, ctx, lang)
+            return self._brief(card, ses, ctx, lang)
         raw_params, adj = P.fit(P.extract(idea), card)
         kept = P.validate(card, ses.get("params"))
         params = P.with_defaults(card, {**kept, **raw_params})
@@ -335,9 +461,21 @@ class Assistant:
 
     # ============================================================== intents
     def _new_task(self, kind: str | None, msg: str, needs: list[str], topic: str, ses: dict) -> None:
-        ses.update(kind=kind, topic=topic, needs=needs, idea=msg, picked=None, prompt="", params={}, shown=[])
+        ses.update(kind=kind, topic=topic, needs=needs, idea=msg, picked=None, prompt="", params={}, shown=[],
+                   brief=None, brief_done=False, variants=[], var_round=0)
+
+    def _ask_subject(self, kind: str, ses: dict, ctx: dict, lang: str, junk: bool = False) -> dict:
+        """Пустая или непонятная идея → уточняющие вопросы (кто, где, что происходит, атмосфера, нюансы). Без примеров."""
+        ses["await"] = "idea"
+        head = t("need_subject_" + (kind if kind in KINDS else "image"), lang)
+        if junk:
+            head = ("Не совсем поняла 🙂\n" if lang != "en" else "Sorry, I didn't get that 🙂\n") + head
+        return response([head], [], intent="need_subject")
 
     def _i_generate_task(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
+        if self.d.brief and not BR.has_subject(msg):   # «нужно сделать видео» — о чём? сначала суть
+            self._new_task(it.kind, "", it.needs, "", ses)
+            return self._ask_subject(it.kind or "image", ses, ctx, lang)
         self._new_task(it.kind, msg, it.needs, it.topic, ses)
         pick = self._recommend(it.kind or "image", it.needs, bool(ctx.get("has_image")))
         return self._show_models(pick, ses, lang, "generate_task")
@@ -345,6 +483,71 @@ class Assistant:
     def _i_ask_type(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
         self._new_task(None, msg, it.needs, it.topic, ses)
         return self._ask_type(ses, ctx, lang)
+
+    # ------------------------------------------------ бриф и варианты промпта
+    def _brief(self, card: Card, ses: dict, ctx: dict, lang: str) -> dict:
+        idea = ses.get("idea") or ""
+        br = ses.get("brief") or {}
+        if not br.get("q"):
+            data = self._llm_json(BR.BRIEF_SYSTEM, BR.brief_user(card, idea, lang), BR.validate_brief, ses, 450)
+            if data is not None and not data["clear"]:
+                ses["idea"] = ""
+                return self._ask_subject(card.kind, ses, ctx, lang, junk=True)
+            if data and data["questions"]:
+                br = {"q": data["questions"], "a": {}, "extra": [], "summary": data.get("summary") or "", "src": "llm"}
+            else:
+                q, a = BR.rule_questions(card.kind, idea, lang)
+                br = {"q": q, "a": a, "extra": [], "summary": "", "src": "rules"}
+        ses["brief"] = br
+        ses["await"] = "brief"
+        head = t("brief_head_summary", lang, summary=br["summary"]) if br.get("summary") else t("brief_head", lang)
+        lines = [head] + ([t("brief_saved", lang, detail="; ".join(br["extra"]))] if br.get("extra") else [])
+        blocks = [{"type": "brief", "model_id": card.id, "title": card.title,
+                   "questions": BR.render_questions(br["q"], br["a"], lang)}]
+        chips = [std_chip("build_variants", "variants", lang, primary=True), std_chip("skip_brief", "variants", lang, "skip"),
+                 std_chip("other_model", "more", lang)]
+        return response(lines, chips, blocks, lang, intent="brief", generate_model=card.id,
+                        models=[{"id": card.id, "title": card.title, "price": short_price(self._price(card.id))}])
+
+    def _answers_text(self, br: dict) -> dict[str, str]:
+        out = {}
+        for q in br.get("q") or []:
+            v = (br.get("a") or {}).get(q["id"])
+            if v and v != BR.ANY:
+                out[q["label"]] = next((o["label"] for o in q["options"] if o["value"] == v), v)
+        return out
+
+    def _variants(self, card: Card, ses: dict, ctx: dict, lang: str, change: str = "") -> dict:
+        idea = ses.get("idea") or ""
+        br = ses.get("brief") or {"q": [], "a": {}, "extra": []}
+        raw_params, adj = P.fit(P.extract(idea + " " + " ".join(br.get("extra") or [])), card)
+        params = P.with_defaults(card, {**P.validate(card, ses.get("params")), **raw_params})
+        data = self._llm_json(BR.VARIANTS_SYSTEM, BR.variants_user(card, idea, self._answers_text(br), br.get("extra") or [],
+                                                                  params, lang, change), BR.validate_variants, ses, 900)
+        degraded = data is None
+        if degraded:
+            answers = {k: v for k, v in (br.get("a") or {}).items()}
+            items = BR.rule_variants(card, idea, answers, list(br.get("extra") or []), lang, int(ses.get("var_round") or 0))
+        else:
+            items = [v for v in data["variants"] if not _unsafe(v["text"])]
+            if not items:
+                return self._i_safety(Intent("safety"), "", ctx, ses, lang)
+        ses.update(variants=items, brief_done=True, params=params, picked=card.id)
+        lines = [t("variants_simple" if degraded else "variants_head", lang, title=card.title)]
+        if degraded and not ses.get("degraded_told"):
+            lines.append(t("degraded", lang))
+            ses["degraded_told"] = True
+        return self._show_variants(card, ses, lang, lines, degraded)
+
+    def _show_variants(self, card: Card, ses: dict, lang: str, lines: list[str], degraded: bool) -> dict:
+        ses["await"] = "variants"
+        items, params = ses.get("variants") or [], P.validate(card, ses.get("params"))
+        blocks = [{"type": "variants", "model_id": card.id, "title": card.title, "items": items}]
+        chips = [std_chip("more_variants", "more_variants", lang), std_chip("back_brief", "back_brief", lang),
+                 std_chip("mine", "use_mine", lang), std_chip("other_model", "more", lang)]
+        return response(lines, chips, blocks, lang, intent="variants", degraded=degraded, generate_model=card.id,
+                        generate_params=params, models=[{"id": card.id, "title": card.title,
+                                                         "price": short_price(self._price(card.id))}])
 
     def _i_prompt_improve(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
         card = self._current_card(ses, ctx)
@@ -361,6 +564,10 @@ class Assistant:
         return self._pick(card.id, ctx, ses, lang, intent="prompt_improve")
 
     def _refine(self, card: Card, change: str, ctx: dict, ses: dict, lang: str) -> dict:
+        if BR.is_junk(change):  # «ооло» не дописываем в промпт — переспрашиваем
+            sugg = REFINE_SUGGEST.get(card.kind, REFINE_SUGGEST["image"])["en" if lang == "en" else "ru"]
+            ses["await"] = "refine"
+            return response([t("refine_unclear", lang)], [chip(x, "refine", x) for x in sugg], intent="refine_unclear")
         params = P.validate(card, ses.get("params"))
         prompt, note, degraded = self._adapt(card, ses.get("idea") or "", params, ses, lang,
                                              change=change, prev=ses.get("prompt") or "")
@@ -494,6 +701,42 @@ class Assistant:
             if not card or not ses.get("prompt"):
                 return self._message(value, ctx, ses, lang)
             return self._refine(card, value, ctx, ses, lang)
+        if kind in ("brief", "variants", "more_variants", "back_brief", "use_variant"):
+            card = self._current_card(ses, ctx) if ses.get("picked") else None
+            if not card:
+                return self._ask_type(ses, ctx, lang)
+            if kind == "brief" and isinstance(value, dict):
+                br = ses.get("brief") or {}
+                if br.get("q"):
+                    qid, val = str(value.get("id") or ""), value.get("value")
+                    valid = {o["value"] for q in br["q"] if q["id"] == qid for o in q["options"]}
+                    if val == BR.ANY:
+                        br.get("a", {}).pop(qid, None)
+                    elif val in valid:
+                        br.setdefault("a", {})[qid] = val
+                    ses["brief"] = br
+                return self._brief(card, ses, ctx, lang)
+            if kind == "back_brief":
+                return self._brief(card, ses, ctx, lang)
+            if kind == "more_variants":
+                ses["var_round"] = int(ses.get("var_round") or 0) + 1
+                return self._variants(card, ses, ctx, lang, change="other creative directions, different from before")
+            if kind == "use_variant":
+                v = next((x for x in ses.get("variants") or [] if x.get("id") == value), None)
+                if not v:
+                    return self._variants(card, ses, ctx, lang)
+                ses["prompt"] = v["text"]
+                ses["params"] = P.with_defaults(card, P.validate(card, ses.get("params")))
+                return self._setup_reply(card, ses, ctx, lang, "use_variant", t("variant_chosen", lang, title=v["title"]))
+            return self._variants(card, ses, ctx, lang)
+        if kind == "resume":  # вернулись после входа / пополнения — показать то же место с новой проверкой
+            card = self._current_card(ses, ctx) if ses.get("picked") else None
+            if card and (ses.get("prompt") or ses.get("idea")):
+                if not ses.get("prompt"):
+                    ses["prompt"] = ses.get("idea")
+                ses["params"] = P.with_defaults(card, P.validate(card, ses.get("params")))
+                return self._setup_reply(card, ses, ctx, lang, "resume", t("resumed", lang))
+            return response([t("nothing_to_resume", lang)], self._type_chips(ctx, lang), intent="resume")
         if kind == "edit_prompt":
             return response([t("what_change", lang)], [], intent="edit_prompt")
         if kind == "rephrase":
@@ -514,3 +757,10 @@ def _unsafe(text: str) -> bool:
 
 def _generic_error(lang: str) -> str:
     return "Что-то пошло не так. Попробуйте ещё раз." if lang != "en" else "Something went wrong. Please try again."
+
+
+def _rub(kop: int | None) -> str:
+    if kop is None:
+        return "—"
+    s = str(kop // 100) if kop % 100 == 0 else f"{kop / 100:.2f}".rstrip("0").rstrip(".")
+    return s.replace(".", ",") + " ₽"

@@ -213,7 +213,7 @@ def test_short_price_and_estimate():
     assert short_price("4,3 ₽ / секунда") == "4,3 ₽/сек"
     assert short_price("бесплатно") == "бесплатно"
     assert estimate("4,3 ₽/сек", 5, "ru") == "≈ 22 ₽ за 5 с"
-    assert estimate("0,43 ₽/сек", 5, "ru") == "≈ 2,1 ₽ за 5 с"
+    assert estimate("0,43 ₽/сек", 5, "ru") == "≈ 2,15 ₽ за 5 с"
     assert estimate("3 ₽/фото", 5, "ru") is None
 
 

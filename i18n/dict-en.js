@@ -128,10 +128,10 @@ window.AISH_DICT_EN = {
   'index.detect.music': 'music|track|song|beat',
   'index.detect.image': 'image|picture|photo|artwork|poster|painting',
 
-  /* orb bubble: 1–6 intro, 7–20 random (polite tone, sunny-phrases) */
-  'index.greet.01': 'What are we making—video, image, or music?',
-  'index.greet.02': "Share your idea—I'll pick a model and price",
-  'index.greet.03': 'Seedance is free right now—my treat!',
+  /* orb bubble: 1–3 about the service (from studio), 4–20 soft nudges */
+  'index.greet.01': 'Hi! Here AI makes videos, images and music from your description',
+  'index.greet.02': "Describe your idea — I'll pick a model, write the prompt and show the price",
+  'index.greet.03': 'You pay only for a finished result. Video, image or track?',
   'index.greet.04': 'Video with sound in Seedance—free',
   'index.greet.05': "I'll compare models and prices for you",
   'index.greet.06': 'Prices up front, no surprises',
@@ -151,7 +151,7 @@ window.AISH_DICT_EN = {
   'index.greet.20': 'Whenever you\u2019re ready, press \u201cGenerate\u201d',
 
   /* orb lines in the flow (chips, typing, cook) */
-  'index.say.hello': 'Hi! What are we making?',
+  'index.say.hello': 'Hi! Here AI makes videos, images and music from your description',
   'index.say.idle': [],
   'index.say.listen': [
     "Listening closely, I'm all ears!",
@@ -370,14 +370,14 @@ window.AISH_DICT_EN = {
   'studio.detect.music': 'music|track|song|beat',
   'studio.detect.image': 'image|picture|poster|photo|artwork|painting',
 
-  /* Eggy in Studio */
-  'studio.eggy.intro2': "Describe your idea — I'll pick a model, write the prompt and show the price",
-  'studio.eggy.intro3': 'You pay only for a finished result. Video, image or track?',
+  /* Eggy in Studio: model / price CTAs (formerly on the homepage) */
+  'studio.eggy.intro2': 'GPT Image 2 —\nfor quick images from a description',
+  'studio.eggy.intro3': 'Kling 2.5 Turbo Pro —\nfor smooth camera video',
   'studio.does.video': 'makes videos from your description',
   'studio.does.image': 'draws images from your description',
   'studio.does.music': 'makes music from your description',
   'studio.does.text': 'writes texts on request',
-  'studio.eggy.start': 'Hi! Here AI makes videos, images and music from your description',
+  'studio.eggy.start': 'Try P-Video —\nlowest price for video',
   'studio.eggy.welcomeBack': 'Welcome back! Describe an idea — AI will make a video, image or track',
   'studio.eggy.loggedOut': "You're logged out. Come back — AI will make videos, images and music",
   'studio.eggy.sound': '{model} will make a video with sound — {price}',
@@ -401,8 +401,13 @@ window.AISH_DICT_EN = {
   'studio.chat.stillRunning': 'The AI is still working — the result will be saved to “My works”',
   'studio.chat.done': 'Done! Saved to “My works”. Make another one?',
   'studio.chat.again': 'Another one? Describe a new idea or switch the model in the panel',
-  'studio.chat.failed': "The AI couldn't finish — your money is back on your balance",
-  'studio.chat.failedRetry': "The AI couldn't finish — your money is back on your balance. Try again?",
+  'studio.chat.failed': 'The AI couldn’t finish — failed generations are not charged',
+  'studio.chat.notStarted': 'Couldn’t start the generation — you were not charged. Try again?',
+  'studio.chat.serviceDown': 'The generation service is unavailable right now — you were not charged. Try again in a minute',
+  'studio.chat.modelDown': 'This AI model is unavailable right now — you were not charged. Pick another model in the panel',
+  'studio.chat.moderation': 'The request didn’t pass the content rules — you were not charged. Try describing it differently',
+  'studio.chat.timeout': 'The AI ran out of time — you were not charged. Retry or pick a faster model',
+  'studio.chat.failedRetry': 'The AI couldn’t finish — failed generations are not charged. Try again?',
   'studio.chat.estimateFailed': "Couldn't estimate the price. Please try again",
   'studio.chat.needMoney': "You're {price} short for this generation. Top up and we'll continue",
   'studio.chat.confirmCharge': 'Charge {price} for this generation? If it fails, you get it back',

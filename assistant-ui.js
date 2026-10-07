@@ -20,7 +20,8 @@
 (function (root) {
   'use strict';
   var SERVER = { pick_model: 1, more: 1, choose_type: 1, use_mine: 1, param: 1, refine: 1, improve: 1, send: 1,
-    similar: 1, cheaper: 1, faster: 1, no_photo_model: 1, rephrase: 1 };
+    similar: 1, cheaper: 1, faster: 1, no_photo_model: 1, rephrase: 1, resume: 1,
+    brief: 1, variants: 1, more_variants: 1, back_brief: 1, use_variant: 1 };
   var KIND_ICON = { image: '🖼', video: '🎬', music: '🎵', sfx: '🔊', edit: '✏️' };
 
   function el(tag, cls, text) {
@@ -50,6 +51,33 @@
       return btn;
     }
 
+    /** Типы (видео/картинка/…) и примеры — отдельными рядами, если в ответе есть и то и другое. */
+    function renderChips(list) {
+      var types = [], examples = [], rest = [];
+      (list || []).forEach(function (c) {
+        if (c.action === 'choose_type') types.push(c);
+        else if (c.example || (c.action === 'send' && c.value && String(c.value).length > 12)) examples.push(c);
+        else rest.push(c);
+      });
+      var wrap = el('div', 'aich-chips-wrap');
+      if (types.length) {
+        var row1 = el('div', 'aich-chips aich-chips--types');
+        types.forEach(function (c) { row1.appendChild(chipBtn(c)); });
+        wrap.appendChild(row1);
+      }
+      if (examples.length) {
+        var row2 = el('div', 'aich-chips aich-chips--examples');
+        examples.forEach(function (c) { row2.appendChild(chipBtn(c)); });
+        wrap.appendChild(row2);
+      }
+      if (rest.length) {
+        var row3 = el('div', 'aich-chips');
+        rest.forEach(function (c) { row3.appendChild(chipBtn(c)); });
+        wrap.appendChild(row3);
+      }
+      return wrap.childNodes.length === 1 ? wrap.firstChild : wrap;
+    }
+
     function renderModels(bl) {
       var grid = el('div', 'aich-models');
       bl.items.forEach(function (it) {
@@ -63,8 +91,13 @@
         card.appendChild(el('div', 'aich-model__price', it.estimate || it.price));
         card.appendChild(el('div', 'aich-model__sub', it.estimate ? (it.price + ' · ' + it.speed) : it.speed));
         var link = el('a', 'aich-model__link', L('Примеры на витрине →', 'Examples in showcase →'));
-        link.href = it.vitrina_url; link.target = '_blank'; link.rel = 'noopener';
-        link.addEventListener('click', function (e) { e.stopPropagation(); });
+        link.href = it.vitrina_url || '#';
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (opts.onUiAction) opts.onUiAction('open_vitrina', it.id);
+          else if (it.vitrina_url) location.href = it.vitrina_url;
+        });
         card.appendChild(link);
         card.addEventListener('click', function () { onChip({ label: it.title, action: 'pick_model', value: it.id }); });
         grid.appendChild(card);
@@ -110,6 +143,59 @@
       return wrap;
     }
 
+    /** Уточняющие вопросы: варианты ответов кнопками, «Не важно» по умолчанию. Клик — обновление на месте. */
+    function renderBrief(bl) {
+      var wrap = el('div', 'aich-params aich-brief');
+      var open = bl.questions.filter(function (q) { return !q.options || !q.options.length; });
+      if (open.length) {   // кто, где, что происходит, нюансы — отвечают своими словами
+        var box0 = el('div', 'aich-open');
+        var ul = el('ul', 'aich-open__list');
+        open.forEach(function (q) { ul.appendChild(el('li', null, q.label)); });
+        box0.appendChild(ul);
+        box0.appendChild(el('div', 'aich-prompt__hint', L('ответьте одним сообщением в поле ниже', 'answer in one message below')));
+        wrap.appendChild(box0);
+      }
+      bl.questions.forEach(function (q) {
+        if (!q.options || !q.options.length) return;
+        var row = el('div', 'aich-param');
+        row.appendChild(el('div', 'aich-param__label', q.label));
+        var box = el('div', 'aich-param__opts');
+        q.options.forEach(function (o) {
+          var b = el('button', 'aich-opt' + (o.selected ? ' is-on' : ''), o.label);
+          b.type = 'button';
+          b.setAttribute('aria-pressed', o.selected ? 'true' : 'false');
+          b.addEventListener('click', function () {
+            if (o.selected) return;
+            post({ action: { type: 'brief', value: { id: q.id, value: o.value } } }, true);
+          });
+          box.appendChild(b);
+        });
+        row.appendChild(box);
+        wrap.appendChild(row);
+      });
+      return wrap;
+    }
+
+    /** Варианты промпта: карточки, клик — выбрать вариант (дальше параметры и запуск). */
+    function renderVariants(bl) {
+      var list = el('div', 'aich-variants');
+      bl.items.forEach(function (v, i) {
+        var card = el('button', 'aich-variant');
+        card.type = 'button';
+        var top = el('div', 'aich-variant__top');
+        top.appendChild(el('span', 'aich-variant__n', String(i + 1)));
+        top.appendChild(el('span', 'aich-variant__title', v.title));
+        card.appendChild(top);
+        card.appendChild(el('div', 'aich-variant__text', v.text));
+        card.appendChild(el('div', 'aich-variant__cta', L('Выбрать этот →', 'Use this →')));
+        card.addEventListener('click', function () {
+          onChip({ label: L('Вариант «', 'Option “') + v.title + L('»', '”'), action: 'use_variant', value: v.id });
+        });
+        list.appendChild(card);
+      });
+      return list;
+    }
+
     function renderSummary(bl) {
       var box = el('div', 'aich-summary');
       var head = el('div', 'aich-summary__head');
@@ -133,14 +219,12 @@
         else if (bl.type === 'prompt') col.appendChild(renderPrompt(bl));
         else if (bl.type === 'params') col.appendChild(renderParams(bl));
         else if (bl.type === 'summary') col.appendChild(renderSummary(bl));
+        else if (bl.type === 'brief') col.appendChild(renderBrief(bl));
+        else if (bl.type === 'variants') col.appendChild(renderVariants(bl));
       });
-      if (data.chips && data.chips.length) {
-        var chips = el('div', 'aich-chips');
-        data.chips.forEach(function (c) { chips.appendChild(chipBtn(c)); });
-        col.appendChild(chips);
-      }
+      if (data.chips && data.chips.length) col.appendChild(renderChips(data.chips));
       row.appendChild(col);
-      var setup = (data.blocks || []).some(function (b) { return b.type === 'params' || b.type === 'prompt'; });
+      var setup = (data.blocks || []).some(function (b) { return b.type === 'params' || b.type === 'prompt' || b.type === 'brief'; });
       if (setup) setupNode = row;
       return row;
     }
@@ -195,7 +279,11 @@
         return;
       }
       if (c.action === 'retry' && lastBody) { post(lastBody); return; }
-      if (c.action === 'open_vitrina' && c.value) { location.href = c.value; return; }
+      if (c.action === 'open_vitrina') {
+        if (opts.onUiAction) opts.onUiAction('open_vitrina', c.value);
+        else if (c.value) location.href = c.value;
+        return;
+      }
       if (SERVER[c.action]) {
         opts.onUser && opts.onUser(c.label);
         lastBody = { action: { type: c.action, value: c.value } };
@@ -214,6 +302,8 @@
         return post(lastBody);
       },
       chip: onChip,
+      /** Вернулись после входа или пополнения: сервер заново проверит вход → баланс и покажет то же место. */
+      resume: function () { if (busy) return Promise.resolve(null); lastBody = { action: { type: 'resume' } }; return post(lastBody); },
       render: render,
       isBusy: function () { return busy; },
       form: function () { return form; }

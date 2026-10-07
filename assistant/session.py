@@ -30,6 +30,12 @@ def empty_session() -> dict[str, Any]:
         "turns": 0,
         "await": None,       # чего ждём от пользователя: type | model | params | refine | idea
         "last_chips": [],    # кнопки прошлого ответа — чтобы понять, если их label пришёл текстом
+        "owner": None,       # id пользователя: анонимный разговор продолжается после входа
+        "degraded_told": False,
+        "brief": None,       # {q: вопросы, a: ответы, extra: детали своими словами, summary}
+        "brief_done": False,
+        "variants": [],      # последние варианты промпта
+        "var_round": 0,
     }
 
 

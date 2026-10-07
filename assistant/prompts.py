@@ -90,22 +90,100 @@ _CMD = re.compile(
 def clean_idea(idea: str) -> str:
     """«надо сделать картинку: кот жарит яичницу» → «кот жарит яичницу». Тему не трогаем."""
     s = (idea or "").strip()
+    # «Вертикальное видео 10 секунд: кот в снегу» → «кот в снегу»
+    m = re.match(r"^([^:]{2,60}):\s*(.{3,})$", s)
+    if m and re.search(r"видео|ролик|клип|картин|изображ|фото|постер|логотип|музык|трек|песн|звук|video|image|picture|"
+                       r"poster|logo|music|track|song|sound", m.group(1), re.I):
+        s = m.group(2).strip()
     out = _CMD.sub("", s, count=1).strip()
     return out if len(out) >= 3 else s
 
 
+TEMPLATE = {
+    "ru": {"music": "Трек на тему «{idea}»", "sfx": "Звук: {idea}"},
+    "en": {"music": "A track inspired by “{idea}”", "sfx": "Sound: {idea}"},
+}
+
+# Правки промпта без LLM: кнопки-подсказки → понятная модели формулировка. group — взаимоисключающие правки
+REFINE_RULES: dict[str, tuple[str, str, str]] = {
+    # картинки
+    "больше деталей": ("больше мелких деталей и фактуры", "intricate details and textures", "detail"),
+    "more detail": ("больше мелких деталей и фактуры", "intricate details and textures", "detail"),
+    "ярче цвета": ("яркие насыщенные цвета", "vivid saturated colors", "color"),
+    "brighter colors": ("яркие насыщенные цвета", "vivid saturated colors", "color"),
+    "как настоящее фото": ("фотореализм, естественный свет", "photorealistic, natural light", "style"),
+    "photorealistic": ("фотореализм, естественный свет", "photorealistic, natural light", "style"),
+    "мультяшный стиль": ("мультяшный стиль, мягкие формы", "cartoon style, soft shapes", "style"),
+    "cartoon style": ("мультяшный стиль, мягкие формы", "cartoon style, soft shapes", "style"),
+    # правка фото
+    "аккуратнее": ("минимальные аккуратные изменения", "subtle minimal changes", "edit"),
+    "more subtle": ("минимальные аккуратные изменения", "subtle minimal changes", "edit"),
+    "сохранить лицо": ("лицо без изменений", "keep the face unchanged", "face"),
+    "keep the face": ("лицо без изменений", "keep the face unchanged", "face"),
+    "другой фон": ("другой фон", "different background", "bg"),
+    "different background": ("другой фон", "different background", "bg"),
+    # видео
+    "кинематографично": ("кинематографичный кадр, глубина резкости", "cinematic shot, shallow depth of field", "look"),
+    "cinematic": ("кинематографичный кадр, глубина резкости", "cinematic shot, shallow depth of field", "look"),
+    "больше движения": ("больше движения в кадре", "more motion in the frame", "motion"),
+    "more motion": ("больше движения в кадре", "more motion in the frame", "motion"),
+    "плавная камера": ("плавное движение камеры", "smooth camera movement", "camera"),
+    "smooth camera": ("плавное движение камеры", "smooth camera movement", "camera"),
+    "ночная сцена": ("ночная сцена, неоновый свет", "night scene, neon light", "time"),
+    "night scene": ("ночная сцена, неоновый свет", "night scene, neon light", "time"),
+    # музыка
+    "энергичнее": ("энергичный ритм, быстрый темп", "energetic rhythm, fast tempo", "tempo"),
+    "more energetic": ("энергичный ритм, быстрый темп", "energetic rhythm, fast tempo", "tempo"),
+    "спокойнее": ("спокойный темп, мягкое звучание", "calm tempo, soft sound", "tempo"),
+    "calmer": ("спокойный темп, мягкое звучание", "calm tempo, soft sound", "tempo"),
+    "добавить вокал": ("с вокалом", "with vocals", "vocal"),
+    "add vocals": ("с вокалом", "with vocals", "vocal"),
+    "больше баса": ("мощный бас", "heavy bass", "bass"),
+    "more bass": ("мощный бас", "heavy bass", "bass"),
+    # звуки
+    "громче": ("громкий, близкий звук", "loud, close sound", "volume"),
+    "louder": ("громкий, близкий звук", "loud, close sound", "volume"),
+    "тише и дальше": ("тихий, далёкий звук", "soft, distant sound", "volume"),
+    "softer, distant": ("тихий, далёкий звук", "soft, distant sound", "volume"),
+    "добавить эхо": ("с эхом", "with echo", "echo"),
+    "add echo": ("с эхом", "with echo", "echo"),
+    "короче": ("короткий", "short", "len"),
+    "shorter": ("короткий", "short", "len"),
+}
+
+
+def _lang_of(text: str) -> str:
+    cyr = len(re.findall(r"[а-яё]", text or "", re.I))
+    return "ru" if cyr > len(text or "") // 4 else "en"
+
+
 def fallback_prompt(card: Card, idea: str, change: str = "", prev_prompt: str = "", lang: str = "ru") -> str:
-    """Режим без LLM: не переводим и не выдумываем — идея пользователя без команд + стиль по типу модели."""
-    base = (prev_prompt or clean_idea(idea) or "").strip().rstrip(".")
-    cyr = len(re.findall(r"[а-яё]", base, re.I))
-    L = "ru" if cyr > len(base) // 4 else "en"
+    """Режим без LLM: не переводим и не выдумываем.
+    Промпт = идея (без «сделай картинку…») + известные правки-подсказки + стиль по типу модели."""
+    if prev_prompt:
+        body = prev_prompt.strip().rstrip(".")
+        L = _lang_of(body)
+    else:
+        idea_c = clean_idea(idea).strip().rstrip(".")
+        L = _lang_of(idea_c)
+        tpl = TEMPLATE[L].get(card.kind)
+        body = tpl.format(idea=idea_c) if tpl else idea_c
     suffix = card.extra.get("fallback_suffix") or KIND_SUFFIX[L].get(card.kind, "")
-    if suffix and base.lower().endswith(suffix.lower()):
-        base = base[: -len(suffix)].rstrip(" .,")
-    if base:
-        base = base[0].upper() + base[1:]
+    if suffix and body.lower().endswith(suffix.lower()):
+        body = body[: -len(suffix)].rstrip(" .,")
+    if body:
+        body = body[0].upper() + body[1:]
     if change:
         ch = change.strip().rstrip(".")
-        base = f"{base}, {ch[0].lower() + ch[1:]}" if ch else base
-    out = f"{base}. {suffix}" if suffix else base
+        rule = REFINE_RULES.get(ch.lower())
+        if rule:
+            add = rule[0] if L == "ru" else rule[1]
+            for ru, en, grp in REFINE_RULES.values():  # убрать взаимоисключающую правку (спокойнее ↔ энергичнее)
+                if grp == rule[2]:
+                    for old in (ru, en):
+                        body = re.sub(r",?\s*" + re.escape(old), "", body, flags=re.I)
+            ch = add
+        if ch and ch.lower() not in body.lower():
+            body = f"{body}, {ch[0].lower() + ch[1:]}"
+    out = f"{body}. {suffix[0].upper() + suffix[1:]}" if suffix else body
     return out[:MAX_PROMPT_CHARS]

@@ -56,7 +56,8 @@ def client(server):
 
 def _post(client, body):
     csrf = client.get("/api/csrf").get_json()["csrf_token"]
-    return client.post("/api/assistant/chat", json=body, headers={"X-CSRF-Token": csrf})
+    ip = "10.8.%d.%d" % (id(client) % 250, id(client) // 250 % 250)   # свой «IP»: не упираться в rate-limit
+    return client.post("/api/assistant/chat", json=body, headers={"X-CSRF-Token": csrf, "X-Forwarded-For": ip})
 
 
 def test_cards_match_integrated_models(server):
@@ -107,8 +108,13 @@ def test_flow_without_llm_keys(client, monkeypatch):
     d = r.get_json()
     assert d["intent"] == "generate_task" and len(d["models"]) >= 2
     mid = d["models"][0]["id"]
-    d2 = _post(client, {"action": {"type": "pick_model", "value": mid}}).get_json()
-    assert d2["generate_model"] == mid and d2["generate_prompt"] and d2["degraded"] is True
+    b = _post(client, {"action": {"type": "pick_model", "value": mid}}).get_json()
+    assert b["intent"] == "brief" and b["blocks"][0]["type"] == "brief"
+    v = _post(client, {"action": {"type": "variants"}}).get_json()
+    assert v["intent"] == "variants" and len(v["blocks"][0]["items"]) >= 2 and v["degraded"] is True
+    assert "по шаблону" in v["text"]
+    d2 = _post(client, {"action": {"type": "use_variant", "value": "v1"}}).get_json()
+    assert d2["generate_model"] == mid and d2["generate_prompt"].startswith("Кот в снегу")
     assert "job_id" not in d2
 
 
@@ -132,6 +138,8 @@ def test_assistant_does_not_enqueue(client, monkeypatch):
     monkeypatch.setattr(jobs, "enqueue_inbound", lambda *a, **k: (_ for _ in ()).throw(AssertionError("enqueue")))
     _post(client, {"message": "видео: кот"})
     _post(client, {"action": {"type": "pick_model", "value": "veo-3-1"}})
+    _post(client, {"action": {"type": "variants"}})
+    _post(client, {"action": {"type": "use_variant", "value": "v1"}})
     d = _post(client, {"message": "запускай"}).get_json()
     assert d["intent"] == "generate_now"
 

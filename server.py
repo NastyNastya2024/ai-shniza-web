@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 import os
 import re
 import json
@@ -4506,6 +4507,50 @@ def api_generate_job(job_id: str):
     return resp
 
 
+def _generate_require_auth() -> bool:
+    """Генерация только для вошедших и только при достаточном балансе. Выключить можно лишь для тестов/локально."""
+    return (os.getenv("GENERATE_REQUIRE_AUTH") or "1").strip().lower() not in {"0", "false", "no"}
+
+
+def _generate_cost_kop(model_id: str, params: dict | None = None) -> int | None:
+    """Цена запуска в копейках по каталогу (_integration_prices) и длительности из params / по умолчанию.
+    Это та же оценка, что показывает ассистент. None — цена неизвестна (не блокируем)."""
+    try:
+        from assistant.params import seconds as _sec, with_defaults as _wd
+        from assistant.recommend import price_value as _pv
+        from assistant.render import per_second as _ps, short_price as _sp
+
+        price = _sp(_integration_prices().get(model_id))
+        if not price:
+            return None
+        per = _ps(price)
+        if per is not None:
+            assist = app.config.get("ASSISTANT")
+            card = assist.d.cards.get(model_id) if assist is not None else None
+            sec = (_sec(card, _wd(card, dict(params or {}))) if card else None) or int((params or {}).get("duration") or 5)
+            return int(math.ceil(per * sec * 100))
+        v = _pv(price)
+        return None if v is None else int(math.ceil(v * 100))
+    except Exception:  # noqa: BLE001
+        app.logger.exception("generate cost estimate failed")
+        return None
+
+
+def _generate_account() -> dict | None:
+    """Вход и баланс текущего пользователя — для ассистента (вопросы перед запуском) и для проверки в /api/generate."""
+    uid = session.get("user_id")
+    if not uid:
+        return {"authed": False, "available_kop": 0, "free_left": 0}
+    models = app.extensions.get("product_models") or {}
+    Balance = models.get("Balance")
+    if Balance is None:
+        return {"authed": True, "available_kop": 0, "free_left": 0}
+    import billing as _billing
+
+    bal = _billing.get_or_create_balance(db, Balance, uid)
+    return {"authed": True, "available_kop": int(_billing.available_kop(bal)), "free_left": 0}
+
+
 @app.route("/api/generate", methods=["POST"])
 def api_generate():
     data = request.get_json(silent=True) or {}
@@ -4568,6 +4613,16 @@ def api_generate():
     # Legacy groq provider entries (if any) use /api/chat path
     if spec["provider"] == "groq":
         return jsonify({"error": "use_chat", "detail": "Use /api/chat for assistant"}), 400
+
+    # Сначала вход, потом баланс — тот же порядок, что спрашивает ассистент в чате.
+    if _generate_require_auth():
+        acct = _generate_account()
+        if not acct or not acct["authed"]:
+            return jsonify({"error": "auth_required"}), 401
+        need = _generate_cost_kop(model_id, safe_params)
+        if need and acct["available_kop"] < need:
+            return jsonify({"error": "insufficient_funds", "need_kop": need,
+                            "available_kop": acct["available_kop"]}), 402
 
     provider = spec["provider"]
     if provider == "replicate":
@@ -4859,8 +4914,14 @@ ASSISTANT = _assist_build(
     channel_healthy=_assist_channel_healthy,
     redis_client=_assist_redis(),
     on_event=_assist_on_event,
+    cost_fn=_generate_cost_kop,
 )
-register_assistant(app, ASSISTANT, user_id_fn=lambda: session.get("user_id"))
+register_assistant(
+    app, ASSISTANT,
+    user_id_fn=lambda: session.get("user_id"),
+    # перед «Сгенерировать» ассистент спрашивает: 1) войти, 2) пополнить — по данным сервера, не фронта
+    account_fn=lambda _uid: _generate_account() if _generate_require_auth() else None,
+)
 
 
 @app.after_request

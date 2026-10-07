@@ -29,6 +29,7 @@ def make_assistant(cards, price_fn):
         chain = None
         if llm:
             chain = make_chain(transport or FakeTransport(omniroute=[("ok", ok_json())]))
+        kw.setdefault("brief", False)  # старые сценарии проверяют промпт/параметры напрямую; бриф — в test_assist_brief.py
         deps = AssistantDeps(cards=c, neighbors=nb, price_fn=price_fn, health_fn=health, llm=chain,
                              store=MemoryStore(), **kw)
         return Assistant(deps)

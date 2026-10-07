@@ -340,7 +340,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
   .vit-btn .vb-t{display:none}
   .hero{padding:12px 16px!important}
   .hero>div:first-child{width:104px!important;height:104px!important;margin-bottom:14px!important}
-  #speech{font-size:16px!important}
+  #speech{font-size:13px!important}
   #chat{padding:12px 12px 10px!important}
   #msgs>div{max-width:92%!important}
   #form{padding:0 8px max(8px,env(safe-area-inset-bottom))!important;margin-bottom:var(--kb,0px)!important}
@@ -435,9 +435,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
           <span class="eye-p r hero-eye"><span class="eye-shape"></span></span>
         </div>
       </div>
-      <div class="glass" style="position:relative;border-radius:22px;padding:13px 22px 14px;box-shadow:0 16px 40px -20px var(--shadow);max-width:calc(100% - 8px);box-sizing:border-box">
+      <div class="glass" style="position:relative;border-radius:22px;padding:12px 18px 13px;box-shadow:0 16px 40px -20px var(--shadow);max-width:min(280px,calc(100% - 24px));box-sizing:border-box">
         <span aria-hidden="true" style="position:absolute;left:50%;top:-8px;width:14px;height:14px;margin-left:-7px;background:var(--bubble-tail);border-left:1px solid var(--glass-brd);border-top:1px solid var(--glass-brd);transform:rotate(45deg);border-radius:3px 0 0 0"></span>
-        <h1 id="speech" style="position:relative;margin:0;font-family:'Days One',sans-serif;font-weight:400;font-size:clamp(16px,1.5vw,20px);line-height:1.3;color:var(--ink)"><span aria-hidden="true"><span id="speechText"></span><span class="caret"></span></span></h1>
+        <h1 id="speech" style="position:relative;margin:0;font-family:'Days One',sans-serif;font-weight:400;font-size:clamp(13px,1.2vw,15px);line-height:1.35;text-align:center;white-space:pre-line;color:var(--ink)"><span aria-hidden="true"><span id="speechText"></span><span class="caret"></span></span></h1>
       </div>
     </div>
 
@@ -667,15 +667,21 @@ class Component extends DCLogic {
       return [m.price, unit].filter(Boolean).join(' ').trim();
     };
     this.doesText = (m) => tr('studio.does.' + (m.type || 'image'));
-    /** Стартовые фразы по очереди: что это за сервис → как пользоваться → про оплату. Останавливаются, как только человек начал. */
+    /** Стартовые CTA студии: модель / цена по очереди. Останавливаются, как только человек начал. */
     this.intro = (step) => {
       clearTimeout(this.timers.intro);
-      const keys = ['studio.eggy.start', 'studio.eggy.intro2', 'studio.eggy.intro3'];
+      const slides = [
+        { key: 'studio.eggy.start', slug: 'p-video' },
+        { key: 'studio.eggy.intro2', slug: 'gpt-image-2' },
+        { key: 'studio.eggy.intro3', slug: 'kling-v2-5-turbo-pro' }
+      ];
       const i = step || 0;
-      this.speak(tr(keys[i]));
-      if (i < keys.length - 1) {
+      const s = slides[i] || slides[0];
+      if (s.slug && this.MODELS.some((x) => x.slug === s.slug)) this.setState({ sel: s.slug });
+      this.speak(tr(s.key));
+      if (i < slides.length - 1) {
         this.timers.intro = setTimeout(() => {
-          if (!this.state.text && !this.state.chat && this.state.say === tr(keys[i])) this.intro(i + 1);
+          if (!this.state.text && !this.state.chat && this.state.say === tr(s.key)) this.intro(i + 1);
         }, 6500);
       }
     };
@@ -851,7 +857,9 @@ class Component extends DCLogic {
         method: 'POST',
         body: JSON.stringify(body)
       });
+      let jobIdStarted = '';
       if (res.status === 202 && data && data.job_id) {
+        jobIdStarted = data.job_id;
         this.patchLastBot({ text: tr('studio.chat.queued'), job: true });
         ({ res, data } = await this.pollGenerate(data.job_id, data.poll_url));
       }
@@ -862,16 +870,24 @@ class Component extends DCLogic {
           job_status: 'failed',
           job_age_sec: 0
         };
-        if (res.status === 401 || res.status === 403 || (data && data.error === 'auth_required')) {
+        // Технические подробности (Redis, провайдер) — только в консоль, человеку — понятный текст
+        if (data && (data.detail || data.error)) console.warn('[generate]', res.status, data.error, data.detail || '');
+        const err = (data && data.error) || '';
+        const started = !!jobIdStarted;   // задание успело уйти в очередь?
+        if (res.status === 401 || res.status === 403 || err === 'auth_required') {
           this.botSay({ text: tr('studio.chat.needLogin'), loginCta: true }, 200);
           return;
         }
-        if (data && data.error === 'insufficient_funds') {
-          this.botSay({ text: tr('studio.chat.insufficient'), topup: true }, 200);
+        if (res.status === 402 || err === 'insufficient_funds') {
+          const need = data && data.need_kop ? Math.max(0, data.need_kop - (data.available_kop || 0)) : 0;
+          this.botSay({ text: need ? tr('studio.chat.needMoney', { price: moneyText(Math.ceil(need / 100)) }) : tr('studio.chat.insufficient'), topup: true }, 200);
           return;
         }
-        const detail = (data && (data.detail || data.error)) || '';
-        this.botSay({ text: tr('studio.chat.failedRetry') + (detail ? ('\n\n' + String(detail).slice(0, 180)) : '') }, 200);
+        if (err === 'queue_unavailable' || err === 'not_configured') { this.botSay({ text: tr('studio.chat.serviceDown') }, 200); return; }
+        if (err === 'channel_unavailable') { this.botSay({ text: tr('studio.chat.modelDown') }, 200); return; }
+        if (err === 'moderation') { this.botSay({ text: tr('studio.chat.moderation') }, 200); return; }
+        if (err === 'timeout') { this.botSay({ text: tr('studio.chat.timeout') }, 200); return; }
+        this.botSay({ text: started ? tr('studio.chat.failedRetry') : tr('studio.chat.notStarted') }, 200);
         return;
       }
       if (data && data.kind === 'text') {
@@ -1037,12 +1053,14 @@ class Component extends DCLogic {
       const wasChat = this.state.afterLogin === 'chat';
       this.setState({ modal: null, password: '', code: '', err: '', errField: '' });
       await refreshUser();
+      if (wasChat && this.eggy && this.eggy.resume) { this.eggy.resume(); return; }
       if (wasChat && this.pendingPrompt) {
         this.botSay({ text: tr('studio.chat.welcomed') }, 600);
       } else this.speak(tr('studio.eggy.welcomeBack'));
     };
     this.logout = async () => { await api('/api/auth/logout', { method: 'POST' }); await refreshUser(); this.speak(tr('studio.eggy.loggedOut')); };
     this.afterAuth = () => {
+      if (this.eggy && this.eggy.resume) { this.setState({ chat: true }); this.eggy.resume(); return; }
       if (this.state.chat && this.pendingPrompt) {
         this.botSay({ text: tr('studio.chat.welcomed') }, 600);
       } else this.speak(tr('studio.eggy.welcomeBack'));
@@ -1218,8 +1236,22 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
   },
   onUiAction: (action, value) => {
     if (action === 'open_models') { app.openPanel(); return; }
-    if (action === 'open_topup') { location.href = '/account#balance'; return; }
-    if (action === 'open_vitrina') { location.href = value || '/explore'; return; }
+    if (action === 'open_topup') {
+      try { sessionStorage.setItem('aish-assist-resume', '1'); } catch (e) {}   // вернётся — продолжим с того же места
+      location.href = '/account#balance';
+      return;
+    }
+    if (action === 'open_vitrina') {
+      let slug = '';
+      const raw = value == null ? '' : String(value);
+      if (/[?&]model=/.test(raw) || raw.indexOf('/') >= 0) {
+        try { slug = new URL(raw, location.origin).searchParams.get('model') || ''; }
+        catch (_) { const m = raw.match(/[?&]model=([^&]+)/); slug = m ? decodeURIComponent(m[1]) : ''; }
+      } else slug = raw;
+      if (window.vitOpenForModel) window.vitOpenForModel(slug || app.state.sel);
+      else location.href = raw || '/explore';
+      return;
+    }
     if (action === 'login') { app.login(); return; }
     if (action === 'attach') {
       const btn = document.querySelector('[data-attach]');
@@ -1654,11 +1686,14 @@ render();
 app.componentDidMount();
 refreshUser().then(() => {
   if (!app.state.authed) return;
+  let resumeAssist = false;
+  try { resumeAssist = sessionStorage.getItem('aish-assist-resume') === '1'; sessionStorage.removeItem('aish-assist-resume'); } catch (e) {}
+  if (resumeAssist && app.eggy && app.eggy.resume) { app.setState({ chat: true }); app.eggy.resume(); return; }
   let ret = null;
   try { ret = JSON.parse(sessionStorage.getItem('aish-auth-return') || 'null'); sessionStorage.removeItem('aish-auth-return'); } catch (e) {}
   if (!ret) return;
   if (ret.sel) app.setState({ sel: ret.sel });
-  if (ret.after === 'chat' && ret.prompt) {
+  if (ret.after === 'chat') {
     app.pendingPrompt = ret.prompt;
     app.pendingSel = ret.sel || app.state.sel;
     app.setState({ chat: true });

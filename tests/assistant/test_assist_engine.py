@@ -74,7 +74,7 @@ def test_degraded_when_all_llm_fail(make_assistant):
     a.handle("нарисуй логотип кофейни Утро", {}, SID)
     r = a.handle("", {}, SID, action={"type": "pick_model", "value": "ideogram-v3-turbo"})
     assert r["degraded"] is True and r["generate_prompt"].startswith("Логотип кофейни Утро")
-    assert "базовый вариант" in r["text"] and r["llm"]["error"] == "all_failed"
+    assert "по шаблону" in r["text"] and r["llm"]["error"] == "all_failed"
     assert r["ready"] is True  # пользователь всё равно может генерировать
 
 
@@ -387,3 +387,82 @@ def test_video_estimate_on_cards(make_assistant, cards):
     r = a.handle("дешевое видео 10 секунд кот", {}, SID)
     wan = next(i for i in block(r, "models")["items"] if i["id"] == "wan-3-0")
     assert wan["estimate"] == "≈ 43 ₽ за 10 с" and wan["price"] == "4,3 ₽/сек"
+
+
+
+# ---------- перед запуском: сначала вход, потом баланс ----------
+def _setup(a, sid, ctx):
+    a.handle("видео кот жарит яичницу", ctx, sid)
+    return a.handle("", ctx, sid, action={"type": "pick_model", "value": "veo-3-1"})
+
+
+def test_gate_order_login_then_topup_then_generate(make_assistant):
+    a = make_assistant()
+    r = _setup(a, "g1", {"_account": {"authed": False}})
+    assert r["gate"] == "login" and r["ready"] is False and r["chips"][0]["action"] == "login"
+    assert not any(c["action"] == "generate" for c in r["chips"])
+    r = a.handle("", {"_account": {"authed": True, "available_kop": 100}, "_uid": "7"}, "g1", action={"type": "resume"})
+    assert r["gate"] == "topup" and r["chips"][0]["action"] == "open_topup"
+    assert {c["action"] for c in r["chips"]} >= {"resume", "cheaper"}
+    r = a.handle("", {"_account": {"authed": True, "available_kop": 10 ** 7}, "_uid": "7"}, "g1", action={"type": "resume"})
+    assert r["gate"] == "ok" and r["ready"] and r["chips"][0]["action"] == "generate"
+    assert "спишется" in r["text"]
+
+
+def test_gate_uses_cost_fn_and_params(make_assistant):
+    seen = []
+
+    def cost(mid, params):
+        seen.append((mid, dict(params)))
+        return 5000
+
+    a = make_assistant(cost_fn=cost)
+    r = _setup(a, "g2", {"_account": {"authed": True, "available_kop": 4999}})
+    assert r["gate"] == "topup" and "50 ₽" in r["text"] and "49,99 ₽" in r["text"]
+    assert seen[-1][0] == "veo-3-1" and "duration" in seen[-1][1]
+
+
+def test_gate_free_model(make_assistant):
+    a = make_assistant()
+    a.handle("логотип кофейни", {"_account": {"authed": True, "available_kop": 0}}, "g3")
+    r = a.handle("", {"_account": {"authed": True, "available_kop": 0}}, "g3",
+                 action={"type": "pick_model", "value": "ideogram-v3-turbo"})  # в тестовых ценах — «бесплатно»
+    assert r["gate"] == "free" and r["ready"]
+
+
+def test_param_change_rechecks_balance(make_assistant):
+    a = make_assistant()
+    ctx = {"_account": {"authed": True, "available_kop": 6000}}
+    r = _setup(a, "g4", ctx)        # 120 ₽ за ролик в тестовых ценах — не хватает
+    assert r["gate"] == "topup"
+    r = a.handle("", ctx, "g4", action={"type": "cheaper"})
+    assert r["models"] and "veo-3-1" not in {m["id"] for m in r["models"]}
+
+
+def test_resume_without_context_says_what_service_does(make_assistant):
+    r = make_assistant().handle("", {}, "g5", action={"type": "resume"})
+    assert r["intent"] == "resume" and "нейросеть" in r["text"]
+
+
+def test_other_user_on_same_browser_starts_fresh(make_assistant):
+    a = make_assistant()
+    a.handle("видео кот", {"_uid": "1"}, "shared")
+    r = a.handle("", {"_uid": "2"}, "shared", action={"type": "use_mine"})
+    assert not r.get("generate_prompt")
+
+
+def test_anonymous_chat_moves_to_account_after_login(make_assistant):
+    a = make_assistant()
+    _setup(a, "anon", {})
+    r = a.handle("", {"_uid": "42", "_account": {"authed": True, "available_kop": 10 ** 7}}, "anon", action={"type": "resume"})
+    assert r["generate_model"] == "veo-3-1" and r["gate"] == "ok"
+
+
+def test_degraded_note_once_per_session(make_assistant):
+    tr = FakeTransport(omniroute=[("http", 503)], groq=[("http", 503)])
+    a = make_assistant(tr)
+    a.handle("картинка кот", {}, "d1")
+    r1 = a.handle("", {}, "d1", action={"type": "pick_model", "value": "seedream-5-pro"})
+    r2 = a.handle("", {}, "d1", action={"type": "refine", "value": "Ярче цвета"})
+    assert "по шаблону" in r1["text"] and "по шаблону" not in r2["text"]
+    assert "яркие насыщенные цвета" in r2["generate_prompt"]

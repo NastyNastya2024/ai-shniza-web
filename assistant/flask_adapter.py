@@ -16,6 +16,7 @@ from __future__ import annotations
 import datetime as _dt
 import logging
 import os
+import re
 import uuid
 from typing import Any, Callable
 
@@ -105,7 +106,9 @@ def providers_from_env(env: dict[str, str] | None = None) -> list[LLMProvider]:
 def build_from_env(models: dict[str, dict] | None = None, price_fn: Callable[[str], Any] | None = None,
                    channel_healthy: Callable[[str], bool] | None = None, redis_client: Any = None,
                    env: dict[str, str] | None = None, transport: Any = None,
-                   on_event: Callable[[dict], None] | None = None) -> Assistant:
+                   on_event: Callable[[dict], None] | None = None,
+                   cost_fn: Callable[[str, dict], "int | None"] | None = None) -> Assistant:
+    """cost_fn(model_id, params) → цена запуска в копейках (как будет считать биллинг). None — посчитаем из price_fn."""
     e = env if env is not None else os.environ
     cards, neighbors = load_cards(e.get("ASSIST_CARDS_PATH") or os.path.join(os.path.dirname(__file__), "data", "model_cards.json"))
     if models is not None:
@@ -121,10 +124,13 @@ def build_from_env(models: dict[str, dict] | None = None, price_fn: Callable[[st
         price_fn=price_fn or (lambda _m: None),
         health_fn=make_health_fn(models, channel_healthy) if (models is not None and channel_healthy) else None,
         llm=llm if llm.available else None,
+        llm_diag=llm,
         store=RedisStore(redis_client) if redis_client is not None else MemoryStore(),
         vitrina_url=e.get("ASSIST_VITRINA_URL") or "/vitrina.html",
         token_budget=int(e.get("ASSIST_SESSION_TOKEN_BUDGET") or 6000),
         on_event=on_event,
+        cost_fn=cost_fn,
+        brief=(e.get("ASSIST_BRIEF") or "1").strip().lower() not in {"0", "false", "no"},
     )
     return Assistant(deps)
 
@@ -158,29 +164,44 @@ def _last_user_text(body: dict) -> str:
     return ""
 
 
-def session_key(flask_session: Any, user_id: Any = None) -> str:
-    """Ключ памяти — только серверный (cookie-сессия + пользователь), не из тела запроса."""
-    sid = flask_session.get("assist_sid")
+COOKIE = "aish_assist"
+_SID_RX = re.compile(r"^[0-9a-f]{32}$")
+
+
+def session_key(flask_session: Any, user_id: Any = None, sid: str | None = None) -> str:
+    """Ключ памяти — только серверный, не из тела запроса.
+    Отдельная cookie `aish_assist` (а не flask session): вход в аккаунт делает session.clear(),
+    а разговор должен продолжиться после входа и после пополнения баланса."""
+    if sid and _SID_RX.match(sid):
+        return sid
+    sid = flask_session.get("assist_sid") if hasattr(flask_session, "get") else None
     if not sid:
         sid = uuid.uuid4().hex
-        flask_session["assist_sid"] = sid
-    return f"{user_id or 'anon'}:{sid}"
+        try:
+            flask_session["assist_sid"] = sid
+        except Exception:
+            pass
+    return sid
 
 
 def handle_request(assistant: Assistant, body: Any, flask_session: Any, user_id: Any = None,
-                   legacy_autostart: bool = False) -> dict[str, Any]:
-    """legacy_autostart=True — для СТАРОГО фронта (app.html/generate.js), который запускает генерацию,
-    как только видит generate_prompt в ответе. Тогда отдаём generate_* только на явное «запускай»
-    (intent=generate_now и всё уточнено), а в остальных ответах кладём их в draft_* — фронт их игнорирует,
-    и деньги без подтверждения не тратятся. Новый фронт с кнопками: legacy_autostart=False.
-    """
+                   legacy_autostart: bool = False, sid: str | None = None,
+                   account: dict | None = None) -> dict[str, Any]:
+    """account — {authed, available_kop, free_left} с СЕРВЕРА (не из тела запроса): по нему ассистент
+    перед запуском спрашивает сначала вход, потом пополнение. None — проверка выключена.
+
+    legacy_autostart=True — для старого фронта, который сам запускает генерацию, увидев generate_prompt."""
     body = body if isinstance(body, dict) else {}
     action = body.get("action") if isinstance(body.get("action"), dict) else None
     raw_ctx = dict(body.get("context") or {}) if isinstance(body.get("context"), dict) else {}
     if body.get("selected_model_id") and "selected_model_id" not in raw_ctx:  # формат текущего /api/chat
         raw_ctx["selected_model_id"] = body.get("selected_model_id")
-    out = assistant.handle(_last_user_text(body), clean_context(raw_ctx), session_key(flask_session, user_id), action)
-    # совместимость с текущим фронтом /api/chat: reply, model, channel, generate_prompt?, generate_model?
+    ctx = clean_context(raw_ctx)          # клиент не может подложить _account/_uid: их нет в CTX_SCHEMA
+    if account is not None:
+        ctx["_account"] = account
+    if user_id is not None:
+        ctx["_uid"] = str(user_id)
+    out = assistant.handle(_last_user_text(body), ctx, session_key(flask_session, user_id, sid), action)
     out["model"] = "assistant"
     out["channel"] = out["llm"].get("provider") or "rules"
     if legacy_autostart and not (out.get("intent") == "generate_now" and out.get("ready")):
@@ -190,9 +211,35 @@ def handle_request(assistant: Assistant, body: Any, flask_session: Any, user_id:
     return out
 
 
+def status(assistant: Assistant, account_check: bool | None = None) -> dict[str, Any]:
+    """Почему ассистент отвечает шаблоном: провайдеры LLM, ключи, breaker, последняя ошибка, хранилище."""
+    d = assistant.d
+    chain = d.llm or d.llm_diag
+    store = type(d.store).__name__
+    redis_ok = None
+    if store == "RedisStore":
+        try:
+            redis_ok = bool(d.store.r.ping())
+        except Exception as exc:
+            redis_ok = f"error: {exc}"[:120]
+    return {
+        "llm_enabled": bool(d.llm and d.llm.available),
+        "llm_providers": chain.status() if chain else [],
+        "deadline_sec": chain.deadline_sec if chain else None,
+        "session_store": store, "redis": redis_ok,
+        "cards": len(d.cards),
+        "account_check": "on" if (d.account_check if account_check is None else account_check) else "off",
+        "hint": None if (d.llm and d.llm.available) else
+        "LLM выключена: нет ни одного провайдера с ключом и моделью → промпты собираются по шаблону. "
+        "Задайте GROQ_API_KEY (+ ASSIST_GROQ_MODEL=llama-3.1-8b-instant) и/или OMNIROUTE_API_KEY + OMNIROUTE_BASE_URL.",
+    }
+
+
 def register_assistant(app: Any, assistant: Assistant, url: str = "/api/assistant/chat",
                        user_id_fn: Callable[[], Any] | None = None, decorators: list[Callable] | None = None,
-                       legacy_autostart: bool = False, rate: tuple[int, int] | None = (30, 60)) -> None:
+                       legacy_autostart: bool = False, rate: tuple[int, int] | None = (60, 60),
+                       account_fn: Callable[[Any], dict | None] | None = None,
+                       status_allowed: Callable[[], bool] | None = None) -> None:
     """Регистрирует POST {url}. ВНИМАНИЕ: /api/assistant уже занят старым studio.js — поэтому по умолчанию /api/assistant/chat.
     Если в app.extensions есть rate_limit (security.apply_rate_limits) — оборачиваем им же: rate=(лимит, окно сек)."""
     from flask import jsonify, request, session
@@ -210,7 +257,26 @@ def register_assistant(app: Any, assistant: Assistant, url: str = "/api/assistan
             except Exception:
                 uid = None
         asst = app.config.get("ASSISTANT") or assistant
-        resp = jsonify(handle_request(asst, body, session, uid, legacy_autostart))
+        account = None
+        if account_fn:
+            try:
+                account = account_fn(uid)
+            except Exception:
+                log.exception("assistant account_fn failed")
+                account = None
+        sid = request.cookies.get(COOKIE) or ""
+        if not _SID_RX.match(sid):
+            sid = uuid.uuid4().hex
+        resp = jsonify(handle_request(asst, body, session, uid, legacy_autostart, sid=sid, account=account))
+        resp.headers["Cache-Control"] = "no-store"
+        resp.set_cookie(COOKIE, sid, max_age=6 * 3600, httponly=True, samesite="Lax", secure=request.is_secure)
+        return resp
+
+    def status_view():
+        allowed = status_allowed() if status_allowed else (os.getenv("FLASK_ENV") or "").lower() != "production"
+        if not allowed:
+            return jsonify({"error": "forbidden"}), 403
+        resp = jsonify(status(app.config.get("ASSISTANT") or assistant, account_check=bool(account_fn)))
         resp.headers["Cache-Control"] = "no-store"
         return resp
 
@@ -220,4 +286,6 @@ def register_assistant(app: Any, assistant: Assistant, url: str = "/api/assistan
     if limiter and rate:
         view = limiter(rate[0], rate[1], "assistant_chat")(view)
     app.add_url_rule(url, endpoint="api_assistant_chat", view_func=view, methods=["POST"])
+    app.add_url_rule(url + "/status", endpoint="api_assistant_status", view_func=status_view, methods=["GET"])
     app.config["ASSISTANT"] = assistant
+    assistant.d.account_check = bool(account_fn)
