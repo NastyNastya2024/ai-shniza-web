@@ -4418,10 +4418,43 @@ def api_integrations():
 _JOB_ID_RE = re.compile(r"^[a-f0-9]{16,64}$")
 
 
-def _generate_job_fields(model_id: str, prompt: str) -> dict | None:
+def _apply_assist_params(
+    input_payload: dict,
+    safe_params: dict | None,
+    *,
+    has_image: bool = False,
+) -> dict:
+    """Наложить белый список параметров ассистента на payload провайдера.
+
+    Только ключи, уже присутствующие в payload (имя совпадает со схемой).
+    Не трогаем match_input_image / adaptive, если есть картинка.
+    """
+    if not safe_params or not isinstance(input_payload, dict):
+        return input_payload
+    out = dict(input_payload)
+    for key, value in safe_params.items():
+        if key not in out:
+            continue
+        cur = out.get(key)
+        if has_image and cur in {"match_input_image", "adaptive"}:
+            continue
+        out[key] = value
+    return out
+
+
+def _generate_job_fields(model_id: str, prompt: str, params: dict | None = None) -> dict | None:
     spec = INTEGRATED_MODELS.get(model_id)
     if not spec:
         return None
+    payload = _build_provider_input(spec, prompt, None, None, None)
+    safe: dict = {}
+    if params:
+        assist = app.config.get("ASSISTANT")
+        card = getattr(getattr(assist, "d", None), "cards", {}).get(model_id) if assist else None
+        if card is not None:
+            from assistant.params import validate as _assist_params_validate
+            safe = _assist_params_validate(card, params)
+    payload = _apply_assist_params(payload, safe, has_image=False)
     return {
         "model_id": model_id,
         "provider": spec["provider"],
@@ -4429,7 +4462,7 @@ def _generate_job_fields(model_id: str, prompt: str) -> dict | None:
         "upstream_model": _provider_model_ref(spec),
         "replicate_model": spec.get("replicate_model"),
         "fal_model": spec.get("fal_model"),
-        "input_payload": _build_provider_input(spec, prompt, None, None, None),
+        "input_payload": payload,
     }
 
 
@@ -4464,10 +4497,22 @@ def api_generate():
     image_data_url = data.get("image") if isinstance(data.get("image"), str) else None
     audio_data_url = data.get("audio") if isinstance(data.get("audio"), str) else None
     video_data_url = data.get("video") if isinstance(data.get("video"), str) else None
+    raw_params = data.get("params") if isinstance(data.get("params"), dict) else None
 
     spec = INTEGRATED_MODELS.get(model_id)
     if not spec:
         return jsonify({"error": "unknown_model", "detail": model_id}), 400
+
+    safe_params: dict = {}
+    assist = app.config.get("ASSISTANT")
+    if assist is not None and raw_params:
+        try:
+            from assistant.params import validate as _assist_params_validate
+            card = assist.d.cards.get(model_id)
+            if card is not None:
+                safe_params = _assist_params_validate(card, raw_params)
+        except Exception:
+            safe_params = {}
 
     prompt = prompt.strip()
     if spec["kind"] == "stt":
@@ -4537,6 +4582,12 @@ def api_generate():
         )
     except ValueError as exc:
         return jsonify({"error": "bad_model", "detail": str(exc)}), 400
+
+    input_payload = _apply_assist_params(
+        input_payload,
+        safe_params,
+        has_image=bool((image_data_url or "").strip()),
+    )
 
     upstream_model = _provider_model_ref(spec)
     if not upstream_model and provider != "omniroute":
@@ -4750,6 +4801,49 @@ app.config["INTEGRATED_MODELS"] = INTEGRATED_MODELS
 app.config["GENERATE_JOB_FIELDS"] = _generate_job_fields
 register_product(app, db, User)
 apply_rate_limits(app)
+
+# ── Ассистент чата студии: POST /api/assistant/chat (не трогает /api/chat и /api/assistant) ──
+from assistant.flask_adapter import build_from_env as _assist_build, metrics_hook as _assist_metrics, register_assistant
+
+
+def _assist_redis():
+    try:
+        from queue_runtime import get_redis
+        r = get_redis()
+        r.ping()
+        return r
+    except Exception:
+        return None  # без Redis — память в процессе (сессия ассистента не переживёт рестарт)
+
+
+def _assist_channel_healthy(channel: str) -> bool:
+    from queue_runtime.health import is_channel_healthy
+    return is_channel_healthy(channel)
+
+
+def _assist_on_event(ev: dict) -> None:
+    app.logger.info(
+        "assistant intent=%s llm=%s provider=%s tokens=%s degraded=%s ms=%s",
+        ev["intent"], ev["llm_used"], ev["provider"], ev["tokens"], ev["degraded"], ev["ms"],
+    )
+    try:
+        metric = (app.extensions.get("product_models") or {}).get("AssistantMetric")
+        if metric is not None:
+            _assist_metrics(db, metric)(ev)
+    except Exception:
+        app.logger.exception("assistant metrics failed")
+
+
+load_env(BASE_DIR)
+os.environ.setdefault("ASSIST_VITRINA_URL", "/explore")
+ASSISTANT = _assist_build(
+    models=INTEGRATED_MODELS,
+    price_fn=lambda mid: _integration_prices().get(mid),
+    channel_healthy=_assist_channel_healthy,
+    redis_client=_assist_redis(),
+    on_event=_assist_on_event,
+)
+register_assistant(app, ASSISTANT, user_id_fn=lambda: session.get("user_id"))
 
 
 @app.after_request

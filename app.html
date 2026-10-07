@@ -460,7 +460,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
         <label for="prompt" class="sr-only" data-i18n="studio.composer.label">Задача для модели</label>
         <textarea id="prompt" class="prompt-input" rows="2" placeholder="Опишите ролик, картинку или трек…" data-i18n-attr="placeholder:studio.composer.placeholder" style="width:100%;box-sizing:border-box;border:none;background:transparent;resize:none;font-family:'Onest',sans-serif;font-size:17px;line-height:1.5;padding:2px 0 0"></textarea>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <button type="button" class="field" aria-label="Прикрепить файл" data-i18n-attr="aria-label:common.attach" style="width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <button type="button" class="field" data-attach aria-label="Прикрепить файл" data-i18n-attr="aria-label:common.attach" style="width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg>
           </button>
           <button type="button" class="field" aria-label="Сменить модель" data-i18n-attr="aria-label:studio.composer.changeModel" data-toggle-right-open style="height:44px;padding:0 14px;border-radius:14px;font-family:'Onest',sans-serif;font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer;max-width:100%">
@@ -498,6 +498,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 <script src="/i18n/dict-en.js"></script>
 <script src="/i18n/runtime.js"></script>
 <script src="/vitrina-data.js"></script>
+<script src="/assistant-chat.js"></script>
 <script>
 /* Тема общая со витриной/профилем: localStorage aish-vitrina-theme (+ theme). ?theme= перекрывает. */
 function readSharedTheme() {
@@ -583,9 +584,19 @@ class Component extends DCLogic {
     this.timers = {};
     this.pendingPrompt = '';
     this.pendingSel = '';
+    this.pendingParams = {};
+    this.lastJobCtx = {};
     this.later = (n, ms, fn) => { clearTimeout(this.timers[n]); this.timers[n] = setTimeout(fn, ms); };
     /* цена/единицы: cost — сортировка; rub — число; price/unit — подписи в списке */
+    this.resolveKinds = (m) => {
+      if (Array.isArray(m.kinds) && m.kinds.length) return m.kinds.filter(Boolean);
+      if (Array.isArray(m.kindKeys) && m.kindKeys.length) return m.kindKeys.map((k) => tr(k)).filter(Boolean);
+      if (m.kind) return [m.kind];
+      return [tr(m.kindKey || 'studio.kind.image')];
+    };
     this.priceModel = (m) => {
+      const kinds = this.resolveKinds(m);
+      const kind = kinds.join(' · ');
       if (m.priceFromApi) {
         const free = !m.cost;
         const label = String(m.priceFromApi).trim();
@@ -594,32 +605,33 @@ class Component extends DCLogic {
         const baked = /₽\/(сек|млн|фото)/.test(short) || /^от\s/i.test(short);
         const unit = free || baked ? '' : (m.unitFromApi || priceUnitHint(label));
         return Object.assign({}, m, {
-          kind: m.kind || tr(m.kindKey || 'studio.kind.image'),
+          kinds: kinds,
+          kind: kind,
           price: free ? tr('common.price.free') : short,
           unit: unit,
           short: short,
           est: free ? moneyText(0) : short
         });
       }
-      if (m.cost === 0) return Object.assign({}, m, { kind: tr(m.kindKey), price: tr('common.price.free'), unit: tr('common.price.promo'), short: tr('common.price.freeShort'), est: moneyText(0) });
+      if (m.cost === 0) return Object.assign({}, m, { kinds: kinds, kind: kind, price: tr('common.price.free'), unit: tr('common.price.promo'), short: tr('common.price.freeShort'), est: moneyText(0) });
       if (m.perSec) {
         const per = tr('common.price.perSec', { price: moneyText(m.rub) });
-        return Object.assign({}, m, { kind: tr(m.kindKey), price: per, unit: tr('common.price.unit5s', { price: moneyText(m.cost) }), short: per, est: tr('common.price.est5s', { price: moneyText(m.cost) }) });
+        return Object.assign({}, m, { kinds: kinds, kind: kind, price: per, unit: tr('common.price.unit5s', { price: moneyText(m.cost) }), short: per, est: tr('common.price.est5s', { price: moneyText(m.cost) }) });
       }
       const p = moneyText(m.rub);
-      return Object.assign({}, m, { kind: tr(m.kindKey), price: p, unit: tr(m.type === 'image' ? 'common.price.perImage' : 'common.price.perRun'), short: p, est: p });
+      return Object.assign({}, m, { kinds: kinds, kind: kind, price: p, unit: tr(m.type === 'image' ? 'common.price.perImage' : 'common.price.perRun'), short: p, est: p });
     };
     this.MODELS = [
-      { slug: 'wan-3-0', model_key: 'wan-3-0', name: 'Wan 3.0', kindKey: 'studio.kind.imageToVideo', type: 'video', cost: 22, rub: 4.2, perSec: true },
-      { slug: 'grok-imagine-video-1-5', model_key: 'grok-imagine-video-1-5', name: 'Grok Imagine Video 1.5', kindKey: 'studio.kind.imageToVideo', type: 'video', cost: 34, rub: 6.8, perSec: true },
-      { slug: 'seedance-2-5', model_key: 'seedance-2-5', name: 'Seedance 2.5', kindKey: 'studio.kind.videoSound', type: 'video', cost: 44, rub: 8.8, perSec: true },
-      { slug: 'veo-3-1', model_key: 'veo-3-1', name: 'Veo 3.1', kindKey: 'studio.kind.videoSound', type: 'video', cost: 136, rub: 17, perSec: true },
-      { slug: 'veo-3-1-fast', model_key: 'veo-3-1-fast', name: 'Veo 3.1 Fast', kindKey: 'studio.kind.videoSound', type: 'video', cost: 72, rub: 9, perSec: true },
-      { slug: 'kling-v2-5-turbo-pro', model_key: 'kling-v2-5-turbo-pro', name: 'Kling 2.5 Turbo Pro', kindKey: 'studio.kind.imageToVideo', type: 'video', cost: 30, rub: 6, perSec: true },
-      { slug: 'pixverse-v6', model_key: 'pixverse-v6', name: 'PixVerse V6', kindKey: 'studio.kind.videoSound', type: 'video', cost: 22, rub: 4.3, perSec: true },
-      { slug: 'p-video', model_key: 'p-video', name: 'P-Video', kindKey: 'studio.kind.videoSound', type: 'video', cost: 9, rub: 1.7, perSec: true },
-      { slug: 'gen4-turbo', model_key: 'gen4-turbo', name: 'Gen-4 Turbo', kindKey: 'studio.kind.imageToVideo', type: 'video', cost: 60, rub: 12, perSec: true },
-      { slug: 'hailuo-02', model_key: 'hailuo-02', name: 'Hailuo 02', kindKey: 'studio.kind.imageToVideo', type: 'video', cost: 24, rub: 24 },
+      { slug: 'wan-3-0', model_key: 'wan-3-0', name: 'Wan 3.0', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 22, rub: 4.2, perSec: true },
+      { slug: 'grok-imagine-video-1-5', model_key: 'grok-imagine-video-1-5', name: 'Grok Imagine Video 1.5', kindKeys: ['studio.kind.imageToVideo'], type: 'video', cost: 34, rub: 6.8, perSec: true },
+      { slug: 'seedance-2-5', model_key: 'seedance-2-5', name: 'Seedance 2.5', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 44, rub: 8.8, perSec: true },
+      { slug: 'veo-3-1', model_key: 'veo-3-1', name: 'Veo 3.1', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 136, rub: 17, perSec: true },
+      { slug: 'veo-3-1-fast', model_key: 'veo-3-1-fast', name: 'Veo 3.1 Fast', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 72, rub: 9, perSec: true },
+      { slug: 'kling-v2-5-turbo-pro', model_key: 'kling-v2-5-turbo-pro', name: 'Kling 2.5 Turbo Pro', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 30, rub: 6, perSec: true },
+      { slug: 'pixverse-v6', model_key: 'pixverse-v6', name: 'PixVerse V6', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 22, rub: 4.3, perSec: true },
+      { slug: 'p-video', model_key: 'p-video', name: 'P-Video', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 9, rub: 1.7, perSec: true },
+      { slug: 'gen4-turbo', model_key: 'gen4-turbo', name: 'Gen-4 Turbo', kindKeys: ['studio.kind.imageToVideo'], type: 'video', cost: 60, rub: 12, perSec: true },
+      { slug: 'hailuo-02', model_key: 'hailuo-02', name: 'Hailuo 02', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 24, rub: 24 },
       { slug: 'seedream-5-pro', model_key: 'seedream-5-pro', name: 'Seedream 5.0 Pro', kindKey: 'studio.kind.image', type: 'image', cost: 4, rub: 4 },
       { slug: 'gpt-image-2', model_key: 'gpt-image-2', name: 'GPT Image 2', kindKey: 'studio.kind.image', type: 'image', cost: 1, rub: 1 },
       { slug: 'gpt-image-2-5-flare', model_key: 'gpt-image-2-5-flare', name: 'GPT Image 2.5 Flare', kindKey: 'studio.kind.image', type: 'image', cost: 1, rub: 1 },
@@ -694,17 +706,17 @@ class Component extends DCLogic {
       const sel = this.pendingSel || this.state.sel;
       const m = this.MODELS.find((x) => x.slug === sel) || this.MODELS[1];
       this.botSay({ text: tr('studio.chat.cooking'), job: true }, 700);
-      this.later('cook', 900, () => this.runJob(m, prompt));
+      this.later('cook', 900, () => this.runJob(m, prompt, this.pendingParams || {}));
     };
-    this.runJob = async (m, prompt) => {
+    this.runJob = async (m, prompt, genParams) => {
       if (m && (m.viaGenerate || m.type === 'text')) {
-        await this.runGenerate(m, prompt);
+        await this.runGenerate(m, prompt, genParams);
         return;
       }
       const params = m.type === 'video' ? { duration_sec: 5 } : {};
       const est = await api('/api/jobs/estimate', { method: 'POST', body: JSON.stringify({ model_key: m.model_key, params }) });
       if (!est.res.ok) {
-        if (m && m.integrated) { await this.runGenerate(m, prompt); return; }
+        if (m && m.integrated) { await this.runGenerate(m, prompt, genParams); return; }
         this.botSay({ text: tr('studio.chat.estimateFailed') }, 200);
         return;
       }
@@ -728,7 +740,7 @@ class Component extends DCLogic {
         else if (err === 'free_limit') this.botSay({ text: tr('studio.chat.freeLimit') }, 200);
         else if (err === 'free_queue_full') this.botSay({ text: tr('studio.chat.freeQueueFull') }, 200);
         else if (err === 'auth_required') this.botSay({ text: tr('studio.chat.needLogin'), loginCta: true }, 200);
-        else if (m && m.integrated) { await this.runGenerate(m, prompt); return; }
+        else if (m && m.integrated) { await this.runGenerate(m, prompt, genParams); return; }
         else this.botSay({ text: tr('studio.chat.failedRetry') }, 200);
         await refreshUser();
         return;
@@ -746,6 +758,7 @@ class Component extends DCLogic {
       const start = Date.now();
       let interval = 2000;
       let errors = 0;
+      const jobStarted = Date.now();
       while (Date.now() - start < maxMs) {
         let res, data;
         try {
@@ -776,6 +789,13 @@ class Component extends DCLogic {
         }
         errors = 0;
         const st = data && data.status;
+        this.lastJobCtx = {
+          last_error: (data && (data.error || data.detail)) || '',
+          last_http_status: (data && data.http_status) || res.status || 0,
+          job_status: st || '',
+          job_age_sec: (Date.now() - jobStarted) / 1000,
+          job_failover: !!(data && data.failover)
+        };
         if (st === 'running') this.patchLastBot({ text: tr('studio.chat.almost'), job: true });
         if (st === 'queued' || st === 'dispatched') this.patchLastBot({ text: tr('studio.chat.queued'), job: true });
         if (st === 'succeeded') return { res: { ok: true, status: 200 }, data: data };
@@ -788,19 +808,31 @@ class Component extends DCLogic {
       }
       return { res: { ok: false, status: 504 }, data: { error: 'timeout' } };
     };
-    this.runGenerate = async (m, prompt) => {
+    this.runGenerate = async (m, prompt, genParams) => {
       this.patchLastBot({ text: tr('studio.chat.cooking'), job: true });
+      const body = { model: m.model_key || m.slug, prompt: prompt || '' };
+      if (genParams && typeof genParams === 'object' && Object.keys(genParams).length) body.params = genParams;
       let { res, data } = await api('/api/generate', {
         method: 'POST',
-        body: JSON.stringify({ model: m.model_key || m.slug, prompt: prompt || '' })
+        body: JSON.stringify(body)
       });
       if (res.status === 202 && data && data.job_id) {
         this.patchLastBot({ text: tr('studio.chat.queued'), job: true });
         ({ res, data } = await this.pollGenerate(data.job_id, data.poll_url));
       }
       if (!res.ok) {
+        this.lastJobCtx = {
+          last_error: (data && (data.error || data.detail)) || '',
+          last_http_status: res.status || 0,
+          job_status: 'failed',
+          job_age_sec: 0
+        };
         if (res.status === 401 || res.status === 403 || (data && data.error === 'auth_required')) {
           this.botSay({ text: tr('studio.chat.needLogin'), loginCta: true }, 200);
+          return;
+        }
+        if (data && data.error === 'insufficient_funds') {
+          this.botSay({ text: tr('studio.chat.insufficient'), topup: true }, 200);
           return;
         }
         const detail = (data && (data.detail || data.error)) || '';
@@ -881,42 +913,18 @@ class Component extends DCLogic {
       const text = this.state.text.trim();
       if (!text) { this.speak(tr('studio.eggy.needIdea')); return; }
       const sel = this.pickFor(text);
-      const m = this.MODELS.find((x) => x.slug === sel) || this.MODELS[0];
       this.pendingPrompt = text;
       this.pendingSel = sel;
       this.setState({ chat: true, text: '', sel: sel });
       this.push({ role: 'user', text: text });
-      // Диалог через /api/chat, генерация — только по GENERATE_NOW
       this.setState({ typing: true });
-      const history = this.state.msgs
-        .filter((x) => x && (x.role === 'user' || x.role === 'bot') && x.text)
-        .slice(-18)
-        .map((x) => ({ role: x.role === 'bot' ? 'assistant' : 'user', content: String(x.text).slice(0, 4000) }));
-      try {
-        const { res, data } = await api('/api/chat', {
-          method: 'POST',
-          body: JSON.stringify({
-            messages: history,
-            selected_model_id: m.model_key || '',
-            selected_model_name: m.name || '',
-          }),
-        });
+      if (!this.eggy) {
         this.setState({ typing: false });
-        if (!res.ok) {
-          const detail = (data && (data.detail || data.error)) || '';
-          this.botSay({ text: tr('studio.chat.failedRetry') + (detail ? ('\n\n' + String(detail).slice(0, 180)) : '') }, 200);
-          return;
-        }
-        const reply = (data && data.reply) ? String(data.reply) : '';
-        if (reply) this.push({ role: 'bot', text: reply });
-        if (data && data.generate_prompt) {
-          this.pendingPrompt = String(data.generate_prompt);
-          if (data.generate_model) {
-            const byKey = this.MODELS.find((x) => x.model_key === data.generate_model);
-            if (byKey) { this.pendingSel = byKey.slug; this.setState({ sel: byKey.slug }); }
-          }
-          this.later('ck', 900, this.cook);
-        }
+        this.botSay({ text: tr('studio.chat.failedRetry') }, 200);
+        return;
+      }
+      try {
+        await this.eggy.send(text);
       } catch (_) {
         this.setState({ typing: false });
         this.botSay({ text: tr('studio.chat.failedRetry') }, 200);
@@ -1072,7 +1080,7 @@ class Component extends DCLogic {
     let list = this.MODELS.filter((m) => (st.tab === 'all' || m.type === st.tab) && (!q || (m.name + ' ' + m.slug + ' ' + m.kind).toLowerCase().includes(q)));
     list = list.slice().sort((a, b) => a.cost - b.cost);
     const models = list.map((m) => ({
-      slug: m.slug, name: m.name, kind: m.kind, price: m.price, unit: m.unit,
+      slug: m.slug, name: m.name, kind: m.kind, kinds: m.kinds || [m.kind], price: m.price, unit: m.unit,
       thumb: m.thumb || '', example: m.example || '', exampleVideo: m.exampleVideo || '',
       letter: String(m.name || '?').replace(/^[^a-zA-Zа-яА-ЯёЁ0-9]+/, '').slice(0, 1).toUpperCase() || '?',
       on: m.slug === st.sel, cls: m.slug === st.sel ? 'model-on' : '',
@@ -1134,12 +1142,78 @@ const ORB_SRC = document.querySelector('#hero img').src;
 const ICONS = { sun: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>`, moon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>` };
 const app = new Component({ theme: DEFAULT_THEME });
 window.app = app;
+app.eggy = (typeof AssistantChat === 'function') ? AssistantChat({
+  api: api,
+  getContext: () => {
+    const m = app.MODELS.find((x) => x.slug === app.state.sel) || {};
+    return Object.assign({
+      selected_model_id: m.model_key || m.slug || '',
+      has_image: !!app.state.hasImage,
+      draft: app.state.text || '',
+    }, app.lastJobCtx || {});
+  },
+  onReply: (data) => {
+    app.setState({ typing: false });
+    if (!data) return;
+    app.push({
+      role: 'bot',
+      text: String(data.reply || ''),
+      chips: Array.isArray(data.chips) ? data.chips : [],
+      topup: !!(data.chips || []).some((c) => c && c.action === 'open_topup'),
+      loginCta: !!(data.chips || []).some((c) => c && c.action === 'login'),
+    });
+  },
+  onFillForm: ({ model, prompt, params, ready }) => {
+    if (model) {
+      const byKey = app.MODELS.find((x) => x.model_key === model || x.slug === model);
+      if (byKey) { app.pendingSel = byKey.slug; app.setState({ sel: byKey.slug }); }
+    }
+    if (prompt) {
+      app.pendingPrompt = String(prompt);
+      app.setState({ text: String(prompt) });
+    }
+    app.pendingParams = params && typeof params === 'object' ? params : {};
+    app.assistReady = !!ready;
+  },
+  onUiAction: (action, value) => {
+    if (action === 'generate') {
+      if (value) {
+        const byKey = app.MODELS.find((x) => x.model_key === value || x.slug === value);
+        if (byKey) { app.pendingSel = byKey.slug; app.setState({ sel: byKey.slug }); }
+      }
+      app.cook();
+      return;
+    }
+    if (action === 'open_models') { app.openPanel(); return; }
+    if (action === 'open_topup') { location.href = '/account#balance'; return; }
+    if (action === 'open_vitrina') { location.href = value || '/explore'; return; }
+    if (action === 'login') { app.login(); return; }
+    if (action === 'attach') {
+      const btn = document.querySelector('[data-attach]');
+      if (btn) btn.click();
+      return;
+    }
+    if (action === 'retry') {
+      const lastUser = [...(app.state.msgs || [])].reverse().find((m) => m.role === 'user' && m.text);
+      if (lastUser) app.eggy.send(lastUser.text);
+      return;
+    }
+    if (action === 'edit_prompt') {
+      const ta = document.getElementById('prompt');
+      if (ta) { ta.focus(); if (app.pendingPrompt) app.setState({ text: app.pendingPrompt }); }
+      return;
+    }
+    if (action === 'wait' || action === 'support') return;
+  }
+}) : null;
 const $ = (id) => document.getElementById(id);
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmtBot = (t) => esc(t)
   .replace(/^###\s+(.+)$/gm, '<strong>$1</strong>')
   .replace(/^##\s+(.+)$/gm, '<strong>$1</strong>')
+  .replace(/^&gt;\s?(.+)$/gm, '<span style="display:block;border-left:3px solid var(--field-brd);padding-left:10px;color:var(--muted)">$1</span>')
   .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">$1</a>')
   .replace(/\n/g, '<br>');
 let raf = 0, lastMsgs = -1, lastModelsKey = '', lastTabsKey = '', lastSay = null, lastDark = null, lastModal = false, lastStepCode = false;
 function scheduleRender() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
@@ -1225,6 +1299,8 @@ function render() {
       const ex = hasExamples
         ? '<span class="m-ex" data-examples role="button" title="' + esc(tr('studio.model.examples')) + '">' + esc(tr('studio.model.examples')) + '</span>'
         : '';
+      const kinds = (Array.isArray(m.kinds) && m.kinds.length ? m.kinds : [m.kind]).filter(Boolean);
+      const kindHtml = kinds.map((k) => '<span class="m-kind">' + esc(k) + '</span>').join('');
       b.innerHTML =
         '<span class="m-main">'
         + '<span class="m-top">'
@@ -1237,7 +1313,7 @@ function render() {
         + '</span>'
         + '</span>'
         + '<span class="m-row">'
-        + '<span class="m-kind">' + esc(m.kind) + '</span>'
+        + kindHtml
         + ex
         + '</span>'
         + '</span>';
@@ -1284,12 +1360,32 @@ function msgEl(m) {
     + (likeChip ? '<div style="display:flex;flex-wrap:wrap;gap:8px">' + likeChip + '</div>' : '')
     + (m.loginCta ? '<button type="button" class="btn-login" data-cta data-login style="height:40px;padding:0 18px;border-radius:12px;font-size:14px">' + esc(tr('studio.chat.loginRun')) + '</button>' : '')
     + (m.topup ? '<a href="/account#balance" class="btn-purple" style="height:40px;padding:0 18px;border-radius:12px;font-size:14px;display:inline-flex;align-items:center;text-decoration:none">' + esc(tr('studio.chat.toBalance')) + '</a>' : '')
+    + (Array.isArray(m.chips) && m.chips.length
+      ? '<div class="assist-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px">'
+        + m.chips.slice(0, 5).map((c, i) => '<button type="button" class="field" data-assist-chip="' + i + '" style="height:34px;padding:0 12px;border-radius:999px;font:700 12px Onest,system-ui,sans-serif;cursor:pointer">' + esc(c.label || c.action || '') + '</button>').join('')
+        + '</div>'
+      : '')
     + '</div>';
+  if (Array.isArray(m.chips) && m.chips.length) el._assistChips = m.chips.slice(0, 5);
   return el;
 }
 
 /* события */
 document.addEventListener('click', async (e) => {
+  const chipBtn = e.target.closest('[data-assist-chip]');
+  if (chipBtn) {
+    e.preventDefault();
+    const wrap = chipBtn.closest('.msg-in');
+    const chips = wrap && wrap._assistChips;
+    const idx = +chipBtn.getAttribute('data-assist-chip');
+    const chip = chips && chips[idx];
+    if (chip && app.eggy) {
+      app.setState({ typing: true });
+      await app.eggy.chip(chip);
+      if (app.state.typing) app.setState({ typing: false });
+    }
+    return;
+  }
   const likeBtn = e.target.closest('[data-like-work]');
   if (likeBtn) {
     e.preventDefault();
@@ -1420,13 +1516,29 @@ function integrationType(it) {
   return 'image';
 }
 
+function integrationKindLabels(it, type) {
+  if (it.is_assistant || it.kind === 'llm' || it.kind === 'chat') return [tr('studio.kind.assistant')];
+  if (type === 'text') return [tr('studio.kind.text')];
+  if (type === 'music') return [tr('studio.kind.audio')];
+  if (type === 'video') {
+    const inputs = it.inputs || [];
+    const notes = String(it.notes || '').toLowerCase();
+    const hasText = inputs.indexOf('text') >= 0;
+    const hasImage = inputs.indexOf('image') >= 0;
+    const imageOnly = /image\s+required/.test(notes)
+      || (/\bi2v\b/.test(notes) && !/\bt2v\b/.test(notes))
+      || (/image\s*[→\-–—>]+\s*video/.test(notes) && !/\bt2v\b/.test(notes) && !/text\s*[\/·|,]/.test(notes) && !/текст/.test(notes));
+    const labels = [];
+    if (hasText && !imageOnly) labels.push(tr('studio.kind.textToVideo'));
+    if (hasImage) labels.push(tr('studio.kind.imageToVideo'));
+    if (!labels.length) labels.push(tr('studio.kind.videoSound'));
+    return labels;
+  }
+  return [tr('studio.kind.image')];
+}
+
 function integrationKindLabel(it, type) {
-  if (it.is_assistant || it.kind === 'llm' || it.kind === 'chat') return tr('studio.kind.assistant');
-  if (type === 'text') return tr('studio.kind.text');
-  if (type === 'music') return tr('studio.kind.audio');
-  if (type === 'video' && (it.inputs || []).indexOf('image') >= 0) return tr('studio.kind.imageToVideo');
-  if (type === 'video') return tr('studio.kind.videoSound');
-  return tr('studio.kind.image');
+  return integrationKindLabels(it, type).join(' · ');
 }
 
 function integrationDisplayName(name) {
@@ -1461,6 +1573,7 @@ async function loadIntegrations() {
         model_key: it.id,
         name: integrationDisplayName(it.name),
         type: type,
+        kinds: integrationKindLabels(it, type),
         kind: integrationKindLabel(it, type),
         cost: free ? 0 : (rub || 9999),
         rub: free ? 0 : rub,

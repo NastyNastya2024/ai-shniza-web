@@ -1,50 +1,84 @@
 /*
  * Список работ для ленты на главной.
  * Файлы лежат в /works/. Клик открывает /explore?work=<id>.
- * Только сети, подключённые по схеме Wan/Grok.
+ * По две карточки на сеть, где есть резервный провайдер.
  */
 window.AISHNITSA_WORKS = [
   'works/wan30.mp4',
+  'works/wan30fal.mp4',
   'works/grok15.mp4',
+  'works/grok15fal.mp4',
   'works/seedance25.mp4',
+  'works/seedance25fal.mp4',
   'works/veo31.mp4',
+  'works/veo31fal.mp4',
   'works/veo31fast.mp4',
+  'works/veo31fastfal.mp4',
   'works/kling25turbopro.mp4',
+  'works/kling25turboprofal.mp4',
   'works/pixversev6.mp4',
+  'works/pixversev6fal.mp4',
   'works/pvideo.mp4',
   'works/gen4turbo.mp4',
   'works/hailuo02.mp4',
+  'works/hailuo02fal.mp4',
   'works/seedream5pro.jpg',
+  'works/seedream5profal.jpg',
   'works/gptimage2.jpg',
+  'works/gptimage2fal.jpg',
   'works/gptimage25flare.jpg',
+  'works/gptimage25flarefal.jpg',
   'works/gptimage25sunburst.jpg',
+  'works/gptimage25sunburstfal.jpg',
   'works/nanobanana2.jpg',
+  'works/nanobanana2fal.jpg',
   'works/ideogramv3turbo.jpg',
+  'works/ideogramv3turbofal.jpg',
   'works/acestep.jpg',
+  'works/acestepfal.jpg',
   'works/elevenlabsmusic.jpg',
-  'works/stableaudio25.jpg'
+  'works/elevenlabsmusicfal.jpg',
+  'works/stableaudio25.jpg',
+  'works/stableaudio25fal.jpg'
 ];
 
 window.AISHNITSA_WORK_IDS = [
   'ex-wan-3-0',
+  'ex-wan-3-0-fal',
   'ex-grok-imagine-video-1-5',
+  'ex-grok-imagine-video-1-5-fal',
   'ex-seedance-2-5',
+  'ex-seedance-2-5-fal',
   'ex-veo-3-1',
+  'ex-veo-3-1-fal',
   'ex-veo-3-1-fast',
+  'ex-veo-3-1-fast-fal',
   'ex-kling-v2-5-turbo-pro',
+  'ex-kling-v2-5-turbo-pro-fal',
   'ex-pixverse-v6',
+  'ex-pixverse-v6-fal',
   'ex-p-video',
   'ex-gen4-turbo',
   'ex-hailuo-02',
+  'ex-hailuo-02-fal',
   'ex-seedream-5-pro',
+  'ex-seedream-5-pro-fal',
   'ex-gpt-image-2',
+  'ex-gpt-image-2-fal',
   'ex-gpt-image-2-5-flare',
+  'ex-gpt-image-2-5-flare-fal',
   'ex-gpt-image-2-5-sunburst',
+  'ex-gpt-image-2-5-sunburst-fal',
   'ex-nano-banana-2',
+  'ex-nano-banana-2-fal',
   'ex-ideogram-v3-turbo',
+  'ex-ideogram-v3-turbo-fal',
   'ex-ace-step',
+  'ex-ace-step-fal',
   'ex-elevenlabs-music',
-  'ex-stable-audio-2-5'
+  'ex-elevenlabs-music-fal',
+  'ex-stable-audio-2-5',
+  'ex-stable-audio-2-5-fal'
 ];
 
 window.AISHNITSA_LENS = {

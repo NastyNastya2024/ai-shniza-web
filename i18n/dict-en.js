@@ -352,6 +352,7 @@ window.AISH_DICT_EN = {
   'studio.kind.videoSound': 'Video with sound',
   'studio.kind.image': 'Image',
   'studio.kind.music': 'Music',
+  'studio.kind.textToVideo': 'Text → video',
   'studio.kind.imageToVideo': 'Image → video',
   'studio.kind.text': 'Text',
   'studio.kind.audio': 'Audio',

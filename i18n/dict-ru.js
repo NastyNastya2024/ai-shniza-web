@@ -351,6 +351,7 @@ window.AISH_DICT_RU = {
   'studio.kind.videoSound': 'Видео со звуком',
   'studio.kind.image': 'Картинка',
   'studio.kind.music': 'Музыка',
+  'studio.kind.textToVideo': 'Текст → видео',
   'studio.kind.imageToVideo': 'Фото → видео',
   'studio.kind.text': 'Текст',
   'studio.kind.audio': 'Аудио',

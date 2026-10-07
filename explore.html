@@ -427,7 +427,7 @@ html{transition:background-color .3s}
   <div class="dbody" id="dBody"></div>
 </aside>
 
-<script src="/vitrina-data.js"></script>
+<script src="/vitrina-data.js?v=3"></script>
 <script>
 (function () {
   const tr = (k, p) => AISH_I18N.t(k, p);
@@ -493,11 +493,31 @@ html{transition:background-color .3s}
   }
 
   let filter = 'all', query = '', sort = 'new', list = works.slice(), openIdx = -1, openId = null, mode = 'view', lastSent = null;
+  let modelSlugFilter = '';
+  (function applyUrlFilters() {
+    const sp = new URLSearchParams(location.search);
+    const q0 = (sp.get('q') || '').trim();
+    const m0 = (sp.get('model') || '').trim();
+    if (q0) {
+      query = q0;
+      const qi = $('q');
+      if (qi) qi.value = q0;
+    }
+    if (m0) {
+      modelSlugFilter = m0;
+      const hit = works.find((w) => w.model_slug === m0);
+      if (hit) {
+        const token = String(hit.model || '').trim().split(/\s+/)[0];
+        if (token) filter = token;
+      }
+    }
+  })();
 
   function apply() {
     const q = query.trim().toLowerCase();
     list = works.filter((w) => {
       const c = C[w.creator] || { name: '', nick: '' };
+      if (modelSlugFilter && String(w.model_slug || '') !== modelSlugFilter) return false;
       if (filter === 'video' && w.type !== 'video') return false;
       if (filter === 'image' && w.type !== 'image') return false;
       if (filter !== 'all' && filter !== 'video' && filter !== 'image' && String(w.model || '').indexOf(filter) !== 0) return false;
@@ -835,6 +855,7 @@ html{transition:background-color .3s}
     const chip = e.target.closest('.chip[data-f]');
     if (chip) {
       filter = chip.dataset.f;
+      if (filter === 'all' || filter === 'video' || filter === 'image') modelSlugFilter = '';
       closeMore();
       syncChips();
       apply();
