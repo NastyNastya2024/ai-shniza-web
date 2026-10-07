@@ -95,7 +95,8 @@ def providers_from_env(env: dict[str, str] | None = None) -> list[LLMProvider]:
         "groq": LLMProvider(
             name="groq", base_url=e.get("GROQ_BASE_URL") or "https://api.groq.com/openai/v1",
             api_key=(e.get("GROQ_API_KEY") or "").strip(),
-            model=e.get("ASSIST_GROQ_MODEL") or e.get("GROQ_CHAT_MODEL") or "llama-3.1-8b-instant",
+            model=(e.get("ASSIST_GROQ_MODEL") or e.get("GROQ_CHAT_MODEL") or e.get("GROQ_MODEL")
+                   or "llama-3.1-8b-instant"),
             timeout=float(e.get("ASSIST_GROQ_TIMEOUT") or 5)),
     }
     return [table[n] for n in order if n in table]

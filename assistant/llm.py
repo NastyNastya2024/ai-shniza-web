@@ -196,8 +196,9 @@ class LLMChain:
             payload["response_format"] = {"type": "json_object"}
         headers = {"Authorization": f"Bearer {p.api_key}", "Content-Type": "application/json", **p.extra_headers}
         status, body = self.transport(p.url, headers, payload, timeout)
-        if status == 400 and p.json_mode and "response_format" in json.dumps(body, ensure_ascii=False)[:2000]:
-            p.json_mode = False  # провайдер не умеет json-режим — запоминаем и повторяем без него
+        if status == 400 and p.json_mode:
+            # Groq: unsupported response_format или json_validate_failed на части моделей
+            p.json_mode = False
             payload.pop("response_format", None)
             status, body = self.transport(p.url, headers, payload, timeout)
         if status == 429:

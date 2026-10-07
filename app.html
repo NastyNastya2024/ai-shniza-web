@@ -657,6 +657,28 @@ class Component extends DCLogic {
       ['music', tr('studio.tab.music')],
       ['text', tr('studio.tab.text')]
     ];
+    /** Цена модели одной строкой для фраз шарика: «4,20 ₽/с», «от 1 ₽ за картинку», «бесплатно». */
+    this.priceText = (slug) => {
+      const raw = this.MODELS.find((x) => x.slug === slug);
+      const m = raw ? this.priceModel(raw) : null;
+      if (!m) return '';
+      // «за картинку» / «за запуск» добавляем; «5 с — 60 ₽» и «промо» — нет (во фразе это шум)
+      const unit = m.unit && !/\d/.test(m.unit) && m.unit !== tr('common.price.promo') ? m.unit : '';
+      return [m.price, unit].filter(Boolean).join(' ').trim();
+    };
+    this.doesText = (m) => tr('studio.does.' + (m.type || 'image'));
+    /** Стартовые фразы по очереди: что это за сервис → как пользоваться → про оплату. Останавливаются, как только человек начал. */
+    this.intro = (step) => {
+      clearTimeout(this.timers.intro);
+      const keys = ['studio.eggy.start', 'studio.eggy.intro2', 'studio.eggy.intro3'];
+      const i = step || 0;
+      this.speak(tr(keys[i]));
+      if (i < keys.length - 1) {
+        this.timers.intro = setTimeout(() => {
+          if (!this.state.text && !this.state.chat && this.state.say === tr(keys[i])) this.intro(i + 1);
+        }, 6500);
+      }
+    };
     this.speak = (line) => {
       clearInterval(this.timers.tw);
       this.setState({ say: line, shown: 0 });
@@ -670,15 +692,21 @@ class Component extends DCLogic {
       this.setState({ text: e.target.value });
       this.later('type', 1000, () => {
         const t = this.state.text.toLowerCase();
-        const cost = (slug) => { const mm = this.MODELS.find((x) => x.slug === slug); return mm ? moneyText(mm.rub) : ''; };
+        const info = (slug) => { const mm = this.MODELS.find((x) => x.slug === slug) || {}; return { model: mm.name || '', price: this.priceText(slug) }; };
         const has = (slug) => this.MODELS.some((x) => x.slug === slug);
         const firstOf = (type) => (this.MODELS.find((x) => x.type === type) || {}).slug;
         if (rx('studio.detect.music').test(t) && firstOf('music')) {
           const slug = firstOf('music');
-          this.setState({ sel: slug }); this.speak(tr('studio.eggy.music', { price: cost(slug) }));
-        } else if (rx('studio.detect.video').test(t) || rx('studio.detect.sound').test(t) || rx('studio.detect.image').test(t)) {
+          this.setState({ sel: slug }); this.speak(tr('studio.eggy.music', info(slug)));
+        } else if (rx('studio.detect.image').test(t) && !rx('studio.detect.video').test(t) && firstOf('image')) {
+          const slug = has('seedream-5-pro') ? 'seedream-5-pro' : firstOf('image');
+          this.setState({ sel: slug }); this.speak(tr('studio.eggy.image', info(slug)));
+        } else if (rx('studio.detect.sound').test(t) && (has('seedance-2-5') || firstOf('video'))) {
+          const slug = has('seedance-2-5') ? 'seedance-2-5' : firstOf('video');
+          this.setState({ sel: slug }); this.speak(tr('studio.eggy.sound', info(slug)));
+        } else if (rx('studio.detect.video').test(t)) {
           const slug = has('wan-3-0') ? 'wan-3-0' : (has('grok-imagine-video-1-5') ? 'grok-imagine-video-1-5' : firstOf('video'));
-          if (slug) { this.setState({ sel: slug }); this.speak(tr('studio.eggy.video')); }
+          if (slug) { this.setState({ sel: slug }); this.speak(tr('studio.eggy.video', info(slug))); }
         } else if (t.trim()) this.speak(tr('studio.eggy.ready'));
       });
     };
@@ -687,7 +715,13 @@ class Component extends DCLogic {
       const has = (slug) => this.MODELS.some((x) => x.slug === slug);
       const firstOf = (type) => (this.MODELS.find((x) => x.type === type) || {}).slug;
       if (rx('studio.detect.music').test(t)) return firstOf('music') || this.state.sel;
-      if (rx('studio.detect.video').test(t) || rx('studio.detect.sound').test(t) || rx('studio.detect.image').test(t)) {
+      if (rx('studio.detect.image').test(t) && !rx('studio.detect.video').test(t)) {
+        return has('seedream-5-pro') ? 'seedream-5-pro' : (firstOf('image') || this.state.sel);
+      }
+      if (rx('studio.detect.sound').test(t)) {
+        return has('seedance-2-5') ? 'seedance-2-5' : (firstOf('video') || this.state.sel);
+      }
+      if (rx('studio.detect.video').test(t)) {
         return has('wan-3-0') ? 'wan-3-0' : (has('grok-imagine-video-1-5') ? 'grok-imagine-video-1-5' : (firstOf('video') || this.state.sel));
       }
       return this.state.sel;
@@ -1019,7 +1053,7 @@ class Component extends DCLogic {
       this.pendingPrompt = ''; this.pendingSel = '';
       lastMsgs = -1;
       this.setState({ chat: false, msgs: [], typing: false, text: '' });
-      this.speak(tr('studio.eggy.start'));
+      this.intro(0);
     };
     this.toggleTheme = () => {
       const dark = !this.state.dark;
@@ -1064,7 +1098,7 @@ class Component extends DCLogic {
   }
   componentDidMount() {
     this.init();
-    this.speak(tr('studio.eggy.start'));
+    this.intro(0);
     const blink = (cb) => { this.setState({ blink: true }); this.later('bu', 130, () => { this.setState({ blink: false }); if (cb) this.later('b2', 160, cb); }); };
     const loop = () => this.later('bl', 2200 + Math.random() * 2600, () => { if (Math.random() < 0.3) blink(() => blink(loop)); else { blink(); loop(); } });
     loop();
@@ -1083,7 +1117,7 @@ class Component extends DCLogic {
       letter: String(m.name || '?').replace(/^[^a-zA-Zа-яА-ЯёЁ0-9]+/, '').slice(0, 1).toUpperCase() || '?',
       on: m.slug === st.sel, cls: m.slug === st.sel ? 'model-on' : '',
       priceColor: m.cost === 0 ? 'var(--free)' : 'var(--ink)',
-      pick: () => { this.setState({ sel: m.slug, leftOpen: MOBILE() ? false : this.state.leftOpen }); this.speak(m.cost === 0 ? tr('studio.eggy.modelFree', { model: m.name }) : tr('studio.eggy.modelPrice', { model: m.name, price: m.price, unit: m.unit })); },
+      pick: () => { this.setState({ sel: m.slug, leftOpen: MOBILE() ? false : this.state.leftOpen }); this.speak(m.cost === 0 ? tr('studio.eggy.modelFree', { model: m.name, does: this.doesText(m) }) : tr('studio.eggy.modelPrice', { model: m.name, does: this.doesText(m), price: this.priceText(m.slug) })); },
       examples: () => {
         this.setState({ sel: m.slug, leftOpen: MOBILE() ? false : this.state.leftOpen });
         if (window.vitOpenForModel) window.vitOpenForModel(m.slug);

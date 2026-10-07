@@ -36,8 +36,8 @@ T: dict[str, dict[str, str]] = {
     "alternatives": {"ru": "Похожие модели:", "en": "Similar models:"},
     "model_down": {"ru": "{title} сейчас недоступна.", "en": "{title} is unavailable right now."},
     "cheapest_head": {"ru": "Самые доступные сейчас:", "en": "Most affordable right now:"},
-    "ask_type_idea": {"ru": "Что сделать по идее «{topic}» — картинку, видео или музыку?", "en": "What should I make for “{topic}” — image, video or music?"},
-    "ask_type_plain": {"ru": "Что создаём — картинку, видео или музыку?", "en": "What shall we create — image, video or music?"},
+    "ask_type_idea": {"ru": "По идее «{topic}» нейросеть может сделать картинку, видео или музыку — что выберем?", "en": "For “{topic}” AI can make an image, a video or music — which one?"},
+    "ask_type_plain": {"ru": "Нейросеть сделает это картинкой, видео или музыкой — что выберем?", "en": "AI can make it an image, a video or music — which one?"},
     "ask_type_again": {"ru": "Не поняла 🙂 Выберите кнопкой: картинка, видео или музыка.", "en": "Sorry, didn't get that 🙂 Pick a button: image, video or music."},
     "models_head": {"ru": "Подобрала {n} модели для «{topic}». Нажмите на карточку:", "en": "{n} models for “{topic}”. Tap a card:"},
     "models_head_plain": {"ru": "Подобрала {n} модели. Нажмите на карточку:", "en": "{n} models for you. Tap a card:"},
@@ -55,17 +55,17 @@ T: dict[str, dict[str, str]] = {
     "free": {"ru": "бесплатно", "en": "free"},
     # --- служебные ответы ---
     "hello": {
-        "ru": "Здравствуйте! Помогу выбрать модель и написать промпт.\nЧто создаём?",
-        "en": "Hello! I'll help you pick a model and write the prompt.\nWhat shall we create?",
+        "ru": "Здравствуйте! Здесь нейросети делают видео, картинки и музыку по вашему описанию.\nОпишите идею — подберу модель, напишу промпт и покажу цену. С чего начнём?",
+        "en": "Hello! Here AI models make videos, images and music from your description.\nDescribe the idea — I'll pick a model, write the prompt and show the price. Where do we start?",
     },
     "thanks": {"ru": "Пожалуйста! Что ещё создадим?", "en": "You're welcome! What else shall we create?"},
     "who": {
-        "ru": "Я Яишенка — помощник студии.\nПодбираю модель, пишу промпт, подсказываю по интерфейсу.",
-        "en": "I'm Eggy, the studio assistant.\nI pick models, write prompts and help with the interface.",
+        "ru": "Я Яишенка — помощник студии, где нейросети делают видео, картинки и музыку.\nПодбираю модель под задачу, пишу промпт и показываю цену до запуска.",
+        "en": "I'm Eggy, the assistant of a studio where AI makes videos, images and music.\nI pick the model, write the prompt and show the price before you run it.",
     },
     "off_topic": {
-        "ru": "Я помогаю только с генерациями: видео, картинки, музыка, правка фото.\nЧто создадим?",
-        "en": "I can only help with generations: video, images, music, photo edits.\nWhat shall we create?",
+        "ru": "Здесь нейросети делают видео, картинки и музыку — с этим и помогаю.\nОпишите, что создать, или выберите пример:",
+        "en": "Here AI makes videos, images and music — that's what I help with.\nDescribe what to create or pick an example:",
     },
     "injection": {
         "ru": "Я помогаю только с генерациями в студии.\nЧто создаём?",
