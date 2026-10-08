@@ -64,12 +64,12 @@ T: dict[str, dict[str, str]] = {
         "en": "I'm Eggy, the assistant of a studio where AI makes videos, images and music.\nI pick the model, write the prompt and show the price before you run it.",
     },
     "off_topic": {
-        "ru": "Здесь нейросети делают видео, картинки и музыку — с этим и помогаю.\nОпишите, что создать, или выберите пример:",
-        "en": "Here AI makes videos, images and music — that's what I help with.\nDescribe what to create or pick an example:",
+        "ru": "Здесь нейросети делают видео, картинки и музыку — с этим и помогаю.\nСначала выберите формат:",
+        "en": "Here AI makes videos, images and music — that's what I help with.\nFirst pick a format:",
     },
     "injection": {
-        "ru": "Я помогаю только с генерациями в студии.\nЧто создаём?",
-        "en": "I only help with generations in the studio.\nWhat shall we create?",
+        "ru": "Я помогаю только с генерациями в студии.\nСначала выберите формат:",
+        "en": "I only help with generations in the studio.\nFirst pick a format:",
     },
     "safety": {
         "ru": "С этим помочь не могу — это против правил площадки.\nМогу предложить безопасный вариант: опишите идею иначе.",
@@ -96,6 +96,8 @@ T: dict[str, dict[str, str]] = {
                            "en": "Tell me more about the track:\n• What is it for: video, background, song?\n• Genre?\n• Mood and tempo?\n• Vocals or instrumental?\n• Nuances: instruments, length?"},
     "need_subject_sfx": {"ru": "Расскажите подробнее о звуке:\n• Что звучит?\n• Где — в помещении, на улице?\n• Какой характер: мягкий, резкий, ритмичный?",
                          "en": "Tell me more about the sound:\n• What makes the sound?\n• Where — indoors, outdoors?\n• Character: soft, sharp, rhythmic?"},
+    "quick_pick_short": {"ru": "Напишите хотя бы пару слов своими словами — или выберите направление кнопкой:", "en": "Type at least a couple of words — or pick a direction:"},
+    "quick_pick_buttons": {"ru": "Давайте проще: выберите направление кнопкой, детали уточним потом.", "en": "Let's keep it simple: pick a direction, we'll add details later."},
     "junk": {"ru": "Не совсем поняла 🙂 Опишите словами: кто в кадре, где и что происходит.", "en": "Sorry, I didn't get that 🙂 Please describe in words: who, where and what happens."},
     "brief_head": {"ru": "Уточню детали — так промпт получится точнее. Ответьте одним сообщением или выберите кнопки:", "en": "Let me clarify a few details. Answer in one message or use the buttons:"},
     "brief_head_summary": {"ru": "Поняла так: {summary}. Уточню детали — ответьте одним сообщением или выберите кнопки:", "en": "Got it: {summary}. A few details — answer in one message or use the buttons:"},
@@ -130,6 +132,7 @@ B: dict[str, dict[str, str]] = {
     "topup": {"ru": "Пополнить", "en": "Top up"},
     "login": {"ru": "Войти", "en": "Sign in"},
     "resume_topup": {"ru": "Баланс пополнен — продолжить", "en": "Topped up — continue"},
+    "ask_type_again_btn": {"ru": "Начать заново", "en": "Start over"},
     "build_variants": {"ru": "Собрать промпт", "en": "Build prompt"},
     "skip_brief": {"ru": "Пропустить", "en": "Skip"},
     "more_variants": {"ru": "Ещё варианты", "en": "More options"},

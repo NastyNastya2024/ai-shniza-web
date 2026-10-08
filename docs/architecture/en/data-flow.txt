@@ -1,0 +1,155 @@
+UML / DATA FLOW — Generate (text diagram)
+================================================================================
+
+1) Context (who talks to whom)
+--------------------------------------------------------------------------------
+
+                    ┌──────────────────────────────────────┐
+                    │              ai-shniza               │
+                    │                                      │
+   ┌────────┐       │  ┌─────────┐    ┌────────────────┐   │      ┌───────────┐
+   │ Browser│───────┼─►│ Flask   │───►│ Routing        │   │      │ Replicate │
+   │Generate│◄──────┼──│ API     │    │ Dispatcher     │───┼─────►│           │
+   └────────┘       │  └────┬────┘    └───────┬────────┘   │      └───────────┘
+                    │       │                 │            │
+                    │       │          ┌──────┼──────┐     │      ┌───────────┐
+                    │       │          ▼      ▼      ▼     │      │  fal.ai   │
+                    │       │        Qrep   Qfal   Qomni   │─────►│           │
+                    │       │          │      │      │     │      └───────────┘
+                    │       │          ▼      ▼      ▼     │
+                    │       │         Wr     Wf     Wo     │      ┌───────────┐
+                    │       │                        │     │─────►│ OmniRoute │
+                    │       ▼                        │     │      │  :20128   │
+                    │  ┌─────────┐                   │     │      └─────┬─────┘
+                    │  │ Postgres│◄──────────────────┘     │            │
+                    │  │ Jobs +  │                         │            ▼
+                    │  │ Health  │                         │      (providers)
+                    │  └─────────┘                         │
+                    │  ┌─────────┐  optional               │
+                    │  │ Redis   │  (queues)               │
+                    │  └─────────┘                         │
+                    │  ┌─────────┐  optional               │
+                    │  │ S3/YOS  │  (media bytes)          │
+                    │  └─────────┘                         │
+                    └──────────────────────────────────────┘
+
+
+2) Classes / entities (simplified UML)
+--------------------------------------------------------------------------------
+
+  ┌─────────────────────┐         ┌──────────────────────┐
+  │ LogicalModel        │1      * │ ChannelBinding       │
+  ├─────────────────────┤─────────├──────────────────────┤
+  │ id                  │         │ channel              │
+  │ kind                │         │   replicate|fal|omni │
+  │ inputs / outputs    │         │ upstream_ref         │
+  │ ui_label            │         │ priority             │
+  └──────────┬──────────┘         └──────────────────────┘
+             │
+             │ 1
+             │
+             │ *
+  ┌──────────▼──────────┐         ┌──────────────────────┐
+  │ GenerationJob       │*      1 │ ChannelHealth        │
+  ├─────────────────────┤         ├──────────────────────┤
+  │ id                  │         │ channel              │
+  │ logical_model_id    │         │ state healthy|…|down │
+  │ chosen_channel      │         │ error_streak         │
+  │ upstream_ref        │         │ cooldown_until       │
+  │ status              │         │ last_checked_at      │
+  │ payload_ref         │         └──────────────────────┘
+  │ result_urls|reply   │
+  │ error               │         ┌──────────────────────┐
+  │ created_at          │         │ RouteDecision        │
+  └─────────────────────┘         ├──────────────────────┤
+                                  │ job_id               │
+                                  │ candidates[]         │
+                                  │ selected_channel     │
+                                  │ reason               │
+                                  │   preferred|failover │
+                                  └──────────────────────┘
+
+
+3) Data flow for one Generate (arrows = data)
+--------------------------------------------------------------------------------
+
+  [prompt + media]
+        │
+        ▼
+  Flask API ──► GenerationJob(status=queued)
+        │
+        ▼
+  Dispatcher
+        │  reads ChannelBinding[] + ChannelHealth
+        │  writes RouteDecision
+        │
+        ├──► queue:replicate   payload_ref, upstream_ref
+        ├──► queue:fal
+        └──► queue:omniroute
+                │
+                ▼
+           Channel Worker
+                │  reads job
+                │  calls upstream
+                │
+                ├──► Replicate prediction / fal queue / OmniRoute /v1
+                │
+                ▼
+           GenerationJob(status=succeeded|failed)
+                │  result_urls | reply | error
+                │
+                ├──► Postgres (metadata)
+                └──► S3 (optional, bytes)
+                │
+                ▼
+           Browser poll ◄── status + urls
+
+
+4) Health / failover flow (control data)
+--------------------------------------------------------------------------------
+
+  Worker error/timeout
+        │
+        ▼
+  ChannelHealth.error_streak++
+        │
+        ├── < threshold → channel stays healthy
+        └── ≥ threshold → state=down, cooldown_until=now+T
+                            │
+                            ▼
+                     Dispatcher (new jobs)
+                            │
+                            └── picks next ChannelBinding
+                                (more traffic to fal / omni)
+
+
+5) Integrations as-is → to-be (catalog flow)
+--------------------------------------------------------------------------------
+
+  server.py INTEGRATED_MODELS          OmniRoute GET /v1/models
+  (replicate ~39, fal ~19, omni ~3)             │
+           │                                    │ weekly snapshot
+           ▼                                    ▼
+     RouteMap / LogicalModel  ◄──── merge (duplicates allowed)
+           │
+           ▼
+     Generate UI (/api/integrations)
+
+  Prices: models_catalog/CATALOG.md (not on the request path).
+
+
+6) Chat assistant (separate flow from media-generate)
+--------------------------------------------------------------------------------
+
+  Browser ──POST /api/chat──► Flask
+                                │  CHAT_SYSTEM_PROMPT (system)
+                                ▼
+                          OmniRoute /v1/chat/completions
+                                │ fail
+                                ▼
+                          Replicate DeepSeek (+ same system in prompt)
+
+  LLM group=assistants via /api/generate:
+    _with_assistant_persona(prompt) → same Navigator.
+
+  Details: assistant-prompt.md, ARCHITECTURE.md §9.

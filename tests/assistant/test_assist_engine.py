@@ -246,12 +246,15 @@ def test_unknown_action_noop_and_bad_model(make_assistant):
     assert r["intent"] == "ask_type"
 
 
-def test_example_chip_send(make_assistant):
+def test_off_topic_asks_format_not_examples(make_assistant):
     a = make_assistant()
     r = a.handle("напиши код на python", {}, SID)
-    ex = next(c for c in r["chips"] if c["action"] == "send")
-    r2 = a.handle("", {}, SID, action={"type": "send", "value": ex["value"]})
-    assert r2["intent"] == "generate_task"
+    assert r["intent"] == "off_topic" and {c["action"] for c in r["chips"]} == {"choose_type"}
+    assert not any(c["action"] == "send" for c in r["chips"])
+    r2 = a.handle("", {}, SID, action={"type": "choose_type", "value": "video"})
+    assert r2["intent"] == "choose_type"
+    r3 = a.handle("яичница танцует на сковородке", {}, SID)
+    assert r3["intent"] == "generate_task"
 
 
 def test_handler_crash_returns_safe_reply(make_assistant, monkeypatch):

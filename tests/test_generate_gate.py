@@ -72,7 +72,9 @@ def _gen(c, model="veo-3-1", params=None):
     body = {"model": model, "prompt": "a cat"}
     if params:
         body["params"] = params
-    return c.post("/api/generate", json=body, headers={"X-CSRF-Token": _csrf(c)})
+    import uuid
+    ip = "10.7.%d.%d" % (uuid.uuid4().int % 250, uuid.uuid4().int % 250)   # свой «IP»: не упираться в общий rate-limit
+    return c.post("/api/generate", json=body, headers={"X-CSRF-Token": _csrf(c), "X-Forwarded-For": ip})
 
 
 def _chat(c, body):
@@ -181,7 +183,7 @@ def test_status_endpoint_explains_template_mode(srv):
     c = srv.app.test_client()
     d = c.get("/api/assistant/chat/status").get_json()
     assert d["llm_enabled"] is False and "GROQ_API_KEY" in d["hint"]
-    assert {p["name"] for p in d["llm_providers"]} == {"groq", "omniroute"}
+    assert {p["name"] for p in d["llm_providers"]} == {"gigachat", "groq", "openrouter", "omniroute"}
     assert all(p["why_disabled"] == "нет ключа" for p in d["llm_providers"])
     assert d["account_check"] == "on"
     assert "test-token" not in str(d)

@@ -1,0 +1,129 @@
+SEQUENCE — Generate with dispatcher, three queues, failover
+================================================================================
+
+Participants (left to right):
+
+  U  = User / Browser
+  A  = Flask API
+  D  = Routing Dispatcher
+  H  = Channel Health store
+  Qr = queue:replicate
+  Qf = queue:fal
+  Qo = queue:omniroute
+  Wr = worker-replicate
+  Wf = worker-fal
+  Wo = worker-omniroute
+  R  = Replicate API
+  F  = fal.ai
+  O  = OmniRoute (:20128)
+
+
+--------------------------------------------------------------------------------
+A) Happy path — Replicate selected
+--------------------------------------------------------------------------------
+
+ U          A          D          H         Qr        Wr         R
+ |          |          |          |          |         |         |
+ |--POST /api/generate----------->|          |         |         |
+ |          |--create Job-------->|          |         |         |
+ |          |          |--health?>|          |         |         |
+ |          |          |<--repl=ok-|         |         |         |
+ |          |          |--enqueue Job------->|         |         |
+ |          |<--202 job_id--------|          |         |         |
+ |<--202 job_id---------|          |          |         |         |
+ |          |          |          |          |         |         |
+ |          |          |          |          |--pull-->|         |
+ |          |          |          |          |         |--run--->|
+ |          |          |          |          |         |<--out---|
+ |          |          |          |          |         |--Job=ok-|
+ |--GET /api/jobs/:id-->|          |          |         |         |
+ |<--succeeded + urls---|          |          |         |         |
+
+
+--------------------------------------------------------------------------------
+B) Failover — Replicate down → fal
+--------------------------------------------------------------------------------
+
+ U          A          D          H         Qr        Qf        Wf        F
+ |          |          |          |          |         |         |         |
+ |--POST generate------>|          |          |         |         |         |
+ |          |--Job----->|          |          |         |         |         |
+ |          |          |--health?>|          |         |         |         |
+ |          |          |<--repl=DOWN, fal=OK-|         |         |         |
+ |          |          |  (RouteMap has fal-binding)    |         |         |
+ |          |          |--enqueue----------------------->|         |         |
+ |          |          |  (Qr is NOT used)               |         |         |
+ |<--202 job_id---------|          |          |         |         |         |
+ |          |          |          |          |         |--pull-->|         |
+ |          |          |          |          |         |         |--run--->|
+ |          |          |          |          |         |         |<--out---|
+ |<--poll succeeded-----|          |          |         |         |         |
+
+
+--------------------------------------------------------------------------------
+C) Channel error → cooldown + retry on backup
+--------------------------------------------------------------------------------
+
+          Wr         R          H          D         Qf
+           |         |          |          |         |
+           |--run--->|          |          |         |
+           |<--5xx---|          |          |         |
+           |--fail+inc errors-->|          |         |
+           |         |          |--if threshold: repl=DOWN
+           |--ask requeue------>|          |         |
+           |         |          |--fal binding exists?
+           |         |          |--enqueue----------->|
+           |         |          |  Job.status=requeued
+
+
+--------------------------------------------------------------------------------
+D) OmniRoute channel
+--------------------------------------------------------------------------------
+
+ U     A     D     H     Qo     Wo     O     (upstream behind Omni)
+ |     |     |     |      |      |     |            |
+ |POST>|     |     |      |      |     |            |
+ |     |---->|health omni=OK     |     |            |
+ |     |     |--enqueue--------->|     |            |
+ |<202-|     |      |      |     |     |            |
+ |     |     |      |      |--pull>|     |            |
+ |     |     |      |      |     |--/v1/...------->|
+ |     |     |      |      |     |     |--route---->|
+ |     |     |      |      |     |<----result------|
+ |poll succeeded                    |     |            |
+
+
+--------------------------------------------------------------------------------
+E) As-is today (for comparison, no queues)
+--------------------------------------------------------------------------------
+
+ U                    Flask                         R|F
+ |                      |                            |
+ |--POST /api/generate (holds the connection)------->|
+ |                      |--submit + poll (2..5 min)->|
+ |                      |<-----------result----------|
+ |<-------------200 + urls---------------------------|
+
+ (at 100 of these — Flask workers are busy, the site stalls)
+
+
+--------------------------------------------------------------------------------
+F) Chat assistant (Navigator) — as-is
+--------------------------------------------------------------------------------
+
+Participants: U, A=Flask, O=OmniRoute, R=Replicate DeepSeek
+
+ U                A                    O                 R
+ |                |                    |                 |
+ |--POST /api/chat {messages}--------->|                 |
+ |                |--+ system prompt   |                 |
+ |                |  (CHAT_SYSTEM_PROMPT)                |
+ |                |--/v1/chat/completions (auto/*)------>|
+ |                |<--reply / 4xx------|                 |
+ |                |  (on fail)         |                 |
+ |                |--prediction DeepSeek---------------->|
+ |                |<--text-------------------------------|
+ |<--200 {reply, model, channel}-------|                 |
+
+ Persona also applies to LLM group=assistants via /api/generate
+ (_with_assistant_persona). Media models — no persona.

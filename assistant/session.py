@@ -36,6 +36,7 @@ def empty_session() -> dict[str, Any]:
         "brief_done": False,
         "variants": [],      # последние варианты промпта
         "var_round": 0,
+        "junk_count": 0,     # сколько непонятных сообщений подряд — чтобы не повторять один и тот же ответ
     }
 
 

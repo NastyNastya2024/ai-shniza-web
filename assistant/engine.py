@@ -103,6 +103,8 @@ class Assistant:
         self._llm_info = {"used": False, "provider": None, "tokens": 0, "latency_ms": 0}
         try:
             if action and isinstance(action, dict) and action.get("type"):
+                if action.get("type") != "send":
+                    ses["junk_count"] = 0
                 out = self._action(str(action["type"]), action.get("value"), ctx, ses, lang)
             else:
                 out = self._message(msg, ctx, ses, lang)
@@ -139,24 +141,32 @@ class Assistant:
         return detect_lang(rest, default=fallback)
 
     def _message(self, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
+        if not (msg and BR.is_junk(msg)):
+            ses["junk_count"] = 0
         # 1) текст совпал с кнопкой прошлого ответа или с названием модели → это клик
         act = self._text_as_action(msg, ses)
         if act:
             return self._action(act[0], act[1], ctx, ses, lang)
         # 1б) мусор вроде «ооло» никуда не пишем — переспрашиваем по месту
         if msg and not re.fullmatch(r"\s*\d{1,2}\s*[.)]?\s*", msg) and BR.is_junk(msg):
+            n = ses["junk_count"] = int(ses.get("junk_count") or 0) + 1
             aw = ses.get("await")
             card = self._current_card(ses, ctx) if ses.get("picked") else None
             if aw in ("params", "refine") and card:
                 return self._refine(card, msg, ctx, ses, lang)
-            if aw in ("brief", "variants") and card:
-                out = self._brief(card, ses, ctx, lang) if aw == "brief" else self._variants(card, ses, ctx, lang)
-                out["text"] = t("junk", lang) + "\n" + out["text"]
-                out["reply"] = t("junk", lang) + "\n" + out["reply"]
+            if aw in ("brief", "variants") and card:   # LLM не зовём: показываем то же место, коротко
+                if aw == "brief":
+                    out = self._brief(card, ses, ctx, lang)
+                else:
+                    out = self._show_variants(card, ses, lang, [t("variants_head", lang, title=card.title)], False)
+                note = _junk_line(n, lang)
+                out["text"] = note + "\n" + out["text"]
+                out["reply"] = note + "\n" + out["reply"]
                 return out
             if ses.get("kind"):
                 return self._ask_subject(ses["kind"], ses, ctx, lang, junk=True)
-            return response([t("junk", lang)], self._type_chips(ctx, lang), intent="junk")
+            return response([_junk_line(n, lang) + ("\n" + t("ask_type_plain", lang) if n == 1 else "")],
+                            self._type_chips(ctx, lang), intent="junk")
         # 1в) ждём суть идеи («о чём видео?») — любой осмысленный текст становится идеей
         if ses.get("await") == "idea" and ses.get("kind") and BR.has_subject(msg):
             it0 = route(msg, ctx, ses, self.titles)
@@ -307,7 +317,8 @@ class Assistant:
             self._llm_info["error"] = "budget"
         return fallback_prompt(card, idea, change, prev, lang), "", True
 
-    def _llm_json(self, system: str, user: str, validate: Callable, ses: dict, max_tokens: int) -> dict | None:
+    def _llm_json(self, system: str, user: str, validate: Callable, ses: dict, max_tokens: int,
+                  timeout_scale: float = 1.0, task: str = "") -> dict | None:
         """Один JSON-вызов LLM с учётом бюджета сессии. None — LLM нет / не ответила / бюджет кончился."""
         llm = self.d.llm
         if llm is None or not llm.available:
@@ -317,7 +328,7 @@ class Assistant:
             return None
         ses["llm_calls"] = int(ses.get("llm_calls") or 0) + 1
         try:
-            res = llm.complete_json(system, user, validate, max_tokens=max_tokens)
+            res = llm.complete_json(system, user, validate, max_tokens=max_tokens, timeout_scale=timeout_scale, task=task)
         except LLMUnavailable as exc:
             ses["tokens"] = int(ses.get("tokens") or 0) + exc.tokens
             self._llm_info.update(tokens=self._llm_info["tokens"] + exc.tokens, error=exc.reason, attempts=exc.attempts[-4:])
@@ -465,12 +476,23 @@ class Assistant:
                    brief=None, brief_done=False, variants=[], var_round=0)
 
     def _ask_subject(self, kind: str, ses: dict, ctx: dict, lang: str, junk: bool = False) -> dict:
-        """Пустая или непонятная идея → уточняющие вопросы (кто, где, что происходит, атмосфера, нюансы). Без примеров."""
+        """Пустая или непонятная идея → уточняющие вопросы. Без примеров сюжетов.
+        Если человек раз за разом пишет непонятное — не повторяем одно и то же: на 2-й раз коротко,
+        с 3-го — кнопки категорий (жанр / тема), чтобы можно было двигаться дальше без текста."""
         ses["await"] = "idea"
-        head = t("need_subject_" + (kind if kind in KINDS else "image"), lang)
-        if junk:
-            head = ("Не совсем поняла 🙂\n" if lang != "en" else "Sorry, I didn't get that 🙂\n") + head
-        return response([head], [], intent="need_subject")
+        k = kind if kind in KINDS else "image"
+        n = int(ses.get("junk_count") or 0) if junk else 0
+        if n <= 1:
+            head = t("need_subject_" + k, lang)
+            if junk:
+                head = _junk_line(1, lang) + "\n" + head
+            return response([head], [], intent="need_subject")
+        L = "en" if lang == "en" else "ru"
+        picks = QUICK_PICKS.get(k, QUICK_PICKS["image"])[L]
+        chips = [chip(label, "send", value) for label, value in picks]
+        chips.append(std_chip("ask_type_again_btn", "restart", lang))
+        head = _junk_line(n, lang) + "\n" + t("quick_pick_" + ("short" if n == 2 else "buttons"), lang)
+        return response([head], chips, intent="need_subject")
 
     def _i_generate_task(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
         if self.d.brief and not BR.has_subject(msg):   # «нужно сделать видео» — о чём? сначала суть
@@ -489,7 +511,8 @@ class Assistant:
         idea = ses.get("idea") or ""
         br = ses.get("brief") or {}
         if not br.get("q"):
-            data = self._llm_json(BR.BRIEF_SYSTEM, BR.brief_user(card, idea, lang), BR.validate_brief, ses, 450)
+            data = self._llm_json(BR.BRIEF_SYSTEM, BR.brief_user(card, idea, lang), BR.validate_brief, ses, 450,
+                                  timeout_scale=1.5, task="brief")
             if data is not None and not data["clear"]:
                 ses["idea"] = ""
                 return self._ask_subject(card.kind, ses, ctx, lang, junk=True)
@@ -522,12 +545,24 @@ class Assistant:
         br = ses.get("brief") or {"q": [], "a": {}, "extra": []}
         raw_params, adj = P.fit(P.extract(idea + " " + " ".join(br.get("extra") or [])), card)
         params = P.with_defaults(card, {**P.validate(card, ses.get("params")), **raw_params})
-        data = self._llm_json(BR.VARIANTS_SYSTEM, BR.variants_user(card, idea, self._answers_text(br), br.get("extra") or [],
-                                                                  params, lang, change), BR.validate_variants, ses, 900)
+        answers_text = self._answers_text(br)
+        data = self._llm_json(BR.VARIANTS_SYSTEM, BR.variants_user(card, idea, answers_text, br.get("extra") or [],
+                                                                  params, lang, change), BR.validate_variants, ses, 1000,
+                              timeout_scale=2.5, task="variants")
+        if data is None and self.d.llm is not None and self._llm_info.get("error") != "budget":
+            # на 3 варианта модели не хватило (время/формат) — просим ОДИН промпт (короче и надёжнее)
+            full = "; ".join([idea] + [f"{k}: {v}" for k, v in answers_text.items()] + list(br.get("extra") or []))
+            if change:
+                full += "; " + change
+            one = self._llm_json(SYSTEM, build_user(card, full, params, lang), validate_output, ses, 300,
+                                 timeout_scale=1.5, task="variants_one")
+            if one and one.get("prompt") and one.get("note") != "unsafe" and not _unsafe(one["prompt"]):
+                data = {"variants": BR.variants_from_one(card, one["prompt"], lang)}
         degraded = data is None
         if degraded:
             answers = {k: v for k, v in (br.get("a") or {}).items()}
-            items = BR.rule_variants(card, idea, answers, list(br.get("extra") or []), lang, int(ses.get("var_round") or 0))
+            items = BR.rule_variants(card, idea, answers, list(br.get("extra") or []), lang, int(ses.get("var_round") or 0),
+                                     questions=br.get("q"))
         else:
             items = [v for v in data["variants"] if not _unsafe(v["text"])]
             if not items:
@@ -622,10 +657,13 @@ class Assistant:
         return response([t(it.data.get("kind", "hello"), lang)], self._type_chips(ctx, lang), intent="smalltalk")
 
     def _i_off_topic(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
-        return response([t("off_topic", lang)], self._examples(lang), intent="off_topic")
+        # формат → содержание → модель; примеры сюжетов не подсовываем
+        ses.update({"await": "type", "idea": "", "topic": "", "kind": None, "picked": None, "prompt": "", "params": {}, "junk_count": 0})
+        return response([t("off_topic", lang)], self._type_chips(ctx, lang), intent="off_topic")
 
     def _i_injection(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
-        return response([t("injection", lang)], self._examples(lang), intent="injection")
+        ses.update({"await": "type", "idea": "", "topic": "", "kind": None, "picked": None, "prompt": "", "params": {}, "junk_count": 0})
+        return response([t("injection", lang)], self._type_chips(ctx, lang), intent="injection")
 
     def _i_safety(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
         ses.update(prompt="")
@@ -645,10 +683,14 @@ class Assistant:
         if kind == "choose_type":
             if value not in KINDS:
                 return self._ask_type(ses, ctx, lang)
-            ses.update(kind=value, picked=None, prompt="", params={}, shown=[])
+            ses.update(kind=value, picked=None, prompt="", params={}, shown=[], junk_count=0)
             if not ses.get("needs"):
                 ses["needs"] = detect_needs(ses.get("idea") or "")
-            if not ses.get("idea"):
+            idea = ses.get("idea") or ""
+            if self.d.brief and not BR.has_subject(idea):
+                ses["idea"] = ""
+                return self._ask_subject(value, ses, ctx, lang)
+            if not idea:
                 ses["await"] = "idea"
                 return response([t("describe_idea", lang)], [], intent="choose_type")
             return self._show_models(self._recommend(value, ses.get("needs") or [], has_image), ses, lang, "choose_type")
@@ -729,6 +771,10 @@ class Assistant:
                 ses["params"] = P.with_defaults(card, P.validate(card, ses.get("params")))
                 return self._setup_reply(card, ses, ctx, lang, "use_variant", t("variant_chosen", lang, title=v["title"]))
             return self._variants(card, ses, ctx, lang)
+        if kind == "restart":
+            self._new_task(None, "", [], "", ses)
+            ses["junk_count"] = 0
+            return self._ask_type(ses, ctx, lang)
         if kind == "resume":  # вернулись после входа / пополнения — показать то же место с новой проверкой
             card = self._current_card(ses, ctx) if ses.get("picked") else None
             if card and (ses.get("prompt") or ses.get("idea")):
@@ -764,3 +810,37 @@ def _rub(kop: int | None) -> str:
         return "—"
     s = str(kop // 100) if kop % 100 == 0 else f"{kop / 100:.2f}".rstrip("0").rstrip(".")
     return s.replace(".", ",") + " ₽"
+
+
+# Категории вместо примеров сюжетов: человек выбирает направление, детали спросим дальше
+QUICK_PICKS = {
+    "video": {"ru": [("Природа", "видео про природу"), ("Город", "видео про город"), ("Животные", "видео с животными"),
+                     ("Люди", "видео с людьми"), ("Абстракция", "абстрактное видео")],
+              "en": [("Nature", "a video about nature"), ("City", "a city video"), ("Animals", "a video with animals"),
+                     ("People", "a video with people"), ("Abstract", "an abstract video")]},
+    "image": {"ru": [("Портрет", "портрет"), ("Пейзаж", "пейзаж"), ("Логотип", "логотип"), ("Постер", "постер"),
+                     ("Иллюстрация", "иллюстрация")],
+              "en": [("Portrait", "a portrait"), ("Landscape", "a landscape"), ("Logo", "a logo"), ("Poster", "a poster"),
+                     ("Illustration", "an illustration")]},
+    "edit": {"ru": [("Заменить фон", "заменить фон на фото"), ("Улучшить свет", "улучшить свет на фото"),
+                    ("Убрать лишнее", "убрать лишние объекты с фото")],
+             "en": [("Replace background", "replace the photo background"), ("Fix lighting", "improve the photo lighting"),
+                    ("Remove objects", "remove unwanted objects from the photo")]},
+    "music": {"ru": [("Поп", "поп-трек"), ("Электроника", "электронный трек"), ("Лоу-фай", "лоу-фай трек"),
+                     ("Рок", "рок-трек"), ("Оркестр", "оркестровая музыка")],
+              "en": [("Pop", "a pop track"), ("Electronic", "an electronic track"), ("Lo-fi", "a lo-fi track"),
+                     ("Rock", "a rock track"), ("Orchestral", "orchestral music")]},
+    "sfx": {"ru": [("Природа", "звуки природы"), ("Город", "звуки города"), ("Интерфейс", "звук интерфейса, клик"),
+                   ("Удар", "звук удара")],
+            "en": [("Nature", "nature sounds"), ("City", "city sounds"), ("UI", "a UI click sound"), ("Impact", "an impact sound")]},
+}
+
+_JUNK_LINES = {
+    "ru": ["Не совсем поняла 🙂", "Похоже, сообщение не получилось 🙂", "Всё ещё не разобрала текст 🙂"],
+    "en": ["Sorry, I didn't get that 🙂", "Looks like the message didn't come through 🙂", "Still can't make it out 🙂"],
+}
+
+
+def _junk_line(n: int, lang: str) -> str:
+    lines = _JUNK_LINES["en" if lang == "en" else "ru"]
+    return lines[min(max(n, 1), len(lines)) - 1]

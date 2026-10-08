@@ -83,12 +83,30 @@ def make_health_fn(models: dict[str, dict], channel_healthy: Callable[[str], boo
 
 
 def providers_from_env(env: dict[str, str] | None = None) -> list[LLMProvider]:
+    """Провайдеры LLM по порядку ASSIST_LLM_ORDER. Без ключа провайдер просто пропускается.
+
+    Бесплатные варианты:
+      gigachat   — Сбер, работает из РФ; Freemium физлица: GIGACHAT_AUTH_KEY (ключ авторизации из личного кабинета)
+      groq       — бесплатный тариф с лимитами; GROQ_API_KEY
+      openrouter — бесплатные модели «:free» (мало запросов в день); OPENROUTER_API_KEY
+      omniroute  — свой шлюз; OMNIROUTE_API_KEY
+    """
+    from .llm import GigaChatAuth
+
     e = env if env is not None else os.environ
-    order = [x.strip() for x in (e.get("ASSIST_LLM_ORDER") or "groq,omniroute").split(",") if x.strip()]
+    order = [x.strip() for x in (e.get("ASSIST_LLM_ORDER") or "gigachat,groq,openrouter,omniroute").split(",") if x.strip()]
     omni_base = (e.get("OMNIROUTE_BASE_URL") or "http://127.0.0.1:20128").rstrip("/")
     if not omni_base.endswith("/v1"):
         omni_base += "/v1"
+    giga_key = (e.get("GIGACHAT_AUTH_KEY") or e.get("GIGACHAT_CREDENTIALS") or "").strip()
+    giga_ca = (e.get("GIGACHAT_CA_BUNDLE") or "").strip() or None
     table = {
+        "gigachat": LLMProvider(
+            name="gigachat", base_url=e.get("GIGACHAT_BASE_URL") or "https://gigachat.devices.sberbank.ru/api/v1",
+            api_key=giga_key, model=e.get("ASSIST_GIGACHAT_MODEL") or "GigaChat-2-Pro",
+            timeout=float(e.get("ASSIST_GIGACHAT_TIMEOUT") or 10), json_mode=False, ca_bundle=giga_ca,
+            auth=GigaChatAuth(giga_key, scope=e.get("GIGACHAT_SCOPE") or "GIGACHAT_API_PERS", ca_bundle=giga_ca)
+            if giga_key else None),
         "omniroute": LLMProvider(
             name="omniroute", base_url=omni_base, api_key=(e.get("OMNIROUTE_API_KEY") or "").strip(),
             model=e.get("ASSIST_OMNIROUTE_MODEL") or e.get("OMNIROUTE_CHAT_MODEL") or "",
@@ -96,9 +114,16 @@ def providers_from_env(env: dict[str, str] | None = None) -> list[LLMProvider]:
         "groq": LLMProvider(
             name="groq", base_url=e.get("GROQ_BASE_URL") or "https://api.groq.com/openai/v1",
             api_key=(e.get("GROQ_API_KEY") or "").strip(),
-            model=(e.get("ASSIST_GROQ_MODEL") or e.get("GROQ_CHAT_MODEL") or e.get("GROQ_MODEL")
-                   or "llama-3.1-8b-instant"),
-            timeout=float(e.get("ASSIST_GROQ_TIMEOUT") or 5)),
+            # НЕ наследуем GROQ_CHAT_MODEL/GROQ_MODEL от /api/chat: там часто «думающая» gpt-oss —
+            # она медленная и тратит лимит токенов на рассуждения → варианты промпта не успевают → шаблон.
+            model=e.get("ASSIST_GROQ_MODEL") or "llama-3.3-70b-versatile",
+            timeout=float(e.get("ASSIST_GROQ_TIMEOUT") or 8)),
+        "openrouter": LLMProvider(
+            name="openrouter", base_url=e.get("OPENROUTER_BASE_URL") or "https://openrouter.ai/api/v1",
+            api_key=(e.get("OPENROUTER_API_KEY") or "").strip(),
+            model=e.get("ASSIST_OPENROUTER_MODEL") or "meta-llama/llama-3.3-70b-instruct:free",
+            timeout=float(e.get("ASSIST_OPENROUTER_TIMEOUT") or 12),
+            extra_headers={"X-Title": "AI-shnitsa assistant"}),
     }
     return [table[n] for n in order if n in table]
 
@@ -117,7 +142,7 @@ def build_from_env(models: dict[str, dict] | None = None, price_fn: Callable[[st
             log.warning("assistant: %s", w)
         cards = {mid: c for mid, c in cards.items() if mid in listed}  # не советуем то, чего нет в студии
     llm = LLMChain(providers_from_env(e), transport=transport,
-                   deadline_sec=float(e.get("ASSIST_LLM_DEADLINE_SEC") or 12),
+                   deadline_sec=float(e.get("ASSIST_LLM_DEADLINE_SEC") or 25),
                    max_tokens=int(e.get("ASSIST_LLM_MAX_TOKENS") or 220))
     deps = AssistantDeps(
         cards=cards, neighbors=neighbors,
@@ -231,7 +256,8 @@ def status(assistant: Assistant, account_check: bool | None = None) -> dict[str,
         "account_check": "on" if (d.account_check if account_check is None else account_check) else "off",
         "hint": None if (d.llm and d.llm.available) else
         "LLM выключена: нет ни одного провайдера с ключом и моделью → промпты собираются по шаблону. "
-        "Задайте GROQ_API_KEY (+ ASSIST_GROQ_MODEL=llama-3.1-8b-instant) и/или OMNIROUTE_API_KEY + OMNIROUTE_BASE_URL.",
+        "Бесплатно: GIGACHAT_AUTH_KEY (Сбер, работает из РФ), GROQ_API_KEY, OPENROUTER_API_KEY или OMNIROUTE_API_KEY. "
+        "Проверка вживую: python -m assistant.selfcheck",
     }
 
 

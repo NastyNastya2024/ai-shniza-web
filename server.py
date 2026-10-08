@@ -2095,6 +2095,18 @@ STUDIO_ONBOARD_IDS = frozenset({
     "ace-step",
     "elevenlabs-music",
     "stable-audio-2-5",
+    # текст / LLM — вкладка «Текст» и чат с моделью
+    "deepseek-v3-1",
+    "deepseek-v3",
+    "claude-sonnet-5",
+    "claude-4-5-haiku",
+    "claude-opus-4-7",
+    "gemini-3-5-flash",
+    "gemini-3-1-pro",
+    "gpt-5-4",
+    "gpt-5-6-sol",
+    "omni-auto",
+    "omni-auto-free",
 })
 
 # Replicate primary id → fal backup id by mode: "t" text-only, "i" with input image.
@@ -3190,7 +3202,9 @@ def _build_provider_input(
 ) -> dict:
     """Build provider-specific input. Replicate and fal models keep separate ids even if similar."""
     # Все ассистенты (любая LLM-модель в группе assistants) — роль Навигатора.
-    if spec.get("group") == "assistants" and spec.get("kind") in {"llm", "chat"}:
+    # Роль «навигатора студии» — только у модели-ассистента. Текстовые модели (DeepSeek, Claude, GPT, Gemini…)
+    # человек выбирает, чтобы говорить с ними напрямую, — им роль не навязываем.
+    if spec.get("kind") in {"llm", "chat"} and (spec.get("id") == "assistant" or spec.get("navigator")):
         prompt = _with_assistant_persona(prompt)
     if spec.get("provider") == "omniroute":
         return {"prompt": prompt}
@@ -4398,6 +4412,7 @@ def api_integrations():
             "notes": _public_notes(spec.get("notes")),
             "price": price,
             "price_full": price_full,
+            **(_text_price_fields(mid) if kind in {"llm", "chat"} else {}),
             "image_url": _integration_image(spec, fetch_missing=False),
             "example_url": _integration_example(spec),
             "example_video_url": _integration_example_video(spec),
@@ -4507,14 +4522,66 @@ def api_generate_job(job_id: str):
     return resp
 
 
+def _text_price_fields(model_id: str) -> dict:
+    """Для текстовых моделей: понятная цена «≈ 0,19 ₽ за ответ» вместо «58 ₽/млн»."""
+    rub = _text_answer_rub(model_id)
+    if rub is None:
+        return {}
+    rub = math.ceil(rub * 100 - 1e-9) / 100 if rub > 0 else 0.0   # как спишет проверка баланса — вверх до копейки
+    label = "бесплатно" if rub <= 0 else f"{_rub_label(rub)} за ответ"
+    return {"price_answer_rub": round(rub, 4), "price_answer": label,
+            "price_answer_hint": "ответ ~400 слов; длинные ответы и большой контекст стоят дороже"}
+
+
 def _generate_require_auth() -> bool:
     """Генерация только для вошедших и только при достаточном балансе. Выключить можно лишь для тестов/локально."""
     return (os.getenv("GENERATE_REQUIRE_AUTH") or "1").strip().lower() not in {"0", "false", "no"}
 
 
-def _generate_cost_kop(model_id: str, params: dict | None = None) -> int | None:
+TEXT_ANSWER_TOKENS_IN = 1500   # сообщение + немного истории диалога
+TEXT_ANSWER_TOKENS_OUT = 600   # ответ средней длины (~400 слов)
+_TOKEN_PRICE_RX = re.compile(r"(\d+(?:[.,]\d+)?)\s*₽\s*/\s*(млн|тыс\.?)\s*(входн|выходн)", re.I)
+
+
+def _text_token_prices(model_id: str) -> tuple[float, float] | None:
+    """₽ за 1 токен (вход, выход) из строки каталога «58 ₽ / млн входных токенов · 174 ₽ / млн выходных»."""
+    full = _integration_prices().get(f"{model_id}__full") or _integration_prices().get(model_id) or ""
+    if re.search(r"бесплат|free", full, re.I):
+        return 0.0, 0.0
+    found = {}
+    for num, unit, side in _TOKEN_PRICE_RX.findall(full):
+        per = float(num.replace(",", ".")) / (1_000_000 if unit.lower().startswith("млн") else 1_000)
+        found["in" if side.lower().startswith("вход") else "out"] = per
+    if not found:
+        return None
+    return found.get("in", found.get("out", 0.0)), found.get("out", found.get("in", 0.0))
+
+
+def _text_answer_rub(model_id: str, prompt: str = "") -> float | None:
+    """Примерная цена одного ответа текстовой модели в рублях."""
+    prices = _text_token_prices(model_id)
+    if prices is None:
+        return None
+    tin = max(TEXT_ANSWER_TOKENS_IN, len(prompt or "") // 3 + 200)
+    return prices[0] * tin + prices[1] * TEXT_ANSWER_TOKENS_OUT
+
+
+def _rub_label(rub: float) -> str:
+    if rub <= 0:
+        return "бесплатно"
+    if rub < 0.01:
+        rub = 0.01
+    txt = f"{rub:.2f}" if rub < 10 else f"{rub:.0f}"
+    return "≈ " + txt.rstrip("0").rstrip(".").replace(".", ",") + " ₽"
+
+
+def _generate_cost_kop(model_id: str, params: dict | None = None, prompt: str = "") -> int | None:
     """Цена запуска в копейках по каталогу (_integration_prices) и длительности из params / по умолчанию.
     Это та же оценка, что показывает ассистент. None — цена неизвестна (не блокируем)."""
+    spec = INTEGRATED_MODELS.get(model_id) or {}
+    if (spec.get("kind") or "").lower() in {"llm", "chat"}:      # текст: цена за ответ, а не «за 1 млн токенов»
+        rub = _text_answer_rub(model_id, prompt)
+        return None if rub is None else int(math.ceil(rub * 100))
     try:
         from assistant.params import seconds as _sec, with_defaults as _wd
         from assistant.recommend import price_value as _pv
@@ -4619,7 +4686,7 @@ def api_generate():
         acct = _generate_account()
         if not acct or not acct["authed"]:
             return jsonify({"error": "auth_required"}), 401
-        need = _generate_cost_kop(model_id, safe_params)
+        need = _generate_cost_kop(model_id, safe_params, prompt)
         if need and acct["available_kop"] < need:
             return jsonify({"error": "insufficient_funds", "need_kop": need,
                             "available_kop": acct["available_kop"]}), 402

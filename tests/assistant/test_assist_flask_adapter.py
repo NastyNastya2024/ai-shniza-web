@@ -66,10 +66,13 @@ def test_clean_context():
 def test_providers_from_env_order_and_defaults():
     ps = providers_from_env({"OMNIROUTE_API_KEY": "k", "OMNIROUTE_BASE_URL": "http://h:20128/", "GROQ_API_KEY": "g",
                              "ASSIST_LLM_ORDER": "groq,omniroute", "ASSIST_OMNIROUTE_MODEL": "m"})
-    assert [p.name for p in providers_from_env({"OMNIROUTE_API_KEY": "k", "GROQ_API_KEY": "g"})] == ["groq", "omniroute"]
+    assert [p.name for p in providers_from_env({})] == ["gigachat", "groq", "openrouter", "omniroute"]
     assert [p.name for p in ps] == ["groq", "omniroute"]
     assert ps[1].url == "http://h:20128/v1/chat/completions" and ps[1].model == "m"
-    assert ps[0].model == "llama-3.1-8b-instant"
+    assert ps[0].model == "llama-3.3-70b-versatile"
+    # модель /api/chat (часто «думающая» gpt-oss) НЕ наследуется — только явный ASSIST_GROQ_MODEL
+    groq = {p.name: p for p in providers_from_env({"GROQ_API_KEY": "g", "GROQ_CHAT_MODEL": "openai/gpt-oss-20b"})}["groq"]
+    assert groq.model == "llama-3.3-70b-versatile"
 
 
 def test_no_keys_means_no_llm_and_degraded():
@@ -202,3 +205,56 @@ def test_uses_app_rate_limiter():
 def test_brief_on_by_default_from_env():
     a = build_from_env(models=MODELS, price_fn=PRICES.get, env={})
     assert a.d.brief is True
+
+
+
+# ---------- бесплатные провайдеры: GigaChat (OAuth Сбера) и OpenRouter
+def test_gigachat_provider_from_env():
+    ps = {p.name: p for p in providers_from_env({"GIGACHAT_AUTH_KEY": "base64key", "GIGACHAT_CA_BUNDLE": "/etc/ssl/russian_trusted_root_ca.cer"})}
+    g = ps["gigachat"]
+    assert g.api_key and g.auth is not None and g.json_mode is False
+    assert g.model == "GigaChat-2-Pro" and g.url == "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
+    assert g.ca_bundle == "/etc/ssl/russian_trusted_root_ca.cer" and g.auth.scope == "GIGACHAT_API_PERS"
+    assert ps["openrouter"].model.endswith(":free") and not ps["openrouter"].api_key
+
+
+def test_gigachat_oauth_token_cached_and_refreshed_on_401():
+    from assistant.llm import GigaChatAuth, LLMChain, LLMProvider
+    from assistant.prompts import SYSTEM, validate_output
+    clock = [1.76e9]
+    oauth_calls, chat_calls = [], []
+
+    def fetch(url, headers, data, verify):
+        oauth_calls.append((headers["Authorization"], data["scope"], verify, headers["RqUID"]))
+        return 200, {"access_token": f"tok{len(oauth_calls)}", "expires_at": int((clock[0] + 1800) * 1000)}
+
+    auth = GigaChatAuth("KEY", ca_bundle="/ca.pem", fetch=fetch, clock=lambda: clock[0])
+    replies = [(401, {"message": "Token has expired"}), (200, {"choices": [{"message": {"content": ok_json()}}], "usage": {}})]
+
+    def tr(url, headers, payload, timeout, verify=True):
+        chat_calls.append((headers["Authorization"], verify, "response_format" in payload))
+        return replies.pop(0) if replies else (200, {"choices": [{"message": {"content": ok_json()}}], "usage": {}})
+
+    p = LLMProvider("gigachat", "https://gigachat.devices.sberbank.ru/api/v1", "KEY", "GigaChat-2-Pro",
+                    json_mode=False, ca_bundle="/ca.pem", auth=auth)
+    chain = LLMChain([p], transport=tr)
+    res = chain.complete_json(SYSTEM, "{}", validate_output)
+    assert res.provider == "gigachat"
+    assert oauth_calls[0][:3] == ("Basic KEY", "GIGACHAT_API_PERS", "/ca.pem")
+    assert chat_calls == [("Bearer tok1", "/ca.pem", False), ("Bearer tok2", "/ca.pem", False)]  # 401 → новый токен
+    chain.complete_json(SYSTEM, "{}", validate_output)
+    assert len(oauth_calls) == 2                                   # токен закэширован
+    clock[0] += 1800                                               # истёк → обновится сам
+    chain.complete_json(SYSTEM, "{}", validate_output)
+    assert len(oauth_calls) == 3
+
+
+def test_gigachat_oauth_error_is_explained():
+    from assistant.llm import GigaChatAuth, LLMChain, LLMProvider, LLMUnavailable
+    from assistant.prompts import SYSTEM, validate_output
+    auth = GigaChatAuth("BAD", fetch=lambda *a: (401, {"message": "Can't decode 'Authorization' header"}))
+    chain = LLMChain([LLMProvider("gigachat", "https://x/api/v1", "BAD", "GigaChat-2-Pro", auth=auth)],
+                     transport=lambda *a, **k: (200, {}))
+    with pytest.raises(LLMUnavailable):
+        chain.complete_json(SYSTEM, "{}", validate_output)
+    assert "oauth_http_401" in chain.status()[0]["last"]["error"]

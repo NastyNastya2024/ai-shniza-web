@@ -21,7 +21,7 @@
   'use strict';
   var SERVER = { pick_model: 1, more: 1, choose_type: 1, use_mine: 1, param: 1, refine: 1, improve: 1, send: 1,
     similar: 1, cheaper: 1, faster: 1, no_photo_model: 1, rephrase: 1, resume: 1,
-    brief: 1, variants: 1, more_variants: 1, back_brief: 1, use_variant: 1 };
+    brief: 1, variants: 1, more_variants: 1, back_brief: 1, use_variant: 1, restart: 1 };
   var KIND_ICON = { image: '🖼', video: '🎬', music: '🎵', sfx: '🔊', edit: '✏️' };
 
   function el(tag, cls, text) {

@@ -850,7 +850,7 @@ class Component extends DCLogic {
       return { res: { ok: false, status: 504 }, data: { error: 'timeout' } };
     };
     this.runGenerate = async (m, prompt, genParams) => {
-      this.patchLastBot({ text: tr('studio.chat.cooking'), job: true });
+      this.patchLastBot({ text: tr(m && m.type === 'text' ? 'studio.chat.thinking' : 'studio.chat.cooking'), job: true });
       const body = { model: m.model_key || m.slug, prompt: prompt || '' };
       if (genParams && typeof genParams === 'object' && Object.keys(genParams).length) body.params = genParams;
       let { res, data } = await api('/api/generate', {
@@ -893,7 +893,7 @@ class Component extends DCLogic {
       if (data && data.kind === 'text') {
         const reply = String(data.reply || '').trim() || tr('studio.chat.failedRetry');
         this.patchLastBot({ text: reply, job: false });
-        return;
+        return data;
       }
       const url = (data && data.urls && data.urls[0]) || '';
       const kind = (data && data.kind) || m.type || 'image';
@@ -959,10 +959,35 @@ class Component extends DCLogic {
       });
       await refreshUser();
     };
+    /** Выбрана текстовая модель (DeepSeek, Claude, GPT, Gemini, «Авто») — говорим с ней напрямую, как в чате,
+     *  а не через помощника по генерациям. История диалога — последние сообщения, отправляются вместе с вопросом. */
+    this.textHistory = [];
+    this.textModel = '';
+    this.textChat = (m, text) => {
+      if (this.textModel !== m.slug) { this.textHistory = []; this.textModel = m.slug; }
+      this.setState({ chat: true, text: '' });
+      this.push({ role: 'user', text: text });
+      const hist = this.textHistory.slice(-8);
+      let prompt = text;
+      if (hist.length) {
+        const ctx = hist.map((h) => (h.role === 'user' ? tr('studio.text.you') : tr('studio.text.model')) + ': ' + h.content).join('\n');
+        prompt = tr('studio.text.context') + '\n' + ctx.slice(-6000) + '\n\n' + tr('studio.text.newMessage') + '\n' + text;
+      }
+      this.textHistory.push({ role: 'user', content: text });
+      this.pendingPrompt = prompt; this.pendingSel = m.slug; this.pendingParams = {};
+      this.botSay({ text: tr('studio.chat.thinking'), job: true }, 200);
+      this.later('cook', 300, async () => {
+        const data = await this.runGenerate(m, prompt, {});
+        if (data && data.kind === 'text' && data.reply) this.textHistory.push({ role: 'assistant', content: String(data.reply).slice(0, 4000) });
+        else this.textHistory.pop();   // ответа нет — вопрос не остаётся «висеть» в истории
+      });
+    };
     this.onSubmit = async (e) => {
       if (e && e.preventDefault) e.preventDefault();
       const text = this.state.text.trim();
       if (!text) { this.speak(tr('studio.eggy.needIdea')); return; }
+      const cur = this.MODELS.find((x) => x.slug === this.state.sel);
+      if (cur && cur.type === 'text') { this.textChat(cur, text); return; }
       const sel = this.pickFor(text);
       this.pendingPrompt = text;
       this.pendingSel = sel;
@@ -1153,7 +1178,7 @@ class Component extends DCLogic {
       say: st.say || ' ', shown: st.say.slice(0, st.shown), blinkClass: st.blink ? 'eye-blink' : '',
       ey: st.text ? 6 : 0,
       text: st.text, onType: this.onType, onSubmit: this.onSubmit,
-      sel: { name: s.name, priceShort: s.short, estimate: s.est },
+      sel: { name: s.name, priceShort: s.short, estimate: s.est, isText: s.type === 'text' },
       query: st.query, onQuery: this.onQuery,
       searchOn: !!st.query.trim() || !!st.searchFocus,
       tabs: tabs, models: models, empty: models.length === 0,
@@ -1326,7 +1351,7 @@ function render() {
   if (v.blinkClass === 'eye-blink') { const av = document.querySelectorAll('#msgs .bot-av'); const last = av[av.length - 1]; if (last) last.querySelectorAll('.bot-eye').forEach((e) => e.classList.add('eye-blink')); }
   // композер
   const ta = $('prompt'); if (ta.value !== v.text) ta.value = v.text;
-  $('selName').textContent = v.sel.name; $('selPrice').textContent = v.sel.priceShort; $('selEst').textContent = tr('studio.eggy.priceEst', { price: v.sel.estimate });
+  $('selName').textContent = v.sel.name; { const ta0 = $('prompt'); const ph = tr(v.sel.isText ? 'studio.text.placeholder' : 'studio.composer.placeholder'); if (ta0 && ta0.placeholder !== ph) ta0.placeholder = ph; } $('selPrice').textContent = v.sel.priceShort; $('selEst').textContent = tr('studio.eggy.priceEst', { price: v.sel.estimate });
   // модели
   const tbBar = $('modelToolbar');
   if (tbBar) tbBar.classList.toggle('search-on', v.searchOn);
@@ -1544,6 +1569,7 @@ function parsePriceRub(s) {
 function shortPriceLabel(raw) {
   let s = String(raw || '').replace(/\u00a0/g, ' ').trim();
   if (!s) return '';
+  if (/за ответ|per answer/i.test(s)) return s.replace(/^≈\s*/, '').replace(/\s*за ответ/i, ' ₽/ответ').replace(/₽\s*₽/, '₽');
   const hasTiers = s.includes('·') || /at\s*\d+p/i.test(s) || /480p|720p|1080p/i.test(s);
   s = s.split('·')[0].trim();
   const m = s.match(/(\d+[.,]?\d*)\s*₽/);
@@ -1623,7 +1649,8 @@ async function loadIntegrations() {
     if (!items.length) return;
     const mapped = items.map((it) => {
       const type = integrationType(it);
-      const priceRaw = (it.price_full || it.price || '').trim();
+      // текст: «≈ 0,19 ₽ за ответ» вместо «58 ₽/млн» — понятно, сколько стоит один вопрос
+      const priceRaw = ((type === 'text' && it.price_answer) ? it.price_answer : (it.price_full || it.price || '')).trim();
       const rub = parsePriceRub(priceRaw);
       const free = /бесплат|free/i.test(priceRaw) || (!priceRaw && (it.is_assistant || it.provider === 'omniroute'));
       const viaGenerate = !!(it.is_assistant || type === 'text' || it.provider === 'replicate' || it.provider === 'fal' || it.provider === 'omniroute');

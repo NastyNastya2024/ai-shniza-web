@@ -87,6 +87,23 @@ _CMD = re.compile(
     re.I)
 
 
+_VERBS = re.compile(
+    r"^\s*(?:(?:надо|нужно|нужен|нужна|хочу|давай(?:те)?|пожалуйста|мне|можешь|можно|please|i want|i need|can you)\s+)*"
+    r"(?:(?:сделай(?:те)?|сделать|создай(?:те)?|создать|нарисуй(?:те)?|нарисовать|сгенерируй(?:те)?|сгенерировать|"
+    r"make|create|draw|generate)\s+)?(?:мне\s+)?", re.I)
+
+
+def strip_commands(idea: str) -> str:
+    """Убрать только «нужно сделать …», а «видео с закатом» оставить целиком (иначе выйдет «Закатом»)."""
+    s = (idea or "").strip()
+    m = re.match(r"^([^:]{2,60}):\s*(.{3,})$", s)   # «Вертикальное видео 10 с: кот в снегу» → «кот в снегу»
+    if m and re.search(r"видео|ролик|клип|картин|изображ|фото|постер|логотип|музык|трек|песн|звук|video|image|picture|"
+                       r"poster|logo|music|track|song|sound", m.group(1), re.I):
+        s = m.group(2).strip()
+    out = _VERBS.sub("", s, count=1).strip()
+    return out if len(out) >= 3 else s
+
+
 def clean_idea(idea: str) -> str:
     """«надо сделать картинку: кот жарит яичницу» → «кот жарит яичницу». Тему не трогаем."""
     s = (idea or "").strip()
