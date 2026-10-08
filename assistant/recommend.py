@@ -17,6 +17,9 @@ from .cards import Card
 PriceFn = Callable[[str], "str | None"]
 HealthFn = Callable[[str], bool]
 
+# Первая карточка в подборе по типу (если модель доступна и подходит).
+PIN_FIRST = {"video": "seedance-2-5", "text": "omni-auto-free"}
+
 
 @dataclass
 class Pick:
@@ -74,6 +77,11 @@ def recommend(cards: dict[str, Card], kind: str, needs: list[str] | None = None,
                 if c.kind in ks and c.id not in excl and c.supports(has_image) and _healthy(c, health_fn)]
 
     main = sorted(pool([kind]), key=lambda c: (-score(c, needs, has_image, price_fn), c.id))
+    pin_id = PIN_FIRST.get(kind)
+    if pin_id:
+        pinned = next((c for c in main if c.id == pin_id), None)
+        if pinned is not None:
+            main = [pinned] + [c for c in main if c.id != pin_id]
     exact = not needs or any(set(needs) & set(c.tags) for c in main[:n])
     # разнообразие: не показываем две модели одного семейства (Veo 3.1 + Veo 3.1 Fast), если есть альтернатива
     picked: list[Card] = []

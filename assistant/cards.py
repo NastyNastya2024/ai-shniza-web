@@ -11,8 +11,8 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable
 
 DEFAULT_PATH = os.path.join(os.path.dirname(__file__), "data", "model_cards.json")
-KINDS = {"video", "image", "edit", "music", "sfx"}
-MODES = {"t2v", "i2v", "t2i", "i2i", "t2m"}
+KINDS = {"video", "image", "edit", "music", "sfx", "text"}
+MODES = {"t2v", "i2v", "t2i", "i2i", "t2m", "t2t"}
 
 
 @dataclass
@@ -43,7 +43,7 @@ class Card:
 
     def supports(self, has_image: bool) -> bool:
         if has_image:
-            return any(m in {"i2v", "i2i"} for m in self.modes) or self.kind in {"music", "sfx"}
+            return any(m in {"i2v", "i2i"} for m in self.modes) or self.kind in {"music", "sfx", "text"}
         return not self.needs_image
 
 

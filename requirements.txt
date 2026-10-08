@@ -8,4 +8,5 @@ gunicorn==23.0.0
 Pillow==10.4.0
 boto3==1.35.36
 cryptography>=42.0.0
+higgsfield-client==0.2.0
 pytest==8.3.3

@@ -9,17 +9,19 @@ from typing import Any
 
 import redis
 
-CHANNELS = ("replicate", "fal", "omniroute")
+CHANNELS = ("replicate", "fal", "omniroute", "higgsfield")
 QUEUE_INBOUND = "ai_shniza:queue:inbound"
 QUEUE_BY_CHANNEL = {
     "replicate": "ai_shniza:queue:replicate",
     "fal": "ai_shniza:queue:fal",
     "omniroute": "ai_shniza:queue:omniroute",
+    "higgsfield": "ai_shniza:queue:higgsfield",
 }
 PROCESSING_BY_CHANNEL = {
     "replicate": "ai_shniza:processing:replicate",
     "fal": "ai_shniza:processing:fal",
     "omniroute": "ai_shniza:processing:omniroute",
+    "higgsfield": "ai_shniza:processing:higgsfield",
 }
 INFLIGHT_KEY = "ai_shniza:inflight:{channel}"
 HEALTH_KEY = "ai_shniza:health:{channel}"
@@ -34,11 +36,12 @@ HEALTH_FAIL_THRESHOLD = int(os.getenv("HEALTH_FAIL_THRESHOLD", "2"))
 JOB_WAIT_SEC = int(os.getenv("JOB_WAIT_SEC", "360"))
 JOB_TTL_SEC = int(os.getenv("JOB_TTL_SEC", "3600"))
 WORKER_SHUTDOWN_GRACE_SEC = int(os.getenv("WORKER_SHUTDOWN_GRACE_SEC", "20"))
-_DEFAULT_CONCURRENCY = {"replicate": 10, "fal": 6, "omniroute": 3}
+_DEFAULT_CONCURRENCY = {"replicate": 10, "fal": 6, "omniroute": 3, "higgsfield": 4}
 _CONCURRENCY_ENV = {
     "replicate": "WORKER_CONCURRENCY_REPLICATE",
     "fal": "WORKER_CONCURRENCY_FAL",
     "omniroute": "WORKER_CONCURRENCY_OMNIROUTE",
+    "higgsfield": "WORKER_CONCURRENCY_HIGGSFIELD",
 }
 
 

@@ -1,11 +1,11 @@
-"""Бриф перед промптом: понять суть, уточнить детали, предложить 3 варианта промпта.
+"""Бриф перед промптом: понять суть, уточнить детали, предложить варианты промпта — до выбора модели.
 
 Шаги:
-  1. Идея пустая («нужно сделать видео») или мусор («ооло») → «Что должно быть в кадре?» + примеры кнопками.
-  2. Модель выбрана → бриф: 2–3 вопроса с вариантами-кнопками (стиль, настроение, кадр / жанр …).
-     С LLM вопросы и варианты ответов подбираются ПОД ИДЕЮ («Кот: рыжий повар / пушистый котёнок / …»),
-     без LLM — общие слоты по типу задачи. Уже названное в тексте («аниме», «весёлый») отмечено сразу.
-  3. «Собрать промпт» → 3 разных варианта промпта карточками; человек выбирает один, дальше параметры и запуск.
+  1. Идея пустая («нужно сделать видео») или мусор («ооло») → «Что должно быть в кадре?».
+  2. Тип известен → бриф: 2–3 вопроса с вариантами-кнопками (стиль, настроение, кадр / жанр …).
+     С LLM вопросы под идею; без LLM — общие слоты по типу. Уже названное («аниме», «весёлый») отмечено сразу.
+  3. Ответ сообщением или «Пропустить» → варианты промпта; человек выбирает один.
+  4. Выбор нейросети под готовый промпт → параметры и запуск.
 """
 from __future__ import annotations
 
@@ -154,6 +154,26 @@ SLOTS: dict[str, list[tuple[str, dict, list[tuple]]]] = {
             ("rhythm", "Ритмичный", "Rhythmic", "ритмичный", "rhythmic", r"ритм|rhythm"),
         ]),
     ],
+    "text": [
+        ("form", {"ru": "Формат", "en": "Format"}, [
+            ("post", "Пост", "Post", "пост для соцсети", "a social media post", r"пост|соцсет|instagram|telegram|post"),
+            ("letter", "Письмо", "Letter", "письмо", "a letter", r"письм|letter|email"),
+            ("article", "Статья", "Article", "статья", "an article", r"стать|article|блог"),
+            ("script", "Сценарий", "Script", "сценарий", "a script", r"сценари|script"),
+            ("poem", "Стих", "Poem", "стихотворение", "a poem", r"стих|poem|поэз"),
+        ]),
+        ("tone", {"ru": "Тон", "en": "Tone"}, [
+            ("formal", "Деловой", "Formal", "деловой официальный тон", "formal business tone", r"делов|официал|formal"),
+            ("friendly", "Дружеский", "Friendly", "дружеский тёплый тон", "friendly warm tone", r"дружес|неформал|friendly"),
+            ("creative", "Креативный", "Creative", "креативный яркий стиль", "creative vivid style", r"креатив|творч|creative"),
+            ("neutral", "Нейтральный", "Neutral", "нейтральный спокойный тон", "neutral calm tone", r"нейтрал|спокойн|neutral"),
+        ]),
+        ("length", {"ru": "Длина", "en": "Length"}, [
+            ("short", "Короткий", "Short", "короткий текст", "a short text", r"коротк|кратко|short"),
+            ("medium", "Средний", "Medium", "текст средней длины", "a medium-length text", r"средн|medium"),
+            ("long", "Подробный", "Long", "подробный развёрнутый текст", "a detailed long text", r"подробн|длинн|развёрн|long"),
+        ]),
+    ],
 }
 ANY = "any"
 
@@ -170,6 +190,9 @@ OPEN: dict[str, list[tuple[str, dict, bool]]] = {   # (id, label, задават
     "music": [("purpose", {"ru": "Для чего трек: ролик, фон, песня?", "en": "What is it for: video, background, song?"}, True),
               ("nuance", {"ru": "Нюансы: инструменты, темп, длительность?", "en": "Nuances: instruments, tempo, length?"}, False)],
     "sfx": [("what", {"ru": "Что именно звучит?", "en": "What exactly makes the sound?"}, True)],
+    "text": [("topic", {"ru": "О чём текст — тема и цель?", "en": "What is the text about — topic and goal?"}, True),
+             ("audience", {"ru": "Для кого пишем?", "en": "Who is the audience?"}, True),
+             ("nuance", {"ru": "Нюансы: факты, ограничения, что обязательно включить?", "en": "Nuances: facts, constraints, must-haves?"}, False)],
 }
 
 
@@ -222,6 +245,7 @@ DETAILS = {
         "edit": ["естественный результат", "без артефактов", "сохранить остальное как есть"],
         "music": ["запоминающаяся мелодия", "живые инструменты", "плавное нарастание к припеву"],
         "sfx": ["чистая запись", "естественное эхо", "без посторонних шумов"],
+        "text": ["чёткий структура и сильный заголовок", "живые примеры и конкретика", "плавный ритм и понятный вывод"],
     },
     "en": {
         "video": ["soft light and lively highlights", "slow motion at the key moment", "detailed textures, sharp focus"],
@@ -229,6 +253,7 @@ DETAILS = {
         "edit": ["natural result", "no artifacts", "keep everything else as is"],
         "music": ["catchy melody", "live instruments", "smooth build-up to the chorus"],
         "sfx": ["clean recording", "natural reverb", "no background noise"],
+        "text": ["clear structure and a strong headline", "concrete examples and specifics", "smooth rhythm and a clear takeaway"],
     },
 }
 ALT = {  # чем отличаются 2-й и 3-й варианты, если человек ничего не выбрал
@@ -237,6 +262,7 @@ ALT = {  # чем отличаются 2-й и 3-й варианты, если �
     "edit": [{"strength": "soft"}, {"strength": "strong"}],
     "music": [{"mood": "energy"}, {"mood": "calm"}],
     "sfx": [{"char": "soft"}, {"char": "sharp"}],
+    "text": [{"tone": "friendly", "length": "short"}, {"tone": "formal", "length": "medium"}],
 }
 TITLES = {"ru": ["Как вы описали", "Ярче и живее", "Атмосферно"], "en": ["As described", "Brighter", "Atmospheric"]}
 
@@ -278,7 +304,12 @@ def rule_variants(card: Card, subject: str, answers: dict[str, str], extra: list
                 parts.append(frag)
         pool = DETAILS[L].get(kind, DETAILS[L]["image"])
         detail = pool[(i + round_) % len(pool)]
-        head = (f"Трек на тему «{subj}»" if L == "ru" else f"A track inspired by “{subj}”") if kind == "music" else _sentence(subj)
+        if kind == "music":
+            head = f"Трек на тему «{subj}»" if L == "ru" else f"A track inspired by “{subj}”"
+        elif kind == "text":
+            head = f"Напиши текст: {subj}" if L == "ru" else f"Write text: {subj}"
+        else:
+            head = _sentence(subj)
         sentences = [head]
         if parts:
             sentences.append(_sentence("; ".join(parts)))
@@ -304,6 +335,7 @@ STYLE_TWISTS = {
     "music": [("Энергичнее", "energetic, faster tempo, punchy drums"),
               ("Мягче", "mellow, slower tempo, warm analog sound")],
     "sfx": [("Ближе", "close-up, crisp and loud"), ("Дальше", "distant, soft, natural reverb")],
+    "text": [("Короче", "keep it concise, punchy sentences"), ("Подробнее", "add concrete details, examples, and a clear structure")],
 }
 
 

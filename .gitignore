@@ -38,6 +38,9 @@ backups/
 # Local media fallback (non-S3)
 media/
 
+# Camera movement previews (from aicameramovements.com; owner decides licensing)
+assets/camera/
+
 # Worker logs
 logs/
 

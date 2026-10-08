@@ -47,10 +47,23 @@
 .aich-variant__text{font-size:14px;line-height:1.45;color:var(--ink,#1E1238)}
 .aich-variant__cta{font-size:13px;font-weight:600;color:var(--accent-ink,#4B2BB8)}
 .aich-row.is-old .aich-variant{pointer-events:none;opacity:.6}
+.aich-camera{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.aich-camera__head{display:flex;flex-direction:column;gap:2px}
+.aich-camera__none{align-self:flex-start}
+.aich-camera__row{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.aich-camera__card{all:unset;box-sizing:border-box;cursor:pointer;flex:0 0 132px;scroll-snap-align:start;display:flex;flex-direction:column;gap:6px;padding:0;border-radius:14px;border:1.5px solid var(--panel-brd,rgba(80,60,160,.10));background:var(--card-on,#fff);overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.aich-camera__card:hover{border-color:var(--accent-ink,#4B2BB8);box-shadow:0 6px 18px rgba(75,43,184,.12)}
+.aich-camera__card.is-on{border-color:var(--accent-ink,#4B2BB8);box-shadow:0 0 0 1px var(--accent-ink,#4B2BB8)}
+.aich-camera__card:focus-visible{outline:2px solid var(--accent-ink,#4B2BB8);outline-offset:2px}
+.aich-camera__vid{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;background:#1a1228;pointer-events:none}
+.aich-camera__title{font:600 12px 'Onest',system-ui,sans-serif;padding:0 8px 8px;line-height:1.25;color:var(--ink,#1E1238)}
+.aich-row.is-old .aich-camera__card,.aich-row.is-old .aich-camera__none{pointer-events:none;opacity:.6}
 .aich-summary{background:var(--card-on,#fff);border:1px solid var(--panel-brd,rgba(80,60,160,.10));border-radius:16px;padding:12px 16px}
 .aich-summary__head{display:flex;justify-content:space-between;gap:12px;font-size:15px}
 .aich-summary__price{font-weight:700;white-space:nowrap}
 .aich-summary__params{font-size:13px;color:var(--muted,#5B4D93);margin-top:4px}
+.aich-summary__files{font-size:13px;color:var(--muted,#5B4D93);margin-top:4px;overflow-wrap:anywhere}
+.aich-summary__files b{font-weight:700;color:var(--ink,#1E1238)}
 
 .aich-chips-wrap{display:flex;flex-direction:column;gap:8px}
 .aich-chips{display:flex;flex-wrap:wrap;gap:8px}

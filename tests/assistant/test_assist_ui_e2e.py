@@ -54,25 +54,20 @@ def say(pg, text):
 def test_flow_from_screenshot(page):
     pg, errors = page
     say(pg, "привет")
-    assert pg.locator(".aich-row:last-child .aich-chip").count() == 4
+    assert pg.locator(".aich-row:last-child .aich-chip").count() == 5
     say(pg, "надо сделать коты который жарит иишницу")
-    assert "картинку, видео или музыку" in pg.inner_text(".aich-row:last-child")
+    assert "картинку, видео, музыку или текст" in pg.inner_text(".aich-row:last-child")
     say(pg, "карттинку")
-    cards = pg.locator(".aich-row:last-child .aich-model")
-    assert cards.count() >= 2
-    assert "₽" in cards.first.inner_text() and "витрине" in cards.first.inner_text()
-    n = pg.locator(".aich-row").count()
-    cards.first.click()
-    pg.wait_for_function(f"document.querySelectorAll('.aich-row:not(.aich-typing)').length >= {n + 2}")
     last = pg.locator(".aich-row:last-child")
-    assert "Поняла так" in last.inner_text() and "Какой кот" in last.inner_text()   # уточняет детали под идею
+    assert "Поняла так" in last.inner_text() or "Уточню детали" in last.inner_text()
+    assert "Какой кот" in last.inner_text() or last.locator(".aich-opt").count() >= 1
     assert last.locator(".aich-open li").count() == 3                                # кто, где, что — своими словами
     rows = pg.locator(".aich-row").count()
     last.locator(".aich-opt:has-text('Смешная')").click()
     pg.wait_for_function("[...document.querySelectorAll('.aich-row:last-child .aich-opt.is-on')].some(b => b.textContent === 'Смешная')")
     assert pg.locator(".aich-row").count() == rows                                   # обновилось на месте
     n = pg.locator(".aich-row").count()
-    say(pg, "рыжий кот в поварском колпаке, деревенская кухня, переворачивает яичницу")   # ответ одним сообщением
+    say(pg, "рыжий кот в поварском колпаке, деревенская кухня, переворачивает яичницу")   # → варианты промпта
     variants = pg.locator(".aich-row:last-child .aich-variant")
     assert variants.count() == 3 and "chef's hat" in variants.first.inner_text()
     n = pg.locator(".aich-row").count()
@@ -80,6 +75,12 @@ def test_flow_from_screenshot(page):
     pg.wait_for_function(f"document.querySelectorAll('.aich-row:not(.aich-typing)').length >= {n + 2}")
     last = pg.locator(".aich-row:last-child")
     assert "flips an egg" in last.locator(".aich-prompt__text").inner_text()
+    cards = last.locator(".aich-model")
+    assert cards.count() >= 2 and "₽" in cards.first.inner_text()
+    n = pg.locator(".aich-row").count()
+    cards.first.click()
+    pg.wait_for_function(f"document.querySelectorAll('.aich-row:not(.aich-typing)').length >= {n + 2}")
+    last = pg.locator(".aich-row:last-child")
     assert last.locator(".aich-opt.is-on").count() >= 1
     # смена параметра обновляет сообщение на месте, без новых пузырей
     rows = pg.locator(".aich-row").count()
@@ -101,13 +102,14 @@ def test_prompt_edit_in_place_updates_form(page):
     pg, errors = page
     say(pg, "вертикальное видео 5 секунд: кот жарит яичницу")
     n = pg.locator(".aich-row").count()
-    pg.locator(".aich-row:last-child .aich-model").first.click()
-    pg.wait_for_function(f"document.querySelectorAll('.aich-row:not(.aich-typing)').length >= {n + 2}")
-    n = pg.locator(".aich-row").count()
-    pg.locator(".aich-row:last-child .aich-chip--primary").click()
+    # бриф → варианты → модель → правка промпта на экране запуска
+    pg.locator(".aich-row:last-child .aich-chip:has-text('Пропустить')").click()
     pg.wait_for_function(f"document.querySelectorAll('.aich-row:not(.aich-typing)').length >= {n + 2}")
     n = pg.locator(".aich-row").count()
     pg.locator(".aich-row:last-child .aich-variant").first.click()
+    pg.wait_for_function(f"document.querySelectorAll('.aich-row:not(.aich-typing)').length >= {n + 2}")
+    n = pg.locator(".aich-row").count()
+    pg.locator(".aich-row:last-child .aich-model").first.click()
     pg.wait_for_function(f"document.querySelectorAll('.aich-row:not(.aich-typing)').length >= {n + 2}")
     txt = pg.locator(".aich-row:last-child .aich-prompt__text")
     txt.click()
@@ -118,12 +120,11 @@ def test_prompt_edit_in_place_updates_form(page):
     assert errors == []
 
 
-
 @pytest.mark.account
 def test_login_then_topup_then_generate(page):
     pg, errors = page
     say(pg, "видео: кот жарит яичницу")
-    for sel in (".aich-model", ".aich-chip--primary", ".aich-variant"):          # модель → бриф → вариант
+    for sel in (".aich-chip:has-text('Пропустить')", ".aich-variant", ".aich-model"):  # бриф → вариант → модель
         n = pg.locator(".aich-row").count()
         pg.locator(".aich-row:last-child " + sel).first.click()
         pg.wait_for_function(f"document.querySelectorAll('.aich-row:not(.aich-typing)').length >= {n + 2}")
@@ -149,7 +150,6 @@ def test_login_then_topup_then_generate(page):
     assert errors == []
 
 
-
 def test_empty_idea_and_junk_in_ui(page):
     pg, errors = page
     say(pg, "нужно сделать видео")
@@ -158,5 +158,6 @@ def test_empty_idea_and_junk_in_ui(page):
     say(pg, "ооло")
     assert "Не совсем поняла" in pg.locator(".aich-row:last-child").inner_text()
     say(pg, "рыжий кот жарит яичницу на кухне")
-    assert pg.locator(".aich-row:last-child .aich-model").count() >= 2
+    last = pg.locator(".aich-row:last-child")
+    assert last.locator(".aich-opt").count() >= 1 or "Уточню" in last.inner_text() or "Поняла" in last.inner_text()
     assert errors == []

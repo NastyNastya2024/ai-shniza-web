@@ -63,6 +63,7 @@ def _wait_seconds(model_id: str, kind: str) -> int:
         "wan-3-0-t2v-fal",
         "wan-3-0-i2v-fal",
         "seedance-2-5",
+        "seedance-2-5-hf",
         "ltx-2-3-t2v-fal",
         "ltx-2-3-t2v-fast-fal",
         "ltx-2-3-i2v-fal",
@@ -105,6 +106,8 @@ def _format_success(job: dict[str, Any], prediction: dict[str, Any], provider: s
     upstream_model = job["upstream_model"]
     if provider == "fal":
         outputs = srv._fal_extract_outputs(prediction, kind)
+    elif provider == "higgsfield":
+        outputs = srv._higgsfield_extract_outputs(prediction, kind)
     else:
         outputs = srv._flatten_output(prediction.get("output"))
 
@@ -117,6 +120,7 @@ def _format_success(job: dict[str, Any], prediction: dict[str, Any], provider: s
         "upstream_model": upstream_model,
         "replicate_model": job.get("replicate_model"),
         "fal_model": job.get("fal_model"),
+        "higgsfield_model": job.get("higgsfield_model"),
         "prediction_id": prediction.get("id") or prediction.get("request_id"),
     }
 
@@ -216,6 +220,8 @@ def process_job(channel: str, job: dict[str, Any], *, resume: bool = False) -> d
     if not ref:
         if channel == "fal":
             submitted = srv._fal_submit(upstream, payload)
+        elif channel == "higgsfield":
+            submitted = srv._higgsfield_submit(upstream, payload)
         else:
             submitted = srv._replicate_submit(upstream, payload)
 
@@ -231,6 +237,23 @@ def process_job(channel: str, job: dict[str, Any], *, resume: bool = False) -> d
             }
             # Immediate result without queue urls
             if prediction and not submitted.get("status_url"):
+                set_job(
+                    job["id"],
+                    status="running",
+                    chosen_channel=channel,
+                    started_at=time.time(),
+                    upstream_ref=ref,
+                )
+                write_health(channel, True, "job_ok")
+                return _format_success(job, prediction, channel)
+        elif channel == "higgsfield":
+            ref = {
+                "request_id": submitted.get("request_id"),
+                "status_url": submitted.get("status_url"),
+                "response_url": submitted.get("response_url"),
+                "cancel_url": submitted.get("cancel_url"),
+            }
+            if prediction and prediction.get("video"):
                 set_job(
                     job["id"],
                     status="running",
@@ -277,6 +300,10 @@ def process_job(channel: str, job: dict[str, Any], *, resume: bool = False) -> d
         result = srv._fal_wait(ref.get("status_url"), ref.get("response_url"), deadline)
         if result.get("error") == "timeout":
             srv._fal_cancel(upstream, ref.get("request_id"))
+    elif channel == "higgsfield":
+        result = srv._higgsfield_wait(ref.get("request_id"), deadline)
+        if result.get("error") == "timeout":
+            srv._higgsfield_cancel(ref.get("request_id"))
     else:
         result = srv._replicate_wait(ref.get("get_url"), deadline)
         if result.get("error") == "timeout":

@@ -18,6 +18,9 @@ from security import configure_security, apply_rate_limits, ensure_csrf_token
 from pricing import list_pricing_public, price_rub_media, get_usd_rub_rate
 from assistant_rules import recommend as assistant_recommend
 from product_routes import register_product
+from uploads import UploadError, register_uploads, resolve_generate_media
+from chat_history import register_chat_history
+from generation_works import register_generation_works
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "app.db")
@@ -1484,6 +1487,19 @@ INTEGRATED_MODELS = {
         "outputs": ["video"],
         "notes": "текст/фото→видео · звук · 480p/720p · до 30 с",
     },
+    # Higgsfield channel (queue + worker) — parallel to Replicate/fal, not a replacement
+    "seedance-2-5-hf": {
+        "id": "seedance-2-5-hf",
+        "name": "Seedance 2.5 HF",
+        "provider": "higgsfield",
+        "kind": "video",
+        "group": "video",
+        "higgsfield_model": "bytedance/seedance-2.5/text-to-video",
+        "inputs": ["text"],
+        "outputs": ["video"],
+        "notes": "Higgsfield · текст→видео · 720p · до 30 с · звук",
+        "wait_sec": 300,
+    },
     "seedance-2-0": {
         "id": "seedance-2-0",
         "name": "Seedance 2.0",
@@ -2079,6 +2095,7 @@ STUDIO_ONBOARD_IDS = frozenset({
     "wan-3-0",
     "grok-imagine-video-1-5",
     "seedance-2-5",
+    "seedance-2-5-hf",
     "veo-3-1",
     "veo-3-1-fast",
     "kling-v2-5-turbo-pro",
@@ -2205,11 +2222,18 @@ def _omniroute_key() -> str:
     return (os.getenv("OMNIROUTE_API_KEY") or "").strip()
 
 
+def _higgsfield_key() -> str:
+    load_env(BASE_DIR)
+    return (os.getenv("HF_KEY") or "").strip()
+
+
 def _provider_model_ref(spec: dict) -> str | None:
     if spec.get("provider") == "fal":
         return spec.get("fal_model")
     if spec.get("provider") == "omniroute":
         return spec.get("omniroute_model")
+    if spec.get("provider") == "higgsfield":
+        return spec.get("higgsfield_model")
     return spec.get("replicate_model")
 
 
@@ -2659,6 +2683,17 @@ def _build_replicate_input(
         if image:
             payload["image"] = image
         return payload
+
+    if model_id == "seedance-2-5-hf":
+        # Higgsfield Seedance 2.5 text-to-video API
+        return {
+            "prompt": prompt,
+            "duration": 5,
+            "resolution": "720p",
+            "aspect_ratio": "16:9",
+            "output_format": "mp4",
+            "generate_audio": True,
+        }
 
     if model_id == "seedance-2-0":
         return {"prompt": prompt}
@@ -3552,12 +3587,271 @@ def _run_fal_prediction(fal_model: str, input_payload: dict, wait_seconds: int =
     return result
 
 
+def _higgsfield_extract_outputs(prediction: dict, kind: str) -> list[str]:
+    """Normalize Higgsfield result payload into media URLs."""
+    if not isinstance(prediction, dict):
+        return []
+    urls: list[str] = []
+    video = prediction.get("video")
+    if isinstance(video, dict):
+        u = video.get("url") or video.get("uri")
+        if isinstance(u, str) and u:
+            urls.append(u)
+    elif isinstance(video, str) and video:
+        urls.append(video)
+    images = prediction.get("images")
+    if isinstance(images, list):
+        for item in images:
+            if isinstance(item, dict):
+                u = item.get("url") or item.get("uri")
+                if isinstance(u, str) and u:
+                    urls.append(u)
+            elif isinstance(item, str) and item:
+                urls.append(item)
+    if not urls:
+        urls.extend(_flatten_output(prediction.get("output")))
+    return urls
+
+
+def _higgsfield_submit(hf_model: str, input_payload: dict) -> dict:
+    """Submit to Higgsfield queue via official SDK (server-side HF_KEY)."""
+    if not _higgsfield_key():
+        return {"ok": False, "error": "not_configured", "status": 503, "phase": "submit"}
+    try:
+        import higgsfield_client as hf
+        from higgsfield_client.exceptions import CredentialsMissedError, HiggsfieldClientError
+    except ImportError:
+        return {
+            "ok": False,
+            "error": "not_configured",
+            "detail": "higgsfield-client not installed",
+            "status": 503,
+            "phase": "submit",
+        }
+    try:
+        ctrl = hf.submit(hf_model, input_payload or {})
+    except CredentialsMissedError:
+        return {"ok": False, "error": "not_configured", "status": 503, "phase": "submit"}
+    except HiggsfieldClientError as exc:
+        detail = str(exc)[:400]
+        low = detail.lower()
+        if "not_enough_credits" in low or "insufficient" in low:
+            return {
+                "ok": False,
+                "error": "insufficient_credits",
+                "detail": detail,
+                "status": 402,
+                "phase": "submit",
+            }
+        return {
+            "ok": False,
+            "error": "upstream",
+            "detail": detail,
+            "status": 502,
+            "phase": "submit",
+        }
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "ok": False,
+            "error": "upstream",
+            "detail": str(exc.__class__.__name__),
+            "status": 502,
+            "phase": "submit",
+        }
+    return {
+        "ok": True,
+        "request_id": getattr(ctrl, "request_id", None),
+        "status_url": getattr(ctrl, "status_url", None),
+        "response_url": getattr(ctrl, "response_url", None),
+        "cancel_url": getattr(ctrl, "cancel_url", None),
+        "prediction": {},
+        "phase": "submit",
+    }
+
+
+def _higgsfield_wait(request_id: str | None, deadline: float) -> dict:
+    if not request_id:
+        return {"ok": False, "error": "bad_response", "detail": "missing request_id", "status": 502, "phase": "run"}
+    if not _higgsfield_key():
+        return {"ok": False, "error": "not_configured", "status": 503, "phase": "run"}
+    try:
+        import higgsfield_client as hf
+        from higgsfield_client import Cancelled, Completed, Failed, NSFW
+        from higgsfield_client.exceptions import HiggsfieldClientError
+    except ImportError:
+        return {
+            "ok": False,
+            "error": "not_configured",
+            "detail": "higgsfield-client not installed",
+            "status": 503,
+            "phase": "run",
+        }
+    last_status = None
+    while time.time() < deadline:
+        try:
+            st = hf.status(request_id=request_id)
+            last_status = type(st).__name__
+        except HiggsfieldClientError as exc:
+            return {
+                "ok": False,
+                "error": "upstream",
+                "detail": str(exc)[:400],
+                "status": 502,
+                "phase": "run",
+            }
+        except Exception as exc:  # noqa: BLE001
+            if time.time() >= deadline:
+                return {
+                    "ok": False,
+                    "error": "upstream",
+                    "detail": str(exc.__class__.__name__),
+                    "status": 502,
+                    "phase": "run",
+                }
+            time.sleep(2)
+            continue
+
+        if isinstance(st, Completed):
+            try:
+                body = hf.result(request_id=request_id)
+            except Exception as exc:  # noqa: BLE001
+                return {
+                    "ok": False,
+                    "error": "upstream",
+                    "detail": str(exc)[:400],
+                    "status": 502,
+                    "phase": "run",
+                }
+            if not isinstance(body, dict):
+                body = {"raw": body}
+            body.setdefault("request_id", request_id)
+            body.setdefault("status", "completed")
+            return {"ok": True, "prediction": body, "phase": "run"}
+
+        if isinstance(st, NSFW):
+            return {
+                "ok": False,
+                "error": "moderated",
+                "detail": "content moderated",
+                "status": 422,
+                "phase": "run",
+            }
+        if isinstance(st, Cancelled):
+            return {
+                "ok": False,
+                "error": "cancelled",
+                "detail": "request cancelled",
+                "status": 499,
+                "phase": "run",
+            }
+        if isinstance(st, Failed):
+            return {
+                "ok": False,
+                "error": "failed",
+                "detail": last_status or "failed",
+                "status": 502,
+                "phase": "run",
+            }
+        time.sleep(2)
+
+    return {
+        "ok": False,
+        "error": "timeout",
+        "detail": f"higgsfield still {last_status or 'running'}",
+        "status": 504,
+        "phase": "run",
+    }
+
+
+def _higgsfield_cancel(request_id: str | None) -> None:
+    if not request_id or not _higgsfield_key():
+        return
+    try:
+        import higgsfield_client as hf
+        hf.cancel(request_id=request_id)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _run_higgsfield_prediction(hf_model: str, input_payload: dict, wait_seconds: int = 120) -> dict:
+    submitted = _higgsfield_submit(hf_model, input_payload)
+    if not submitted.get("ok"):
+        return submitted
+    prediction = submitted.get("prediction") or {}
+    if prediction.get("video"):
+        return {"ok": True, "prediction": prediction}
+    deadline = time.time() + max(int(wait_seconds or 60), 30)
+    result = _higgsfield_wait(submitted.get("request_id"), deadline)
+    if result.get("error") == "timeout":
+        _higgsfield_cancel(submitted.get("request_id"))
+    return result
+
+
+def _groq_chat_completion(messages: list, wait_seconds: int = 60) -> dict:
+    """Прямой вызов Groq — запасной путь, когда OmniRoute free-роуты не отвечают."""
+    groq_key = (os.getenv("GROQ_API_KEY") or "").strip()
+    if not groq_key:
+        return {"error": "not_configured", "detail": "GROQ_API_KEY missing", "status": 503}
+    models: list[str] = []
+    for candidate in (
+        (os.getenv("GROQ_CHAT_MODEL") or "").strip(),
+        (os.getenv("GROQ_MODEL") or "").strip(),
+        "openai/gpt-oss-20b",
+        "llama-3.1-8b-instant",
+    ):
+        if candidate and candidate not in models:
+            models.append(candidate)
+    last: dict = {"error": "upstream", "detail": "groq_failed", "status": 502}
+    for model in models:
+        try:
+            resp = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
+                json={"model": model, "messages": messages, "temperature": 0.4, "max_tokens": 1024, "stream": False},
+                timeout=max(15, min(wait_seconds, 90)),
+            )
+        except requests.RequestException as exc:
+            last = {"error": "upstream", "detail": str(exc.__class__.__name__), "status": 502}
+            continue
+        try:
+            data = resp.json()
+        except ValueError:
+            last = {"error": "bad_response", "detail": resp.text[:300], "status": 502}
+            continue
+        if resp.status_code >= 400:
+            detail = data.get("error") or data.get("detail") or resp.text[:300]
+            if isinstance(detail, dict):
+                detail = detail.get("message") or detail
+            last = {"error": "upstream", "detail": detail, "status": resp.status_code, "body": data}
+            continue
+        text = ""
+        choices = data.get("choices") if isinstance(data, dict) else None
+        if isinstance(choices, list) and choices:
+            msg = choices[0].get("message") if isinstance(choices[0], dict) else None
+            if isinstance(msg, dict):
+                text = _extract_chat_message_text(msg)
+            if not text and isinstance(choices[0], dict):
+                text = str(choices[0].get("text") or "")
+        if not str(text).strip():
+            last = {"error": "upstream", "detail": "empty groq reply", "status": 502}
+            continue
+        return {
+            "ok": True,
+            "prediction": {
+                "id": data.get("id") if isinstance(data, dict) else None,
+                "status": "succeeded",
+                "output": text,
+                "raw": data,
+                "via": "groq",
+                "model": data.get("model") or model,
+            },
+        }
+    return last
+
+
 def _run_omniroute_prediction(omni_model: str, input_payload: dict, wait_seconds: int = 120) -> dict:
     """Call OmniRoute OpenAI-compatible /v1/chat/completions."""
     key = _omniroute_key()
-    if not key:
-        return {"error": "not_configured", "detail": "OMNIROUTE_API_KEY missing", "status": 503}
-    base = _omniroute_base()
     prompt = ""
     if isinstance(input_payload, dict):
         prompt = (input_payload.get("prompt") or input_payload.get("text") or "").strip()
@@ -3572,59 +3866,73 @@ def _run_omniroute_prediction(omni_model: str, input_payload: dict, wait_seconds
     if not messages or not str(messages[-1].get("content") or "").strip():
         return {"error": "empty", "detail": "prompt required", "status": 400}
 
-    url = f"{base}/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {key}",
-        "Content-Type": "application/json",
-    }
-    body = {
-        "model": omni_model,
-        "messages": messages,
-        "stream": False,
-    }
-    try:
-        resp = requests.post(url, headers=headers, json=body, timeout=wait_seconds + 30)
-    except requests.RequestException as exc:
-        return {"error": "upstream", "detail": str(exc.__class__.__name__), "status": 502}
+    omni_err: dict | None = None
+    if key:
+        base = _omniroute_base()
+        url = f"{base}/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+        }
+        body = {
+            "model": omni_model,
+            "messages": messages,
+            "stream": False,
+        }
+        try:
+            resp = requests.post(url, headers=headers, json=body, timeout=wait_seconds + 30)
+        except requests.RequestException as exc:
+            omni_err = {"error": "upstream", "detail": str(exc.__class__.__name__), "status": 502}
+        else:
+            try:
+                data = resp.json()
+            except ValueError:
+                omni_err = {"error": "bad_response", "detail": resp.text[:300], "status": 502}
+            else:
+                if resp.status_code >= 400:
+                    detail = data.get("error") or data.get("detail") or resp.text[:300]
+                    if isinstance(detail, dict):
+                        detail = detail.get("message") or detail
+                    omni_err = {"error": "upstream", "detail": detail, "status": resp.status_code, "body": data}
+                else:
+                    # Normalize to prediction-like object used by formatters.
+                    text = ""
+                    choices = data.get("choices") if isinstance(data, dict) else None
+                    if isinstance(choices, list) and choices:
+                        msg = choices[0].get("message") if isinstance(choices[0], dict) else None
+                        if isinstance(msg, dict):
+                            content = msg.get("content")
+                            if isinstance(content, str):
+                                text = content
+                            elif isinstance(content, list):
+                                parts = []
+                                for part in content:
+                                    if isinstance(part, dict) and isinstance(part.get("text"), str):
+                                        parts.append(part["text"])
+                                    elif isinstance(part, str):
+                                        parts.append(part)
+                                text = "\n".join(parts)
+                        if not text and isinstance(choices[0], dict):
+                            text = str(choices[0].get("text") or "")
 
-    try:
-        data = resp.json()
-    except ValueError:
-        return {"error": "bad_response", "detail": resp.text[:300], "status": 502}
+                    prediction = {
+                        "id": data.get("id") if isinstance(data, dict) else None,
+                        "status": "succeeded",
+                        "output": text,
+                        "raw": data,
+                    }
+                    return {"ok": True, "prediction": prediction}
+    else:
+        omni_err = {"error": "not_configured", "detail": "OMNIROUTE_API_KEY missing", "status": 503}
 
-    if resp.status_code >= 400:
-        detail = data.get("error") or data.get("detail") or resp.text[:300]
-        if isinstance(detail, dict):
-            detail = detail.get("message") or detail
-        return {"error": "upstream", "detail": detail, "status": resp.status_code, "body": data}
-
-    # Normalize to prediction-like object used by formatters.
-    text = ""
-    choices = data.get("choices") if isinstance(data, dict) else None
-    if isinstance(choices, list) and choices:
-        msg = choices[0].get("message") if isinstance(choices[0], dict) else None
-        if isinstance(msg, dict):
-            content = msg.get("content")
-            if isinstance(content, str):
-                text = content
-            elif isinstance(content, list):
-                parts = []
-                for part in content:
-                    if isinstance(part, dict) and isinstance(part.get("text"), str):
-                        parts.append(part["text"])
-                    elif isinstance(part, str):
-                        parts.append(part)
-                text = "\n".join(parts)
-        if not text and isinstance(choices[0], dict):
-            text = str(choices[0].get("text") or "")
-
-    prediction = {
-        "id": data.get("id") if isinstance(data, dict) else None,
-        "status": "succeeded",
-        "output": text,
-        "raw": data,
-    }
-    return {"ok": True, "prediction": prediction}
+    # Free-роуты OmniRoute часто 403/502 (OpenCode only) — отвечаем через Groq, если ключ есть.
+    if (os.getenv("GROQ_API_KEY") or "").strip():
+        fallback = _groq_chat_completion(messages, wait_seconds=wait_seconds)
+        if fallback.get("ok"):
+            return fallback
+        if omni_err is None:
+            return fallback
+    return omni_err or {"error": "upstream", "detail": "omniroute_failed", "status": 502}
 
 
 @app.route("/api/channels/health", methods=["GET"])
@@ -4517,6 +4825,18 @@ def api_generate_job(job_id: str):
         return jsonify({"error": "queue_unavailable", "detail": str(exc)}), 503
     if not public:
         return jsonify({"error": "not_found"}), 404
+    # Готово → работа в «Моих работах»: неопубликованная хранится 24 часа, в чате сразу предлагаем опубликовать
+    if public.get("status") == "succeeded" and owner:
+        try:
+            gw = app.extensions.get("generation_works")
+            work = gw["record"](job_id, public, owner, job.get("prompt") or "", job.get("params")) if gw else None
+            if work is not None:
+                public["work_id"] = work.id
+                public["expires_at"] = gw["expires_iso"](work)
+                public["published"] = work.status == "published"
+        except Exception:  # noqa: BLE001
+            db.session.rollback()
+            app.logger.exception("record generation work failed")
     resp = jsonify(public)
     resp.headers["Cache-Control"] = "no-store"
     return resp
@@ -4701,6 +5021,9 @@ def api_generate():
     elif provider == "omniroute":
         if not _omniroute_key():
             return jsonify({"error": "not_configured", "detail": "OMNIROUTE_API_KEY missing"}), 503
+    elif provider == "higgsfield":
+        if not _higgsfield_key():
+            return jsonify({"error": "not_configured", "detail": "HF_KEY missing"}), 503
     else:
         return jsonify({"error": "unsupported_provider", "provider": provider}), 400
 
@@ -4714,6 +5037,15 @@ def api_generate():
             }), 503
     except Exception as exc:  # noqa: BLE001
         return jsonify({"error": "queue_unavailable", "detail": str(exc)}), 503
+
+    # Скрепка: «upl_…» из /api/uploads → ссылка, которую скачает провайдер (S3 / сайт / data URL).
+    # Файлы, которые модель не принимает (spec["inputs"]), отбрасываются.
+    try:
+        image_data_url, audio_data_url, video_data_url = resolve_generate_media(
+            spec, image_data_url, audio_data_url, video_data_url
+        )
+    except UploadError as exc:
+        return jsonify(exc.to_dict()), exc.status
 
     try:
         input_payload = _build_provider_input(
@@ -4743,8 +5075,11 @@ def api_generate():
                 "upstream_model": upstream_model,
                 "replicate_model": spec.get("replicate_model"),
                 "fal_model": spec.get("fal_model"),
+                "higgsfield_model": spec.get("higgsfield_model"),
                 "input_payload": input_payload,
                 "owner_id": session.get("user_id"),
+                "prompt": prompt[:4000],          # для «Моих работ» и публикации на витрине
+                "params": safe_params or None,
             })
         except Exception as exc:  # noqa: BLE001
             return jsonify({"error": "queue_unavailable", "detail": str(exc)}), 503
@@ -4797,6 +5132,7 @@ def api_generate():
         "wan-3-0-t2v-fal",
         "wan-3-0-i2v-fal",
         "seedance-2-5",
+        "seedance-2-5-hf",
         "ltx-2-3-t2v-fal",
         "ltx-2-3-t2v-fast-fal",
         "ltx-2-3-i2v-fal",
@@ -4818,6 +5154,10 @@ def api_generate():
 
     if provider == "fal":
         result = _run_fal_prediction(upstream_model, input_payload, wait_seconds=wait)
+    elif provider == "higgsfield":
+        result = _run_higgsfield_prediction(upstream_model, input_payload, wait_seconds=wait)
+    elif provider == "omniroute":
+        result = _run_omniroute_prediction(upstream_model, input_payload, wait_seconds=wait)
     else:
         result = _run_replicate_prediction(upstream_model, input_payload, wait_seconds=wait)
 
@@ -4831,12 +5171,15 @@ def api_generate():
             "upstream_model": upstream_model,
             "replicate_model": spec.get("replicate_model"),
             "fal_model": spec.get("fal_model"),
+            "higgsfield_model": spec.get("higgsfield_model"),
         }), code
 
     prediction = result["prediction"]
     kind = spec["kind"]
     if provider == "fal":
         outputs = _fal_extract_outputs(prediction, kind)
+    elif provider == "higgsfield":
+        outputs = _higgsfield_extract_outputs(prediction, kind)
     else:
         outputs = _flatten_output(prediction.get("output"))
 
@@ -4846,6 +5189,7 @@ def api_generate():
         "upstream_model": upstream_model,
         "replicate_model": spec.get("replicate_model"),
         "fal_model": spec.get("fal_model"),
+        "higgsfield_model": spec.get("higgsfield_model"),
         "prediction_id": prediction.get("id") or prediction.get("request_id"),
     }
 
@@ -4982,6 +5326,7 @@ ASSISTANT = _assist_build(
     redis_client=_assist_redis(),
     on_event=_assist_on_event,
     cost_fn=_generate_cost_kop,
+    visible_fn=lambda mid: _is_studio_visible(INTEGRATED_MODELS.get(mid) or {}),   # этапы проекта: только модели студии
 )
 register_assistant(
     app, ASSISTANT,
@@ -4989,6 +5334,15 @@ register_assistant(
     # перед «Сгенерировать» ассистент спрашивает: 1) войти, 2) пополнить — по данным сервера, не фронта
     account_fn=lambda _uid: _generate_account() if _generate_require_auth() else None,
 )
+
+# ── Скрепка: POST/GET/DELETE /api/uploads (файлы для генерации; записи — в Redis, иначе в памяти) ──
+register_uploads(app, redis_fn=_assist_redis)
+
+# ── История переписки студии: /api/chats (текст и имена файлов — в аккаунте; сами файлы живут 24 ч) ──
+register_chat_history(app, db)
+
+# ── Генерации → «Мои работы»; неопубликованные удаляются через 24 ч (flask purge-unpublished-works) ──
+register_generation_works(app, db)
 
 
 @app.after_request

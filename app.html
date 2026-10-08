@@ -8,6 +8,8 @@
 <link rel="icon" href="/assets/brand/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/assets/brand/png/apple-touch-icon-180.png">
 <link rel="stylesheet" href="/assistant-ui.css">
+<link rel="stylesheet" href="/attach.css">
+<link rel="stylesheet" href="/chat-history.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -39,19 +41,19 @@ body{margin:0;background:#EEEAF8}
   box-shadow:0 18px 40px -28px var(--shadow);
 }
 .t-light #left.panel{background:#F7F5FC}
-.t-light #left.panel .model{background:rgba(255,255,255,.92)}
-.t-light #left.panel .model-on{background:linear-gradient(#fff,#fff) padding-box,linear-gradient(110deg,#FFA235 0%,#FF7B2C 45%,#FF8F7E 78%,#F6AACF 100%) border-box}
-.t-light #left.panel .model-toolbar #tabs,
-.t-light #left.panel .model-toolbar:not(.search-on) .search-wrap .search,
-.t-light #left.panel .model-toolbar.search-on .search-wrap .search{background:rgba(60,40,130,.06)}
+.t-light :is(#left.panel,#vit) .model{background:rgba(255,255,255,.92)}
+.t-light :is(#left.panel,#vit) .model-on{background:linear-gradient(#fff,#fff) padding-box,linear-gradient(110deg,#FFA235 0%,#FF7B2C 45%,#FF8F7E 78%,#F6AACF 100%) border-box}
+.t-light :is(#left.panel,#vit) .model-toolbar #tabs,
+.t-light :is(#left.panel,#vit) .model-toolbar:not(.search-on) .search-wrap .search,
+.t-light :is(#left.panel,#vit) .model-toolbar.search-on .search-wrap .search{background:rgba(60,40,130,.06)}
 .t-dark #left.panel{
   background:rgba(46,38,78,.92);
   border-color:rgba(255,255,255,.15);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 24px 60px -30px rgba(0,0,0,.85);
 }
-.t-dark #left.panel .model{background:rgba(255,255,255,.075);border-color:rgba(255,255,255,.08)}
-.t-dark #left.panel .model:hover{border-color:rgba(255,255,255,.2)}
-.t-dark #left.panel .model-on{background:linear-gradient(rgba(46,38,78,.98),rgba(46,38,78,.98)) padding-box,linear-gradient(110deg,#FFA235 0%,#FF7B2C 45%,#FF8F7E 78%,#F6AACF 100%) border-box;box-shadow:0 0 0 1px rgba(255,162,53,.18),0 8px 18px -14px rgba(240,110,130,.55)}
+.t-dark :is(#left.panel,#vit) .model{background:rgba(255,255,255,.075);border-color:rgba(255,255,255,.08)}
+.t-dark :is(#left.panel,#vit) .model:hover{border-color:rgba(255,255,255,.2)}
+.t-dark :is(#left.panel,#vit) .model-on{background:linear-gradient(rgba(46,38,78,.98),rgba(46,38,78,.98)) padding-box,linear-gradient(110deg,#FFA235 0%,#FF7B2C 45%,#FF8F7E 78%,#F6AACF 100%) border-box;box-shadow:0 0 0 1px rgba(255,162,53,.18),0 8px 18px -14px rgba(240,110,130,.55)}
 .t-dark .glass{box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 24px 60px -30px rgba(0,0,0,.85)}
 .t-dark .composer.glass{background:rgba(46,38,78,.9)}
 .t-dark .icon-btn:not(.icon-ghost){background:rgba(46,38,78,.86);border-color:rgba(255,255,255,.16);color:var(--ink)}
@@ -235,8 +237,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 }
 .vit-card video{pointer-events:none;background:#120f20}
 .vit-card:hover img,.vit-card:hover video{transform:scale(1.04)}
-.vit-card .vc-t{position:absolute;left:0;right:0;bottom:0;padding:22px 9px 8px;background:linear-gradient(180deg,rgba(20,14,40,0),rgba(20,14,40,.78));color:#fff;font-size:11.5px;font-weight:600;line-height:1.3}
-.t-dark .vit-card .vc-t{background:linear-gradient(180deg,rgba(10,6,24,0),rgba(10,6,24,.85))}
 .vit-card .vc-p{position:absolute;left:7px;top:7px;height:20px;padding:0 6px;border-radius:999px;background:rgba(20,14,40,.6);color:#fff;font-size:10.5px;font-weight:700;display:flex;align-items:center;gap:3px}
 .vit-card:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
 .vit-empty{margin:4px;padding:14px;border-radius:16px;border:1.5px dashed var(--field-brd);font-size:13px;line-height:1.45;color:var(--muted)}
@@ -296,6 +296,21 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .vit-back{align-self:flex-start;border:none;background:none;color:var(--accent-ink);font-family:'Onest',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;padding:4px;min-height:44px}
 .vit-full{display:flex;align-items:center;justify-content:center;gap:8px;height:44px;flex:0 0 auto;border-radius:14px;text-decoration:none;font-size:14px;font-weight:700;color:var(--accent-ink);background:var(--seg-bg)}
 .vit-full:hover{background:var(--seg-on)}
+/* правая панель: вкладки «Витрина | Нейросети» */
+.vit-h .rp-tabs{flex:1 1 auto;min-width:0;display:flex;gap:2px;padding:3px;border-radius:14px;background:var(--seg-bg)}
+.rp-tab{flex:1 1 0;min-width:0;height:38px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 10px;border:0;border-radius:11px;background:transparent;color:var(--muted);font:600 14px 'Onest',sans-serif;cursor:pointer;white-space:nowrap}
+.rp-tab span{overflow:hidden;text-overflow:ellipsis}
+.rp-tab svg{flex:0 0 auto}
+.rp-tab:hover{color:var(--ink)}
+.rp-tab[aria-selected=true]{background:var(--seg-on);color:var(--accent-ink);box-shadow:0 4px 12px -6px var(--shadow)}
+.rp-pane{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px}
+.rp-pane.hidden{display:none!important}
+.vit-top{display:flex;align-items:flex-start;gap:8px}
+.vit-top .vit-sub{flex:1 1 auto;margin:2px 4px 0}
+.vit-top .vit-full{height:32px;padding:0 12px;border-radius:10px;font-size:12.5px}
+/* слева — только чаты, список на всю высоту */
+.chats.chats-side{flex:1 1 auto;min-height:0;margin-top:4px;border:0;background:transparent;padding:0 2px}
+.chats.chats-side .chats-list{flex:1 1 auto;max-height:none;margin:0 -2px}
 .vit-hint{width:100%;max-width:780px;margin:0 auto 10px;padding:0 12px;box-sizing:border-box;display:flex;justify-content:flex-end;gap:6px;animation:msgIn .35s ease-out both}
 .vit-hint button{font-family:'Onest',sans-serif;cursor:pointer}
 #vitHintBtn{display:flex;align-items:center;gap:10px;height:46px;padding:0 6px;border-radius:999px;border:1px solid var(--glass-brd);background:var(--glass);backdrop-filter:blur(16px);color:var(--ink);font-size:13.5px;font-weight:600;box-shadow:0 14px 30px -18px var(--shadow);max-width:100%;min-width:0}
@@ -348,6 +363,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
   .composer textarea{font-size:16px!important}
   .composer [data-toggle-right-open]{flex:1 1 auto;min-width:0;justify-content:flex-start;overflow:hidden}
   .composer [data-toggle-right-open] #selName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .composer [data-toggle-right-open] #selName.sel-empty{font-weight:600;color:var(--muted2)}
+  .composer [data-toggle-right-open].sel-empty #selPrice{display:none}
   #selEst{display:none}
   .composer button[type=submit]{padding:0 14px!important;min-width:44px;min-height:44px}
   .composer button[type=submit] .sub-t{display:none}
@@ -374,6 +391,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 @media (prefers-reduced-motion:reduce){
   #vit,#left,.vit-btn.pulse{animation:none!important}
 }
+.assist-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:0 4px 8px}
+.assist-bar__btn{font:600 13px 'Onest',system-ui,sans-serif;height:34px;padding:0 12px;border-radius:999px;border:1.5px solid var(--field-brd,rgba(80,60,160,.15));background:var(--card,rgba(255,255,255,.7));color:var(--ink,#1E1238);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:border-color .15s,background .15s,opacity .15s}
+.assist-bar__btn:hover{border-color:var(--accent-ink,#4B2BB8)}
+.assist-bar__btn--accent{border-color:transparent;background:linear-gradient(110deg,#FFA235 0%,#FF7B2C 55%,#FF8F7E 100%);color:#fff;text-shadow:0 1px 1px rgba(120,40,10,.25)}
+.assist-bar__btn--accent:hover{filter:brightness(1.05)}
+.assist-bar__dot{width:8px;height:8px;border-radius:50%;background:#3BB273;box-shadow:0 0 0 3px rgba(59,178,115,.2)}
+.assist-bar.is-off .assist-bar__dot{background:#A0A0B0;box-shadow:none}
+.assist-bar.is-off #assistToggle{opacity:.92;color:var(--muted2,#6E62A3)}
+.t-dark .assist-bar__btn{background:rgba(46,38,78,.88)}
 </style>
 </head>
 <body data-title-key="studio.title">
@@ -386,20 +412,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
       <a href="/" aria-label="{AI}-шница — на главную" data-i18n-attr="aria-label:common.home.aria" style="display:flex;align-items:center;text-decoration:none;flex:0 0 auto"><img class="brand-mark brand-mark-light" src="/assets/brand/svg/icon-light.svg" alt="{AI}-шница" data-i18n-attr="alt:common.brand.alt"><img class="brand-mark brand-mark-dark" src="/assets/brand/svg/icon-dark.svg" alt="{AI}-шница" data-i18n-attr="alt:common.brand.alt"></a>
       <span style="display:flex;align-items:center;gap:2px;margin-left:auto"><a href="#" class="icon-btn icon-ghost" aria-label="Помощь" title="Помощь" data-i18n-attr="aria-label:common.help;title:common.help"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01"></path></svg></a><button type="button" class="icon-btn icon-ghost lang" data-lang-toggle aria-label="Язык: русский" title="Язык">RU</button><button type="button" id="themeBtn" class="icon-btn icon-ghost" aria-label="Тёмная тема" title="Тёмная тема"></button><button type="button" class="icon-btn icon-ghost" aria-label="Скрыть панель" data-i18n-attr="aria-label:studio.panel.hide" data-toggle-left><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"></rect><path d="M9 4v16"></path></svg></button></span>
     </div>
-    <div style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:8px;margin-top:3px">
-      <div id="modelToolbar" class="model-toolbar">
-        <label class="search-wrap" for="query">
-          <span class="sr-only" data-i18n="studio.search.label">Поиск модели</span>
-          <svg class="search-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-          <input id="query" class="search" type="search" placeholder="Поиск модели" data-i18n-attr="placeholder:studio.search.placeholder" autocomplete="off">
-        </label>
-        <div id="tabs" role="tablist" aria-label="Тип модели" data-i18n-attr="aria-label:studio.tabs.aria"></div>
-      </div>
-      <div class="ttl" style="flex:1 1 auto;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin:0 -2px;padding:2px 2px 4px">
-        <div id="models" style="display:flex;flex-direction:column;gap:6px"></div>
-        <div id="empty" class="hidden" style="padding:24px 8px;text-align:center;font-size:14px;color:var(--muted)" data-i18n="studio.empty">Ничего не нашлось. Попробуйте другое слово.</div>
-      </div>
-    </div>
+    <!-- слева — только чаты; каталог нейросетей переехал в правую панель (вкладка «Нейросети») -->
+    <section id="chatsBox" class="chats chats-side" aria-label="Чаты" data-i18n-attr="aria-label:studio.history.title"></section>
     <div style="display:flex;flex-direction:column;gap:10px;flex:0 0 auto">
       <div id="guestCard" class="cabinet" style="padding:14px;display:flex;flex-direction:column;gap:10px">
         <button type="button" class="btn-purple" data-login data-i18n="common.login" style="height:42px;border-radius:12px;font-size:14px">Войти</button>
@@ -418,7 +432,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 
   <main style="flex:1 1 360px;min-width:280px;box-sizing:border-box;display:flex;flex-direction:column;height:calc(100vh - 32px);min-height:560px">
     <div style="display:flex;align-items:center;gap:8px;padding:0 4px;min-height:44px">
-      <button type="button" id="vitBtn" class="icon-btn vit-btn" aria-pressed="false" aria-controls="vit" title="Похожие работы на витрине" data-i18n-attr="title:studio.vitBtn.title" style="order:2;margin-left:auto"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect></svg><span class="vb-t" data-i18n="studio.vitBtn.label">Витрина</span><span class="cnt hidden" id="vitCnt"></span></button>
+      <button type="button" id="vitBtn" class="icon-btn vit-btn" aria-pressed="false" aria-controls="vit" title="Похожие работы на витрине" data-i18n-attr="title:studio.vitBtn.title" style="order:2;margin-left:auto"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect></svg><span class="vb-t" data-i18n="studio.vitBtn.label">Нейросети и витрина</span><span class="cnt hidden" id="vitCnt"></span></button>
       <span id="leftReopen" class="hidden" style="display:flex;align-items:center;gap:6px">
         <a href="/" aria-label="{AI}-шница — на главную" data-i18n-attr="aria-label:common.home.aria" style="display:flex;align-items:center;text-decoration:none"><img class="brand-mark brand-mark-light" src="/assets/brand/svg/icon-light.svg" alt="{AI}-шница" data-i18n-attr="alt:common.brand.alt" style="height:30px;width:30px"><img class="brand-mark brand-mark-dark" src="/assets/brand/svg/icon-dark.svg" alt="{AI}-шница" data-i18n-attr="alt:common.brand.alt" style="height:30px;width:30px"></a>
         <button type="button" class="icon-btn" aria-label="Показать панель" data-i18n-attr="aria-label:studio.panel.show" data-toggle-left><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"></rect><path d="M9 4v16"></path></svg></button>
@@ -457,6 +471,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 
     <div id="vitHint" class="vit-hint hidden" role="status"><button type="button" id="vitHintBtn"><span class="vh-th" id="vhTh"></span><span class="vh-t" id="vhT"></span><span class="vh-go" data-i18n="studio.hint.go">Смотреть →</span></button><button type="button" class="vh-x" id="vitHintX" aria-label="Скрыть подсказку" data-i18n-attr="aria-label:studio.hint.dismiss">×</button></div>
     <form id="form" style="width:100%;max-width:780px;margin:0 auto;box-sizing:border-box;padding:0 12px 6px">
+      <div id="assistBar" class="assist-bar" role="toolbar" aria-label="Управление помощником" data-i18n-attr="aria-label:studio.assist.bar">
+        <button type="button" id="assistToggle" class="assist-bar__btn" data-assist-toggle aria-pressed="true">
+          <span class="assist-bar__dot" aria-hidden="true"></span>
+          <span id="assistToggleLabel" data-i18n="studio.assist.on">Помощник вкл</span>
+        </button>
+        <button type="button" id="assistNew" class="assist-bar__btn assist-bar__btn--accent" data-assist-new data-i18n="studio.assist.new" title="Сбросить диалог и начать с выбора типа" data-i18n-attr="title:studio.assist.newTitle">Новая генерация</button>
+      </div>
       <div class="composer glass" style="border-radius:26px;padding:14px 14px 12px 18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 24px 60px -26px var(--shadow)">
         <label for="prompt" class="sr-only" data-i18n="studio.composer.label">Задача для модели</label>
         <textarea id="prompt" class="prompt-input" rows="2" placeholder="Опишите ролик, картинку или трек…" data-i18n-attr="placeholder:studio.composer.placeholder" style="width:100%;box-sizing:border-box;border:none;background:transparent;resize:none;font-family:'Onest',sans-serif;font-size:17px;line-height:1.5;padding:2px 0 0"></textarea>
@@ -464,8 +485,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
           <button type="button" class="field" data-attach aria-label="Прикрепить файл" data-i18n-attr="aria-label:common.attach" style="width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg>
           </button>
-          <button type="button" class="field" aria-label="Сменить модель" data-i18n-attr="aria-label:studio.composer.changeModel" data-toggle-right-open style="height:44px;padding:0 14px;border-radius:14px;font-family:'Onest',sans-serif;font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer;max-width:100%">
-            <span id="selName" style="font-weight:700;color:var(--ink)"></span>
+          <button type="button" class="field" id="selBtn" aria-label="Выбрать модель" data-i18n-attr="aria-label:studio.composer.pickModel.aria" data-toggle-right-open style="height:44px;padding:0 14px;border-radius:14px;font-family:'Onest',sans-serif;font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer;max-width:100%">
+            <span id="selName" class="sel-empty" style="font-weight:700;color:var(--ink)" data-i18n="studio.composer.pickModel">Выберите модель</span>
             <span id="selPrice" style="color:var(--muted2)"></span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
           </button>
@@ -479,15 +500,33 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
     </form>
   </main>
 
-  <aside id="vit" class="glass panel hidden" aria-label="Витрина: похожие работы" data-i18n-attr="aria-label:studio.vit.aria">
+  <aside id="vit" class="glass panel hidden" aria-label="Нейросети и витрина" data-i18n-attr="aria-label:studio.rp.aria">
     <div class="vit-h">
-      <h2 class="vit-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect></svg><span data-i18n="studio.vit.title">Витрина</span></h2>
-      <a class="vit-full" id="vitFull2" href="/explore" data-i18n="nav.allWorks">Все работы</a>
-      <button type="button" id="vitClose" class="icon-btn icon-ghost" aria-label="Закрыть витрину" title="Закрыть" data-i18n-attr="aria-label:studio.vit.close;title:common.close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+      <div class="rp-tabs" role="tablist" aria-label="Правая панель" data-i18n-attr="aria-label:studio.rp.tabs">
+        <button type="button" role="tab" id="rpTabVit" class="rp-tab" data-rp-tab="vit" aria-controls="rpVit" aria-selected="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect></svg><span data-i18n="studio.vit.title">Витрина</span></button>
+        <button type="button" role="tab" id="rpTabModels" class="rp-tab" data-rp-tab="models" aria-controls="rpModels" aria-selected="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7z"></path></svg><span data-i18n="studio.rp.models">Нейросети</span></button>
+      </div>
+      <button type="button" id="vitClose" class="icon-btn icon-ghost" aria-label="Закрыть панель" title="Закрыть" data-i18n-attr="aria-label:studio.rp.close;title:common.close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
     </div>
-    <p class="vit-sub" data-i18n="studio.vit.sub">Похожие работы — посмотрите, как это уже сделали, и возьмите модель или стиль</p>
-    <div class="vit-ctx" id="vitCtx"></div>
-    <div class="vit-body" id="vitBody"></div>
+    <div id="rpVit" class="rp-pane" role="tabpanel" aria-labelledby="rpTabVit">
+      <div class="vit-top"><p class="vit-sub" data-i18n="studio.vit.sub">Похожие работы — посмотрите, как это уже сделали, и возьмите модель или стиль</p><a class="vit-full" id="vitFull2" href="/explore" data-i18n="nav.allWorks">Все работы</a></div>
+      <div class="vit-ctx" id="vitCtx"></div>
+      <div class="vit-body" id="vitBody"></div>
+    </div>
+    <div id="rpModels" class="rp-pane hidden" role="tabpanel" aria-labelledby="rpTabModels">
+      <div id="modelToolbar" class="model-toolbar">
+        <label class="search-wrap" for="query">
+          <span class="sr-only" data-i18n="studio.search.label">Поиск модели</span>
+          <svg class="search-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input id="query" class="search" type="search" placeholder="Поиск модели" data-i18n-attr="placeholder:studio.search.placeholder" autocomplete="off">
+        </label>
+        <div id="tabs" role="tablist" aria-label="Тип модели" data-i18n-attr="aria-label:studio.tabs.aria"></div>
+      </div>
+      <div class="ttl" style="flex:1 1 auto;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin:0 -2px;padding:2px 2px 4px">
+        <div id="models" style="display:flex;flex-direction:column;gap:6px"></div>
+        <div id="empty" class="hidden" style="padding:24px 8px;text-align:center;font-size:14px;color:var(--muted)" data-i18n="studio.empty">Ничего не нашлось. Попробуйте другое слово.</div>
+      </div>
+    </div>
   </aside>
 
 
@@ -500,6 +539,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 <script src="/i18n/runtime.js"></script>
 <script src="/vitrina-data.js"></script>
 <script src="/assistant-ui.js"></script>
+<script src="/attach.js"></script>
+<script src="/chat-history.js"></script>
 <script>
 /* Тема общая со витриной/профилем: localStorage aish-vitrina-theme (+ theme). ?theme= перекрывает. */
 function readSharedTheme() {
@@ -581,7 +622,9 @@ class Component extends DCLogic {
   init() {
     if (this._ready) return;
     this._ready = true;
-    this.state = Object.assign({ tab: 'all', query: '', sort: 'cheap', searchFocus: false, sel: 'wan-3-0', text: URL_PROMPT || '', say: '', shown: 0, blink: false, chat: false, msgs: [], typing: false, authed: false, leftOpen: !IS_MOBILE, rightOpen: true, dark: (this.props.theme || 'light') === 'dark', userName: '', userLetter: '?', balanceText: tr('common.balance', { amount: AISH_I18N.money(0) }), modal: null, social: null, email: '', password: '', pwMode: false, consent: false, code: '', err: '', errField: '', resendIn: 0, checking: false, shake: false, locked: false, attempts: 0, afterLogin: null }, this.state || {});
+    let assistOn = true;
+    try { if (localStorage.getItem('aish-assist') === '0') assistOn = false; } catch (e) {}
+    this.state = Object.assign({ tab: 'all', query: '', sort: 'cheap', searchFocus: false, sel: '', text: URL_PROMPT || '', say: '', shown: 0, blink: false, chat: false, msgs: [], typing: false, assist: assistOn, authed: false, leftOpen: !IS_MOBILE, rightOpen: true, dark: (this.props.theme || 'light') === 'dark', userName: '', userLetter: '?', balanceText: tr('common.balance', { amount: AISH_I18N.money(0) }), modal: null, social: null, email: '', password: '', pwMode: false, consent: false, code: '', err: '', errField: '', resendIn: 0, checking: false, shake: false, locked: false, attempts: 0, afterLogin: null }, this.state || {});
     this.timers = {};
     this.pendingPrompt = '';
     this.pendingSel = '';
@@ -644,7 +687,7 @@ class Component extends DCLogic {
       { slug: 'stable-audio-2-5', model_key: 'stable-audio-2-5', name: 'Stable Audio 2.5', kindKey: 'studio.kind.audio', type: 'music', cost: 17, rub: 17 }
     ].map(this.priceModel);
     if (URL_MODEL && this.MODELS.some((m) => m.slug === URL_MODEL)) this.state.sel = URL_MODEL;
-    else this.state.sel = 'wan-3-0';
+    else this.state.sel = '';
     this.TAB_ICONS = {
       video: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"></rect><path d="m16 10 5-3v10l-5-3z"></path></svg>',
       image: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="9" cy="9" r="2"></circle><path d="m3 16 5-5 4 4 3-3 6 6"></path></svg>',
@@ -667,21 +710,20 @@ class Component extends DCLogic {
       return [m.price, unit].filter(Boolean).join(' ').trim();
     };
     this.doesText = (m) => tr('studio.does.' + (m.type || 'image'));
-    /** Стартовые CTA студии: модель / цена по очереди. Останавливаются, как только человек начал. */
+    /** Стартовые CTA студии: подсказки по моделям. Не выбирают модель — пустое состояние сохраняется. */
     this.intro = (step) => {
       clearTimeout(this.timers.intro);
       const slides = [
-        { key: 'studio.eggy.start', slug: 'p-video' },
-        { key: 'studio.eggy.intro2', slug: 'gpt-image-2' },
-        { key: 'studio.eggy.intro3', slug: 'kling-v2-5-turbo-pro' }
+        { key: 'studio.eggy.start' },
+        { key: 'studio.eggy.intro2' },
+        { key: 'studio.eggy.intro3' }
       ];
       const i = step || 0;
       const s = slides[i] || slides[0];
-      if (s.slug && this.MODELS.some((x) => x.slug === s.slug)) this.setState({ sel: s.slug });
       this.speak(tr(s.key));
       if (i < slides.length - 1) {
         this.timers.intro = setTimeout(() => {
-          if (!this.state.text && !this.state.chat && this.state.say === tr(s.key)) this.intro(i + 1);
+          if (!this.state.text && !this.state.chat && !this.state.sel && this.state.say === tr(s.key)) this.intro(i + 1);
         }, 6500);
       }
     };
@@ -698,21 +740,21 @@ class Component extends DCLogic {
       this.setState({ text: e.target.value });
       this.later('type', 1000, () => {
         const t = this.state.text.toLowerCase();
+        // подсказки по типу задачи — без автовыбора модели (выбор только вручную)
         const info = (slug) => { const mm = this.MODELS.find((x) => x.slug === slug) || {}; return { model: mm.name || '', price: this.priceText(slug) }; };
         const has = (slug) => this.MODELS.some((x) => x.slug === slug);
         const firstOf = (type) => (this.MODELS.find((x) => x.type === type) || {}).slug;
         if (rx('studio.detect.music').test(t) && firstOf('music')) {
-          const slug = firstOf('music');
-          this.setState({ sel: slug }); this.speak(tr('studio.eggy.music', info(slug)));
+          this.speak(tr('studio.eggy.music', info(firstOf('music'))));
         } else if (rx('studio.detect.image').test(t) && !rx('studio.detect.video').test(t) && firstOf('image')) {
           const slug = has('seedream-5-pro') ? 'seedream-5-pro' : firstOf('image');
-          this.setState({ sel: slug }); this.speak(tr('studio.eggy.image', info(slug)));
+          this.speak(tr('studio.eggy.image', info(slug)));
         } else if (rx('studio.detect.sound').test(t) && (has('seedance-2-5') || firstOf('video'))) {
           const slug = has('seedance-2-5') ? 'seedance-2-5' : firstOf('video');
-          this.setState({ sel: slug }); this.speak(tr('studio.eggy.sound', info(slug)));
+          this.speak(tr('studio.eggy.sound', info(slug)));
         } else if (rx('studio.detect.video').test(t)) {
           const slug = has('wan-3-0') ? 'wan-3-0' : (has('grok-imagine-video-1-5') ? 'grok-imagine-video-1-5' : firstOf('video'));
-          if (slug) { this.setState({ sel: slug }); this.speak(tr('studio.eggy.video', info(slug))); }
+          if (slug) this.speak(tr('studio.eggy.video', info(slug)));
         } else if (t.trim()) this.speak(tr('studio.eggy.ready'));
       });
     };
@@ -732,7 +774,7 @@ class Component extends DCLogic {
       }
       return this.state.sel;
     };
-    this.push = (m) => this.setState({ msgs: this.state.msgs.concat([Object.assign({ id: Date.now() + Math.random() }, m)]) });
+    this.push = (m) => this.setState({ msgs: this.state.msgs.concat([Object.assign({ id: Date.now() + Math.random(), ts: Date.now() }, m)]) });
     this.botSay = (m, ms) => { this.setState({ typing: true }); this.later('bot', ms || 900, () => { this.setState({ typing: false }); this.push(Object.assign({ role: 'bot' }, m)); }); };
     this.patchLastBot = (patch) => {
       const msgs = this.state.msgs.slice();
@@ -745,7 +787,12 @@ class Component extends DCLogic {
     this.cook = () => {
       const prompt = this.pendingPrompt;
       const sel = this.pendingSel || this.state.sel;
-      const m = this.MODELS.find((x) => x.slug === sel) || this.MODELS[1];
+      const m = this.MODELS.find((x) => x.slug === sel);
+      if (!m) {
+        this.openPanel();
+        this.botSay({ text: tr('studio.eggy.needModel') }, 200);
+        return;
+      }
       this.botSay({ text: tr('studio.chat.cooking'), job: true }, 700);
       this.later('cook', 900, () => this.runJob(m, prompt, this.pendingParams || {}));
     };
@@ -853,11 +900,23 @@ class Component extends DCLogic {
       this.patchLastBot({ text: tr(m && m.type === 'text' ? 'studio.chat.thinking' : 'studio.chat.cooking'), job: true });
       const body = { model: m.model_key || m.slug, prompt: prompt || '' };
       if (genParams && typeof genParams === 'object' && Object.keys(genParams).length) body.params = genParams;
+      // Скрепка: ждём, пока файл догрузится, и кладём номера файлов (upl_…) в image / audio / video
+      if (window.AishAttach) {
+        for (let i = 0; i < 240 && AishAttach.busy(); i++) {
+          if (i === 0) this.patchLastBot({ text: tr('studio.attach.waitUpload'), job: true });
+          await new Promise((r) => setTimeout(r, 500));
+        }
+        const att = AishAttach.payload(m);
+        Object.assign(body, att.body);
+        // в сообщении о запуске — какие именно файлы ушли в генерацию
+        if (att.files.length) this.patchLastBot({ text: tr('studio.attach.cookingWith', { files: AishAttach.describe(att.files) }), job: true, files: att.files });
+      }
       let { res, data } = await api('/api/generate', {
         method: 'POST',
         body: JSON.stringify(body)
       });
       let jobIdStarted = '';
+      if (window.AishAttach && (res.ok || res.status === 202)) AishAttach.consume();
       if (res.status === 202 && data && data.job_id) {
         jobIdStarted = data.job_id;
         this.patchLastBot({ text: tr('studio.chat.queued'), job: true });
@@ -883,6 +942,14 @@ class Component extends DCLogic {
           this.botSay({ text: need ? tr('studio.chat.needMoney', { price: moneyText(Math.ceil(need / 100)) }) : tr('studio.chat.insufficient'), topup: true }, 200);
           return;
         }
+        // Файлы: модели нужно фото/аудио/видео, файл устарел или слишком большой
+        const detail = String((data && data.detail) || '');
+        if (err === 'bad_model' && /image required|prompt or image/.test(detail)) { this.botSay({ text: tr('studio.attach.needImage'), chips: [{ label: tr('studio.attach.add'), action: 'attach' }] }, 200); return; }
+        if (err === 'bad_model' && /audio required|reference song/.test(detail)) { this.botSay({ text: tr('studio.attach.needAudio'), chips: [{ label: tr('studio.attach.add'), action: 'attach' }] }, 200); return; }
+        if (err === 'bad_model' && /video required/.test(detail)) { this.botSay({ text: tr('studio.attach.needVideo'), chips: [{ label: tr('studio.attach.add'), action: 'attach' }] }, 200); return; }
+        if (err === 'upload_expired' || err === 'upload_not_found' || err === 'upload_wrong_kind' || err === 'bad_media_ref') { this.botSay({ text: tr('studio.attach.expired'), chips: [{ label: tr('studio.attach.add'), action: 'attach' }] }, 200); return; }
+        if (err === 'file_too_large') { this.botSay({ text: tr('studio.attach.tooLarge') }, 200); return; }
+        if (err === 'media_not_reachable') { this.botSay({ text: tr('studio.chat.serviceDown') }, 200); return; }
         if (err === 'queue_unavailable' || err === 'not_configured') { this.botSay({ text: tr('studio.chat.serviceDown') }, 200); return; }
         if (err === 'channel_unavailable') { this.botSay({ text: tr('studio.chat.modelDown') }, 200); return; }
         if (err === 'moderation') { this.botSay({ text: tr('studio.chat.moderation') }, 200); return; }
@@ -902,7 +969,10 @@ class Component extends DCLogic {
         result: !!url,
         mediaUrl: url,
         mediaKind: kind === 'audio' ? 'audio' : (kind === 'video' ? 'video' : 'image'),
-        job: false
+        job: false,
+        // работа в «Моих работах»: неопубликованная хранится 24 часа — под результатом сразу предлагаем опубликовать
+        workId: (data && data.work_id) || '',
+        published: !!(data && data.published)
       });
     };
     this.watchJob = (jobId, workId) => {
@@ -953,6 +1023,7 @@ class Component extends DCLogic {
         mediaUrl: url,
         mediaKind: kind,
         workId: workId || (work && work.id),
+        published: !!(work && work.status === 'published'),
         likes: work && work.likes != null ? work.likes : 0,
         liked: !!(work && work.liked),
         workStatus: (work && work.status) || ''
@@ -982,16 +1053,58 @@ class Component extends DCLogic {
         else this.textHistory.pop();   // ответа нет — вопрос не остаётся «висеть» в истории
       });
     };
+    this.syncAssistPref = () => {
+      try { localStorage.setItem('aish-assist', this.state.assist ? '1' : '0'); } catch (e) {}
+    };
+    this.toggleAssist = () => {
+      const on = !this.state.assist;
+      this.setState({ assist: on });
+      this.syncAssistPref();
+      if (!on && this.eggy && this.eggy.softReset) this.eggy.softReset();
+      this.speak(tr(on ? 'studio.assist.enabled' : 'studio.assist.disabled'));
+    };
+    /** Сохранить текущий чат и начать с нуля: помощник снова спрашивает тип генерации. */
+    this.newGeneration = async () => {
+      if (window.AishHistory) await AishHistory.detach();
+      clearTimeout(this.timers.bot); clearTimeout(this.timers.cook); clearTimeout(this.timers.lead); clearTimeout(this.timers.ck); clearTimeout(this.timers.intro);
+      this.pendingPrompt = ''; this.pendingSel = ''; this.pendingParams = {};
+      this.textHistory = [];
+      this._shownFiles = {};
+      if (window.AishAttach && AishAttach.consume) AishAttach.consume();
+      lastMsgs = -1;
+      this.setState({ chat: true, msgs: [], typing: false, text: '', assist: true });
+      this.syncAssistPref();
+      if (!this.eggy || !this.eggy.restart) {
+        this.botSay({ text: tr('studio.chat.failedRetry') }, 200);
+        return;
+      }
+      try { await this.eggy.restart(); }
+      catch (_) { this.botSay({ text: tr('studio.chat.failedRetry') }, 200); }
+    };
     this.onSubmit = async (e) => {
       if (e && e.preventDefault) e.preventDefault();
       const text = this.state.text.trim();
       if (!text) { this.speak(tr('studio.eggy.needIdea')); return; }
       const cur = this.MODELS.find((x) => x.slug === this.state.sel);
+      // текстовая модель — прямой чат; без модели или с медиа-моделью — к помощнику
       if (cur && cur.type === 'text') { this.textChat(cur, text); return; }
-      const sel = this.pickFor(text);
       this.pendingPrompt = text;
-      this.pendingSel = sel;
-      this.setState({ chat: true, text: '', sel: sel });
+      this.pendingSel = cur ? cur.slug : '';
+      this.setState({ chat: true, text: '' });
+      if (window.AishAttach) {
+        this._shownFiles = this._shownFiles || {};
+        this._echoFiles = AishAttach.ready().filter((f) => !this._shownFiles[f.id]);
+        this._echoFiles.forEach((f) => { this._shownFiles[f.id] = 1; });
+      }
+      // помощник выключен — сразу генерация по выбранной модели
+      if (!this.state.assist) {
+        const files = this._echoFiles || [];
+        this._echoFiles = null;
+        this.push(files.length ? { role: 'user', text: text, files: files } : { role: 'user', text: text });
+        if (window.AishAttach && AishAttach.park) AishAttach.park();   // плашки из композера — уже в пузыре
+        this.cook();
+        return;
+      }
       if (!this.eggy) {
         this.push({ role: 'user', text: text });
         this.botSay({ text: tr('studio.chat.failedRetry') }, 200);
@@ -999,6 +1112,7 @@ class Component extends DCLogic {
       }
       try {
         await this.eggy.send(text);
+        if (window.AishAttach && AishAttach.park) AishAttach.park();   // плашки из композера — уже в пузыре
       } catch (_) {
         this.botSay({ text: tr('studio.chat.failedRetry') }, 200);
       }
@@ -1083,7 +1197,7 @@ class Component extends DCLogic {
         this.botSay({ text: tr('studio.chat.welcomed') }, 600);
       } else this.speak(tr('studio.eggy.welcomeBack'));
     };
-    this.logout = async () => { await api('/api/auth/logout', { method: 'POST' }); await refreshUser(); this.speak(tr('studio.eggy.loggedOut')); };
+    this.logout = async () => { await api('/api/auth/logout', { method: 'POST' }); await refreshUser(); this.goHome(); this.speak(tr('studio.eggy.loggedOut')); };
     this.afterAuth = () => {
       if (this.eggy && this.eggy.resume) { this.setState({ chat: true }); this.eggy.resume(); return; }
       if (this.state.chat && this.pendingPrompt) {
@@ -1103,8 +1217,8 @@ class Component extends DCLogic {
       writeSharedTheme(dark ? 'dark' : 'light');
       this.setState({ dark: dark });
     };
-    this.openPanel = () => {
-      if (MOBILE() && window.vitIsOpen && window.vitIsOpen() && window.vitClose) window.vitClose();
+    this.openPanel = () => {   // «Сменить модель» / помощник «открой модели» → правая панель, вкладка «Нейросети»
+      if (window.rpShow) { window.rpShow('models'); return; }
       if (!this.state.leftOpen) this.setState({ leftOpen: true });
     };
     this.toggleLeft = () => {
@@ -1132,6 +1246,7 @@ class Component extends DCLogic {
           mediaUrl: w.media_url || w.thumb_url || '',
           mediaKind: w.kind || 'image',
           workId: w.id,
+          published: w.status === 'published',
           likes: w.likes || 0,
           liked: !!w.liked,
           workStatus: w.status || ''
@@ -1160,13 +1275,19 @@ class Component extends DCLogic {
       letter: String(m.name || '?').replace(/^[^a-zA-Zа-яА-ЯёЁ0-9]+/, '').slice(0, 1).toUpperCase() || '?',
       on: m.slug === st.sel, cls: m.slug === st.sel ? 'model-on' : '',
       priceColor: m.cost === 0 ? 'var(--free)' : 'var(--ink)',
-      pick: () => { this.setState({ sel: m.slug, leftOpen: MOBILE() ? false : this.state.leftOpen }); this.speak(m.cost === 0 ? tr('studio.eggy.modelFree', { model: m.name, does: this.doesText(m) }) : tr('studio.eggy.modelPrice', { model: m.name, does: this.doesText(m), price: this.priceText(m.slug) })); },
+      pick: () => {
+        const next = m.slug === st.sel ? '' : m.slug;
+        this.setState({ sel: next });
+        if (!next) return;
+        if (SHUTTERS_COVER() && window.vitClose) window.vitClose();
+        this.speak(m.cost === 0 ? tr('studio.eggy.modelFree', { model: m.name, does: this.doesText(m) }) : tr('studio.eggy.modelPrice', { model: m.name, does: this.doesText(m), price: this.priceText(m.slug) }));
+      },
       examples: () => {
-        this.setState({ sel: m.slug, leftOpen: MOBILE() ? false : this.state.leftOpen });
-        if (window.vitOpenForModel) window.vitOpenForModel(m.slug);
+        this.setState({ sel: m.slug });
+        if (window.vitOpenForModel) window.vitOpenForModel(m.slug);   // та же панель, вкладка «Витрина»
       }
     }));
-    const s = this.MODELS.find((m) => m.slug === st.sel) || this.MODELS[1];
+    const s = this.MODELS.find((m) => m.slug === st.sel) || null;
     let lastBot = -1; st.msgs.forEach((m, i) => { if (m.role === 'bot') lastBot = i; });
     const tabs = this.TABS.map(([id, label]) => ({
       id: id, label: label, icon: this.TAB_ICONS[id], on: st.tab === id, cls: st.tab === id ? 'seg-on' : '',
@@ -1178,7 +1299,9 @@ class Component extends DCLogic {
       say: st.say || ' ', shown: st.say.slice(0, st.shown), blinkClass: st.blink ? 'eye-blink' : '',
       ey: st.text ? 6 : 0,
       text: st.text, onType: this.onType, onSubmit: this.onSubmit,
-      sel: { name: s.name, priceShort: s.short, estimate: s.est, isText: s.type === 'text' },
+      sel: s
+        ? { name: s.name, priceShort: s.short, estimate: s.est, isText: s.type === 'text', empty: false }
+        : { name: tr('studio.composer.pickModel'), priceShort: '', estimate: '', isText: false, empty: true },
       query: st.query, onQuery: this.onQuery,
       searchOn: !!st.query.trim() || !!st.searchFocus,
       tabs: tabs, models: models, empty: models.length === 0,
@@ -1222,13 +1345,23 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
   avatarHTML: '<span class="bot-av" style="position:relative;width:38px;height:38px"><img src="' + ORB_SRC + '" alt="" style="position:absolute;inset:0;width:100%;height:100%"></span>',
   getContext: () => {
     const m = app.MODELS.find((x) => x.slug === app.state.sel) || {};
+    const uiLang = String((window.AISH_I18N && AISH_I18N.LANG) || document.documentElement.lang || 'ru').toLowerCase().slice(0, 2);
     return Object.assign({
       selected_model_id: m.model_key || m.slug || '',
-      has_image: !!(app.attachedImage || app.state.hasImage),
+      has_image: !!((window.AishAttach && AishAttach.has('image')) || app.attachedImage || app.state.hasImage),
+      // скрепка: тип и имя готовых файлов — ассистент называет их по имени в ответах и сводке
+      attachments: window.AishAttach ? AishAttach.ready().map((f) => ({ kind: f.kind, name: f.name })) : [],
       draft: app.state.text || '',
-    }, app.lastJobCtx || {});
+    }, app.lastJobCtx || {}, {
+      lang: uiLang === 'en' ? 'en' : 'ru',   // язык ответов помощника = язык интерфейса (всегда поверх)
+    });
   },
-  onUser: (text) => app.push({ role: 'user', text: text }),
+  onUser: (text) => {
+    // к сообщению, которое человек написал сам, — плашки с новыми файлами (каждый файл показываем один раз)
+    const files = app._echoFiles || [];
+    app._echoFiles = null;
+    app.push(files.length ? { role: 'user', text: text, files: files } : { role: 'user', text: text });
+  },
   onBot: (data) => {
     if (!data) return;
     const chips = Array.isArray(data.chips) ? data.chips : [];
@@ -1244,8 +1377,18 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
   onTyping: (on) => app.setState({ typing: on }),
   onFillForm: ({ model, prompt, params }) => {
     if (model) {
-      const byKey = app.MODELS.find((x) => x.model_key === model || x.slug === model);
-      if (byKey) { app.pendingSel = byKey.slug; app.setState({ sel: byKey.slug }); }
+      let byKey = app.MODELS.find((x) => x.model_key === model || x.slug === model);
+      // текст: generate_model может прийти раньше /api/integrations — заглушка, чтобы сразу шёл textChat
+      if (!byKey) {
+        byKey = app.priceModel({
+          slug: model, model_key: model, name: model,
+          type: 'text', kind: tr('studio.kind.text'), kinds: [tr('studio.kind.text')],
+          cost: 0, rub: 0, viaGenerate: true, integrated: true
+        });
+        app.MODELS = app.MODELS.concat([byKey]);
+      }
+      app.pendingSel = byKey.slug;
+      app.setState({ sel: byKey.slug });
     }
     if (prompt) app.pendingPrompt = String(prompt);
     app.pendingParams = params && typeof params === 'object' ? params : {};
@@ -1279,6 +1422,7 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
     }
     if (action === 'login') { app.login(); return; }
     if (action === 'attach') {
+      if (window.AishAttach) { AishAttach.open(); return; }
       const btn = document.querySelector('[data-attach]');
       if (btn) btn.click();
       return;
@@ -1301,8 +1445,11 @@ const fmtBot = (t) => esc(t)
 let raf = 0, lastMsgs = -1, lastModelsKey = '', lastTabsKey = '', lastSay = null, lastDark = null, lastModal = false, lastStepCode = false;
 function scheduleRender() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
 
+let lastAttachSel = null;
 function render() {
   const v = app.renderVals();
+  // скрепка: при смене модели — пересчитать «эта модель не принимает файл» и accept у выбора файла
+  if (window.AishAttach && lastAttachSel !== app.state.sel) { lastAttachSel = app.state.sel; AishAttach.refresh(); }
   const root = $('root');
   root.classList.toggle('t-dark', v.isDark); root.classList.toggle('t-light', !v.isDark);
   root.classList.toggle('bg-dark', v.isDark); root.classList.toggle('bg-light', !v.isDark);
@@ -1336,6 +1483,7 @@ function render() {
   $('speechText').textContent = v.shown;
   if (lastSay !== v.say) { $('speech').setAttribute('aria-label', v.say); lastSay = v.say; }
   // чат
+  if (window.AishHistory) AishHistory.watch(app.state.msgs);   // переписка поменялась → сохранить (без исходных файлов)
   $('chat').classList.toggle('hidden', !v.chat);
   $('typing').classList.toggle('hidden', !v.typing);
   if (v.msgs.length !== lastMsgs) {
@@ -1351,7 +1499,29 @@ function render() {
   if (v.blinkClass === 'eye-blink') { const av = document.querySelectorAll('#msgs .bot-av'); const last = av[av.length - 1]; if (last) last.querySelectorAll('.bot-eye').forEach((e) => e.classList.add('eye-blink')); }
   // композер
   const ta = $('prompt'); if (ta.value !== v.text) ta.value = v.text;
-  $('selName').textContent = v.sel.name; { const ta0 = $('prompt'); const ph = tr(v.sel.isText ? 'studio.text.placeholder' : 'studio.composer.placeholder'); if (ta0 && ta0.placeholder !== ph) ta0.placeholder = ph; } $('selPrice').textContent = v.sel.priceShort; $('selEst').textContent = tr('studio.eggy.priceEst', { price: v.sel.estimate });
+  {
+    const bar = $('assistBar');
+    if (bar) {
+      bar.classList.toggle('is-off', !app.state.assist);
+      const tog = $('assistToggle');
+      const lab = $('assistToggleLabel');
+      if (tog) tog.setAttribute('aria-pressed', app.state.assist ? 'true' : 'false');
+      if (lab) lab.textContent = tr(app.state.assist ? 'studio.assist.on' : 'studio.assist.off');
+    }
+    const selBtn = $('selBtn');
+    const selName = $('selName');
+    selName.textContent = v.sel.name;
+    selName.classList.toggle('sel-empty', !!v.sel.empty);
+    if (selBtn) {
+      selBtn.classList.toggle('sel-empty', !!v.sel.empty);
+      selBtn.setAttribute('aria-label', tr(v.sel.empty ? 'studio.composer.pickModel.aria' : 'studio.composer.changeModel'));
+    }
+    const ta0 = $('prompt');
+    const ph = tr(v.sel.isText ? 'studio.text.placeholder' : 'studio.composer.placeholder');
+    if (ta0 && ta0.placeholder !== ph) ta0.placeholder = ph;
+    $('selPrice').textContent = v.sel.priceShort || '';
+    $('selEst').textContent = v.sel.empty ? '' : tr('studio.eggy.priceEst', { price: v.sel.estimate });
+  }
   // модели
   const tbBar = $('modelToolbar');
   if (tbBar) tbBar.classList.toggle('search-on', v.searchOn);
@@ -1415,9 +1585,42 @@ function render() {
   $('empty').classList.toggle('hidden', !v.empty);
 }
 
+// плашки «фото: cat.png» — под сообщением человека и под сообщением о запуске генерации
+function filesRow(files, ts) {
+  const row = document.createElement('div');
+  row.className = 'msg-files';
+  // сами файлы хранятся 24 часа, в истории остаются только имена
+  const gone = !!(ts && window.AishHistory && Date.now() - ts > AishHistory._DAY);
+  files.forEach((f) => {
+    const pill = document.createElement('span');
+    pill.className = 'msg-file' + (gone ? ' is-gone' : '');
+    pill.title = gone ? tr('studio.history.fileGone', { name: f.name }) : f.name;
+    pill.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg>';
+    pill.appendChild(document.createTextNode(tr('studio.attach.kind.' + f.kind) + ': ' + f.name));
+    if (gone) { const g = document.createElement('span'); g.className = 'msg-file-gone'; g.textContent = ' · ' + tr('studio.history.fileGoneShort'); pill.appendChild(g); }
+    row.appendChild(pill);
+  });
+  return row;
+}
 function msgEl(m) {
+  if (m.role === 'note') {   // служебная строка истории: «Переписка восстановлена…»
+    const n = document.createElement('div');
+    n.className = 'chat-note msg-in';
+    n.setAttribute('role', 'status');
+    n.textContent = m.text;
+    if (m.resume && app.eggy && app.eggy.resume) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chat-note-btn';
+      b.setAttribute('data-history-resume', '');
+      b.textContent = tr('studio.history.resume');
+      n.appendChild(b);
+    }
+    return n;
+  }
   if (m.assistant && app.eggy && app.eggy.render) {
     const node = app.eggy.render(m.assistant);
+    if (m.history) node.classList.add('is-old', 'is-history');   // из истории — карточки только для чтения
     node.classList.add('msg-in');
     node.style.cssText = 'display:flex;align-items:flex-end;gap:10px;max-width:100%';
     return node;
@@ -1426,11 +1629,19 @@ function msgEl(m) {
   if (m.role === 'user' || m.user) {
     el.className = 'msg-in';
     el.style.cssText = 'align-self:flex-end;max-width:78%;padding:12px 16px;border-radius:20px 20px 6px 20px;background:var(--user-bg);color:var(--user-ink);font-size:15px;line-height:1.45;white-space:pre-wrap';
-    el.textContent = m.text; return el;
+    el.textContent = m.text;
+    if (Array.isArray(m.files) && m.files.length) el.appendChild(filesRow(m.files, m.ts));
+    return el;
   }
   el.className = 'msg-in'; el.style.cssText = 'display:flex;align-items:flex-end;gap:10px;max-width:86%';
+  if (m.history && m.job && !m.result) m = Object.assign({}, m, { text: tr('studio.history.jobGone') });   // генерация шла, когда страница закрылась
   let media = '';
-  if (m.result) {
+  // из истории: неопубликованная генерация старше 24 часов уже удалена — не показываем битую картинку
+  const DAY = 24 * 3600 * 1000;
+  const workGone = !!(m.history && m.result && !m.published && m.ts && Date.now() - m.ts > DAY);
+  if (m.result && workGone) {
+    media = '<div class="pub-gone">' + esc(tr('studio.publish.gone')) + '</div>';
+  } else if (m.result) {
     if (m.mediaUrl) {
       if (m.mediaKind === 'video') media = '<video src="' + esc(m.mediaUrl) + '" controls playsinline style="width:260px;max-width:100%;border-radius:16px;background:#000"></video>';
       else if (m.mediaKind === 'audio' || m.mediaKind === 'music') media = '<audio src="' + esc(m.mediaUrl) + '" controls style="width:260px;max-width:100%"></audio>';
@@ -1439,13 +1650,28 @@ function msgEl(m) {
       media = '<div style="width:260px;max-width:100%;aspect-ratio:4/3;border-radius:16px;border:1.5px dashed var(--field-brd);background:var(--field);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted2)">' + esc(tr('studio.chat.resultPlaceholder')) + '</div>';
     }
   }
-  const likeChip = m.workId
+  // опубликовать сразу после генерации: иначе через 24 часа работа удалится
+  let pubBlock = '';
+  if (m.result && !workGone && m.mediaUrl) {
+    if (m.workId && !m.published) {
+      pubBlock = '<div class="pub-offer" data-pub-box="' + esc(m.workId) + '">'
+        + '<p class="pub-t">' + esc(tr('studio.publish.offer')) + '</p>'
+        + '<div class="pub-row"><button type="button" class="btn-purple pub-btn" data-publish-work="' + esc(m.workId) + '">' + esc(tr('studio.publish.btn')) + '</button>'
+        + '<a class="pub-open" href="/w/' + esc(m.workId) + '" target="_blank" rel="noopener">' + esc(tr('common.open')) + '</a></div>'
+        + '<p class="pub-rules">' + tr('studio.publish.rules.html') + '</p>'
+        + '</div>';
+    } else if (!m.workId) {
+      pubBlock = '<p class="pub-note">' + esc(tr('studio.publish.guestNote')) + '</p>';
+    }
+  }
+  const likeChip = m.workId && (m.published || !m.result)
     ? '<button type="button" class="btn-like-work' + (m.liked ? ' is-on' : '') + '" data-like-work="' + esc(m.workId) + '" aria-pressed="' + (m.liked ? 'true' : 'false') + '" style="height:36px;padding:0 14px;border-radius:12px;border:1px solid ' + (m.liked ? '#E0457B' : 'var(--field-brd)') + ';background:' + (m.liked ? 'rgba(224,69,123,.12)' : 'var(--field)') + ';color:' + (m.liked ? '#E0457B' : 'var(--ink)') + ';font:700 13px Manrope,system-ui,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px">♥ <span data-like-n>' + (m.likes || 0) + '</span></button>'
       + (m.workId ? '<a href="/w/' + esc(m.workId) + '" target="_blank" rel="noopener" style="height:36px;padding:0 14px;border-radius:12px;border:1px solid var(--field-brd);background:var(--field);color:var(--ink);font:700 13px Manrope,system-ui,sans-serif;text-decoration:none;display:inline-flex;align-items:center">' + esc(tr('common.open')) + '</a>' : '')
     : '';
   el.innerHTML = '<span class="bot-av ' + m.avCls + '" style="position:relative;flex:0 0 auto;width:38px;height:38px"><img src="' + ORB_SRC + '" alt="' + esc(tr('common.brand.alt')) + '" style="position:absolute;inset:0;width:100%;height:100%;display:block"><span class="eye-p l bot-eye"><span class="eye-shape" style="box-shadow:none"></span></span><span class="eye-p r bot-eye"><span class="eye-shape" style="box-shadow:none"></span></span></span>'
     + '<div class="glass" style="border-radius:20px 20px 20px 6px;padding:12px 16px;display:flex;flex-direction:column;gap:10px;align-items:flex-start;box-shadow:0 12px 30px -20px var(--shadow)"><span style="font-size:15px;line-height:1.5;color:var(--ink);white-space:normal">' + fmtBot(m.text) + '</span>'
     + media
+    + pubBlock
     + (likeChip ? '<div style="display:flex;flex-wrap:wrap;gap:8px">' + likeChip + '</div>' : '')
     + (m.loginCta ? '<button type="button" class="btn-login" data-cta data-login style="height:40px;padding:0 18px;border-radius:12px;font-size:14px">' + esc(tr('studio.chat.loginRun')) + '</button>' : '')
     + (m.topup ? '<a href="/account#balance" class="btn-purple" style="height:40px;padding:0 18px;border-radius:12px;font-size:14px;display:inline-flex;align-items:center;text-decoration:none">' + esc(tr('studio.chat.toBalance')) + '</a>' : '')
@@ -1456,7 +1682,43 @@ function msgEl(m) {
       : '')
     + '</div>';
   if (Array.isArray(m.chips) && m.chips.length) el._assistChips = m.chips.slice(0, 5);
+  el._msg = m;
+  // генерация с файлами: имена остаются под сообщением, даже когда текст сменится на «в очереди» / «готово»
+  if (Array.isArray(m.files) && m.files.length) {
+    const box = el.querySelector('.glass');
+    if (box) box.insertBefore(filesRow(m.files, m.ts), box.children[1] || null);
+  }
   return el;
+}
+
+/* Опубликовать на витрине прямо из чата (POST /api/works/<id>/publish, как в кабинете) */
+async function publishFromChat(btn) {
+  const id = btn.getAttribute('data-publish-work');
+  const box = btn.closest('[data-pub-box]');
+  const msg = (app.state.msgs || []).find((x) => String(x.workId) === String(id));
+  btn.disabled = true;
+  btn.textContent = tr('studio.publish.busy');
+  const say = (html) => { if (box) box.querySelector('.pub-t').innerHTML = html; };
+  try {
+    const title = msg && msg.prompt ? String(msg.prompt).slice(0, 80) : '';
+    const { res, data } = await api('/api/works/' + encodeURIComponent(id) + '/publish', { method: 'POST', body: JSON.stringify({ agree_rules: true, title: title }) });
+    if (res.ok) {
+      if (msg) { msg.published = true; msg.likes = 0; }
+      if (box) box.outerHTML = '<div class="pub-done">' + esc(tr('studio.publish.done')) + ' <a href="/w/' + esc(id) + '" target="_blank" rel="noopener">' + esc(tr('studio.publish.see')) + '</a></div>';
+      if (window.AishHistory) AishHistory.flush();
+      return;
+    }
+    const err = (data && data.error) || '';
+    if (err === 'handle_required') say(esc(tr('studio.publish.needHandle')) + ' <a href="/account#settings">' + esc(tr('studio.publish.toProfile')) + '</a>');
+    else if (err === 'moderation') say(esc(tr('studio.publish.moderation')));
+    else if (res.status === 401) say(esc(tr('studio.publish.needLogin')));
+    else if (err === 'not_found') say(esc(tr('studio.publish.gone')));
+    else say(esc(tr('studio.publish.failed')));
+  } catch (_) {
+    say(esc(tr('studio.publish.failed')));
+  }
+  btn.disabled = false;
+  btn.textContent = tr('studio.publish.btn');
 }
 
 /* события */
@@ -1471,6 +1733,16 @@ document.addEventListener('click', async (e) => {
     if (chip && app.eggy && app.eggy.chip) {
       await app.eggy.chip(chip);
     }
+    return;
+  }
+  const pubBtn = e.target.closest('[data-publish-work]');
+  if (pubBtn) { e.preventDefault(); await publishFromChat(pubBtn); return; }
+  const resumeBtn = e.target.closest('[data-history-resume]');
+  if (resumeBtn) {   // восстановленная переписка: помощник покажет то же место с живыми кнопками
+    e.preventDefault();
+    resumeBtn.remove();
+    (app.state.msgs || []).forEach((x) => { if (x.role === 'note') x.resume = false; });   // при перерисовке кнопка не вернётся
+    if (app.eggy && app.eggy.resume) await app.eggy.resume();
     return;
   }
   const likeBtn = e.target.closest('[data-like-work]');
@@ -1501,7 +1773,7 @@ document.addEventListener('click', async (e) => {
   }
   const t = e.target.closest('[data-home],[data-login],[data-logout],[data-toggle-left],[data-toggle-right],[data-toggle-right-open],[data-works]');
   if (!t) return;
-  if (t.hasAttribute('data-home')) app.goHome(e);
+  if (t.hasAttribute('data-home')) { if (window.AishHistory) AishHistory.detach(); app.goHome(e); }   // на главную = новый чат, прежний сохранён
   else if (t.hasAttribute('data-login')) app.login();
   else if (t.hasAttribute('data-logout')) app.logout();
   else if (t.hasAttribute('data-toggle-left')) app.toggleLeft();
@@ -1510,10 +1782,27 @@ document.addEventListener('click', async (e) => {
   else if (t.hasAttribute('data-works')) { e.preventDefault(); app.showWorks(); }
 });
 $('themeBtn').addEventListener('click', () => app.toggleTheme());
+// ссылка провайдера на результат умерла (Replicate хранит час) → вместо битой картинки — «Открыть работу»
+$('msgs').addEventListener('error', (e) => {
+  const el = e.target;
+  if (!el || !/^(IMG|VIDEO|AUDIO)$/.test(el.tagName) || el.dataset.dead) return;
+  el.dataset.dead = '1';
+  const row = el.closest('.msg-in');
+  const msg = row && row._msg;
+  const ph = document.createElement('div');
+  ph.className = 'pub-gone';
+  ph.textContent = tr('studio.publish.mediaGone') + ' ';
+  if (msg && msg.workId) { const a = document.createElement('a'); a.href = '/w/' + encodeURIComponent(msg.workId); a.target = '_blank'; a.rel = 'noopener'; a.textContent = tr('studio.publish.openWork'); ph.appendChild(a); }
+  (el.closest('a') || el).replaceWith(ph);
+}, true);
 $('scrim').addEventListener('click', () => { if (window.vitIsOpen && window.vitIsOpen() && window.vitClose) window.vitClose(); else if (app.state.leftOpen) app.toggleLeft(); });
 $('prompt').addEventListener('input', (e) => app.onType(e));
 $('prompt').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); app.onSubmit(e); } });
 $('form').addEventListener('submit', (e) => app.onSubmit(e));
+const assistToggle = $('assistToggle');
+const assistNew = $('assistNew');
+if (assistToggle) assistToggle.addEventListener('click', () => app.toggleAssist());
+if (assistNew) assistNew.addEventListener('click', () => app.newGeneration());
 $('query').addEventListener('input', (e) => app.onQuery(e));
 $('query').addEventListener('focus', () => app.setState({ searchFocus: true }));
 $('query').addEventListener('blur', () => {
@@ -1534,6 +1823,7 @@ async function refreshUser() {
   } else {
     app.setState({ authed: false, userName: '', userLetter: '?', balanceText: tr('common.balance', { amount: moneyText(0) }) });
   }
+  if (window.AishHistory) AishHistory.setUser(user);   // вошли/вышли без перезагрузки: гостевая переписка → в аккаунт; выход → стереть с устройства
   return user;
 }
 
@@ -1672,6 +1962,7 @@ async function loadIntegrations() {
         integrated: true,
         viaGenerate: viaGenerate,
         provider: it.provider,
+        inputs: Array.isArray(it.inputs) ? it.inputs : [],
         thumb: thumb,
         example: example,
         exampleVideo: exampleVideo
@@ -1684,17 +1975,12 @@ async function loadIntegrations() {
       'wan-3-0-i2v-fal': 'wan-3-0',
       'grok-imagine-video-1-5-i2v-fal': 'grok-imagine-video-1-5'
     };
-    if (aliasSel[app.state.sel] && mapped.some((m) => m.slug === aliasSel[app.state.sel])) {
+    if (app.state.sel && aliasSel[app.state.sel] && mapped.some((m) => m.slug === aliasSel[app.state.sel])) {
       app.setState({ sel: aliasSel[app.state.sel] });
     }
-    const still = mapped.some((m) => m.slug === app.state.sel);
-    if (!still) {
-      const prefer = mapped.find((m) => m.slug === 'wan-3-0')
-        || mapped.find((m) => m.slug === 'seedream-5-pro')
-        || mapped.find((m) => m.slug === 'grok-imagine-video-1-5')
-        || mapped.find((m) => m.type === 'video')
-        || mapped[0];
-      if (prefer) app.setState({ sel: prefer.slug });
+    // пустое состояние допустимо; сбрасываем только если выбранной модели больше нет в каталоге
+    if (app.state.sel && !mapped.some((m) => m.slug === app.state.sel)) {
+      app.setState({ sel: '' });
     }
     lastModelsKey = '';
     scheduleRender();
@@ -1706,12 +1992,45 @@ async function loadIntegrations() {
 
 
 
+// Скрепка: выбор / перетаскивание / вставка файла → POST /api/uploads → номер файла уходит в /api/generate
+if (window.AishAttach) {
+  AishAttach.init({
+    composer: '#form .composer',
+    button: '[data-attach]',
+    getModel: () => app.MODELS.find((x) => x.slug === app.state.sel) || null,
+    t: tr,
+    csrf: ensureCsrf,
+    onChange: () => { app.attachedImage = AishAttach.has('image'); }
+  });
+}
+
+// История переписки: вошёл — в аккаунте (/api/chats), гость — 24 часа в этом браузере. Исходные файлы не храним.
+if (window.AishHistory) {
+  AishHistory.init({
+    box: '#chatsBox',
+    side: true,          // левая панель целиком под чаты
+    t: tr,
+    ago: (ts) => AISH_I18N.ago(ts),
+    csrf: ensureCsrf,
+    getMsgs: () => app.state.msgs,
+    onRestore: (msgs) => {
+      ['intro', 'bot', 'cook', 'lead', 'ck'].forEach((k) => clearTimeout((app.timers || {})[k]));   // приветствие героя не нужно — открываем переписку
+      lastMsgs = -1;
+      app._shownFiles = {};
+      app.textHistory = [];
+      app.setState({ chat: true, typing: false, msgs: msgs.map((m) => Object.assign({ id: Date.now() + Math.random() }, m)) });
+    },
+    onNew: () => app.goHome()
+  });
+}
+
 app.init();
 $('userName').textContent = tr('common.guest');
 $('userBalance').textContent = tr('common.balance', { amount: moneyText(0) });
 render();
 app.componentDidMount();
-refreshUser().then(() => {
+refreshUser().then(async (user) => {
+  if (window.AishHistory) await AishHistory.boot(user);   // вернулись с /auth, /account, после перезагрузки — переписка на месте
   if (!app.state.authed) return;
   let resumeAssist = false;
   try { resumeAssist = sessionStorage.getItem('aish-assist-resume') === '1'; sessionStorage.removeItem('aish-assist-resume'); } catch (e) {}
@@ -1831,7 +2150,7 @@ loadIntegrations();
   let modelFilter = true, lastSel = '';
   const $ = (id) => document.getElementById(id);
   const esc2 = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const modelObj = () => app.MODELS.find((m) => m.slug === app.state.sel) || app.MODELS[1];
+  const modelObj = () => app.MODELS.find((m) => m.slug === app.state.sel) || null;
   /** Human meta under preview title: «качество 480p (720×406) · 5 сек» */
   function resTier(vw, vh) {
     const w = Math.round(Number(vw) || 0);
@@ -1901,19 +2220,21 @@ loadIntegrations();
     })();
     return '<button class="vit-card" data-w="' + w.id + '" aria-label="' + esc2(wTitle(w) || w.title || '') + '">' + media
       + (w.type === 'video' || w.video ? '<span class="vc-p">▶ ' + esc2(cardDur) + '</span>' : '')
-      + '<span class="vc-t">' + esc2(wTitle(w) || w.title || '') + '</span></button>';
+      + '</button>';
   };
   function compute() {
     syncExampleWorks();
-    if (app.state.sel !== lastSel) { lastSel = app.state.sel; modelFilter = true; }
-    const m = modelObj(), mName = MODEL_OF[m.slug] || m.name;
+    if (app.state.sel !== lastSel) { lastSel = app.state.sel; modelFilter = !!app.state.sel; }
+    const m = modelObj();
+    const mName = m ? (MODEL_OF[m.slug] || m.name) : '';
+    const filtered = !!(modelFilter && m);
     let mw = [];
-    if (modelFilter) {
+    if (filtered) {
       mw = WORKS.filter((w) => sameModel(w, m, mName)).sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 24);
     } else {
       mw = WORKS.slice().sort((a, b) => (b.likes || 0) - (a.likes || 0));
     }
-    return { m, mName, mw, modelFilter };
+    return { m, mName, mw, modelFilter: filtered };
   }
   function syncScrim() { if (typeof updateStudioScrim === 'function') updateStudioScrim(); }
   function draw() {
@@ -1936,8 +2257,8 @@ loadIntegrations();
     const list = r.mw;
     let h = '<section class="vit-sec">';
     if (list.length) h += '<div class="vit-grid">' + list.map(card).join('') + '</div>';
-    else if (r.modelFilter && r.m.type === 'music') h += '<div class="vit-empty">' + esc2(tr('studio.vit.empty.music')) + '</div>';
-    else if (r.modelFilter && r.m.type === 'text') h += '<div class="vit-empty">' + esc2(tr('studio.vit.empty.text')) + '</div>';
+    else if (r.modelFilter && r.m && r.m.type === 'music') h += '<div class="vit-empty">' + esc2(tr('studio.vit.empty.music')) + '</div>';
+    else if (r.modelFilter && r.m && r.m.type === 'text') h += '<div class="vit-empty">' + esc2(tr('studio.vit.empty.text')) + '</div>';
     else h += '<div class="vit-empty">' + esc2(tr('studio.vit.empty.none')) + '</div>';
     h += '</section>';
     $('vitBody').innerHTML = h;
@@ -2064,7 +2385,23 @@ loadIntegrations();
     }
   }
   let leftWasOpen = false;
-  function setOpen(v) {
+  /* вкладки правой панели: «Витрина» | «Нейросети» */
+  const RP_TAB = 'aish-rp-tab', RP_OPEN = 'aish-rp-open';
+  let rpTab = 'vit';
+  try { if (localStorage.getItem(RP_TAB) === 'models') rpTab = 'models'; } catch (e) {}
+  function setTab(t) {
+    rpTab = t === 'vit' ? 'vit' : 'models';
+    try { localStorage.setItem(RP_TAB, rpTab); } catch (e) {}
+    $('rpModels').classList.toggle('hidden', rpTab !== 'models');
+    $('rpVit').classList.toggle('hidden', rpTab !== 'vit');
+    $('rpTabModels').setAttribute('aria-selected', rpTab === 'models' ? 'true' : 'false');
+    $('rpTabVit').setAttribute('aria-selected', rpTab === 'vit' ? 'true' : 'false');
+    if (rpTab === 'vit') { lastKey = ''; draw(); }
+  }
+  document.querySelectorAll('[data-rp-tab]').forEach((b) => b.addEventListener('click', () => setTab(b.dataset.rpTab)));
+  window.rpShow = (t) => { setTab(t); if (!open) setOpen(true); };
+  window.rpTab = () => rpTab;
+  function setOpen(v, silent) {
     /* Phone: vit covers full screen — close left drawer. Tablet: both stay side-by-side. */
     if (v && MOBILE() && app.state.leftOpen) {
       leftWasOpen = false;
@@ -2081,6 +2418,8 @@ loadIntegrations();
     lastKey = '';
     syncScrim();
     draw();
+    if (!MOBILE()) { try { localStorage.setItem(RP_OPEN, v ? '1' : '0'); } catch (e) {} }   // на компьютере помним, открыта ли панель
+    if (silent) return;
     try {
       if (v) $('vitClose').focus({ preventScroll: true });
       else $('vitBtn').focus({ preventScroll: true });
@@ -2102,11 +2441,12 @@ loadIntegrations();
     preview = null;
     pvMode = 'view';
     lastKey = '';
+    setTab('vit');
     setOpen(true);
   };
   $('vitBtn').addEventListener('click', () => setOpen(!open));
   $('vitClose').addEventListener('click', () => setOpen(false));
-  $('vitHintBtn').addEventListener('click', () => setOpen(true));
+  $('vitHintBtn').addEventListener('click', () => { setTab('vit'); setOpen(true); });
   $('vitHintX').addEventListener('click', () => { $('vitHint').classList.add('hidden'); });
   $('vitCtx').addEventListener('click', (e) => {
     if (!e.target.closest('[data-clear-model]')) return;
@@ -2174,6 +2514,11 @@ loadIntegrations();
       return;
     }
   });
+  setTab(rpTab);
+  // компьютер: каталог справа открыт сразу (если человек сам его не закрывал); телефон и планшет — по кнопке
+  let rpWasOpen = null;
+  try { rpWasOpen = localStorage.getItem(RP_OPEN); } catch (e) {}
+  if (mq('(min-width:980px)') && rpWasOpen !== '0') setOpen(true, true);
   draw();
 })();
 

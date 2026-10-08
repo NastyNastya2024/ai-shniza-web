@@ -63,15 +63,34 @@ a{color:var(--ink-ui)}a:hover{color:#221048}
   backdrop-filter:blur(26px) saturate(1.45);
   -webkit-backdrop-filter:blur(26px) saturate(1.45);
 }
-.speech.glass{
-  background:linear-gradient(165deg, rgba(255,255,255,.66), rgba(245,242,255,.46));
+/* Hero tagline — large plain headline under the orb (no speech bubble) */
+.hero-tagline{
+  margin:0 0 28px;
+  max-width:min(920px, calc(100vw - 40px));
+  padding:0 12px;
+  box-sizing:border-box;
+  text-align:center;
+  border:none;
+  background:none;
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
 }
-.speech.glass .speech-tail{
-  background:linear-gradient(135deg, rgba(255,255,255,.66), rgba(245,242,255,.46));
-  border-left:1px solid rgba(255,255,255,.78);
-  border-top:1px solid rgba(255,255,255,.78);
+.hero-tagline #speech{
+  margin:0;
+  font-family:'Onest',system-ui,sans-serif;
+  font-weight:700;
+  font-size:clamp(28px,4.2vw,44px);
+  line-height:1.15;
+  letter-spacing:-0.03em;
+  color:#1B0D3A;
+  text-shadow:none;
+  white-space:normal;
 }
-.speech #speech{color:var(--ink-ui);text-shadow:none}
+html[data-theme="dark"] .hero-tagline #speech{
+  color:#1B0D3A;
+  text-shadow:none;
+}
 .prompt-box.glass{
   background:linear-gradient(165deg, rgba(255,255,255,.72), rgba(248,245,255,.48));
   border:1px solid rgba(255,255,255,.9);
@@ -129,7 +148,6 @@ a{color:var(--ink-ui)}a:hover{color:#221048}
 html[data-theme="dark"] body,#root[data-theme="dark"]{color:#F4EEFF}
 html[data-theme="dark"] .page-bg{filter:saturate(.85) brightness(.72)}
 html[data-theme="dark"] .glass,
-html[data-theme="dark"] .speech.glass,
 html[data-theme="dark"] .prompt-box.glass{
   background:linear-gradient(165deg, rgba(255,255,255,.16), rgba(40,28,80,.28))!important;
 }
@@ -235,8 +253,8 @@ html[data-theme="dark"] .hdr-tag,html[data-theme="dark"] .hdr-btn{color:#D7CCFF!
   .hdr-logo-lockup{display:none!important}
   .hdr-logo-icon{display:block!important}
   header{padding:14px 16px!important}
-  .speech h1{white-space:normal!important;font-size:14px!important;line-height:1.35!important;letter-spacing:0!important}
-  .speech.glass{padding:12px 16px 13px!important;margin-bottom:18px!important}
+  .hero-tagline{margin-bottom:20px!important}
+  .hero-tagline #speech{font-size:clamp(24px,7vw,32px)!important;line-height:1.2!important}
   .prompt-box{padding:14px 12px 12px!important}
   .prompt-actions{
     gap:8px;
@@ -333,13 +351,12 @@ html[data-theme="dark"] .hdr-tag,html[data-theme="dark"] .hdr-btn{color:#D7CCFF!
           </div>
         </button>
       </div>
-      <div style="width: 110px; height: 12px; border-radius: 50%; background: radial-gradient(closest-side, rgba(75,43,184,0.22), rgba(75,43,184,0)); margin: 10px 0 18px"></div>
+      <div style="width: 110px; height: 12px; border-radius: 50%; background: radial-gradient(closest-side, rgba(75,43,184,0.22), rgba(75,43,184,0)); margin: 6px 0 4px"></div>
     </div>
 
-    <div class="speech glass" style="position: relative; margin: 0 0 26px; max-width: calc(100vw - 40px); box-sizing: border-box; padding: 15px 26px 16px; border-radius: 14px">
-      <span class="speech-tail" aria-hidden="true" style="position: absolute; left: 50%; top: -8px; width: 16px; height: 16px; margin-left: -8px; transform: rotate(45deg); border-radius: 3px 0 0 0"></span>
-      <h1 id="speech" style="position: relative; margin: 0; min-height: 1.3em; text-align: center; font-family: 'Days One', sans-serif; font-weight: 400; font-size: clamp(16px, 1.6vw, 21px); line-height: 1.3; letter-spacing: -0.01em; white-space: nowrap">
-        <span aria-hidden="true"><span id="speechText"></span><span class="caret"></span></span>
+    <div class="hero-tagline">
+      <h1 id="speech">
+        <span id="speechText" data-i18n="index.hero.tagline">Что сгенерим сегодня?</span>
       </h1>
     </div>
     <p class="sr-only" aria-live="polite" id="speechLive"></p>
@@ -493,28 +510,21 @@ class Component extends DCLogic {
   init() {
     if (this._ready) return;
     this._ready = true;
-    this.state = Object.assign({ mode: 'idle', text: '', focused: false, mx: 0, my: 0, say: '', shown: 0, step: 'start' }, this.state || {});
+    const tagline = tr('index.hero.tagline');
+    this.state = Object.assign({ mode: 'idle', text: '', focused: false, mx: 0, my: 0, say: tagline, shown: tagline.length, step: 'start' }, this.state || {});
     this.orbRef = { current: null };
     this.timers = {};
     this.later = (name, ms, fn) => { clearTimeout(this.timers[name]); this.timers[name] = setTimeout(fn, ms); };
     this.setMode = (mode) => { if (this.state.mode !== mode) this.setState({ mode: mode }); };
     this.restMode = () => this.state.focused ? 'listen' : 'idle';
     this.speak = (line, step, onDone) => {
-      if (typeof line === 'string' && /^index\.(say|greet)\./.test(line)) line = tr(line);
+      if (typeof line === 'string' && /^index\.(say|greet|hero)\./.test(line)) line = tr(line);
       clearInterval(this.timers.tw);
-      this._speakDone = typeof onDone === 'function' ? onDone : null;
-      const patch = { say: line, shown: 0 };
+      const patch = { say: line, shown: String(line || '').length };
       if (this.blinkOnce && Math.random() < 0.6) this.blinkOnce();
       if (step !== undefined) patch.step = step;
       this.setState(patch);
-      this.timers.tw = setInterval(() => {
-        const n = this.state.shown + 1;
-        if (n >= this.state.say.length) {
-          clearInterval(this.timers.tw);
-          this.setState({ shown: this.state.say.length });
-          if (this._speakDone) { const cb = this._speakDone; this._speakDone = null; cb(); }
-        } else this.setState({ shown: n });
-      }, 30);
+      if (typeof onDone === 'function') onDone();
       this.scheduleIdle();
     };
     this.pick = (arr) => {
@@ -549,11 +559,8 @@ class Component extends DCLogic {
     };
     this.startGreet = () => {
       clearTimeout(this.timers.intro);
-      // при каждом заходе на главную первая фраза — приветствие / что это генератор
-      this._greetStep = 1;
-      this.speak(greetLine(1), 'start', () => {
-        if (!hasGreeted()) this.chainIntro();
-      });
+      // статичная надпись под шариком — без печатной анимации и цепочки фраз
+      this.speak('index.hero.tagline', 'start');
     };
     /* реплики сценария: index.say.* (t() сам выбирает случайный вариант в массивах) */
     this.P = {
@@ -563,7 +570,7 @@ class Component extends DCLogic {
     };
     this.scheduleIdle = () => this.later('idle', 8000, () => {
       if (this.state.mode !== 'idle' || this.state.text || this.state.step !== 'start') return;
-      this.speak(this.pickGreetRest());
+      this.speak('index.hero.tagline', 'start');
     });
     this.append = (piece) => {
       const t = this.state.text.trim();

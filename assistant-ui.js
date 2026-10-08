@@ -19,10 +19,10 @@
  */
 (function (root) {
   'use strict';
-  var SERVER = { pick_model: 1, more: 1, choose_type: 1, use_mine: 1, param: 1, refine: 1, improve: 1, send: 1,
+  var SERVER = { pick_model: 1, more: 1, choose_type: 1, use_mine: 1, param: 1, pick_camera: 1, refine: 1, improve: 1, send: 1,
     similar: 1, cheaper: 1, faster: 1, no_photo_model: 1, rephrase: 1, resume: 1,
     brief: 1, variants: 1, more_variants: 1, back_brief: 1, use_variant: 1, restart: 1 };
-  var KIND_ICON = { image: '🖼', video: '🎬', music: '🎵', sfx: '🔊', edit: '✏️' };
+  var KIND_ICON = { image: '🖼', video: '🎬', music: '🎵', text: '✍️', sfx: '🔊', edit: '✏️' };
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -55,6 +55,8 @@
     function renderChips(list) {
       var types = [], examples = [], rest = [];
       (list || []).forEach(function (c) {
+        // устаревшие кнопки воронки «создать ролик» / этапы проекта — больше не показываем
+        if (!c || !c.action || /^project_/.test(c.action)) return;
         if (c.action === 'choose_type') types.push(c);
         else if (c.example || (c.action === 'send' && c.value && String(c.value).length > 12)) examples.push(c);
         else rest.push(c);
@@ -143,6 +145,51 @@
       return wrap;
     }
 
+    /** Движения камеры: превью-видео + клик дописывает инструкцию в промпт. */
+    function renderCamera(bl) {
+      var wrap = el('div', 'aich-camera');
+      var head = el('div', 'aich-camera__head');
+      head.appendChild(el('div', 'aich-param__label', bl.label || L('Движение камеры', 'Camera move')));
+      if (bl.hint) head.appendChild(el('div', 'aich-prompt__hint', bl.hint));
+      wrap.appendChild(head);
+      var clear = el('button', 'aich-opt aich-camera__none' + (!bl.items.some(function (it) { return it.selected; }) ? ' is-on' : ''),
+                     L('Без движения', 'No move'));
+      clear.type = 'button';
+      clear.addEventListener('click', function () {
+        post({ action: { type: 'pick_camera', value: 'none' } }, true);
+      });
+      wrap.appendChild(clear);
+      var row = el('div', 'aich-camera__row');
+      (bl.items || []).forEach(function (it) {
+        var card = el('button', 'aich-camera__card' + (it.selected ? ' is-on' : ''));
+        card.type = 'button';
+        card.setAttribute('aria-pressed', it.selected ? 'true' : 'false');
+        var vid = document.createElement('video');
+        vid.className = 'aich-camera__vid';
+        vid.src = it.preview;
+        vid.muted = true;
+        vid.loop = true;
+        vid.playsInline = true;
+        vid.preload = 'metadata';
+        card.appendChild(vid);
+        card.appendChild(el('div', 'aich-camera__title', it.title));
+        function play() { try { vid.play(); } catch (e) {} }
+        function stop() { try { vid.pause(); vid.currentTime = 0; } catch (e) {} }
+        card.addEventListener('mouseenter', play);
+        card.addEventListener('mouseleave', stop);
+        card.addEventListener('focus', play);
+        card.addEventListener('blur', stop);
+        card.addEventListener('click', function () {
+          play();
+          if (it.selected) return;
+          post({ action: { type: 'pick_camera', value: it.id } }, true);
+        });
+        row.appendChild(card);
+      });
+      wrap.appendChild(row);
+      return wrap;
+    }
+
     /** Уточняющие вопросы: варианты ответов кнопками, «Не важно» по умолчанию. Клик — обновление на месте. */
     function renderBrief(bl) {
       var wrap = el('div', 'aich-params aich-brief');
@@ -203,6 +250,13 @@
       head.appendChild(el('span', 'aich-summary__price', bl.estimate || bl.price));
       box.appendChild(head);
       if (bl.params && bl.params.length) box.appendChild(el('div', 'aich-summary__params', bl.params.join(' · ')));
+      // Скрепка: какие файлы уйдут в генерацию и чем станут — по именам
+      if (bl.files && bl.files.length) {
+        var fl = el('div', 'aich-summary__files');
+        fl.appendChild(el('b', null, (bl.files_title || L('Файлы', 'Files')) + ': '));
+        fl.appendChild(document.createTextNode(bl.files.join(' · ')));
+        box.appendChild(fl);
+      }
       return box;
     }
 
@@ -221,10 +275,13 @@
         else if (bl.type === 'summary') col.appendChild(renderSummary(bl));
         else if (bl.type === 'brief') col.appendChild(renderBrief(bl));
         else if (bl.type === 'variants') col.appendChild(renderVariants(bl));
+        else if (bl.type === 'camera') col.appendChild(renderCamera(bl));
       });
       if (data.chips && data.chips.length) col.appendChild(renderChips(data.chips));
       row.appendChild(col);
-      var setup = (data.blocks || []).some(function (b) { return b.type === 'params' || b.type === 'prompt' || b.type === 'brief'; });
+      var setup = (data.blocks || []).some(function (b) {
+        return b.type === 'params' || b.type === 'prompt' || b.type === 'brief' || b.type === 'camera';
+      });
       if (setup) setupNode = row;
       return row;
     }
@@ -257,8 +314,9 @@
           if (inPlace && setupNode && setupNode.parentNode) fill(setupNode, data);   // параметры — на месте
           else opts.onBot(data);
           if (data.generate_model || data.generate_prompt) {
-            form = { model: data.generate_model, prompt: data.generate_prompt || '', params: data.generate_params || {} };
-            opts.onFillForm && opts.onFillForm({ model: form.model, prompt: form.prompt, params: form.params, ready: !!data.ready });
+            form = { model: data.generate_model, prompt: data.generate_prompt || '', params: data.generate_params || {},
+                     files: data.generate_files || [] };
+            opts.onFillForm && opts.onFillForm({ model: form.model, prompt: form.prompt, params: form.params, ready: !!data.ready, files: form.files });
           }
           return data;
         })
@@ -275,7 +333,7 @@
       if (!c || !c.action || busy) return;
       if (c.action === 'generate') {
         opts.onUser && opts.onUser(c.label);
-        opts.onGenerate && opts.onGenerate({ model: form.model || c.value, prompt: form.prompt, params: form.params });
+        opts.onGenerate && opts.onGenerate({ model: form.model || c.value, prompt: form.prompt, params: form.params, files: form.files || [] });
         return;
       }
       if (c.action === 'retry' && lastBody) { post(lastBody); return; }
@@ -293,6 +351,14 @@
       opts.onUiAction && opts.onUiAction(c.action, c.value);
     }
 
+    function softReset() {
+      setupNode = null;
+      form = { model: null, prompt: '', params: {} };
+      allNodes = [];
+      lastBody = null;
+      busy = false;
+    }
+
     return {
       send: function (text) {
         text = String(text || '').trim().slice(0, 2000);
@@ -304,6 +370,16 @@
       chip: onChip,
       /** Вернулись после входа или пополнения: сервер заново проверит вход → баланс и покажет то же место. */
       resume: function () { if (busy) return Promise.resolve(null); lastBody = { action: { type: 'resume' } }; return post(lastBody); },
+      /** Новый диалог: сбросить cookie/память на сервере и спросить тип генерации. */
+      restart: function () {
+        softReset();
+        var resetUrl = (opts.url || '/api/assistant/chat').replace(/\/?$/, '') + '/reset';
+        return opts.api(resetUrl, { method: 'POST', body: '{}' }).catch(function () { return null; }).then(function () {
+          lastBody = { action: { type: 'restart' } };
+          return post(lastBody);
+        });
+      },
+      softReset: softReset,
       render: render,
       isBusy: function () { return busy; },
       form: function () { return form; }

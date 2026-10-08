@@ -29,6 +29,8 @@ PRICES = {
     "grok-imagine-video-1-5": "30 ₽", "gen4-turbo": "35 ₽", "seedream-5-pro": "6 ₽", "gpt-image-2": "4 ₽",
     "gpt-image-2-5-flare": "9 ₽", "gpt-image-2-5-sunburst": "9 ₽", "nano-banana-2": "7 ₽",
     "ideogram-v3-turbo": "бесплатно", "ace-step": "3 ₽", "elevenlabs-music": "25 ₽", "stable-audio-2-5": "5 ₽",
+    "omni-auto-free": "бесплатно", "deepseek-v3-1": "≈ 0,2 ₽ за ответ", "claude-sonnet-5": "≈ 0,78 ₽ за ответ",
+    "claude-4-5-haiku": "≈ 0,3 ₽ за ответ", "gemini-3-5-flash": "≈ 0,4 ₽ за ответ", "gpt-5-4": "≈ 1 ₽ за ответ",
 }
 
 

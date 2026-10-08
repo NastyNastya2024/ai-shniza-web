@@ -107,7 +107,7 @@ def test_redis_store_roundtrip_and_errors():
             return self.d.get(k)
 
         def set(self, k, v, ex=None):
-            assert ex == 6 * 3600
+            assert ex == 24 * 3600   # память помощника = срок жизни файлов и гостевой истории
             self.d[k] = v
 
     s = RedisStore(R())
@@ -197,8 +197,8 @@ def test_uses_app_rate_limiter():
     app.secret_key = "x"
     app.extensions["rate_limit"] = rate_limit
     register_assistant(app, a)
-    assert calls == [(60, 60, "assistant_chat")]
-    assert "api_assistant_chat" in app.view_functions
+    assert calls == [(60, 60, "assistant_chat"), (30, 60, "assistant_reset")]
+    assert "api_assistant_chat" in app.view_functions and "api_assistant_reset" in app.view_functions
 
 
 

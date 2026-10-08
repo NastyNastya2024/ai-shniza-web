@@ -1,0 +1,33 @@
+/* Скрепка студии: плашки прикреплённых файлов + перетаскивание (attach.js) */
+.att-tray{display:flex;flex-wrap:wrap;gap:8px;margin:0}
+.att-tray[hidden]{display:none}
+.att-item{position:relative;display:flex;align-items:center;gap:10px;max-width:100%;min-width:0;padding:6px 6px 6px 6px;border-radius:14px;border:1px solid var(--field-brd);background:var(--field);color:var(--ink);overflow:hidden;font-family:'Onest',sans-serif}
+.att-thumb{flex:0 0 auto;width:40px;height:40px;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--soft);color:var(--accent-ink)}
+.att-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.att-meta{display:flex;flex-direction:column;min-width:0;max-width:260px;gap:2px}
+.att-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.att-sub{font-size:12px;color:var(--muted2);display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.att-err{color:#C2271B;white-space:normal}
+.t-dark .att-err{color:#FF9C8F}
+.att-warn{color:#9A5A00;white-space:normal}
+.t-dark .att-warn{color:#FFC27A}
+.att-warn svg{flex:0 0 auto}
+.att-error{border-color:rgba(194,39,27,.35)}
+.att-notfor{border-color:rgba(200,130,0,.4)}
+.att-x{flex:0 0 auto;width:32px;height:32px;border-radius:10px;border:0;background:transparent;color:var(--muted2);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.att-x:hover,.att-x:focus-visible{background:var(--soft-hover);color:var(--ink)}
+.att-retry{flex:0 0 auto;height:32px;padding:0 10px;border-radius:10px;border:1px solid var(--field-brd);background:var(--soft);color:var(--accent-ink);font:600 12px 'Onest',sans-serif;cursor:pointer}
+.att-bar{position:absolute;left:0;bottom:0;height:3px;background:linear-gradient(90deg,#FFA235,#FF7B2C);transition:width .2s ease;border-radius:0 3px 3px 0}
+.att-uploading .att-thumb{opacity:.7}
+[data-attach].att-has{border-color:var(--purple-brd,rgba(91,53,224,.3));color:var(--purple,#5B35E0)}
+[data-attach].att-has::after{content:"";position:absolute;top:7px;right:7px;width:8px;height:8px;border-radius:50%;background:#FF7B2C}
+[data-attach]{position:relative}
+.composer.att-drop{outline:2px dashed var(--purple,#7A55FF);outline-offset:-6px}
+.composer.att-drop::before{content:attr(data-drop-text);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border-radius:inherit;background:var(--modal-bg,rgba(255,255,255,.86));color:var(--ink);font:600 15px 'Onest',sans-serif;z-index:3;pointer-events:none}
+.composer{position:relative}
+@media (max-width:640px){.att-meta{max-width:170px}}
+@media (prefers-reduced-motion:reduce){.att-bar{transition:none}}
+/* файлы под сообщением человека в чате */
+.msg-files{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;white-space:normal}
+.msg-file{display:inline-flex;align-items:center;gap:5px;max-width:100%;padding:4px 10px;border-radius:999px;background:rgba(150,140,200,.24);font-size:12px;font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msg-file svg{flex:0 0 auto}

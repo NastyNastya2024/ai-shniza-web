@@ -47,6 +47,12 @@ TYPE_RULES: list[tuple[str, re.Pattern]] = [
     ("image", _rx(r"картин", r"картинк", r"пикч", r"\bфотк", r"изображ", r"\bмем\b", r"\bобои\b", r"wallpaper", r"постер", r"плакат", r"\bфото\b", r"\bарт\b", r"логотип", r"\bлого\b", r"баннер", r"обложк",
                   r"иллюстрац", r"аватар", r"\bпринт", r"открытк", r"рисун", r"нарисуй", r"\bиконк", r"стикер", r"\bimage\b", r"\bpicture\b",
                   r"\bposter\b", r"\blogo\b", r"\bbanner\b", r"illustrat", r"\bavatar\b", r"\bdraw\b", r"\bicon\b", r"\bsticker\b")),
+    # после image: «текст на картинке» уже поймает image; иначе — текстовая генерация
+    ("text", _rx(r"\bтекст\b", r"стать[яюе]", r"\bпост\b", r"письм[оае]", r"\bстих", r"эссе", r"реферат", r"сценари", r"рассказ",
+                 r"копирайт", r"сочинен", r"напиши (код|программ|скрипт|функци|эссе|сочинен|реферат|письмо|пост|стать|стих)",
+                 r"\bwrite (code|a program|a script|an essay|a letter|a poem|a post|an article|a story)\b",
+                 r"\bessay\b", r"\bpoem\b", r"\barticle\b", r"\bletter\b", r"\bllm\b", r"языков\w* модел",
+                 r"\bпереведи\b", r"\bперевод\b", r"\btranslate\b")),
 ]
 EDIT_RX = _rx(r"замени", r"\bубери\b", r"удали\b", r"поменяй", r"\bдобавь\b", r"перекрась", r"отредактир", r"смени фон", r"другой фон",
               r"ретуш", r"сохрани лицо", r"объедини", r"совмести", r"\breplace\b", r"\bremove\b", r"change the background", r"\bretouch\b",
@@ -99,10 +105,9 @@ THANKS = _rx(r"^\s*(спасибо|благодар\w*|thanks?|thank you|thx)\b"
 WHO = _rx(r"\bкто ты\b", r"\bты кто\b", r"что ты умеешь", r"who are you", r"what can you do")
 
 OFF_TOPIC = _rx(
-    r"напиши (код|программ|скрипт|функци|эссе|сочинен|реферат|письмо|пост|статью|стих)", r"\bpython\b", r"javascript", r"\bsql\b", r"\bкод\b",
-    r"реши (задач|уравнен|пример)", r"\bуравнени", r"интеграл", r"\bматемат", r"домашк", r"\bпереведи\b", r"\bперевод\b",
+    r"реши (задач|уравнен|пример)", r"\bуравнени", r"интеграл", r"\bматемат", r"домашк",
     r"погод", r"новост", r"курс (доллар|валют|евро|биткоин)", r"\bрецепт", r"анекдот", r"шутк", r"гороскоп", r"\bкто (такой|такая|был)\b",
-    r"столиц", r"\bwrite (code|a program|a script|an essay|a letter|a poem)", r"\bsolve\b", r"\bequation\b", r"homework", r"\btranslate\b",
+    r"столиц", r"\bsolve\b", r"\bequation\b", r"homework",
     r"weather", r"\bnews\b", r"\brecipe\b", r"\bjoke\b", r"horoscope", r"stock price", r"\bcapital of\b",
 )
 
@@ -126,6 +131,7 @@ KIND_WORDS: dict[str, list[str]] = {
               "иллюстрацию", "image", "picture"],
     "video": ["видео", "видеоролик", "ролик", "анимацию", "мультик", "video", "клип"],
     "music": ["музыку", "музыка", "мелодию", "песню", "песня", "трек", "music", "song"],
+    "text": ["текст", "текста", "текстом", "статью", "статья", "пост", "письмо", "стих", "эссе", "text", "essay", "poem"],
     "sfx": ["звуковой", "эффект", "звук"],
 }
 

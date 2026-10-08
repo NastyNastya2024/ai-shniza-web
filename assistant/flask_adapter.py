@@ -23,7 +23,7 @@ from typing import Any, Callable
 from .cards import load_cards, validate
 from .engine import Assistant, AssistantDeps
 from .llm import LLMChain, LLMProvider
-from .session import MemoryStore, RedisStore
+from .session import TTL_SEC, MemoryStore, RedisStore
 
 log = logging.getLogger("assistant")
 
@@ -60,6 +60,11 @@ def clean_context(raw: Any) -> dict[str, Any]:
                 out[key] = str(v)[:max_len]
         except (TypeError, ValueError):
             continue
+    # Скрепка: [{kind, name}] — только тип и имя (до 3 файлов), чтобы ассистент называл файлы по имени
+    from .files import clean_attachments
+    files = clean_attachments(raw.get("attachments"))
+    if files:
+        out["attachments"] = files
     return out
 
 
@@ -132,8 +137,10 @@ def build_from_env(models: dict[str, dict] | None = None, price_fn: Callable[[st
                    channel_healthy: Callable[[str], bool] | None = None, redis_client: Any = None,
                    env: dict[str, str] | None = None, transport: Any = None,
                    on_event: Callable[[dict], None] | None = None,
-                   cost_fn: Callable[[str, dict], "int | None"] | None = None) -> Assistant:
-    """cost_fn(model_id, params) → цена запуска в копейках (как будет считать биллинг). None — посчитаем из price_fn."""
+                   cost_fn: Callable[[str, dict], "int | None"] | None = None,
+                   visible_fn: Callable[[str], bool] | None = None) -> Assistant:
+    """cost_fn(model_id, params) → цена запуска в копейках (как будет считать биллинг). None — посчитаем из price_fn.
+    visible_fn(model_id) → модель открыта в студии; на этапах проекта помощник советует только такие."""
     e = env if env is not None else os.environ
     cards, neighbors = load_cards(e.get("ASSIST_CARDS_PATH") or os.path.join(os.path.dirname(__file__), "data", "model_cards.json"))
     if models is not None:
@@ -155,6 +162,8 @@ def build_from_env(models: dict[str, dict] | None = None, price_fn: Callable[[st
         token_budget=int(e.get("ASSIST_SESSION_TOKEN_BUDGET") or 6000),
         on_event=on_event,
         cost_fn=cost_fn,
+        inputs_fn=(lambda mid: list((models.get(mid) or {}).get("inputs") or [])) if models is not None else None,
+        catalog_fn=visible_fn,
         brief=(e.get("ASSIST_BRIEF") or "1").strip().lower() not in {"0", "false", "no"},
     )
     return Assistant(deps)
@@ -295,7 +304,22 @@ def register_assistant(app: Any, assistant: Assistant, url: str = "/api/assistan
             sid = uuid.uuid4().hex
         resp = jsonify(handle_request(asst, body, session, uid, legacy_autostart, sid=sid, account=account))
         resp.headers["Cache-Control"] = "no-store"
-        resp.set_cookie(COOKIE, sid, max_age=6 * 3600, httponly=True, samesite="Lax", secure=request.is_secure)
+        resp.set_cookie(COOKIE, sid, max_age=TTL_SEC, httponly=True, samesite="Lax", secure=request.is_secure)
+        return resp
+
+    def reset_view():
+        """«Новый чат» / выход: помощник начинает с чистого листа — новая cookie, старая память забывается."""
+        old = request.cookies.get(COOKIE) or ""
+        asst = app.config.get("ASSISTANT") or assistant
+        if _SID_RX.match(old):
+            try:
+                asst.d.store.set(old, {}, 1)   # гасим старую память сразу, не дожидаясь TTL
+            except Exception:
+                pass
+        resp = jsonify({"ok": True})
+        resp.headers["Cache-Control"] = "no-store"
+        resp.set_cookie(COOKIE, uuid.uuid4().hex, max_age=TTL_SEC, httponly=True, samesite="Lax",
+                        secure=request.is_secure)
         return resp
 
     def status_view():
@@ -313,5 +337,7 @@ def register_assistant(app: Any, assistant: Assistant, url: str = "/api/assistan
         view = limiter(rate[0], rate[1], "assistant_chat")(view)
     app.add_url_rule(url, endpoint="api_assistant_chat", view_func=view, methods=["POST"])
     app.add_url_rule(url + "/status", endpoint="api_assistant_status", view_func=status_view, methods=["GET"])
+    reset = limiter(30, 60, "assistant_reset")(reset_view) if limiter else reset_view
+    app.add_url_rule(url + "/reset", endpoint="api_assistant_reset", view_func=reset, methods=["POST"])
     app.config["ASSISTANT"] = assistant
     assistant.d.account_check = bool(account_fn)

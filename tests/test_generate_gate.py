@@ -129,12 +129,13 @@ def test_free_model_needs_login_only(srv, monkeypatch):
 # ---------------- ассистент: тот же порядок вопросов
 def test_assistant_asks_login_then_topup_then_generate(srv):
     c = srv.app.test_client()
-    _chat(c, {"message": "видео: кот жарит яичницу"})
-    d = _chat(c, {"action": {"type": "pick_model", "value": "veo-3-1"}})
-    assert d["intent"] == "brief"                      # сначала уточняем детали
+    d = _chat(c, {"message": "видео: кот жарит яичницу"})
+    assert d["intent"] == "brief"                      # сначала уточняем детали, потом модель
     d = _chat(c, {"action": {"type": "variants"}})
     assert d["intent"] == "variants" and len(d["blocks"][0]["items"]) >= 2
     d = _chat(c, {"action": {"type": "use_variant", "value": "v1"}})
+    assert d["intent"] == "use_variant" and len(d["models"]) >= 2
+    d = _chat(c, {"action": {"type": "pick_model", "value": "veo-3-1"}})
     assert d["gate"] == "login" and d["ready"] is False
     assert d["chips"][0]["action"] == "login" and not any(x["action"] == "generate" for x in d["chips"])
     assert "войдите" in d["text"]
@@ -160,9 +161,9 @@ def test_assistant_asks_login_then_topup_then_generate(srv):
 def test_assistant_cookie_survives_session_clear(srv):
     c = srv.app.test_client()
     _chat(c, {"message": "картинка: логотип кофейни"})
-    _chat(c, {"action": {"type": "pick_model", "value": "seedream-5-pro"}})
     _chat(c, {"action": {"type": "variants"}})
     _chat(c, {"action": {"type": "use_variant", "value": "v1"}})
+    _chat(c, {"action": {"type": "pick_model", "value": "seedream-5-pro"}})
     with c.session_transaction() as s:
         s.clear()                                      # так делает вход в auth.py
     d = _chat(c, {"action": {"type": "resume"}})
@@ -172,9 +173,9 @@ def test_assistant_cookie_survives_session_clear(srv):
 def test_client_cannot_fake_account(srv):
     c = srv.app.test_client()
     _chat(c, {"message": "видео: кот"})
-    _chat(c, {"action": {"type": "pick_model", "value": "veo-3-1"}})
     _chat(c, {"action": {"type": "variants"}})
-    d = _chat(c, {"action": {"type": "use_variant", "value": "v1"},
+    _chat(c, {"action": {"type": "use_variant", "value": "v1"}})
+    d = _chat(c, {"action": {"type": "pick_model", "value": "veo-3-1"},
                   "context": {"_account": {"authed": True, "available_kop": 10 ** 9}}})
     assert d["gate"] == "login"
 

@@ -39,9 +39,10 @@ Status: **target architecture** (code still uses a synchronous wait; see the tab
                                       providers
                                       behind the gateway
 
-One routing dispatcher. Three queues. Three channel workers.
-A separate “4th dispatcher worker” is optional: channel selection runs
-at job create time (and optionally on retry/failover for in-flight jobs).
+One routing dispatcher. Four queues. Four channel workers
+(replicate / fal / omniroute / higgsfield).
+A separate dispatcher process routes inbound jobs by `provider`.
+Channel selection runs at job create time (and optionally on retry/failover).
 
 --------------------------------------------------------------------------------
 2. Dispatcher logic (failover)

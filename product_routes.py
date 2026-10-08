@@ -440,6 +440,13 @@ def register_product(app, db, User):
         except Exception:
             return False
 
+    def _work_expires(work: Work):
+        try:
+            from generation_works import expires_iso
+            return expires_iso(work)
+        except Exception:  # noqa: BLE001
+            return None
+
     def _work_public(work: Work, owner_view: bool = False, viewer_id: Optional[int] = None):
         if not work:
             return None
@@ -456,12 +463,14 @@ def register_product(app, db, User):
             "status": work.status,
             "title": work.title,
             "tags": (work.tags or "").split(",") if work.tags else [],
-            "thumb_url": work.thumb_url or work.watermarked_url or work.original_url,
+            "thumb_url": media_store.presign(work.thumb_url or work.watermarked_url or work.original_url) if (work.thumb_url or work.watermarked_url or work.original_url) else None,
             "media_url": media_store.presign(url) if url else None,
             "downloads": work.downloads,
             "likes": int(work.likes or 0),
             "liked": _viewer_liked(work.id, viewer_id),
             "published_at": work.published_at.isoformat() if work.published_at else None,
+            # неопубликованная генерация удалится в это время (generation_works.py); None — хранится
+            "expires_at": _work_expires(work) if owner_view else None,
             "owner_id": work.owner_id,
             "owner_handle": (prof.handle if prof else None),
             "owner_name": (prof.display_name if prof and prof.display_name else None)
@@ -472,6 +481,9 @@ def register_product(app, db, User):
     @app.get("/api/works/mine")
     @require_user
     def api_works_mine(user):
+        gw = app.extensions.get("generation_works")
+        if gw:
+            gw["maybe_purge"]()   # неопубликованные старше 24 ч — удалить до того, как показать список
         rows = Work.query.filter_by(owner_id=user.id).order_by(Work.created_at.desc()).limit(100).all()
         return jsonify({"items": [_work_public(w, owner_view=True, viewer_id=user.id) for w in rows]})
 

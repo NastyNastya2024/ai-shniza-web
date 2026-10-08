@@ -49,6 +49,12 @@ def _run_omniroute() -> None:
     run_channel_worker("omniroute")
 
 
+def _run_higgsfield() -> None:
+    from queue_runtime.channel_worker import run_channel_worker
+
+    run_channel_worker("higgsfield")
+
+
 def _run_free() -> None:
     from queue_runtime.free_dispatcher import run_free_dispatcher
 
@@ -60,6 +66,7 @@ DEFAULT_ROLES: list[tuple[str, Callable[[], None]]] = [
     ("replicate", _run_replicate),
     ("fal", _run_fal),
     ("omniroute", _run_omniroute),
+    ("higgsfield", _run_higgsfield),
     ("free", _run_free),
 ]
 

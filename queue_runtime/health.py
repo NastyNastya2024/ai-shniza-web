@@ -143,10 +143,39 @@ def probe_omniroute() -> tuple[bool, str]:
     return True, "ok"
 
 
+def probe_higgsfield() -> tuple[bool, str]:
+    key = (os.getenv("HF_KEY") or "").strip()
+    if not key or ":" not in key:
+        return False, "HF_KEY missing"
+    try:
+        # Authenticated ping — 2xx/4xx (not 401/403) means gateway reachable with key.
+        resp = requests.get(
+            "https://platform.higgsfield.ai/v1/models",
+            headers={"Authorization": f"Key {key}"},
+            timeout=15,
+        )
+    except requests.RequestException as exc:
+        # Fallback: API root under api.higgsfield.ai
+        try:
+            resp = requests.get(
+                "https://api.higgsfield.ai/",
+                headers={"Authorization": f"Key {key}"},
+                timeout=15,
+            )
+        except requests.RequestException as exc2:
+            return False, f"network:{exc2.__class__.__name__}"
+    if resp.status_code in {401, 403}:
+        return False, f"auth:{resp.status_code}"
+    if resp.status_code >= 500:
+        return False, f"http:{resp.status_code}"
+    return True, f"http:{resp.status_code}"
+
+
 PROBES = {
     "replicate": probe_replicate,
     "fal": probe_fal,
     "omniroute": probe_omniroute,
+    "higgsfield": probe_higgsfield,
 }
 
 

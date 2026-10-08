@@ -7,11 +7,12 @@
               {"type":"prompt",  "model_id","title","text","note"}
               {"type":"params",  "model_id","groups":[{name,label,options:[{value,label,selected}]}]}
               {"type":"summary", "model_id","title","price","prompt","params":[str]}
+              {"type":"camera",  "label","hint","items":[{id,title,preview,selected}]}
   chips   — кнопки действий [{label, action, value?, primary?}]
   reply   — тот же ответ ОДНИМ простым текстом (для старого фронта, который не умеет blocks)
 
 Кнопка (chip) = {"label", "action", "value"?}. На сервер (как {"action":{type,value}}) уходят:
-  pick_model · more · choose_type · use_mine · param · refine · improve · send · similar · cheaper · faster · no_photo_model · rephrase
+  pick_model · more · choose_type · use_mine · param · pick_camera · refine · improve · send · similar · cheaper · faster · no_photo_model · rephrase
 Фронт сам: generate · edit_prompt · open_models · open_topup · open_vitrina · login · attach · retry · wait · support
 """
 from __future__ import annotations
@@ -115,6 +116,10 @@ def plain_from(text: str, blocks: list[dict[str, Any]], lang: str) -> list[str]:
                 lines.append(f"{g['label']}: {sel}")
         elif bl["type"] == "summary":
             lines.append(f"{bl['title']} · {bl.get('estimate') or bl['price']}")
+        elif bl["type"] == "camera":
+            sel = next((it["title"] for it in bl.get("items") or [] if it.get("selected")), None)
+            if sel:
+                lines.append(f"{bl.get('label') or 'Camera'}: {sel}")
     return lines
 
 

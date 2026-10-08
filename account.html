@@ -139,6 +139,8 @@ html{scrollbar-gutter:stable}
 .wk .st.h{background:rgba(30,18,56,.78);color:#E6E0FA}
 .wk .st:before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor;flex:0 0 auto}
 .wk .st[disabled]{opacity:.6;cursor:wait;transform:none}
+.wk .wk-exp{position:absolute;right:14px;top:14px;height:24px;padding:0 10px;border-radius:999px;background:rgba(30,18,56,.78);color:#FFE0B8;font:700 11.5px inherit;display:inline-flex;align-items:center;z-index:2}
+.wk-ttl-note{margin:0 0 14px;padding:10px 14px;border-radius:14px;background:rgba(255,162,53,.12);font-size:13.5px;line-height:1.45;color:var(--ink)}
 .empty{padding:44px 28px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
 .empty .ill{width:96px;height:96px;border-radius:28px;background:var(--card);display:flex;align-items:center;justify-content:center}
 .empty h3{margin:4px 0 0;font-size:20px;font-weight:800}
@@ -524,9 +526,19 @@ function render() {
 }
 
 /* ---------- Работы ---------- */
+/* «удалится через 5 ч» — неопубликованные генерации хранятся 24 часа */
+function expLeft(iso) {
+  const ms = Date.parse(iso) - Date.now();
+  if (!isFinite(ms)) return '';
+  if (ms <= 0) return 'удаляется';
+  const h = Math.floor(ms / 3600e3);
+  return h >= 1 ? 'удалится через ' + h + ' ч' : 'удалится через ' + Math.max(1, Math.round(ms / 60e3)) + ' мин';
+}
 function vWorks() {
   if (!D.works.length) return $('view').innerHTML = '<div class="glass empty"><div class="ill">' + I.img + '</div><h3>Здесь появятся ваши работы</h3><p>Создайте первую генерацию в студии и опубликуйте лучшее на витрине — клиенты смогут запросить у вас промпт, оригинал или заказать работу.</p><div class="btns"><a class="btn btn-gen" href="/app">' + I.spark + 'Создать первую работу</a><a class="btn btn-s" href="/explore">Посмотреть витрину</a></div><p class="hint">Совет: Seedance сейчас бесплатно — попробуйте видео со звуком.</p></div>';
-  $('view').innerHTML = '<div class="grid">' + D.works.map((w) => '<div class="wk"><img src="' + esc(w.src) + '" alt="' + esc(w.title) + '"><button type="button" class="st' + (w.pub ? '' : ' h') + '" data-pub="' + esc(String(w.id)) + '" aria-pressed="' + (w.pub ? 'true' : 'false') + '" title="' + (w.pub ? 'Скрыть с витрины' : 'Опубликовать на витрине') + '">' + (w.pub ? 'На витрине' : 'Скрыта') + '</button></div>').join('') + '</div>';
+  const hasExp = D.works.some((w) => !w.pub && w.exp);
+  $('view').innerHTML = (hasExp ? '<p class="wk-ttl-note">Неопубликованные работы хранятся 24 часа, потом удаляются вместе с файлом. Опубликуйте на витрине — и работа останется в профиле.</p>' : '')
+    + '<div class="grid">' + D.works.map((w) => '<div class="wk"><img src="' + esc(w.src) + '" alt="' + esc(w.title) + '">' + (!w.pub && w.exp ? '<span class="wk-exp" title="Без публикации работа удалится">' + esc(expLeft(w.exp)) + '</span>' : '') + '<button type="button" class="st' + (w.pub ? '' : ' h') + '" data-pub="' + esc(String(w.id)) + '" aria-pressed="' + (w.pub ? 'true' : 'false') + '" title="' + (w.pub ? 'Скрыть с витрины' : 'Опубликовать на витрине') + '">' + (w.pub ? 'На витрине' : 'Скрыта') + '</button></div>').join('') + '</div>';
 }
 async function toggleWorkPub(w, btn) {
   if (!w || w._busy) return;
@@ -1075,6 +1087,7 @@ async function loadLive() {
         src: x.thumb_url || x.media_url || '/assets/bg-light.jpg',
         pub: x.status === 'published',
         likes: x.likes || 0,
+        exp: x.expires_at || null,   // неопубликованная удалится в это время (24 ч после генерации)
       }));
     }
   } catch (_) {}

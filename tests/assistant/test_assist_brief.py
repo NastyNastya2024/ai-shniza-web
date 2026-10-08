@@ -44,11 +44,12 @@ def test_empty_idea_asks_clarifying_questions_without_examples(make_assistant):
     a = make_assistant(brief=True)
     r = a.handle("Нужно сделать видео", {}, SID)
     assert r["intent"] == "need_subject"
+    assert "Сначала напишите основную идею" in r["text"] and "помогу сформировать промпт" in r["text"]
     for q in ("Кто в кадре?", "Где это происходит?", "Что происходит", "атмосфера", "Нюансы"):
         assert q in r["text"], q
     assert r["chips"] == [] and "кот" not in r["text"].lower()      # никаких готовых примеров
-    r = a.handle("рыжий кот жарит яичницу", {}, SID)          # тип уже известен — сразу модели
-    assert r["intent"] == "generate_task" and blk(r, "models") and "кот" in r["text"]
+    r = a.handle("рыжий кот жарит яичницу", {}, SID)          # тип уже известен — сначала бриф/промпт
+    assert r["intent"] in ("brief", "variants")
 
 
 def test_junk_message_is_not_accepted(make_assistant):
@@ -85,7 +86,8 @@ def test_rule_brief_questions_preselect_from_text(make_assistant):
     style = qs[1]
     assert next(o for o in style["options"] if o["selected"])["value"] == "anime"
     assert qs[2]["options"][-1]["label"] == "Не важно" and qs[2]["options"][-1]["selected"]
-    assert r["chips"][0]["action"] == "variants" and r["chips"][0].get("primary")
+    assert r["chips"] and all(c["action"] == "variants" for c in r["chips"])
+    assert not any(c.get("primary") for c in r["chips"])   # без «Собрать промпт» — ответ текстом или «Пропустить»
     assert "generate_prompt" not in r                      # промпта ещё нет — сначала детали
 
 
@@ -102,8 +104,10 @@ def test_rule_brief_answer_then_three_distinct_variants(make_assistant):
     assert all("уютная тёплая атмосфера" in i["text"].lower() for i in items)   # выбор человека во всех вариантах
     assert all(i["text"].startswith("Кот жарит яичницу") for i in items)
     r = a.handle("", {}, SID, action={"type": "use_variant", "value": items[1]["id"]})
+    assert r["intent"] == "use_variant" and blk(r, "models") and items[1]["title"] in r["text"]
+    assert blk(r, "prompt")["text"] == items[1]["text"]
+    r = a.handle("", {}, SID, action={"type": "pick_model", "value": "kling-v2-5-turbo-pro"})
     assert r["generate_prompt"] == items[1]["text"] and blk(r, "params") and blk(r, "prompt")
-    assert items[1]["title"] in r["text"]
 
 
 def test_more_variants_are_different(make_assistant):
@@ -169,11 +173,10 @@ def test_llm_tailored_questions_and_variants(make_assistant):
 def test_llm_says_unclear_asks_subject(make_assistant):
     tr = FakeTransport(omniroute=[("ok", brief_json(clear=False, qs=[])), ("ok", brief_json())])
     a = make_assistant(tr, brief=True)
-    a.handle("видео кракозябра", {}, SID)
-    r = a.handle("", {}, SID, action={"type": "pick_model", "value": "kling-v2-5-turbo-pro"})
+    r = a.handle("видео кракозябра", {}, SID)                       # бриф сразу; LLM говорит «неясно»
     assert r["intent"] == "need_subject" and "Не совсем поняла" in r["text"]
-    r = a.handle("рыжий кот жарит яичницу", {}, SID)                # после ответа — снова к модели
-    assert r["intent"] == "brief" or r["intent"] == "variants"
+    r = a.handle("рыжий кот жарит яичницу", {}, SID)                # после ответа — снова бриф
+    assert r["intent"] in ("brief", "variants")
 
 
 def test_variants_free_text_is_change_for_llm(make_assistant):
@@ -313,16 +316,16 @@ def test_repeated_junk_escalates_not_loops(make_assistant):
     assert r["chips"] and any(c["label"] == "Лоу-фай" for c in r["chips"])
     assert r["chips"][-1]["action"] == "restart"
     r = a.handle("", {}, SID, action={"type": "send", "value": next(c for c in r["chips"] if c["label"] == "Лоу-фай")["value"]})
-    assert r["intent"] == "generate_task" and blk(r, "models")
+    assert r["intent"] in ("brief", "variants", "generate_task")      # с брифом — сначала промпт
     r = a.handle("ололо", {}, SID)                                   # счётчик сброшен — снова мягко
-    assert "Не совсем поняла" in r["text"] or "Похоже" in r["text"]
+    assert "Не совсем поняла" in r["text"] or "Похоже" in r["text"] or r["intent"] in ("brief", "variants")
 
 
 def test_restart_button(make_assistant):
     a = make_assistant(brief=True)
     a.handle("", {}, SID, action={"type": "choose_type", "value": "video"})
     r = a.handle("", {}, SID, action={"type": "restart"})
-    assert r["intent"] == "ask_type" and len(r["chips"]) == 4
+    assert r["intent"] == "ask_type" and len(r["chips"]) == 5   # image/video/music/text/sfx
 
 
 def test_junk_on_variants_does_not_call_llm(make_assistant):

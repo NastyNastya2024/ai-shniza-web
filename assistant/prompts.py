@@ -68,6 +68,7 @@ KIND_SUFFIX = {
         "edit": "keep everything else unchanged, natural result",
         "music": "well-produced, clear mix",
         "sfx": "clean recording, no music",
+        "text": "clear structure, concrete details, natural language",
     },
     "ru": {
         "video": "кинематографично, плавное движение камеры, высокая детализация",
@@ -75,6 +76,7 @@ KIND_SUFFIX = {
         "edit": "всё остальное без изменений, естественный результат",
         "music": "качественное сведение, чистый звук",
         "sfx": "чистая запись, без музыки",
+        "text": "чёткая структура, конкретика, естественный язык",
     },
 }
 
@@ -97,8 +99,9 @@ def strip_commands(idea: str) -> str:
     """Убрать только «нужно сделать …», а «видео с закатом» оставить целиком (иначе выйдет «Закатом»)."""
     s = (idea or "").strip()
     m = re.match(r"^([^:]{2,60}):\s*(.{3,})$", s)   # «Вертикальное видео 10 с: кот в снегу» → «кот в снегу»
-    if m and re.search(r"видео|ролик|клип|картин|изображ|фото|постер|логотип|музык|трек|песн|звук|video|image|picture|"
-                       r"poster|logo|music|track|song|sound", m.group(1), re.I):
+    if m and re.search(r"видео|ролик|клип|картин|изображ|фото|постер|логотип|музык|трек|песн|звук|текст|стать|пост|"
+                       r"письм|стих|video|image|picture|poster|logo|music|track|song|sound|text|essay|poem|article",
+                       m.group(1), re.I):
         s = m.group(2).strip()
     out = _VERBS.sub("", s, count=1).strip()
     return out if len(out) >= 3 else s
@@ -109,16 +112,17 @@ def clean_idea(idea: str) -> str:
     s = (idea or "").strip()
     # «Вертикальное видео 10 секунд: кот в снегу» → «кот в снегу»
     m = re.match(r"^([^:]{2,60}):\s*(.{3,})$", s)
-    if m and re.search(r"видео|ролик|клип|картин|изображ|фото|постер|логотип|музык|трек|песн|звук|video|image|picture|"
-                       r"poster|logo|music|track|song|sound", m.group(1), re.I):
+    if m and re.search(r"видео|ролик|клип|картин|изображ|фото|постер|логотип|музык|трек|песн|звук|текст|стать|пост|"
+                       r"письм|стих|video|image|picture|poster|logo|music|track|song|sound|text|essay|poem|article",
+                       m.group(1), re.I):
         s = m.group(2).strip()
     out = _CMD.sub("", s, count=1).strip()
     return out if len(out) >= 3 else s
 
 
 TEMPLATE = {
-    "ru": {"music": "Трек на тему «{idea}»", "sfx": "Звук: {idea}"},
-    "en": {"music": "A track inspired by “{idea}”", "sfx": "Sound: {idea}"},
+    "ru": {"music": "Трек на тему «{idea}»", "sfx": "Звук: {idea}", "text": "Напиши текст: {idea}"},
+    "en": {"music": "A track inspired by “{idea}”", "sfx": "Sound: {idea}", "text": "Write text: {idea}"},
 }
 
 # Правки промпта без LLM: кнопки-подсказки → понятная модели формулировка. group — взаимоисключающие правки

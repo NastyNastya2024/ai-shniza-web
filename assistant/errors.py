@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 # обычное время генерации по типу, секунд (для «это нормально / уже долго»)
-TYPICAL_SEC = {"image": 40, "edit": 40, "video": 240, "music": 90, "sfx": 40}
+TYPICAL_SEC = {"image": 40, "edit": 40, "video": 240, "music": 90, "sfx": 40, "text": 20}
 
 E: dict[str, dict[str, Any]] = {
     "queued": {
@@ -28,8 +28,8 @@ E: dict[str, dict[str, Any]] = {
         "chips": [("wait", "wait"), ("topup", "open_topup")],
     },
     "running_ok": {
-        "ru": ["Генерация идёт. Для {kind} это обычно до {mins} мин.", "Результат сохранится в «Моих работах»."],
-        "en": ["Generating. For {kind} this usually takes up to {mins} min.", "The result will be saved to “My works”."],
+        "ru": ["Генерация идёт. Для {kind} это обычно до {mins} мин.", "Результат появится в «Моих работах» — без публикации он хранится 24 часа."],
+        "en": ["Generating. For {kind} this usually takes up to {mins} min.", "The result will appear in “My works” — unpublished, it’s kept for 24 hours."],
         "chips": [("wait", "wait")],
     },
     "running_slow": {
@@ -99,8 +99,8 @@ E: dict[str, dict[str, Any]] = {
     },
 }
 
-KIND_WORD = {"ru": {"image": "картинки", "edit": "правки фото", "video": "видео", "music": "музыки", "sfx": "звука"},
-             "en": {"image": "images", "edit": "photo edits", "video": "video", "music": "music", "sfx": "sound"}}
+KIND_WORD = {"ru": {"image": "картинки", "edit": "правки фото", "video": "видео", "music": "музыки", "sfx": "звука", "text": "текста"},
+             "en": {"image": "images", "edit": "photo edits", "video": "video", "music": "music", "sfx": "sound", "text": "text"}}
 
 ALIASES = {
     "not_configured": "channel_unavailable", "unsupported_provider": "channel_unavailable", "bad_response": "upstream",

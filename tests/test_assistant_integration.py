@@ -106,16 +106,18 @@ def test_flow_without_llm_keys(client, monkeypatch):
     r = _post(client, {"message": "сделай вертикальное видео: кот в снегу"})
     assert r.status_code == 200, r.get_json()
     d = r.get_json()
-    assert d["intent"] == "generate_task" and len(d["models"]) >= 2
-    mid = d["models"][0]["id"]
-    b = _post(client, {"action": {"type": "pick_model", "value": mid}}).get_json()
-    assert b["intent"] == "brief" and b["blocks"][0]["type"] == "brief"
+    assert d["intent"] == "brief" and d["blocks"][0]["type"] == "brief"
     v = _post(client, {"action": {"type": "variants"}}).get_json()
     assert v["intent"] == "variants" and len(v["blocks"][0]["items"]) >= 2 and v["degraded"] is True
     assert "по шаблону" in v["text"]
     d2 = _post(client, {"action": {"type": "use_variant", "value": "v1"}}).get_json()
-    assert d2["generate_model"] == mid and d2["generate_prompt"].startswith("Кот в снегу")
-    assert "job_id" not in d2
+    assert d2["intent"] == "use_variant" and len(d2["models"]) >= 2 and d2["blocks"][0]["type"] == "prompt"
+    assert d2["blocks"][0]["text"].startswith("Кот в снегу")
+    mid = d2["models"][0]["id"]
+    assert mid == "seedance-2-5"
+    setup = _post(client, {"action": {"type": "pick_model", "value": mid}}).get_json()
+    assert setup["generate_model"] == mid and setup["generate_prompt"].startswith("Кот в снегу")
+    assert "job_id" not in setup
 
 
 def test_prices_come_from_catalog(client, server):
@@ -123,6 +125,9 @@ def test_prices_come_from_catalog(client, server):
 
     prices = server._integration_prices()
     d = _post(client, {"message": "сделай картинку: логотип кофейни"}).get_json()
+    assert d["intent"] in ("brief", "variants")
+    _post(client, {"action": {"type": "variants"}})
+    d = _post(client, {"action": {"type": "use_variant", "value": "v1"}}).get_json()
     for m in d["models"]:
         assert m["price"] == (short_price(prices.get(m["id"])) or "цена уточняется")
 
@@ -137,9 +142,9 @@ def test_assistant_does_not_enqueue(client, monkeypatch):
 
     monkeypatch.setattr(jobs, "enqueue_inbound", lambda *a, **k: (_ for _ in ()).throw(AssertionError("enqueue")))
     _post(client, {"message": "видео: кот"})
-    _post(client, {"action": {"type": "pick_model", "value": "veo-3-1"}})
     _post(client, {"action": {"type": "variants"}})
     _post(client, {"action": {"type": "use_variant", "value": "v1"}})
+    _post(client, {"action": {"type": "pick_model", "value": "veo-3-1"}})
     d = _post(client, {"message": "запускай"}).get_json()
     assert d["intent"] == "generate_now"
 

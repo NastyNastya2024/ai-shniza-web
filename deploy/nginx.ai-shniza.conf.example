@@ -33,6 +33,21 @@ server {
     server_name _;
     client_max_body_size 32m;
 
+    # Скрепка студии: видео до 100 МБ (UPLOAD_MAX_VIDEO_MB) + запас на multipart
+    location = /api/uploads {
+        client_max_body_size 110m;
+        proxy_request_buffering off;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_pass http://ai_shniza;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+
     location / {
         proxy_http_version 1.1;
         proxy_set_header Connection "";

@@ -1,7 +1,7 @@
 {
  "_about": "Карточки моделей для ассистента. Ключ = id из INTEGRATED_MODELS. Факты — со страниц моделей и notes в server.py. params — ТОЛЬКО то, что /api/generate реально передаёт модели (см. INTEGRATION_PROMPT.md, шаг 3). Цены здесь не хранятся — берутся из прайса в момент ответа.",
- "_kinds": "video | image | edit | music | sfx",
- "_modes": "t2v (текст→видео), i2v (фото→видео), t2i (текст→картинка), i2i (правка фото), t2m (текст→музыка/звук)",
+ "_kinds": "video | image | edit | music | sfx | text",
+ "_modes": "t2v (текст→видео), i2v (фото→видео), t2i (текст→картинка), i2i (правка фото), t2m (текст→музыка/звук), t2t (текст→текст)",
  "models": {
   "seedance-2-5": {
    "title": "Seedance 2.5",
@@ -924,6 +924,96 @@
    "defaults": {
     "duration": 30
    }
+  },
+  "omni-auto-free": {
+   "title": "Авто · free",
+   "kind": "text",
+   "modes": ["t2t"],
+   "tags": ["дешево", "быстро", "черновик"],
+   "strengths": {"ru": "бесплатные ответы, быстрый черновик", "en": "free answers, fast draft"},
+   "limits": {"ru": "простые задачи", "en": "simple tasks"},
+   "speed": {"ru": "несколько секунд", "en": "a few seconds"},
+   "rank": 6,
+   "params": {},
+   "ask_first": [],
+   "prompt_style": "Clear task in the user's language: goal, audience, tone, length, must-include facts. No roleplay fluff.",
+   "avoid": "vague one-word prompts",
+   "defaults": {}
+  },
+  "deepseek-v3-1": {
+   "title": "DeepSeek V3.1",
+   "kind": "text",
+   "modes": ["t2t"],
+   "tags": ["дешево", "код", "рассуждение"],
+   "strengths": {"ru": "недорого, силён в рассуждении и коде", "en": "affordable, strong at reasoning and code"},
+   "limits": {"ru": "цена за токены", "en": "priced per tokens"},
+   "speed": {"ru": "несколько секунд", "en": "a few seconds"},
+   "rank": 8,
+   "params": {},
+   "ask_first": [],
+   "prompt_style": "Clear task in the user's language: goal, audience, tone, length, must-include facts.",
+   "avoid": "vague one-word prompts",
+   "defaults": {}
+  },
+  "claude-sonnet-5": {
+   "title": "Claude Sonnet 5",
+   "kind": "text",
+   "modes": ["t2t"],
+   "tags": ["качество", "письмо", "анализ"],
+   "strengths": {"ru": "аккуратное письмо и разбор сложных задач", "en": "careful writing and complex analysis"},
+   "limits": {"ru": "дороже простых моделей", "en": "pricier than simple models"},
+   "speed": {"ru": "несколько секунд", "en": "a few seconds"},
+   "rank": 9,
+   "params": {},
+   "ask_first": [],
+   "prompt_style": "Clear task in the user's language: goal, audience, tone, length, constraints.",
+   "avoid": "vague one-word prompts",
+   "defaults": {}
+  },
+  "claude-4-5-haiku": {
+   "title": "Claude Haiku 4.5",
+   "kind": "text",
+   "modes": ["t2t"],
+   "tags": ["быстро", "дешево", "черновик"],
+   "strengths": {"ru": "быстрые короткие ответы", "en": "fast short answers"},
+   "limits": {"ru": "проще, чем Sonnet", "en": "simpler than Sonnet"},
+   "speed": {"ru": "секунды", "en": "seconds"},
+   "rank": 7,
+   "params": {},
+   "ask_first": [],
+   "prompt_style": "Short clear task: goal, tone, length.",
+   "avoid": "huge multi-part briefs",
+   "defaults": {}
+  },
+  "gemini-3-5-flash": {
+   "title": "Gemini 3.5 Flash",
+   "kind": "text",
+   "modes": ["t2t"],
+   "tags": ["быстро", "черновик"],
+   "strengths": {"ru": "быстро и универсально", "en": "fast and versatile"},
+   "limits": {"ru": "не самый глубокий разбор", "en": "not the deepest analysis"},
+   "speed": {"ru": "секунды", "en": "seconds"},
+   "rank": 7,
+   "params": {},
+   "ask_first": [],
+   "prompt_style": "Clear task in the user's language: goal, audience, tone, length.",
+   "avoid": "vague one-word prompts",
+   "defaults": {}
+  },
+  "gpt-5-4": {
+   "title": "GPT-5.4",
+   "kind": "text",
+   "modes": ["t2t"],
+   "tags": ["качество", "универсал"],
+   "strengths": {"ru": "сильный универсальный текст", "en": "strong all-round text"},
+   "limits": {"ru": "цена за токены", "en": "priced per tokens"},
+   "speed": {"ru": "несколько секунд", "en": "a few seconds"},
+   "rank": 9,
+   "params": {},
+   "ask_first": [],
+   "prompt_style": "Clear task in the user's language: goal, audience, tone, length, constraints.",
+   "avoid": "vague one-word prompts",
+   "defaults": {}
   }
  },
  "neighbors": {
@@ -939,7 +1029,8 @@
   "sfx": [
    "music"
   ],
-  "video": []
+  "video": [],
+  "text": []
  },
  "_params_note": "Имена params = ключи payload из server._build_replicate_input. Значения сверить со схемой модели на Replicate перед продом. defaults = то, что сейчас ставит builder."
 }

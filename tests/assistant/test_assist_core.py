@@ -12,15 +12,15 @@ from assistant.ui_help import HELP
 # ---------------- cards
 def test_cards_load_and_valid(cards):
     c, nb = cards
-    assert len(c) == 19
+    assert len(c) == 25
     assert validate(c.values()) == []
-    assert all(k in nb for k in ("image", "edit", "music", "sfx", "video"))
+    assert all(k in nb for k in ("image", "edit", "music", "sfx", "video", "text"))
 
 
 def test_cards_warn_on_unknown_ids(cards):
     c, _ = cards
     warns = validate(c.values(), integrated_ids=["veo-3-1"])
-    assert len(warns) == 18
+    assert len(warns) == 24
 
 
 def test_card_validation_errors():
@@ -101,6 +101,7 @@ def test_recommend_at_least_two_each_kind(cards, price_fn):
         pick = recommend(c, kind, [], False, None, price_fn, nb)
         assert len(pick.cards) >= 2, kind
         assert len({x.id for x in pick.cards}) == len(pick.cards)
+    assert recommend(c, "video", [], False, None, price_fn, nb).cards[0].id == "seedance-2-5"
 
 
 def test_recommend_neighbors_mark_not_exact(cards, price_fn):
@@ -113,7 +114,10 @@ def test_recommend_neighbors_mark_not_exact(cards, price_fn):
 def test_recommend_needs_tags(cards, price_fn):
     c, nb = cards
     assert recommend(c, "image", ["логотип", "типографика"], False, None, price_fn, nb).cards[0].id == "ideogram-v3-turbo"
-    assert recommend(c, "video", ["кино", "речь"], False, None, price_fn, nb).cards[0].id == "veo-3-1"
+    # видео: Seedance всегда первой, даже если теги сильнее тянут к Veo
+    pick = recommend(c, "video", ["кино", "речь"], False, None, price_fn, nb)
+    assert pick.cards[0].id == "seedance-2-5"
+    assert "veo-3-1" in {x.id for x in pick.cards}
 
 
 def test_recommend_health_filter(cards, price_fn):
@@ -198,7 +202,9 @@ def test_ui_help_all_topics_short():
 def test_recommend_family_diversity(cards, price_fn):
     c, nb = cards
     pick = recommend(c, "video", ["кино", "речь"], False, None, price_fn, nb, with_cheap=False)
-    assert {x.title.split()[0] for x in pick.cards} != {"Veo"} and pick.cards[0].id == "veo-3-1"
+    assert pick.cards[0].id == "seedance-2-5"
+    assert {x.title.split()[0] for x in pick.cards} != {"Veo"}
+    assert "veo-3-1" in {x.id for x in pick.cards}
 
 
 def test_vitrina_link_short_and_safe():

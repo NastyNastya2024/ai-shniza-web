@@ -83,6 +83,7 @@ def publish_result(job_id: str, result: dict[str, Any]) -> None:
             "upstream_model",
             "replicate_model",
             "fal_model",
+            "higgsfield_model",
             "prediction_id",
         }
     }

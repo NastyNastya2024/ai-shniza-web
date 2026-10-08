@@ -25,8 +25,8 @@ HELP: dict[str, dict[str, Any]] = {
         "chips": [],
     },
     "history": {
-        "ru": ["Все ваши генерации — в кабинете, раздел «Мои работы»."],
-        "en": ["All your generations are in your account → “My works”."],
+        "ru": ["Генерации — в кабинете, раздел «Мои работы». Неопубликованные хранятся 24 часа, опубликованные на витрине — пока вы их не удалите. Переписка с помощником — 30 дней."],
+        "en": ["Generations are in your account → “My works”. Unpublished ones are kept for 24 hours, published ones until you delete them. Chats are kept for 30 days."],
         "chips": [],
     },
     "login": {

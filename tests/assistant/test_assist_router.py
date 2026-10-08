@@ -13,10 +13,13 @@ CASES = [
     ("постер к концерту", "generate_task", "image"),
     ("трек для рекламы с вокалом", "generate_task", "music"),
     ("звук дождя по крыше", "generate_task", "sfx"),
+    ("напиши пост про запуск продукта", "generate_task", "text"),
     ("make a video of a dancing egg", "generate_task", "video"),
     ("create a logo for my bakery", "generate_task", "image"),
     ("upbeat song for tiktok", "generate_task", "music"),
     ("sound effect of footsteps", "generate_task", "sfx"),
+    ("напиши код на python", "generate_task", "text"),
+    ("translate this to French", "generate_task", "text"),
     ("оживи это фото", "generate_task", "video"),
     # без типа — спросить кнопками
     ("котик в космосе", "ask_type", None),
@@ -31,10 +34,8 @@ CASES = [
     ("where do I top up balance", "ui_help", None),
     ("how to download the result", "ui_help", None),
     # оффтоп
-    ("напиши код на python", "off_topic", None),
     ("какая погода в Москве", "off_topic", None),
     ("реши уравнение x^2=4", "off_topic", None),
-    ("translate this to French", "off_topic", None),
     ("расскажи анекдот", "off_topic", None),
     ("what's the capital of France", "off_topic", None),
     # smalltalk
