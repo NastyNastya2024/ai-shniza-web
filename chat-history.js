@@ -161,7 +161,17 @@
     lastRef = msgs;
     clearTimeout(timer);
     timer = setTimeout(function () { saveNow(o.getMsgs()); }, 1200);
-    renderBox();
+    // не перерисовываем список чатов на каждый статус «думаю…» — только заголовок текущего
+    if (!user && o.side) {
+      var box = document.querySelector(o.box || '#chatsBox');
+      var name = box && box.querySelector('.chats-item.is-on .chats-name');
+      if (name) {
+        var first = (msgs || []).filter(function (m) { return m.role === 'user' && m.text; })[0];
+        if (first) name.textContent = String(first.text).replace(/\s+/g, ' ').slice(0, 60);
+      }
+      var nw = box && box.querySelector('[data-chat-new]');
+      if (nw) nw.disabled = !(msgs || []).some(function (m) { return m.role === 'user' || m.role === 'bot'; });
+    }
   }
 
   function flush(keepalive) {

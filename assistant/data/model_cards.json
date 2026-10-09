@@ -278,6 +278,54 @@
     "duration": 5
    }
   },
+  "kling-v3-0-hf": {
+   "title": "Kling 3.0",
+   "kind": "video",
+   "modes": [
+    "t2v",
+    "i2v"
+   ],
+   "tags": [
+    "плавность",
+    "камера",
+    "звук",
+    "персонаж",
+    "оживить фото"
+   ],
+   "strengths": {
+    "ru": "Kling 3.0 Pro со звуком, до 15 с",
+    "en": "Kling 3.0 Pro with sound, up to 15 s"
+   },
+   "limits": {
+    "ru": "через Higgsfield · 3–15 с",
+    "en": "via Higgsfield · 3–15 s"
+   },
+   "speed": {
+    "ru": "1–4 мин",
+    "en": "1–4 min"
+   },
+   "rank": 9,
+   "params": {
+    "aspect_ratio": [
+     "16:9",
+     "9:16",
+     "1:1"
+    ],
+    "duration": [
+     5,
+     10
+    ]
+   },
+   "ask_first": [
+    "aspect_ratio"
+   ],
+   "prompt_style": "English. Describe motion: what moves, how, and the camera path; keep subject identity. 1-3 short sentences.",
+   "avoid": "re-describing a provided image",
+   "defaults": {
+    "aspect_ratio": "16:9",
+    "duration": 5
+   }
+  },
   "pixverse-v6": {
    "title": "PixVerse V6",
    "kind": "video",

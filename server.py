@@ -1495,9 +1495,49 @@ INTEGRATED_MODELS = {
         "kind": "video",
         "group": "video",
         "higgsfield_model": "bytedance/seedance-2.5/text-to-video",
-        "inputs": ["text"],
+        "higgsfield_model_i2v": "bytedance/seedance-2.5/image-to-video",
+        "inputs": ["text", "image"],
         "outputs": ["video"],
-        "notes": "Higgsfield · текст→видео · 720p · до 30 с · звук",
+        "notes": "Higgsfield · текст/фото→видео · 720p · до 30 с · звук",
+        "wait_sec": 300,
+    },
+    "kling-v2-5-turbo-pro-hf": {
+        "id": "kling-v2-5-turbo-pro-hf",
+        "name": "Kling 2.5 Turbo Pro HF",
+        "provider": "higgsfield",
+        "kind": "video",
+        "group": "video",
+        "higgsfield_model": "kling-video/v2.5-turbo/pro/text-to-video",
+        "higgsfield_model_i2v": "kling-video/v2.5-turbo/pro/image-to-video",
+        "inputs": ["text", "image"],
+        "outputs": ["video"],
+        "notes": "Higgsfield · t2v/i2v · 5/10 с",
+        "wait_sec": 300,
+    },
+    "kling-v3-0-hf": {
+        "id": "kling-v3-0-hf",
+        "name": "Kling 3.0",
+        "provider": "higgsfield",
+        "kind": "video",
+        "group": "video",
+        "higgsfield_model": "kling-video/v3.0/pro/text-to-video",
+        "higgsfield_model_i2v": "kling-video/v3.0/pro/image-to-video",
+        "inputs": ["text", "image"],
+        "outputs": ["video"],
+        "notes": "Higgsfield · Pro · t2v/i2v · звук · до 15 с",
+        "wait_sec": 300,
+    },
+    "veo-3-1-hf": {
+        "id": "veo-3-1-hf",
+        "name": "Veo 3.1 HF",
+        "provider": "higgsfield",
+        "kind": "video",
+        "group": "video",
+        "higgsfield_model": "veo3.1/text-to-video",
+        "higgsfield_model_i2v": "veo3.1/image-to-video",
+        "inputs": ["text", "image"],
+        "outputs": ["video"],
+        "notes": "Higgsfield · t2v/i2v · звук (endpoint may be disabled upstream)",
         "wait_sec": 300,
     },
     "seedance-2-0": {
@@ -2097,8 +2137,11 @@ STUDIO_ONBOARD_IDS = frozenset({
     "seedance-2-5",
     "seedance-2-5-hf",
     "veo-3-1",
+    "veo-3-1-hf",
     "veo-3-1-fast",
     "kling-v2-5-turbo-pro",
+    "kling-v2-5-turbo-pro-hf",
+    "kling-v3-0-hf",
     "pixverse-v6",
     "p-video",
     "seedream-5-pro",
@@ -2227,12 +2270,14 @@ def _higgsfield_key() -> str:
     return (os.getenv("HF_KEY") or "").strip()
 
 
-def _provider_model_ref(spec: dict) -> str | None:
+def _provider_model_ref(spec: dict, *, has_image: bool = False) -> str | None:
     if spec.get("provider") == "fal":
         return spec.get("fal_model")
     if spec.get("provider") == "omniroute":
         return spec.get("omniroute_model")
     if spec.get("provider") == "higgsfield":
+        if has_image and spec.get("higgsfield_model_i2v"):
+            return spec.get("higgsfield_model_i2v")
         return spec.get("higgsfield_model")
     return spec.get("replicate_model")
 
@@ -2685,7 +2730,15 @@ def _build_replicate_input(
         return payload
 
     if model_id == "seedance-2-5-hf":
-        # Higgsfield Seedance 2.5 text-to-video API
+        # Higgsfield Seedance 2.5 — t2v or image-to-video
+        if image:
+            return {
+                "prompt": prompt or "Animate this image.",
+                "image_url": image,
+                "duration": 5,
+                "resolution": "720p",
+                "generate_audio": True,
+            }
         return {
             "prompt": prompt,
             "duration": 5,
@@ -2694,6 +2747,41 @@ def _build_replicate_input(
             "output_format": "mp4",
             "generate_audio": True,
         }
+
+    if model_id == "kling-v2-5-turbo-pro-hf":
+        payload = {
+            "prompt": prompt,
+            "duration": 5,
+            "cfg_scale": 0.5,
+            "negative_prompt": "",
+        }
+        if image:
+            payload["image_url"] = image
+        return payload
+
+    if model_id == "kling-v3-0-hf":
+        payload = {
+            "prompt": prompt,
+            "duration": 5,
+            "sound": "on",
+            "cfg_scale": 0.5,
+            "aspect_ratio": "16:9",
+        }
+        if image:
+            payload["image_url"] = image
+            payload.pop("aspect_ratio", None)
+        return payload
+
+    if model_id == "veo-3-1-hf":
+        payload = {
+            "prompt": prompt,
+            "duration": 8,
+            "aspect_ratio": "16:9",
+            "generate_audio": True,
+        }
+        if image:
+            payload["image_url"] = image
+        return payload
 
     if model_id == "seedance-2-0":
         return {"prompt": prompt}
@@ -3592,22 +3680,26 @@ def _higgsfield_extract_outputs(prediction: dict, kind: str) -> list[str]:
     if not isinstance(prediction, dict):
         return []
     urls: list[str] = []
-    video = prediction.get("video")
-    if isinstance(video, dict):
-        u = video.get("url") or video.get("uri")
-        if isinstance(u, str) and u:
+
+    def _media_url(item) -> str | None:
+        if isinstance(item, dict):
+            u = item.get("url") or item.get("uri")
+            return u if isinstance(u, str) and u else None
+        if isinstance(item, str) and item:
+            return item
+        return None
+
+    for key in ("video", "audio"):
+        u = _media_url(prediction.get(key))
+        if u:
             urls.append(u)
-    elif isinstance(video, str) and video:
-        urls.append(video)
-    images = prediction.get("images")
-    if isinstance(images, list):
-        for item in images:
-            if isinstance(item, dict):
-                u = item.get("url") or item.get("uri")
-                if isinstance(u, str) and u:
+    for key in ("images", "audios"):
+        items = prediction.get(key)
+        if isinstance(items, list):
+            for item in items:
+                u = _media_url(item)
+                if u:
                     urls.append(u)
-            elif isinstance(item, str) and item:
-                urls.append(item)
     if not urls:
         urls.extend(_flatten_output(prediction.get("output")))
     return urls
@@ -3867,6 +3959,14 @@ def _run_omniroute_prediction(omni_model: str, input_payload: dict, wait_seconds
         return {"error": "empty", "detail": "prompt required", "status": 400}
 
     omni_err: dict | None = None
+    groq_key = (os.getenv("GROQ_API_KEY") or "").strip()
+    # auto/coding:free и подобные free-роуты OmniRoute часто 10–20с 403 — для них сразу Groq
+    free_omni = "free" in str(omni_model or "").lower()
+    if free_omni and groq_key:
+        fallback = _groq_chat_completion(messages, wait_seconds=min(wait_seconds, 45))
+        if fallback.get("ok"):
+            return fallback
+
     if key:
         base = _omniroute_base()
         url = f"{base}/v1/chat/completions"
@@ -3879,8 +3979,10 @@ def _run_omniroute_prediction(omni_model: str, input_payload: dict, wait_seconds
             "messages": messages,
             "stream": False,
         }
+        # free-роуты не ждём долго — всё равно уйдём на Groq
+        omni_timeout = 12 if free_omni else (wait_seconds + 30)
         try:
-            resp = requests.post(url, headers=headers, json=body, timeout=wait_seconds + 30)
+            resp = requests.post(url, headers=headers, json=body, timeout=omni_timeout)
         except requests.RequestException as exc:
             omni_err = {"error": "upstream", "detail": str(exc.__class__.__name__), "status": 502}
         else:
@@ -4976,7 +5078,7 @@ def api_generate():
     elif model_id in {"grok-imagine-video-1-5", "gen4-turbo"} or model_id in _FAL_I2V_BACKUP_IDS:
         if not (image_data_url or "").strip():
             return jsonify({"error": "bad_model", "detail": "image required"}), 400
-    elif model_id == "seedance-2-5":
+    elif model_id in {"seedance-2-5", "seedance-2-5-hf", "kling-v2-5-turbo-pro-hf", "kling-v3-0-hf", "veo-3-1-hf"}:
         if not prompt and not (image_data_url or "").strip():
             return jsonify({"error": "bad_model", "detail": "prompt or image required"}), 400
     elif model_id == "ltx-2-3-a2v-fal":
@@ -5060,7 +5162,8 @@ def api_generate():
         has_image=bool((image_data_url or "").strip()),
     )
 
-    upstream_model = _provider_model_ref(spec)
+    has_media_image = bool((image_data_url or "").strip())
+    upstream_model = _provider_model_ref(spec, has_image=has_media_image)
     if not upstream_model and provider != "omniroute":
         return jsonify({"error": "bad_model", "detail": f"missing model ref for {provider}"}), 400
 
@@ -5075,7 +5178,7 @@ def api_generate():
                 "upstream_model": upstream_model,
                 "replicate_model": spec.get("replicate_model"),
                 "fal_model": spec.get("fal_model"),
-                "higgsfield_model": spec.get("higgsfield_model"),
+                "higgsfield_model": upstream_model if provider == "higgsfield" else spec.get("higgsfield_model"),
                 "input_payload": input_payload,
                 "owner_id": session.get("user_id"),
                 "prompt": prompt[:4000],          # для «Моих работ» и публикации на витрине
@@ -5133,6 +5236,9 @@ def api_generate():
         "wan-3-0-i2v-fal",
         "seedance-2-5",
         "seedance-2-5-hf",
+        "kling-v2-5-turbo-pro-hf",
+        "kling-v3-0-hf",
+        "veo-3-1-hf",
         "ltx-2-3-t2v-fal",
         "ltx-2-3-t2v-fast-fal",
         "ltx-2-3-i2v-fal",
