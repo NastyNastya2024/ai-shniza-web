@@ -678,7 +678,9 @@ class Component extends DCLogic {
       { slug: 'gpt-image-2', model_key: 'gpt-image-2', name: 'GPT Image 2', kindKey: 'studio.kind.image', type: 'image', cost: 1, rub: 1 },
       { slug: 'gpt-image-2-5-flare', model_key: 'gpt-image-2-5-flare', name: 'GPT Image 2.5 Flare', kindKey: 'studio.kind.image', type: 'image', cost: 1, rub: 1 },
       { slug: 'gpt-image-2-5-sunburst', model_key: 'gpt-image-2-5-sunburst', name: 'GPT Image 2.5 Sunburst', kindKey: 'studio.kind.image', type: 'image', cost: 1, rub: 1 },
+      { slug: 'nano-banana-pro', model_key: 'nano-banana-pro', name: 'Nano Banana Pro', kindKey: 'studio.kind.image', type: 'image', cost: 34, rub: 34 },
       { slug: 'nano-banana-2', model_key: 'nano-banana-2', name: 'Nano Banana 2', kindKey: 'studio.kind.image', type: 'image', cost: 15, rub: 15 },
+      { slug: 'soul-cinema', model_key: 'soul-cinema', name: 'Soul Cinema', kindKey: 'studio.kind.image', type: 'image', cost: 20, rub: 20 },
       { slug: 'ideogram-v3-turbo', model_key: 'ideogram-v3-turbo', name: 'Ideogram v3 Turbo', kindKey: 'studio.kind.image', type: 'image', cost: 8, rub: 8 },
       { slug: 'ace-step', model_key: 'ace-step', name: 'ACE-Step', kindKey: 'studio.kind.audio', type: 'music', cost: 8, rub: 8 },
       { slug: 'elevenlabs-music', model_key: 'elevenlabs-music', name: 'ElevenLabs Music', kindKey: 'studio.kind.audio', type: 'music', cost: 60, rub: 2, perSec: true },
@@ -2097,7 +2099,9 @@ loadIntegrations();
     'gpt-image-2': 'GPT Image 2',
     'gpt-image-2-5-flare': 'GPT Image 2.5 Flare',
     'gpt-image-2-5-sunburst': 'GPT Image 2.5 Sunburst',
+    'nano-banana-pro': 'Nano Banana Pro',
     'nano-banana-2': 'Nano Banana 2',
+    'soul-cinema': 'Soul Cinema',
     'ideogram-v3-turbo': 'Ideogram v3 Turbo',
     'ace-step': 'ACE-Step',
     'elevenlabs-music': 'ElevenLabs Music',
@@ -2131,7 +2135,9 @@ loadIntegrations();
     if (/gpt-image-2-5-flare/i.test(slug) && /GPT\s*Image\s*2\.5\s*Flare/i.test(wm)) return true;
     if (/gpt-image-2-5-sunburst/i.test(slug) && /GPT\s*Image\s*2\.5\s*Sunburst/i.test(wm)) return true;
     if (/(^|[^\w-])gpt-image-2($|[^\w-])/i.test(slug) && /^GPT\s*Image\s*2(?!\.5)/i.test(wm)) return true;
+    if (/nano-banana-pro/i.test(slug) && /Nano\s*Banana\s*Pro/i.test(wm)) return true;
     if (/nano-banana-2/i.test(slug) && /Nano\s*Banana\s*2/i.test(wm)) return true;
+    if (/soul-cinema/i.test(slug) && /Soul\s*Cinema/i.test(wm)) return true;
     if (/seedream/i.test(slug) && /Seedream/i.test(wm)) return true;
     const token = String(m.name || '').trim().split(/\s+/)[0];
     if (token && token.length >= 3 && new RegExp('^' + token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(wm)) return true;
@@ -2296,7 +2302,7 @@ loadIntegrations();
     const resBadge = '<p class="vc-res">' + esc2(videoMetaText(w, null)) + '</p>';
     const slug = w.model_slug
       || Object.keys(MODEL_OF).find((k) => MODEL_OF[k] === w.model)
-      || (/^Wan/i.test(w.model) ? 'wan-3-0' : /^Grok/i.test(w.model) ? 'grok-imagine-video-1-5' : /^Seedance/i.test(w.model) ? 'seedance-2-5' : /Veo\s*3\.1\s*Fast/i.test(w.model) ? 'veo-3-1-fast' : /^Veo/i.test(w.model) ? 'veo-3-1' : /^Kling/i.test(w.model) ? 'kling-v2-5-turbo-pro' : /^PixVerse/i.test(w.model) ? 'pixverse-v6' : /^P-?Video/i.test(w.model) ? 'p-video' : /Gen-?4\s*Turbo/i.test(w.model) ? 'gen4-turbo' : /Hailuo\s*0?2/i.test(w.model) ? 'hailuo-02' : /Seedream/i.test(w.model) ? 'seedream-5-pro' : /GPT\s*Image\s*2\.5\s*Flare/i.test(w.model) ? 'gpt-image-2-5-flare' : /GPT\s*Image\s*2\.5\s*Sunburst/i.test(w.model) ? 'gpt-image-2-5-sunburst' : /^GPT\s*Image\s*2(?!\.5)/i.test(w.model) ? 'gpt-image-2' : /Nano\s*Banana\s*2/i.test(w.model) ? 'nano-banana-2' : /Ideogram/i.test(w.model) ? 'ideogram-v3-turbo' : /ACE-?Step/i.test(w.model) ? 'ace-step' : /ElevenLabs\s*Music/i.test(w.model) ? 'elevenlabs-music' : /Stable\s*Audio\s*2\.5/i.test(w.model) ? 'stable-audio-2-5' : null);
+      || (/^Wan/i.test(w.model) ? 'wan-3-0' : /^Grok/i.test(w.model) ? 'grok-imagine-video-1-5' : /^Seedance/i.test(w.model) ? 'seedance-2-5' : /Veo\s*3\.1\s*Fast/i.test(w.model) ? 'veo-3-1-fast' : /^Veo/i.test(w.model) ? 'veo-3-1' : /^Kling/i.test(w.model) ? 'kling-v2-5-turbo-pro' : /^PixVerse/i.test(w.model) ? 'pixverse-v6' : /^P-?Video/i.test(w.model) ? 'p-video' : /Gen-?4\s*Turbo/i.test(w.model) ? 'gen4-turbo' : /Hailuo\s*0?2/i.test(w.model) ? 'hailuo-02' : /Seedream/i.test(w.model) ? 'seedream-5-pro' : /GPT\s*Image\s*2\.5\s*Flare/i.test(w.model) ? 'gpt-image-2-5-flare' : /GPT\s*Image\s*2\.5\s*Sunburst/i.test(w.model) ? 'gpt-image-2-5-sunburst' : /^GPT\s*Image\s*2(?!\.5)/i.test(w.model) ? 'gpt-image-2' : /Nano\s*Banana\s*Pro/i.test(w.model) ? 'nano-banana-pro' : /Nano\s*Banana\s*2/i.test(w.model) ? 'nano-banana-2' : /Soul\s*Cinema/i.test(w.model) ? 'soul-cinema' : /Ideogram/i.test(w.model) ? 'ideogram-v3-turbo' : /ACE-?Step/i.test(w.model) ? 'ace-step' : /ElevenLabs\s*Music/i.test(w.model) ? 'elevenlabs-music' : /Stable\s*Audio\s*2\.5/i.test(w.model) ? 'stable-audio-2-5' : null);
     const slugName = slug ? (app.MODELS.find((m) => m.slug === slug) || {}).name : '';
     const handle = c.nick || c.handle || '';
     const cHref = handle

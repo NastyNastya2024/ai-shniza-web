@@ -14,6 +14,12 @@
   "fal-ai/kling-video/o3/standard/image-to-video": {
     "price_summary": "$0.084/s audio off · $0.112/s audio on"
   },
+  "minimax/h3/text-to-video": {
+    "price_summary": "480p $0.05/s · 768p $0.06/s · 2K $0.13/s · 4K $0.16/s"
+  },
+  "minimax/h3/image-to-video": {
+    "price_summary": "480p $0.05/s · 768p $0.06/s · 2K $0.13/s · 4K $0.16/s"
+  },
   "minimax/h3/reference-to-video": {
     "price_summary": "480p $0.05/s · 768p $0.06/s · 2K $0.13/s · 4K $0.16/s · +$0.08 after 5 ref images"
   },
@@ -97,6 +103,12 @@
   },
   "openai/gpt-image-2.5/sunburst/text-to-image": {
     "price_summary": "per image (see fal.ai model page)"
+  },
+  "fal-ai/nano-banana-pro": {
+    "price_summary": "$0.15/image · 4K 2× · web search +$0.015"
+  },
+  "fal-ai/nano-banana-pro/edit": {
+    "price_summary": "$0.15/edit · 4K 2× · web search +$0.015"
   },
   "fal-ai/nano-banana-2": {
     "price_summary": "per image (see fal.ai model page)"

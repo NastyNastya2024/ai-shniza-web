@@ -36,7 +36,7 @@ Units differ by model (per image / per second / per token / per megapixel). Comp
 | Hailuo 2.3 Fast | replicate | minimax/hailuo-2.3-fast | video | image, text | video | $0.19 per output video (or around 52 videos for $10) |
 | Hailuo 02 | replicate | minimax/hailuo-02 | video | text, image | video | $0.10/vid 512p6s · $0.15 512p10s · $0.27 768p6s · $0.45 768p10s · $0.48 1080p6s |
 | DreamActor M2.0 | replicate | bytedance/dreamactor-m2.0 | video | image, video | video | $0.05 per second of output video (or 20 seconds for $1) |
-| Nano Banana Pro | replicate | google/nano-banana-pro | image | text, image | image | $0.15 per output image (or around 66 images for $10) |
+| Nano Banana Pro | replicate | google/nano-banana-pro | image | text, image | image | $0.15/img · fal backup fal-ai/nano-banana-pro(/edit) |
 | Nano Banana 2 | replicate | google/nano-banana-2 | image | text, image | image | $0.067/img 1K · $0.101 2K · $0.151 4K |
 | Nano Banana 2 Lite | replicate | google/nano-banana-2-lite | image | text, image | image | $0.034 per output image (or around 29 images for $1) |
 | Gemini 3.1 Flash TTS | replicate | google/gemini-3.1-flash-tts | audio | text | audio | $2 per million input tokens (or 500,000 tokens for $1) · $0.04 per thousand output tokens (or 25,000 tokens for $1) |
@@ -67,6 +67,7 @@ Units differ by model (per image / per second / per token / per megapixel). Comp
 | Seedance 2.0 | replicate | bytedance/seedance-2.0 | video | text | video | $0.10 per second of output video (or 10 seconds for $1) |
 | Happy Horse 1.1 T2V | fal | alibaba/happy-horse/v1.1/text-to-video | video | text | video | 720p $0.14/s · 1080p $0.18/s |
 | Gemini Omni Flash | fal | google/gemini-omni-flash | video | text | video | $21.875 / 1M tokens · ~$0.125/s at 720p |
+| Soul Cinema | higgsfield | higgsfield-ai/soul/cinema | image | text, image | image | Higgsfield credits · cinematic t2i/i2i |
 | Grok Imagine Video 1.5 I2V | fal | xai/grok-imagine-video/v1.5/image-to-video | video | image, text | video | 480p $0.08/s · 720p $0.14/s · 1080p $0.25/s · +$0.01/ref image |
 | Seedance 2.0 T2V | fal | bytedance/seedance-2.0/text-to-video | video | text | video | 720p $0.3034/s · 1080p $0.682/s (also token formula on page) |
 | Kling 2.5 Turbo Pro | replicate | kwaivgi/kling-v2.5-turbo-pro | video | text, image | video | $0.07/s |

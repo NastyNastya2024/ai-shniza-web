@@ -1191,10 +1191,11 @@ INTEGRATED_MODELS = {
         "name": "Nano Banana Pro",
         "provider": "replicate",
         "kind": "image",
-        "group": "generative",
+        "group": "image",
         "replicate_model": "google/nano-banana-pro",
         "inputs": ["text", "image"],
         "outputs": ["image"],
+        "notes": "t2i/edit · 1K/2K/4K · текст в кадре",
     },
     "nano-banana-2": {
         "id": "nano-banana-2",
@@ -1540,6 +1541,32 @@ INTEGRATED_MODELS = {
         "notes": "Higgsfield · t2v/i2v · звук (endpoint may be disabled upstream)",
         "wait_sec": 300,
     },
+    "soul-cinema": {
+        "id": "soul-cinema",
+        "name": "Soul Cinema",
+        "provider": "higgsfield",
+        "kind": "image",
+        "group": "image",
+        "higgsfield_model": "higgsfield-ai/soul/cinema",
+        "inputs": ["text", "image"],
+        "outputs": ["image"],
+        "notes": "Higgsfield · кинокадры · текст/фото→image · 720p/1080p",
+        "wait_sec": 180,
+    },
+    "soul-cinema-hf": {
+        "id": "soul-cinema-hf",
+        "name": "Soul Cinema (alias)",
+        "provider": "higgsfield",
+        "kind": "image",
+        "group": "image",
+        "higgsfield_model": "higgsfield-ai/soul/cinema",
+        "inputs": ["text", "image"],
+        "outputs": ["image"],
+        "notes": "alias of soul-cinema",
+        "listed": False,
+        "backup_for": "soul-cinema",
+        "wait_sec": 180,
+    },
     "seedance-2-0": {
         "id": "seedance-2-0",
         "name": "Seedance 2.0",
@@ -1562,6 +1589,19 @@ INTEGRATED_MODELS = {
         "outputs": ["video"],
         "notes": "native audio + lip-sync",
     },
+    "gemini-omni-flash": {
+        "id": "gemini-omni-flash",
+        "name": "Gemini Omni Flash",
+        "provider": "fal",
+        "kind": "video",
+        "group": "video",
+        "fal_model": "google/gemini-omni-flash",
+        "inputs": ["text"],
+        "outputs": ["video"],
+        "notes": "текст→видео · звук · до ~8 с",
+        "wait_sec": 300,
+    },
+    # legacy alias kept for any queued jobs / old clients
     "gemini-omni-flash-fal": {
         "id": "gemini-omni-flash-fal",
         "name": "Gemini Omni Flash",
@@ -1571,7 +1611,9 @@ INTEGRATED_MODELS = {
         "fal_model": "google/gemini-omni-flash",
         "inputs": ["text"],
         "outputs": ["video"],
-        "notes": "synced audio",
+        "notes": "alias of gemini-omni-flash",
+        "listed": False,
+        "wait_sec": 300,
     },
     "grok-imagine-video-1-5-i2v-fal": {
         "id": "grok-imagine-video-1-5-i2v-fal",
@@ -1634,6 +1676,46 @@ INTEGRATED_MODELS = {
         "outputs": ["video"],
         "notes": "t2v/i2v/a2v · draft · звук · 720p/1080p · до 20 с",
     },
+    "minimax-h3": {
+        "id": "minimax-h3",
+        "name": "MiniMax H3",
+        "provider": "replicate",
+        "kind": "video",
+        "group": "video",
+        "replicate_model": "minimax/h3",
+        "inputs": ["text", "image"],
+        "outputs": ["video"],
+        "notes": "t2v/i2v · звук · 768P/2K · 4–15 с · refs",
+        "wait_sec": 300,
+    },
+    "minimax-h3-t2v-fal": {
+        "id": "minimax-h3-t2v-fal",
+        "name": "MiniMax H3 T2V (fal)",
+        "provider": "fal",
+        "kind": "video",
+        "group": "video",
+        "fal_model": "minimax/h3/text-to-video",
+        "inputs": ["text"],
+        "outputs": ["video"],
+        "notes": "backup for minimax-h3",
+        "listed": False,
+        "backup_for": "minimax-h3",
+        "wait_sec": 300,
+    },
+    "minimax-h3-i2v-fal": {
+        "id": "minimax-h3-i2v-fal",
+        "name": "MiniMax H3 I2V (fal)",
+        "provider": "fal",
+        "kind": "video",
+        "group": "video",
+        "fal_model": "minimax/h3/image-to-video",
+        "inputs": ["image", "text"],
+        "outputs": ["video"],
+        "notes": "backup for minimax-h3 (image)",
+        "listed": False,
+        "backup_for": "minimax-h3",
+        "wait_sec": 300,
+    },
     "minimax-h3-ref-to-video-fal": {
         "id": "minimax-h3-ref-to-video-fal",
         "name": "MiniMax H3 Ref→Video",
@@ -1644,6 +1726,8 @@ INTEGRATED_MODELS = {
         "inputs": ["text", "image"],
         "outputs": ["video"],
         "notes": "optional ref image(s)",
+        "listed": False,
+        "wait_sec": 300,
     },
     "wan-3-0-t2v-fal": {
         "id": "wan-3-0-t2v-fal",
@@ -2022,6 +2106,32 @@ INTEGRATED_MODELS = {
         "listed": False,
         "backup_for": "gpt-image-2-5-sunburst",
     },
+    "nano-banana-pro-fal": {
+        "id": "nano-banana-pro-fal",
+        "name": "Nano Banana Pro (fal)",
+        "provider": "fal",
+        "kind": "image",
+        "group": "image",
+        "fal_model": "fal-ai/nano-banana-pro",
+        "inputs": ["text"],
+        "outputs": ["image"],
+        "notes": "backup for nano-banana-pro",
+        "listed": False,
+        "backup_for": "nano-banana-pro",
+    },
+    "nano-banana-pro-edit-fal": {
+        "id": "nano-banana-pro-edit-fal",
+        "name": "Nano Banana Pro Edit (fal)",
+        "provider": "fal",
+        "kind": "image",
+        "group": "image",
+        "fal_model": "fal-ai/nano-banana-pro/edit",
+        "inputs": ["image", "text"],
+        "outputs": ["image"],
+        "notes": "backup for nano-banana-pro (image)",
+        "listed": False,
+        "backup_for": "nano-banana-pro",
+    },
     "nano-banana-2-fal": {
         "id": "nano-banana-2-fal",
         "name": "Nano Banana 2 (fal)",
@@ -2149,8 +2259,12 @@ STUDIO_ONBOARD_IDS = frozenset({
     "gpt-image-2-5-flare",
     "gpt-image-2-5-sunburst",
     "nano-banana-2",
+    "nano-banana-pro",
     "gen4-turbo",
     "hailuo-02",
+    "minimax-h3",
+    "gemini-omni-flash",
+    "soul-cinema",
     "ideogram-v3-turbo",
     "ace-step",
     "elevenlabs-music",
@@ -2179,11 +2293,13 @@ FAILOVER_MAP: dict[str, dict[str, str]] = {
     "kling-v2-5-turbo-pro": {"t": "kling-v2-5-turbo-pro-t2v-fal", "i": "kling-v2-5-turbo-pro-i2v-fal"},
     "pixverse-v6": {"t": "pixverse-v6-t2v-fal", "i": "pixverse-v6-i2v-fal"},
     "hailuo-02": {"t": "hailuo-02-t2v-fal", "i": "hailuo-02-i2v-fal"},
+    "minimax-h3": {"t": "minimax-h3-t2v-fal", "i": "minimax-h3-i2v-fal"},
     "seedream-5-pro": {"t": "seedream-5-pro-t2i-fal", "i": "seedream-5-pro-edit-fal"},
     "gpt-image-2": {"t": "gpt-image-2-fal", "i": "gpt-image-2-edit-fal"},
     "gpt-image-2-5-flare": {"t": "gpt-image-2-5-flare-fal"},
     "gpt-image-2-5-sunburst": {"t": "gpt-image-2-5-sunburst-fal"},
     "nano-banana-2": {"t": "nano-banana-2-fal", "i": "nano-banana-2-edit-fal"},
+    "nano-banana-pro": {"t": "nano-banana-pro-fal", "i": "nano-banana-pro-edit-fal"},
     "ideogram-v3-turbo": {"t": "ideogram-v3-turbo-fal"},
     "ace-step": {"t": "ace-step-fal"},
     "elevenlabs-music": {"t": "elevenlabs-music-fal"},
@@ -2783,6 +2899,16 @@ def _build_replicate_input(
             payload["image_url"] = image
         return payload
 
+    if model_id in {"soul-cinema", "soul-cinema-hf"}:
+        payload = {
+            "prompt": prompt,
+            "resolution": "1080p",
+            "aspect_ratio": "16:9",
+        }
+        if image:
+            payload["image_url"] = image
+        return payload
+
     if model_id == "seedance-2-0":
         return {"prompt": prompt}
 
@@ -2795,11 +2921,12 @@ def _build_replicate_input(
             "enable_safety_checker": True,
         }
 
-    if model_id == "gemini-omni-flash-fal":
+    if model_id in {"gemini-omni-flash", "gemini-omni-flash-fal"}:
         return {
             "prompt": prompt,
             "aspect_ratio": "16:9",
             "duration": 8,
+            "enable_safety_checker": True,
         }
 
     if model_id == "grok-imagine-video-1-5-i2v-fal":
@@ -2830,6 +2957,40 @@ def _build_replicate_input(
             "image_url": image,
             "duration": "5",
             "generate_audio": False,
+        }
+
+    if model_id == "minimax-h3":
+        payload = {
+            "prompt": prompt,
+            "duration": 5,
+            "resolution": "768P",
+            "ratio": "16:9",
+        }
+        if image:
+            payload["first_frame_image"] = image
+            payload["ratio"] = "adaptive"
+        return payload
+
+    if model_id == "minimax-h3-t2v-fal":
+        return {
+            "prompt": prompt,
+            "duration": 5,
+            "resolution": "768P",
+            "aspect_ratio": "16:9",
+            "prompt_expansion_mode": "fast",
+            "enable_safety_checker": True,
+        }
+
+    if model_id == "minimax-h3-i2v-fal":
+        if not image:
+            raise ValueError("MiniMax H3 I2V requires an attached start-frame image")
+        return {
+            "prompt": prompt,
+            "image_url": image,
+            "duration": 5,
+            "resolution": "768P",
+            "prompt_expansion_mode": "fast",
+            "enable_safety_checker": True,
         }
 
     if model_id == "minimax-h3-ref-to-video-fal":
@@ -3253,6 +3414,27 @@ def _build_replicate_input(
             "num_images": 1,
             "output_format": "png",
             "background": "auto",
+        }
+
+    if model_id == "nano-banana-pro-fal":
+        return {
+            "prompt": prompt,
+            "aspect_ratio": "1:1",
+            "resolution": "1K",
+            "num_images": 1,
+            "output_format": "jpeg",
+        }
+
+    if model_id == "nano-banana-pro-edit-fal":
+        if not image:
+            raise ValueError("Nano Banana Pro Edit requires an attached image")
+        return {
+            "prompt": prompt,
+            "image_urls": [image],
+            "aspect_ratio": "auto",
+            "resolution": "1K",
+            "num_images": 1,
+            "output_format": "jpeg",
         }
 
     if model_id == "nano-banana-2-fal":
@@ -5078,7 +5260,7 @@ def api_generate():
     elif model_id in {"grok-imagine-video-1-5", "gen4-turbo"} or model_id in _FAL_I2V_BACKUP_IDS:
         if not (image_data_url or "").strip():
             return jsonify({"error": "bad_model", "detail": "image required"}), 400
-    elif model_id in {"seedance-2-5", "seedance-2-5-hf", "kling-v2-5-turbo-pro-hf", "kling-v3-0-hf", "veo-3-1-hf"}:
+    elif model_id in {"seedance-2-5", "seedance-2-5-hf", "kling-v2-5-turbo-pro-hf", "kling-v3-0-hf", "veo-3-1-hf", "soul-cinema", "soul-cinema-hf"}:
         if not prompt and not (image_data_url or "").strip():
             return jsonify({"error": "bad_model", "detail": "prompt or image required"}), 400
     elif model_id == "ltx-2-3-a2v-fal":
@@ -5225,11 +5407,15 @@ def api_generate():
     # Legacy sync path (GENERATE_USE_QUEUE=0)
     wait = 300 if model_id in {
         "happy-horse-1-1-t2v-fal",
+        "gemini-omni-flash",
         "gemini-omni-flash-fal",
         "grok-imagine-video-1-5",
         "grok-imagine-video-1-5-i2v-fal",
         "seedance-2-0-t2v-fal",
         "kling-o3-standard-i2v-fal",
+        "minimax-h3",
+        "minimax-h3-t2v-fal",
+        "minimax-h3-i2v-fal",
         "minimax-h3-ref-to-video-fal",
         "wan-3-0",
         "wan-3-0-t2v-fal",

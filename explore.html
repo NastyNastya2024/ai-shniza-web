@@ -395,6 +395,8 @@ html{transition:background-color .3s}
         <button class="chip" data-f="P-Video" aria-pressed="false">P-Video</button>
         <button class="chip" data-f="Gen-4" aria-pressed="false">Gen-4</button>
         <button class="chip" data-f="Hailuo" aria-pressed="false">Hailuo</button>
+        <button class="chip" data-f="MiniMax" aria-pressed="false">MiniMax</button>
+        <button class="chip" data-f="Gemini Omni" aria-pressed="false">Gemini Omni</button>
         <button class="chip" data-f="Seedream" aria-pressed="false">Seedream</button>
         <button class="chip" data-f="GPT" aria-pressed="false">GPT</button>
         <button class="chip" data-f="Nano Banana" aria-pressed="false">Nano Banana</button>
@@ -596,11 +598,15 @@ html{transition:background-color .3s}
       if (/^P-?Video/i.test(m)) return 'p-video';
       if (/Gen-?4\s*Turbo/i.test(m)) return 'gen4-turbo';
       if (/Hailuo\s*0?2/i.test(m)) return 'hailuo-02';
+      if (/MiniMax\s*H3/i.test(m)) return 'minimax-h3';
+      if (/Gemini\s*Omni/i.test(m)) return 'gemini-omni-flash';
       if (/Seedream/i.test(m)) return 'seedream-5-pro';
       if (/GPT\s*Image\s*2\.5\s*Flare/i.test(m)) return 'gpt-image-2-5-flare';
       if (/GPT\s*Image\s*2\.5\s*Sunburst/i.test(m)) return 'gpt-image-2-5-sunburst';
       if (/^GPT\s*Image\s*2(?!\.5)/i.test(m)) return 'gpt-image-2';
+      if (/Nano\s*Banana\s*Pro/i.test(m)) return 'nano-banana-pro';
       if (/Nano\s*Banana\s*2/i.test(m)) return 'nano-banana-2';
+      if (/Soul\s*Cinema/i.test(m)) return 'soul-cinema';
       if (/Ideogram/i.test(m)) return 'ideogram-v3-turbo';
       if (/ACE-?Step/i.test(m)) return 'ace-step';
       if (/ElevenLabs\s*Music/i.test(m)) return 'elevenlabs-music';

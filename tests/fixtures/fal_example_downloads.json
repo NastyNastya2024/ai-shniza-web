@@ -152,6 +152,18 @@
     "example_still": "/assets/models/examples/gpt-image-2-5-sunburst-fal.png"
   },
   {
+    "slug": "nano-banana-pro",
+    "ok": true,
+    "kind": "image",
+    "stem": "nanobananaprofal",
+    "model": "Nano Banana Pro",
+    "title": "Nano Banana Pro на fal",
+    "url": "https://storage.googleapis.com/falserverless/example_outputs/nano-banana-pro-t2i-output.png",
+    "src": "works/nanobananaprofal.jpg",
+    "example": "/assets/models/examples/nano-banana-pro-fal.png",
+    "example_still": "/assets/models/examples/nano-banana-pro-fal.png"
+  },
+  {
     "slug": "nano-banana-2",
     "ok": true,
     "kind": "image",

@@ -480,6 +480,156 @@
     "resolution": "768p"
    }
   },
+  "gemini-omni-flash": {
+   "title": "Gemini Omni Flash",
+   "kind": "video",
+   "modes": [
+    "t2v"
+   ],
+   "tags": [
+    "звук",
+    "физика",
+    "кино",
+    "знание мира"
+   ],
+   "strengths": {
+    "ru": "видео со звуком, сильная физика и следование промпту",
+    "en": "video with synced audio, strong physics and prompt following"
+   },
+   "limits": {
+    "ru": "только текст→видео, ~8 с",
+    "en": "text-to-video only, ~8 s"
+   },
+   "speed": {
+    "ru": "1–4 мин",
+    "en": "1–4 min"
+   },
+   "rank": 8,
+   "params": {
+    "aspect_ratio": [
+     "16:9",
+     "9:16",
+     "1:1"
+    ],
+    "duration": [
+     4,
+     6,
+     8
+    ]
+   },
+   "ask_first": [
+    "aspect_ratio"
+   ],
+   "prompt_style": "English, cinematic. Describe scene, motion, camera and sound. 1-3 short sentences.",
+   "avoid": "asking for image-to-video",
+   "defaults": {
+    "aspect_ratio": "16:9",
+    "duration": 8
+   }
+  },
+  "soul-cinema": {
+   "title": "Soul Cinema",
+   "kind": "image",
+   "modes": [
+    "t2i",
+    "i2i"
+   ],
+   "tags": [
+    "кинокадр",
+    "атмосфера",
+    "текстура",
+    "эпоха",
+    "персонаж"
+   ],
+   "strengths": {
+    "ru": "киношные кадры, зерно, свет, mood как у фильма",
+    "en": "cinematic stills, grain, light, film-like mood"
+   },
+   "limits": {
+    "ru": "только Higgsfield · цена в кредитах HF",
+    "en": "Higgsfield only · HF credit pricing"
+   },
+   "speed": {
+    "ru": "20–90 с",
+    "en": "20–90 s"
+   },
+   "rank": 8,
+   "params": {
+    "aspect_ratio": [
+     "16:9",
+     "9:16",
+     "1:1"
+    ],
+    "resolution": [
+     "720p",
+     "1080p"
+    ]
+   },
+   "ask_first": [
+    "aspect_ratio"
+   ],
+   "prompt_style": "English cinematic brief: era, lens/feel, subject, light, mood. 1-3 short sentences.",
+   "avoid": "generic 'make it cinematic' without scene details",
+   "defaults": {
+    "aspect_ratio": "16:9",
+    "resolution": "1080p"
+   }
+  },
+  "minimax-h3": {
+   "title": "MiniMax H3",
+   "kind": "video",
+   "modes": [
+    "t2v",
+    "i2v"
+   ],
+   "tags": [
+    "звук",
+    "2K",
+    "референсы",
+    "оживить фото",
+    "динамика"
+   ],
+   "strengths": {
+    "ru": "мультимодальность: текст, кадры и референсы, звук, до 2K",
+    "en": "multimodal: text, frames and refs, audio, up to 2K"
+   },
+   "limits": {
+    "ru": "4–15 с",
+    "en": "4–15 s"
+   },
+   "speed": {
+    "ru": "1–5 мин",
+    "en": "1–5 min"
+   },
+   "rank": 8,
+   "params": {
+    "duration": [
+     5,
+     8,
+     10,
+     15
+    ],
+    "resolution": [
+     "768P",
+     "2K"
+    ],
+    "ratio": [
+     "16:9",
+     "9:16",
+     "1:1"
+    ]
+   },
+   "ask_first": [
+    "ratio"
+   ],
+   "prompt_style": "English. Describe subject, motion and camera. Mention sound if needed. 1-3 short sentences.",
+   "avoid": "re-describing a provided first frame",
+   "defaults": {
+    "duration": 5,
+    "resolution": "768P",
+    "ratio": "16:9"
+   }
+  },
   "grok-imagine-video-1-5": {
    "title": "Grok Imagine Video 1.5",
    "kind": "video",
@@ -748,6 +898,57 @@
    "defaults": {
     "aspect_ratio": "1:1",
     "quality": "medium"
+   }
+  },
+  "nano-banana-pro": {
+   "title": "Nano Banana Pro",
+   "kind": "edit",
+   "modes": [
+    "i2i",
+    "t2i"
+   ],
+   "tags": [
+    "текст в кадре",
+    "инфографика",
+    "качество",
+    "4k",
+    "редактирование"
+   ],
+   "strengths": {
+    "ru": "сложный смысл, точный текст в кадре, студийное качество",
+    "en": "complex briefs, accurate in-image text, studio quality"
+   },
+   "limits": {
+    "ru": "дороже и медленнее Nano Banana 2",
+    "en": "pricier and slower than Nano Banana 2"
+   },
+   "speed": {
+    "ru": "20–60 с",
+    "en": "20–60 s"
+   },
+   "rank": 10,
+   "params": {
+    "aspect_ratio": [
+     "1:1",
+     "3:4",
+     "4:3",
+     "9:16",
+     "16:9"
+    ],
+    "resolution": [
+     "1K",
+     "2K",
+     "4K"
+    ]
+   },
+   "ask_first": [
+    "aspect_ratio"
+   ],
+   "prompt_style": "Natural English creative brief: subject, composition, style, and any on-image text verbatim. For edits: what to change and what to keep.",
+   "avoid": "keyword soup; vague 'make it better'",
+   "defaults": {
+    "aspect_ratio": "1:1",
+    "resolution": "2K"
    }
   },
   "nano-banana-2": {

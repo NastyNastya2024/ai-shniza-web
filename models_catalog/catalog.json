@@ -236,6 +236,19 @@
       "notes": "t2v/i2v · first/last frame · 6/10s"
     },
     {
+      "id": "minimax-h3",
+      "name": "MiniMax H3",
+      "provider": "replicate",
+      "upstream": "minimax/h3",
+      "category": "video",
+      "inputs": "text, image",
+      "outputs": "video",
+      "price": "$0.08 per second of output video at 768P · $0.13 at 2K",
+      "price_source": "replicate.com page",
+      "url": "https://replicate.com/minimax/h3",
+      "notes": "t2v/i2v · refs · audio · 4–15s · 768P/2K"
+    },
+    {
       "id": "dreamactor-m2",
       "name": "DreamActor M2.0",
       "provider": "replicate",
@@ -259,7 +272,33 @@
       "price": "$0.15 per output image (or around 66 images for $10)",
       "price_source": "replicate.com page",
       "url": "https://replicate.com/google/nano-banana-pro",
-      "notes": "p50 $0.0030"
+      "notes": "t2i/edit · 1K/2K/4K · текст в кадре · fal backup"
+    },
+    {
+      "id": "nano-banana-pro-fal",
+      "name": "Nano Banana Pro T2I",
+      "provider": "fal",
+      "upstream": "fal-ai/nano-banana-pro",
+      "category": "image",
+      "inputs": "text",
+      "outputs": "image",
+      "price": "$0.15/image · 4K 2× · web search +$0.015",
+      "price_source": "fal.ai llms.txt / model page",
+      "url": "https://fal.ai/models/fal-ai/nano-banana-pro",
+      "notes": "backup for nano-banana-pro"
+    },
+    {
+      "id": "nano-banana-pro-edit-fal",
+      "name": "Nano Banana Pro Edit",
+      "provider": "fal",
+      "upstream": "fal-ai/nano-banana-pro/edit",
+      "category": "image",
+      "inputs": "image, text",
+      "outputs": "image",
+      "price": "$0.15/edit · 4K 2× · web search +$0.015",
+      "price_source": "fal.ai llms.txt / model page",
+      "url": "https://fal.ai/models/fal-ai/nano-banana-pro/edit",
+      "notes": "backup for nano-banana-pro (image)"
     },
     {
       "id": "nano-banana-2",
@@ -639,7 +678,7 @@
       "notes": ""
     },
     {
-      "id": "gemini-omni-flash-fal",
+      "id": "gemini-omni-flash",
       "name": "Gemini Omni Flash",
       "provider": "fal",
       "upstream": "google/gemini-omni-flash",
@@ -649,7 +688,46 @@
       "price": "$21.875 / 1M tokens · ~$0.125/s at 720p",
       "price_source": "fal.ai llms.txt / model page",
       "url": "https://fal.ai/models/google/gemini-omni-flash",
-      "notes": ""
+      "notes": "t2v · synced audio · ~8s"
+    },
+    {
+      "id": "gemini-omni-flash-fal",
+      "name": "Gemini Omni Flash (alias)",
+      "provider": "fal",
+      "upstream": "google/gemini-omni-flash",
+      "category": "video",
+      "inputs": "text",
+      "outputs": "video",
+      "price": "$21.875 / 1M tokens · ~$0.125/s at 720p",
+      "price_source": "fal.ai llms.txt / model page",
+      "url": "https://fal.ai/models/google/gemini-omni-flash",
+      "notes": "alias of gemini-omni-flash"
+    },
+    {
+      "id": "soul-cinema",
+      "name": "Soul Cinema",
+      "provider": "higgsfield",
+      "upstream": "higgsfield-ai/soul/cinema",
+      "category": "image",
+      "inputs": "text, image",
+      "outputs": "image",
+      "price": "Higgsfield credits (see higgsfield.ai/pricing)",
+      "price_source": "higgsfield.ai/soul-cinema",
+      "url": "https://higgsfield.ai/soul-cinema",
+      "notes": "кинокадры · t2i/i2i · 720p/1080p · Soul ID/HEX"
+    },
+    {
+      "id": "soul-cinema-hf",
+      "name": "Soul Cinema (alias)",
+      "provider": "higgsfield",
+      "upstream": "higgsfield-ai/soul/cinema",
+      "category": "image",
+      "inputs": "text, image",
+      "outputs": "image",
+      "price": "Higgsfield credits (see higgsfield.ai/pricing)",
+      "price_source": "higgsfield.ai/soul-cinema",
+      "url": "https://higgsfield.ai/soul-cinema",
+      "notes": "alias of soul-cinema"
     },
     {
       "id": "grok-imagine-video-1-5-i2v-fal",
@@ -702,6 +780,32 @@
       "price_source": "fal.ai llms.txt / model page",
       "url": "https://fal.ai/models/fal-ai/kling-video/o3/standard/image-to-video",
       "notes": ""
+    },
+    {
+      "id": "minimax-h3-t2v-fal",
+      "name": "MiniMax H3 T2V",
+      "provider": "fal",
+      "upstream": "minimax/h3/text-to-video",
+      "category": "video",
+      "inputs": "text",
+      "outputs": "video",
+      "price": "480p $0.05/s · 768p $0.06/s · 2K $0.13/s · 4K $0.16/s",
+      "price_source": "fal.ai llms.txt / model page",
+      "url": "https://fal.ai/models/minimax/h3/text-to-video",
+      "notes": "backup for minimax-h3"
+    },
+    {
+      "id": "minimax-h3-i2v-fal",
+      "name": "MiniMax H3 I2V",
+      "provider": "fal",
+      "upstream": "minimax/h3/image-to-video",
+      "category": "video",
+      "inputs": "image, text",
+      "outputs": "video",
+      "price": "480p $0.05/s · 768p $0.06/s · 2K $0.13/s · 4K $0.16/s",
+      "price_source": "fal.ai llms.txt / model page",
+      "url": "https://fal.ai/models/minimax/h3/image-to-video",
+      "notes": "backup for minimax-h3 (image)"
     },
     {
       "id": "minimax-h3-ref-to-video-fal",

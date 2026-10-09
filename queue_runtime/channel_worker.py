@@ -53,6 +53,9 @@ def _wait_seconds(model_id: str, kind: str) -> int:
         pass
     long_ids = {
         "happy-horse-1-1-t2v-fal",
+        "gemini-omni-flash",
+        "gemini-omni-flash",
+        "gemini-omni-flash",
         "gemini-omni-flash-fal",
         "grok-imagine-video-1-5",
         "grok-imagine-video-1-5-i2v-fal",
@@ -86,6 +89,10 @@ def _wait_seconds(model_id: str, kind: str) -> int:
         "kling-v2-5-turbo-pro-i2v-fal",
         "hailuo-02-t2v-fal",
         "hailuo-02-i2v-fal",
+        "minimax-h3",
+        "minimax-h3-t2v-fal",
+        "minimax-h3-i2v-fal",
+        "minimax-h3-ref-to-video-fal",
     }
     if model_id in long_ids:
         return 300
