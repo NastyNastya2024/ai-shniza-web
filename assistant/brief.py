@@ -4,7 +4,7 @@
   1. Идея пустая («нужно сделать видео») или мусор («ооло») → «Что должно быть в кадре?».
   2. Тип известен → бриф: 2–3 вопроса с вариантами-кнопками (стиль, настроение, кадр / жанр …).
      С LLM вопросы под идею; без LLM — общие слоты по типу. Уже названное («аниме», «весёлый») отмечено сразу.
-  3. Ответ сообщением или «Пропустить» → варианты промпта; человек выбирает один.
+  3. Ответ сообщением или «Продолжить — сделать промпт» → варианты промпта; человек выбирает один.
   4. Выбор нейросети под готовый промпт → параметры и запуск.
 """
 from __future__ import annotations
@@ -71,19 +71,19 @@ def detail_level(text: str) -> int:
 # slot: (label ru, label en, [(value, ru, en, prompt_ru, prompt_en, detect_regex)])
 SLOTS: dict[str, list[tuple[str, dict, list[tuple]]]] = {
     "video": [
-        ("style", {"ru": "Стиль", "en": "Style"}, [
+        ("style", {"ru": "Добавить описание стиля?", "en": "Add a style description?"}, [
             ("real", "Реализм", "Realistic", "реалистичная съёмка", "photorealistic footage", r"реалист|как в жизни|realistic"),
             ("cartoon", "Мультфильм", "Cartoon", "мультипликация в стиле Pixar", "Pixar-style animation", r"мульт|cartoon|pixar"),
             ("anime", "Аниме", "Anime", "аниме-стиль", "anime style", r"аниме|anime"),
             ("3d", "3D", "3D", "объёмная 3D-анимация", "3D render animation", r"\b3d\b|3д"),
         ]),
-        ("mood", {"ru": "Атмосфера", "en": "Atmosphere"}, [
+        ("mood", {"ru": "Добавить описание атмосферы?", "en": "Add an atmosphere description?"}, [
             ("fun", "Весёлое", "Fun", "весёлое, игривое настроение", "playful, fun mood", r"весел|смешн|прикол|fun|funny"),
             ("cozy", "Уютное", "Cozy", "уютная тёплая атмосфера", "cozy warm atmosphere", r"уют|тепл|cozy"),
             ("epic", "Эпичное", "Epic", "эпичный размах, драматичный свет", "epic scale, dramatic light", r"эпич|epic"),
             ("mystery", "Загадочное", "Mysterious", "загадочная атмосфера, туман", "mysterious atmosphere, fog", r"загадоч|мистич|mysterious"),
         ]),
-        ("shot", {"ru": "Камера", "en": "Camera"}, [
+        ("shot", {"ru": "Добавить описание камеры?", "en": "Add a camera description?"}, [
             ("close", "Крупный план", "Close-up", "крупный план", "close-up shot", r"крупн|close"),
             ("wide", "Общий план", "Wide shot", "общий план", "wide shot", r"общий план|wide"),
             ("fly", "Пролёт камеры", "Fly-through", "плавный пролёт камеры", "smooth camera fly-through", r"пролет|пролёт|дрон|drone"),
@@ -91,20 +91,20 @@ SLOTS: dict[str, list[tuple[str, dict, list[tuple]]]] = {
         ]),
     ],
     "image": [
-        ("style", {"ru": "Стиль", "en": "Style"}, [
+        ("style", {"ru": "Добавить описание стиля?", "en": "Add a style description?"}, [
             ("photo", "Фото", "Photo", "фотореалистично, как снято на камеру", "photorealistic, shot on camera", r"фотореал|как фото|реалист|photo"),
             ("illustration", "Иллюстрация", "Illustration", "цифровая иллюстрация", "digital illustration", r"иллюстрац|illustrat"),
             ("anime", "Аниме", "Anime", "аниме-стиль", "anime style", r"аниме|anime"),
             ("3d", "3D", "3D", "объёмный 3D-рендер", "3D render", r"\b3d\b|3д"),
             ("watercolor", "Акварель", "Watercolor", "акварельная техника", "watercolor painting", r"акварел|watercolor"),
         ]),
-        ("mood", {"ru": "Настроение", "en": "Mood"}, [
+        ("mood", {"ru": "Добавить описание настроения?", "en": "Add a mood description?"}, [
             ("bright", "Яркое", "Bright", "яркие сочные цвета", "vivid colors", r"ярк|сочн|vivid|bright"),
             ("cozy", "Уютное", "Cozy", "тёплый мягкий свет, уют", "warm soft light, cozy", r"уют|тепл|cozy"),
             ("drama", "Драматичное", "Dramatic", "контрастный драматичный свет", "dramatic contrast lighting", r"драмат|мрачн|dramatic|dark"),
             ("minimal", "Минимализм", "Minimal", "минимализм, чистый фон", "minimalist, clean background", r"минимал|minimal"),
         ]),
-        ("frame", {"ru": "Кадр", "en": "Framing"}, [
+        ("frame", {"ru": "Добавить описание кадра?", "en": "Add a framing description?"}, [
             ("portrait", "Портрет", "Portrait", "портрет крупным планом", "close-up portrait", r"портрет|portrait"),
             ("full", "В полный рост", "Full body", "персонаж в полный рост", "full-body shot", r"полный рост|full body"),
             ("scene", "Вся сцена", "Whole scene", "общий план всей сцены", "wide shot of the whole scene", r"сцен|wide"),
@@ -112,63 +112,63 @@ SLOTS: dict[str, list[tuple[str, dict, list[tuple]]]] = {
         ]),
     ],
     "edit": [
-        ("what", {"ru": "Что меняем", "en": "What to change"}, [
+        ("what", {"ru": "Добавить: что меняем?", "en": "Add: what to change?"}, [
             ("bg", "Фон", "Background", "заменить фон", "replace the background", r"фон|background"),
             ("light", "Свет", "Lighting", "исправить свет", "improve lighting", r"свет|light"),
             ("color", "Цвета", "Colors", "сделать цвета ярче", "make colors more vivid", r"цвет|color"),
             ("remove", "Убрать лишнее", "Remove objects", "убрать лишние объекты", "remove unwanted objects", r"убер|удали|remove"),
         ]),
-        ("strength", {"ru": "Насколько", "en": "How much"}, [
+        ("strength", {"ru": "Добавить: насколько меняем?", "en": "Add: how much to change?"}, [
             ("soft", "Аккуратно", "Subtle", "аккуратно, почти незаметно", "subtle, barely noticeable", r"аккурат|subtle"),
             ("strong", "Заметно", "Noticeable", "заметное изменение", "clearly visible change", r"заметн|сильн|strong"),
         ]),
     ],
     "music": [
-        ("genre", {"ru": "Жанр", "en": "Genre"}, [
+        ("genre", {"ru": "Добавить описание жанра?", "en": "Add a genre description?"}, [
             ("pop", "Поп", "Pop", "поп", "pop", r"\bпоп\b|\bpop\b"),
             ("electro", "Электроника", "Electronic", "электроника", "electronic", r"электрон|edm|electro|house|техно"),
             ("lofi", "Лоу-фай", "Lo-fi", "лоу-фай", "lo-fi", r"лоу.?фай|lo.?fi"),
             ("rock", "Рок", "Rock", "рок", "rock", r"\bрок\b|\brock\b"),
             ("orchestra", "Оркестр", "Orchestral", "оркестровая музыка", "orchestral", r"оркестр|orchestr|кино|cinematic"),
         ]),
-        ("mood", {"ru": "Настроение", "en": "Mood"}, [
+        ("mood", {"ru": "Добавить описание настроения?", "en": "Add a mood description?"}, [
             ("happy", "Весёлое", "Happy", "весёлое, светлое", "happy, uplifting", r"весел|радост|happy"),
             ("calm", "Спокойное", "Calm", "спокойное, мягкое", "calm, mellow", r"спокой|расслаб|calm|chill"),
             ("energy", "Энергичное", "Energetic", "энергичное, быстрый темп", "energetic, fast tempo", r"энерг|драйв|energetic"),
             ("sad", "Грустное", "Sad", "грустное, лиричное", "sad, lyrical", r"грус|печал|sad"),
         ]),
-        ("vocal", {"ru": "Вокал", "en": "Vocals"}, [
+        ("vocal", {"ru": "Добавить описание вокала?", "en": "Add a vocals description?"}, [
             ("vocal", "С вокалом", "With vocals", "с вокалом", "with vocals", r"вокал|песн|спой|vocal|sing"),
             ("instr", "Без слов", "Instrumental", "инструментал, без слов", "instrumental, no vocals", r"инструмент|без слов|instrumental"),
         ]),
     ],
     "sfx": [
-        ("place", {"ru": "Где звучит", "en": "Where"}, [
+        ("place", {"ru": "Добавить: где звучит?", "en": "Add: where it sounds?"}, [
             ("inside", "В помещении", "Indoors", "в помещении", "indoors", r"помещен|комнат|indoor"),
             ("outside", "На улице", "Outdoors", "на улице", "outdoors", r"улиц|outdoor"),
             ("far", "Вдалеке", "Distant", "вдалеке", "in the distance", r"вдалек|далек|distant"),
         ]),
-        ("char", {"ru": "Характер", "en": "Character"}, [
+        ("char", {"ru": "Добавить описание характера?", "en": "Add a character description?"}, [
             ("soft", "Мягкий", "Soft", "мягкий", "soft", r"мягк|тих|soft"),
             ("sharp", "Резкий", "Sharp", "резкий", "sharp", r"резк|sharp"),
             ("rhythm", "Ритмичный", "Rhythmic", "ритмичный", "rhythmic", r"ритм|rhythm"),
         ]),
     ],
     "text": [
-        ("form", {"ru": "Формат", "en": "Format"}, [
+        ("form", {"ru": "Добавить описание формата?", "en": "Add a format description?"}, [
             ("post", "Пост", "Post", "пост для соцсети", "a social media post", r"пост|соцсет|instagram|telegram|post"),
             ("letter", "Письмо", "Letter", "письмо", "a letter", r"письм|letter|email"),
             ("article", "Статья", "Article", "статья", "an article", r"стать|article|блог"),
             ("script", "Сценарий", "Script", "сценарий", "a script", r"сценари|script"),
             ("poem", "Стих", "Poem", "стихотворение", "a poem", r"стих|poem|поэз"),
         ]),
-        ("tone", {"ru": "Тон", "en": "Tone"}, [
+        ("tone", {"ru": "Добавить описание тона?", "en": "Add a tone description?"}, [
             ("formal", "Деловой", "Formal", "деловой официальный тон", "formal business tone", r"делов|официал|formal"),
             ("friendly", "Дружеский", "Friendly", "дружеский тёплый тон", "friendly warm tone", r"дружес|неформал|friendly"),
             ("creative", "Креативный", "Creative", "креативный яркий стиль", "creative vivid style", r"креатив|творч|creative"),
             ("neutral", "Нейтральный", "Neutral", "нейтральный спокойный тон", "neutral calm tone", r"нейтрал|спокойн|neutral"),
         ]),
-        ("length", {"ru": "Длина", "en": "Length"}, [
+        ("length", {"ru": "Добавить описание длины?", "en": "Add a length description?"}, [
             ("short", "Короткий", "Short", "короткий текст", "a short text", r"коротк|кратко|short"),
             ("medium", "Средний", "Medium", "текст средней длины", "a medium-length text", r"средн|medium"),
             ("long", "Подробный", "Long", "подробный развёрнутый текст", "a detailed long text", r"подробн|длинн|развёрн|long"),
@@ -224,7 +224,7 @@ def _fragment(kind: str, slot_id: str, value: str, L: str) -> str:
 
 
 def render_questions(qs: list[dict], answers: dict[str, str], lang: str) -> list[dict]:
-    any_label = "Не важно" if lang != "en" else "Any"
+    any_label = "Не добавлять" if lang != "en" else "Don't add"
     out = []
     for q in qs:
         if not q["options"]:   # открытый вопрос: отвечают текстом
@@ -355,10 +355,12 @@ BRIEF_SYSTEM = (
     "Cover these aspects (skip any the idea already states): who/what is in it (appearance), where (place, background), "
     "what happens (action), atmosphere/mood, nuances (time of day, colors, light, sound, style; for music: genre, tempo, vocals).\n"
     "Rules:\n"
-    "- 3 to 5 short questions, labels in language `lang` (≤6 words, ending with '?').\n"
+    "- 3 to 5 short questions, labels in language `lang` (≤8 words, ending with '?'). "
+    "For choice questions phrase as inviting a detail (RU: 'Добавить описание атмосферы?', "
+    "EN: 'Add an atmosphere description?').\n"
     "- `options`: 2-4 short choices ONLY for atmosphere/style/camera/genre-like questions; "
     "for who/where/what-happens questions use options=[] (the person answers in their own words). "
-    "Never invent example subjects or scenes.\n"
+    "Never invent example subjects or scenes. Do not add a skip/any option — the UI adds «Не добавлять» / «Don't add».\n"
     "- If the idea is gibberish or has no subject: clear=false, questions=[].\n"
     'Return ONLY JSON: {"clear": bool, "summary": string (≤10 words, lang, what you understood), '
     '"questions": [{"id": string, "label": string, "options": [string]}]}'

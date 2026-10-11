@@ -1,10 +1,10 @@
 """Подбор моделей — без LLM.
 
 Правила:
-* всегда минимум 2 модели (если доступно хотя бы 2 во всём каталоге с учётом соседних типов);
+* по умолчанию 3 модели в ряд (если доступно; минимум 2 при узком каталоге);
 * модели с упавшим каналом (health_fn → False) не предлагаем;
 * без фото не предлагаем модели «только из фото», с фото для видео — сначала i2v;
-* третьей добавляем самую дешёвую/бесплатную, если она дешевле обеих первых.
+* если среди трёх нет самой дешёвой — подменяем последнюю на неё (with_cheap).
 """
 from __future__ import annotations
 
@@ -66,7 +66,7 @@ def score(card: Card, needs: Iterable[str], has_image: bool, price_fn: PriceFn |
 
 def recommend(cards: dict[str, Card], kind: str, needs: list[str] | None = None, has_image: bool = False,
               health_fn: HealthFn | None = None, price_fn: PriceFn | None = None,
-              neighbors: dict[str, list[str]] | None = None, exclude: Iterable[str] = (), n: int = 2,
+              neighbors: dict[str, list[str]] | None = None, exclude: Iterable[str] = (), n: int = 3,
               with_cheap: bool = True) -> Pick:
     needs = needs or []
     excl = set(exclude)
@@ -101,15 +101,18 @@ def recommend(cards: dict[str, Card], kind: str, needs: list[str] | None = None,
         if extra and len(main) < n:
             exact = False if needs else exact
 
-    if with_cheap and price_fn is not None and len(picked) >= 2:
+    if with_cheap and price_fn is not None and picked:
         rest = [c for c in main if c not in picked]
         prices = [price_value(price_fn(c.id)) for c in picked]
         known = [p for p in prices if p is not None]
         if rest and known:
-            cheapest = min(rest, key=lambda c: (price_value(price_fn(c.id)) if price_value(price_fn(c.id)) is not None else 1e9))
-            cv = price_value(price_fn(cheapest.id))
+            cheap = min(rest, key=lambda c: (price_value(price_fn(c.id)) if price_value(price_fn(c.id)) is not None else 1e9))
+            cv = price_value(price_fn(cheap.id))
             if cv is not None and cv < min(known):
-                picked.append(cheapest)
+                if len(picked) < n:
+                    picked.append(cheap)
+                elif len(picked) >= 2 and picked[-1].id != pin_id:
+                    picked[-1] = cheap
     return Pick(picked, exact)
 
 

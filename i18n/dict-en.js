@@ -25,8 +25,11 @@ window.AISH_DICT_EN = {
   'common.home.aria': '{brand} — home',
   'common.logo.alt': '{brand} — generative models marketplace',
   'common.brand.alt': '{brand}',
-  'common.theme.dark': 'Dark theme',
+  'common.theme.dark': 'Black theme',
   'common.theme.light': 'Light theme',
+  'common.theme.white': 'White theme',
+  'common.theme.lilac': 'Lilac theme',
+  'common.theme.group': 'Color theme',
   'common.lang.aria': 'Language: English',
   'common.like': 'Like',
   'common.like.add': 'Like',
@@ -583,6 +586,7 @@ window.AISH_DICT_EN = {
     one: '{n} work',
     other: '{n} works'
   },
+  'vitrina.prompt.label': 'Prompt',
   'vitrina.req.promptOrVideo': 'Request prompt or video',
   'vitrina.req.promptOrOriginal': 'Request prompt or original',
   'vitrina.req.title': 'Request to {name}',
@@ -828,6 +832,8 @@ window.AISH_DICT_EN = {
   'works.p08.title': 'Aurora—long cut',
   'works.date.draft': 'draft',
 
+  'creators.acm.name': 'AI Camera Movements',
+  'creators.acm.about': 'Camera move library · aicameramovements.com',
   /* ================= creators (vitrina-data.js) ================= */
   'creators.c1.name': 'Mira Svet',
   'creators.c1.about': 'Neon, night cities, cinematic light',

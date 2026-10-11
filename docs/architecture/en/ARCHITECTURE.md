@@ -1,48 +1,55 @@
-# Generate: dispatcher, three queues, three channels
+# Generate: dispatcher, four queues, four channels
 
-Last updated: 2026-09-09  
-Status: **target architecture** (code still uses a synchronous wait; see the table in README).
+Last updated: 2026-10-10  
+Status: **target architecture** (soft-overflow + async queues in code; see README).
 
 --------------------------------------------------------------------------------
 1. Big picture
 --------------------------------------------------------------------------------
 
-                    ┌─────────────┐
-                    │  Browser    │
-                    │  Generate   │
-                    └──────┬──────┘
-                           │ POST /api/generate  (accept)
-                           │ GET  /api/jobs/:id  (status)
-                           ▼
-                    ┌─────────────┐
-                    │  Flask API  │
-                    │  (fast)     │
-                    └──────┬──────┘
-                           │ create Job + LogicalModel
-                           ▼
-              ┌────────────────────────────┐
-              │     ROUTING DISPATCHER     │
-              │  health + duplicate map +   │
-              │  channel selection         │
-              └─────────────┬──────────────┘
-            ┌───────────────┼───────────────┐
-            ▼               ▼               ▼
-     queue:replicate  queue:fal     queue:omniroute
-            │               │               │
-            ▼               ▼               ▼
-      worker-repl     worker-fal      worker-omni
-            │               │               │
-            ▼               ▼               ▼
-       Replicate API    fal queue      OmniRoute
-                                            │
-                                            ▼
-                                      providers
-                                      behind the gateway
+  Browser (Generate)
+       │
+       │  POST /api/generate
+       │  GET  /api/generate/jobs/:id
+       ▼
+  ┌─────────────────────────────────────────┐
+  │ Flask API                               │
+  │  · accept request                       │
+  │  · load_balancer: preferred → soft R→fal│
+  │  · enqueue job (provider already set)   │
+  └───────────────────┬─────────────────────┘
+                      │
+                      ▼
+  ┌─────────────────────────────────────────┐
+  │ queue:inbound                           │
+  │ dispatcher → queue:{provider}           │
+  │ (routes only by job.provider)           │
+  └───────────────────┬─────────────────────┘
+                      │
+        ┌─────────────┼─────────────┬─────────────┐
+        ▼             ▼             ▼             ▼
+   ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌──────────┐
+   │replicate│   │   fal   │   │omniroute│   │higgsfield│
+   │ queue   │   │  queue  │   │  queue  │   │  queue   │
+   └────┬────┘   └────┬────┘   └────┬────┘   └────┬─────┘
+        ▼             ▼             ▼             ▼
+   ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌──────────┐
+   │ worker  │   │ worker  │   │ worker  │   │ worker   │
+   └────┬────┘   └────┬────┘   └────┬────┘   └────┬─────┘
+        ▼             ▼             ▼             ▼
+   Replicate API  fal.run API   OmniRoute    Higgsfield API
+                                                   (HF_KEY)
 
-One routing dispatcher. Four queues. Four channel workers
-(replicate / fal / omniroute / higgsfield).
-A separate dispatcher process routes inbound jobs by `provider`.
-Channel selection runs at job create time (and optionally on retry/failover).
+Read top → bottom: UI → Flask (pick channel) → inbound → one of 4 channels → upstream.
+
+| Channel | Queue | Worker | Upstream | How we get there |
+|---|---|---|---|---|
+| **replicate** | `queue:replicate` | worker-replicate | api.replicate.com | UI model with `provider=replicate` |
+| **fal** | `queue:fal` | worker-fal | fal.run | fal UI model **or** soft-overflow / failover from R |
+| **omniroute** | `queue:omniroute` | worker-omniroute | :20128 | chat / auto |
+| **higgsfield** | `queue:higgsfield` | worker-higgsfield | Higgsfield API | explicit HF card only (`*-hf`, Soul Cinema) |
+
+Higgsfield is a full 4th channel. Not in `FAILOVER_MAP`: not an auto backup from Replicate.
 
 --------------------------------------------------------------------------------
 2. Dispatcher logic (failover)
@@ -84,14 +91,15 @@ Why not three independent dispatchers:
   Three isolated dispatchers cannot shift load across channels.
 
 --------------------------------------------------------------------------------
-3. Three queues and three workers
+3. Four queues and four workers
 --------------------------------------------------------------------------------
 
 Queue                Worker              Upstream
 -------------------  ------------------  -------------------------
 queue:replicate      worker-replicate    api.replicate.com
-queue:fal            worker-fal          queue.fal.run
+queue:fal            worker-fal          queue.fal.run / fal.run
 queue:omniroute      worker-omniroute    OmniRoute :20128 /v1/...
+queue:higgsfield     worker-higgsfield   Higgsfield API (HF_KEY)
 
 Rules:
   - a worker reads ONLY its own queue;

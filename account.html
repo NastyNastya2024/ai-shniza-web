@@ -329,7 +329,7 @@ body.is-chat .msgs{position:static;flex:1 1 0;min-height:0!important;height:auto
 
 <div class="wrap">
   <section class="glass prof" id="prof" aria-label="Профиль"></section>
-  <div class="tabs glass" role="tablist" id="tabs"></div>
+    <div class="tabs glass" role="tablist" id="tabs"></div>
   <main class="main" id="view"></main>
 </div>
 
@@ -341,7 +341,7 @@ body.is-chat .msgs{position:static;flex:1 1 0;min-height:0!important;height:auto
     <p class="hint" style="text-align:center;margin:10px 0 4px">Перетащите фото, чтобы выбрать, что будет в круге</p>
     <label class="crop-zoom"><span aria-hidden="true">−</span><input type="range" id="cropZ" min="1" max="3" step="0.01" value="1" aria-label="Масштаб"><span aria-hidden="true">+</span></label>
     <div class="crop-f"><button class="btn btn-s" type="button" data-crop="other">Другое фото</button><span class="sp"></span><button class="btn btn-s" type="button" data-crop="cancel">Отмена</button><button class="btn btn-p" type="button" data-crop="ok">Сохранить</button></div>
-  </section>
+</section>
 </div>
 <div class="toast" id="toast" role="status"></div>
 
@@ -1170,14 +1170,14 @@ save = () => {
       toast('Чат с креатором открыт');
     }
   }
-  render(); fromHash();
+render(); fromHash();
   ensureAssistant();
-  const S = DEMO;
+const S = DEMO;
   if (S === 'assistant' || S === 'assistant-mid') { openAssistant(); }
-  if (S === 'manual') { tab = 'settings'; render(); }
-  if (S === 'messages' || S === 'thread') { tab = 'messages'; if (S === 'thread') openThread = 't1'; render(); }
-  if (S === 'thread-prompt') { tab = 'messages'; openThread = 't2'; render(); }
-  if (S === 'thread-order') { tab = 'messages'; openThread = 't3'; render(); }
+if (S === 'manual') { tab = 'settings'; render(); }
+if (S === 'messages' || S === 'thread') { tab = 'messages'; if (S === 'thread') openThread = 't1'; render(); }
+if (S === 'thread-prompt') { tab = 'messages'; openThread = 't2'; render(); }
+if (S === 'thread-order') { tab = 'messages'; openThread = 't3'; render(); }
   if (S === 'balance' || S === 'empty-balance') { tab = 'balance'; render(); }
   if (S === 'empty-messages') { tab = 'messages'; openAssistant(); }
 })();

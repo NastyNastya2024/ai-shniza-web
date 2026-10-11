@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from typing import Any
+from urllib.parse import quote
 
 # id → файл превью, подписи, готовая английская инструкция для промпта
 MOVES: list[dict[str, str]] = [
@@ -148,6 +149,71 @@ MOVES: list[dict[str, str]] = [
      "prompt": "pass-through movement. Movement: move forward toward a visible object, surface or barrier and continue into the space beyond. Speed: smooth centered glide. Framing: keep the opening or surface centered as the transition point. End: arrive inside the revealed space beyond."},
 ]
 
+
+# Группы как на aicameramovements.com (фильтр в флоу и на витрине)
+_FILE_GROUP = {
+    "01-static-shot-hq.mp4": "Pan/Tilt",
+    "02-pan-right-hq.mp4": "Pan/Tilt",
+    "03-whip-pan-right-hq.mp4": "Pan/Tilt",
+    "04-tilt-up-hq.mp4": "Pan/Tilt",
+    "05-slow-zoom-in-hq.mp4": "Zoom/Lens",
+    "06-fast-zoom-in-v2-hq.mp4": "Zoom/Lens",
+    "06b-fast-zoom-out-v2-hq.mp4": "Zoom/Lens",
+    "07a-crash-zoom-in-v2-hq.mp4": "Zoom/Lens",
+    "07b-crash-zoom-out-v2-hq.mp4": "Zoom/Lens",
+    "08-dolly-in-hq.mp4": "Dolly/Track",
+    "09-dolly-out-hq.mp4": "Dolly/Track",
+    "10-truck-right-hq.mp4": "Physical Moves",
+    "10b-truck-left-hq.mp4": "Physical Moves",
+    "11a-pedestal-up-hq.mp4": "Physical Moves",
+    "11b-pedestal-down-hq.mp4": "Physical Moves",
+    "12-slider-right-hq.mp4": "Physical Moves",
+    "12b-slider-left-hq.mp4": "Physical Moves",
+    "13-push-past-pass-by-shot-hq.mp4": "Physical Moves",
+    "14-arc-right-hq.mp4": "Physical Moves",
+    "14b-arc-left-hq.mp4": "Physical Moves",
+    "15-orbit-clockwise-hq.mp4": "Physical Moves",
+    "15b-orbit-counterclockwise-hq.mp4": "Physical Moves",
+    "16-tracking-shot-hq.mp4": "Dolly/Track",
+    "17-follow-shot-over-the-shoulder-hq.mp4": "Dolly/Track",
+    "18-reverse-tracking-walk-and-talk-hq.mp4": "Dolly/Track",
+    "19-side-tracking-hq.mp4": "Dolly/Track",
+    "20-low-tracking-v2-hq.mp4": "Dolly/Track",
+    "21-vehicle-tracking-hq.mp4": "Dolly/Track",
+    "22-chase-shot-hq.mp4": "Dolly/Track",
+    "23-handheld-shot-hq.mp4": "Human Camera",
+    "24-snorricam-v2-hq.mp4": "Human Camera",
+    "25-crane-up-hq.mp4": "Drone/Crane",
+    "25b-crane-down-hq.mp4": "Drone/Crane",
+    "26-drone-push-in-hq.mp4": "Drone/Crane",
+    "26b-drone-pull-back-hq.mp4": "Drone/Crane",
+    "27-helicopter-shot-hq.mp4": "Drone/Crane",
+    "2b-pan-left-hq.mp4": "Pan/Tilt",
+    "3b-whip-pan-left-hq.mp4": "Pan/Tilt",
+    "4b-tilt-down-hq.mp4": "Pan/Tilt",
+    "5b-slow-zoom-out-hq.mp4": "Zoom/Lens",
+    "s1-first-person-view-hq.mp4": "Specials",
+    "s2-tilt-shift-hq.mp4": "Specials",
+    "s3-infinite-zoom-hq.mp4": "Specials",
+    "s4-earth-zoom-out-hq.mp4": "Specials",
+    "s5-time-lapse-hq.mp4": "Specials",
+    "s6-pass-through-objects-hq.mp4": "Specials"
+}
+for _m in MOVES:
+    _m["group"] = _FILE_GROUP.get(_m["file"], "Specials")
+
+DEFAULT_ID = None  # по умолчанию без движения (раньше была статика)
+
+GROUP_ORDER = [
+    ("Pan/Tilt", "Пан / наклон", "Pan / Tilt"),
+    ("Zoom/Lens", "Зум / объектив", "Zoom / Lens"),
+    ("Dolly/Track", "Долли / трекинг", "Dolly / Track"),
+    ("Physical Moves", "Физические", "Physical moves"),
+    ("Human Camera", "С рук / тело", "Human camera"),
+    ("Drone/Crane", "Дрон / кран", "Drone / Crane"),
+    ("Specials", "Спецприёмы", "Specials"),
+]
+
 _BY_ID = {m["id"]: m for m in MOVES}
 _PROMPTS = tuple(m["prompt"] for m in MOVES)
 
@@ -158,6 +224,11 @@ def get(move_id: str | None) -> dict[str, str] | None:
 
 def title(move: dict[str, str], lang: str) -> str:
     return move["title_en"] if lang == "en" else move["title_ru"]
+
+
+def ensure_default(ses: dict) -> None:
+    """По умолчанию без движения — ничего не подставляем в сессию."""
+    return
 
 
 def strip(prompt: str) -> str:
@@ -171,7 +242,6 @@ def strip(prompt: str) -> str:
         for sep in (". " + f, " " + f, f):
             if lower.endswith(sep):
                 return text[: len(text) - len(sep)].rstrip(" .")
-            # frag могла быть вставлена целиком после точки
             idx = lower.rfind(f)
             if idx > 0 and lower[idx:].strip() == f:
                 return text[:idx].rstrip(" .")
@@ -193,6 +263,7 @@ def compose(base: str, move_id: str | None) -> str:
 
 def apply(ses: dict, prompt: str | None = None) -> str:
     """Записать prompt_base / camera → итоговый prompt в сессии, вернуть его."""
+    ensure_default(ses)
     if prompt is not None:
         base = strip(prompt)
     else:
@@ -204,17 +275,52 @@ def apply(ses: dict, prompt: str | None = None) -> str:
     return out
 
 
+def work_id(move: dict[str, str]) -> str:
+    """id работы на витрине (vitrina-camera-moves.js): cam-01-static-shot."""
+    stem = (move.get("file") or "").removesuffix(".mp4")
+    if stem.endswith("-hq"):
+        stem = stem[:-3]
+    return f"cam-{stem}"
+
+
+def vitrina_href(move: dict[str, str] | None = None, group: str | None = None) -> str:
+    url = "/explore?f=Camera"
+    g = group or (move.get("group") if move else None)
+    if g:
+        url += "&cam=" + quote(g)
+    if move:
+        url += "&work=" + quote(work_id(move))
+    return url
+
+
 def block(selected: str | None, lang: str) -> dict[str, Any]:
     L = "en" if lang == "en" else "ru"
     items = []
     for m in MOVES:
+        poster = m["file"].replace(".mp4", ".jpg")
         items.append({
             "id": m["id"],
             "title": title(m, L),
             "preview": f"/assets/camera/{m['file']}",
+            "poster": f"/assets/camera/{poster}",
+            "group": m.get("group") or "Specials",
+            "work_id": work_id(m),
+            "vitrina": vitrina_href(m),
             "selected": m["id"] == selected,
         })
+    groups = []
+    for gid, ru, en in GROUP_ORDER:
+        groups.append({"id": gid, "label": en if L == "en" else ru})
     label = "Движение камеры" if L == "ru" else "Camera move"
-    hint = ("Выберите — добавлю инструкцию в промпт" if L == "ru"
-            else "Pick one — I’ll add the instruction to the prompt")
-    return {"type": "camera", "label": label, "hint": hint, "items": items}
+    hint = ("Сначала тип (пан / зум / трекинг…), затем конкретное движение. По умолчанию — без движения"
+            if L == "ru" else
+            "First pick a type (pan / zoom / tracking…), then a specific move. No move by default")
+    sel_move = get(selected)
+    return {
+        "type": "camera",
+        "label": label,
+        "hint": hint,
+        "groups": groups,
+        "items": items,
+        "vitrina_url": vitrina_href(sel_move) if sel_move else "/explore?f=Camera",
+    }

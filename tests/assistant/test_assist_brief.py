@@ -81,13 +81,17 @@ def test_rule_brief_questions_preselect_from_text(make_assistant):
     r = a.handle("", {}, SID, action={"type": "pick_model", "value": "kling-v2-5-turbo-pro"})
     assert r["intent"] == "brief"
     qs = blk(r, "brief")["questions"]
-    assert [q["label"] for q in qs] == ["Нюансы: время суток, цвета, звук, детали?", "Стиль", "Атмосфера", "Камера"]
+    assert [q["label"] for q in qs] == [
+        "Нюансы: время суток, цвета, звук, детали?",
+        "Добавить описание стиля?",
+        "Добавить описание атмосферы?",
+        "Добавить описание камеры?",
+    ]
     assert qs[0]["open"] and qs[0]["options"] == []                     # нюансы — своими словами
     style = qs[1]
     assert next(o for o in style["options"] if o["selected"])["value"] == "anime"
-    assert qs[2]["options"][-1]["label"] == "Не важно" and qs[2]["options"][-1]["selected"]
-    assert r["chips"] and all(c["action"] == "variants" for c in r["chips"])
-    assert not any(c.get("primary") for c in r["chips"])   # без «Собрать промпт» — ответ текстом или «Пропустить»
+    assert qs[2]["options"][-1]["label"] == "Не добавлять" and qs[2]["options"][-1]["selected"]
+    assert r["chips"] and any(c["action"] == "variants" for c in r["chips"])
     assert "generate_prompt" not in r                      # промпта ещё нет — сначала детали
 
 
@@ -105,6 +109,7 @@ def test_rule_brief_answer_then_three_distinct_variants(make_assistant):
     assert all(i["text"].startswith("Кот жарит яичницу") for i in items)
     r = a.handle("", {}, SID, action={"type": "use_variant", "value": items[1]["id"]})
     assert r["intent"] == "use_variant" and blk(r, "models") and items[1]["title"] in r["text"]
+    # без движения по умолчанию — промпт варианта без вставки камеры
     assert blk(r, "prompt")["text"] == items[1]["text"]
     r = a.handle("", {}, SID, action={"type": "pick_model", "value": "kling-v2-5-turbo-pro"})
     assert r["generate_prompt"] == items[1]["text"] and blk(r, "params") and blk(r, "prompt")
@@ -324,8 +329,10 @@ def test_repeated_junk_escalates_not_loops(make_assistant):
 def test_restart_button(make_assistant):
     a = make_assistant(brief=True)
     a.handle("", {}, SID, action={"type": "choose_type", "value": "video"})
+    a.handle("", {}, SID, action={"type": "has_prompt", "value": "yes"})
     r = a.handle("", {}, SID, action={"type": "restart"})
-    assert r["intent"] == "ask_type" and len(r["chips"]) == 5   # image/video/music/text/sfx
+    assert r["intent"] == "ask_type" and len(r["chips"]) == 5   # prompt/image/video/music/sfx
+    assert r["chips"][0]["value"] == "prompt"
 
 
 def test_junk_on_variants_does_not_call_llm(make_assistant):

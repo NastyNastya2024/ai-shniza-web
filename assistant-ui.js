@@ -19,10 +19,10 @@
  */
 (function (root) {
   'use strict';
-  var SERVER = { pick_model: 1, more: 1, choose_type: 1, use_mine: 1, param: 1, pick_camera: 1, refine: 1, improve: 1, send: 1,
+  var SERVER = { pick_model: 1, more: 1, choose_type: 1, has_prompt: 1, use_mine: 1, param: 1, pick_camera: 1, refine: 1, improve: 1, send: 1,
     similar: 1, cheaper: 1, faster: 1, no_photo_model: 1, rephrase: 1, resume: 1,
     brief: 1, variants: 1, more_variants: 1, back_brief: 1, use_variant: 1, restart: 1 };
-  var KIND_ICON = { image: '🖼', video: '🎬', music: '🎵', text: '✍️', sfx: '🔊', edit: '✏️' };
+  var KIND_ICON = { prompt: '✍️', image: '🖼', video: '🎬', music: '🎵', text: '✍️', sfx: '🔊', edit: '✏️' };
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -145,52 +145,106 @@
       return wrap;
     }
 
-    /** Движения камеры: превью-видео + клик дописывает инструкцию в промпт. */
+    /** Движения камеры: сначала тип, затем сабменю; по умолчанию — без движения. */
     function renderCamera(bl) {
       var wrap = el('div', 'aich-camera');
       var head = el('div', 'aich-camera__head');
       head.appendChild(el('div', 'aich-param__label', bl.label || L('Движение камеры', 'Camera move')));
       if (bl.hint) head.appendChild(el('div', 'aich-prompt__hint', bl.hint));
       wrap.appendChild(head);
-      var clear = el('button', 'aich-opt aich-camera__none' + (!bl.items.some(function (it) { return it.selected; }) ? ' is-on' : ''),
+
+      var selected = (bl.items || []).find(function (it) { return it.selected; });
+      /* Сабменю только после выбора типа; если уже выбрано движение — открываем его группу */
+      var activeGroup = selected && selected.group ? selected.group : '';
+      var groups = bl.groups || [];
+
+      var gRow = el('div', 'aich-camera__groups');
+      var clear = el('button', 'aich-opt aich-camera__none' + (!selected ? ' is-on' : ''),
                      L('Без движения', 'No move'));
       clear.type = 'button';
       clear.addEventListener('click', function () {
+        activeGroup = '';
         post({ action: { type: 'pick_camera', value: 'none' } }, true);
       });
-      wrap.appendChild(clear);
-      var row = el('div', 'aich-camera__row');
-      (bl.items || []).forEach(function (it) {
-        var card = el('button', 'aich-camera__card' + (it.selected ? ' is-on' : ''));
-        card.type = 'button';
-        card.setAttribute('aria-pressed', it.selected ? 'true' : 'false');
-        var vid = document.createElement('video');
-        vid.className = 'aich-camera__vid';
-        vid.src = it.preview;
-        vid.muted = true;
-        vid.loop = true;
-        vid.playsInline = true;
-        vid.preload = 'metadata';
-        card.appendChild(vid);
-        card.appendChild(el('div', 'aich-camera__title', it.title));
-        function play() { try { vid.play(); } catch (e) {} }
-        function stop() { try { vid.pause(); vid.currentTime = 0; } catch (e) {} }
-        card.addEventListener('mouseenter', play);
-        card.addEventListener('mouseleave', stop);
-        card.addEventListener('focus', play);
-        card.addEventListener('blur', stop);
-        card.addEventListener('click', function () {
-          play();
-          if (it.selected) return;
-          post({ action: { type: 'pick_camera', value: it.id } }, true);
+      gRow.appendChild(clear);
+      wrap.appendChild(gRow);
+
+      var sub = el('div', 'aich-camera__sub');
+      sub.hidden = true;
+      wrap.appendChild(sub);
+
+      function openVitSide(workId, fallbackHref) {
+        if (window.vitOpenWork && workId && window.vitOpenWork(workId)) return;
+        if (fallbackHref) location.href = fallbackHref;
+      }
+      function paintGroups() {
+        gRow.textContent = '';
+        gRow.appendChild(clear);
+        groups.forEach(function (g) {
+          var b = el('button', 'aich-opt aich-camera__gchip' + (activeGroup === g.id ? ' is-on' : ''), g.label);
+          b.type = 'button';
+          b.setAttribute('aria-pressed', activeGroup === g.id ? 'true' : 'false');
+          b.addEventListener('click', function () {
+            activeGroup = g.id;
+            refresh();
+          });
+          gRow.appendChild(b);
         });
-        row.appendChild(card);
-      });
-      wrap.appendChild(row);
+      }
+      function paintSub() {
+        sub.textContent = '';
+        if (!activeGroup) {
+          sub.hidden = true;
+          return;
+        }
+        sub.hidden = false;
+        var row = el('div', 'aich-camera__row');
+        var n = 0;
+        (bl.items || []).forEach(function (it) {
+          if (it.group !== activeGroup) return;
+          n += 1;
+          var card = el('div', 'aich-camera__chip' + (it.selected ? ' is-on' : ''));
+          var pick = el('button', 'aich-camera__name');
+          pick.type = 'button';
+          pick.setAttribute('aria-pressed', it.selected ? 'true' : 'false');
+          pick.textContent = it.title;
+          pick.addEventListener('click', function () {
+            if (it.selected) return;
+            post({ action: { type: 'pick_camera', value: it.id } }, true);
+          });
+          card.appendChild(pick);
+          if (it.work_id || it.vitrina) {
+            var ex = el('button', 'aich-camera__example');
+            ex.type = 'button';
+            ex.setAttribute('aria-label', L('Смотреть пример', 'Watch example'));
+            ex.title = L('Смотреть пример', 'Watch example');
+            ex.textContent = L('смотреть пример →', 'watch example →');
+            ex.addEventListener('click', function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+              openVitSide(it.work_id, it.vitrina);
+            });
+            card.appendChild(ex);
+          }
+          row.appendChild(card);
+        });
+        if (!n) {
+          sub.appendChild(el('div', 'aich-prompt__hint', L('В этом типе пока нет движений', 'No moves in this type yet')));
+          return;
+        }
+        sub.appendChild(row);
+      }
+      function refresh() {
+        paintGroups();
+        paintSub();
+        clear.classList.toggle('is-on', !selected && !activeGroup);
+      }
+
+      refresh();
       return wrap;
     }
 
-    /** Уточняющие вопросы: варианты ответов кнопками, «Не важно» по умолчанию. Клик — обновление на месте. */
+    /** Уточняющие вопросы: варианты ответов кнопками, «Не добавлять» по умолчанию. Клик — обновление на месте. */
     function renderBrief(bl) {
       var wrap = el('div', 'aich-params aich-brief');
       var open = bl.questions.filter(function (q) { return !q.options || !q.options.length; });

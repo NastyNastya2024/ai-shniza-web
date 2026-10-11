@@ -3,7 +3,7 @@
 @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
 
 /* ---- вариант B блока «Возможности»: три шага ---- */
-.fb{position:relative;z-index:2;margin-top:-44px;padding:230px 0 220px;color:#1E1238;font-family:'Manrope',system-ui,sans-serif;background-color:#C9C3F3}
+.fb{position:relative;z-index:2;margin-top:-44px;padding:230px 0 220px;color:#1E1238;font-family:'Manrope',system-ui,sans-serif;background-color:var(--features-bg,#C9C3F3)}
 .fb .w{max-width:1240px;margin:0 auto;padding:0 24px}
 .fb-head{display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px}
 .fb-head h2{margin:0;font-weight:700;font-size:clamp(34px,4.4vw,60px);line-height:1.04;letter-spacing:-.045em;max-width:900px}

@@ -1,0 +1,462 @@
+[
+  {
+    "shot_id": "shot-01",
+    "group": "Pan/Tilt",
+    "title": "Static shot",
+    "prompt": "Camera: locked-off static shot. Movement: hold one fixed camera position for the full clip. Speed: still and steady. Framing: keep the same angle, height, lens distance and composition. End: finish with the same framing and camera position.",
+    "video_src": "previews/hq/01-static-shot-hq.mp4",
+    "poster_src": "previews/hq/01-static-shot-hq.jpg",
+    "slug": "01-static-shot",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-02",
+    "group": "Pan/Tilt",
+    "title": "Pan right",
+    "prompt": "Camera: pan right. Movement: rotate the camera horizontally from left to right from one fixed point. Speed: smooth constant rotation. Framing: keep the horizon level while new space enters from the right side of the frame. End: settle on a clear final composition.",
+    "video_src": "previews/hq/02-pan-right-hq.mp4",
+    "poster_src": "previews/hq/02-pan-right-hq.jpg",
+    "slug": "02-pan-right",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-02b",
+    "group": "Pan/Tilt",
+    "title": "Pan left",
+    "prompt": "Camera: pan left. Movement: rotate the camera horizontally from right to left from one fixed point. Speed: smooth constant rotation. Framing: keep the horizon level while new space enters from the left side of the frame. End: settle on a clear final composition.",
+    "video_src": "previews/hq/2b-pan-left-hq.mp4",
+    "poster_src": "previews/hq/2b-pan-left-hq.jpg",
+    "slug": "2b-pan-left",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-03",
+    "group": "Pan/Tilt",
+    "title": "Whip pan right",
+    "prompt": "Camera: whip pan right. Movement: rotate rapidly from the starting direction toward a new target on the right. Speed: fast snap with brief motion blur during the rotation. Framing: begin on one readable composition and land on a second readable target. End: settle into a sharp final frame.",
+    "video_src": "previews/hq/03-whip-pan-right-hq.mp4",
+    "poster_src": "previews/hq/03-whip-pan-right-hq.jpg",
+    "slug": "03-whip-pan-right",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-03b",
+    "group": "Pan/Tilt",
+    "title": "Whip pan left",
+    "prompt": "Camera: whip pan left. Movement: rotate rapidly from the starting direction toward a new target on the left. Speed: fast snap with brief motion blur during the rotation. Framing: begin on one readable composition and land on a second readable target. End: settle into a sharp final frame.",
+    "video_src": "previews/hq/3b-whip-pan-left-hq.mp4",
+    "poster_src": "previews/hq/3b-whip-pan-left-hq.jpg",
+    "slug": "3b-whip-pan-left",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-04",
+    "group": "Pan/Tilt",
+    "title": "Tilt up",
+    "prompt": "Camera: tilt up. Movement: rotate the camera upward from one fixed point. Speed: smooth constant tilt. Framing: keep the vertical subject or architecture centered as the frame travels upward. End: land on the upper target.",
+    "video_src": "previews/hq/04-tilt-up-hq.mp4",
+    "poster_src": "previews/hq/04-tilt-up-hq.jpg",
+    "slug": "04-tilt-up",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-04b",
+    "group": "Pan/Tilt",
+    "title": "Tilt down",
+    "prompt": "Camera: tilt down. Movement: rotate the camera downward from one fixed point. Speed: smooth constant tilt. Framing: keep the vertical subject or architecture centered as the frame travels downward. End: land on the lower target.",
+    "video_src": "previews/hq/4b-tilt-down-hq.mp4",
+    "poster_src": "previews/hq/4b-tilt-down-hq.jpg",
+    "slug": "4b-tilt-down",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-05",
+    "group": "Zoom/Lens",
+    "title": "Slow zoom in",
+    "prompt": "Camera: slow zoom in. Movement: slowly increase lens focal length toward a tighter frame. Speed: gradual and even. Framing: keep the main visual target readable as it becomes larger in frame. End: finish on a stable tighter composition.",
+    "video_src": "previews/hq/05-slow-zoom-in-hq.mp4",
+    "poster_src": "previews/hq/05-slow-zoom-in-hq.jpg",
+    "slug": "05-slow-zoom-in",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-05b",
+    "group": "Zoom/Lens",
+    "title": "Slow zoom out",
+    "prompt": "Camera: slow zoom out. Movement: slowly decrease lens focal length toward a wider frame. Speed: gradual and even. Framing: keep the main visual target readable as more surrounding space appears. End: finish on a stable wider composition.",
+    "video_src": "previews/hq/5b-slow-zoom-out-hq.mp4",
+    "poster_src": "previews/hq/5b-slow-zoom-out-hq.jpg",
+    "slug": "5b-slow-zoom-out",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-06",
+    "group": "Zoom/Lens",
+    "title": "Fast zoom in",
+    "prompt": "Camera: fast zoom in. Movement: quickly increase lens focal length toward the main visual target. Speed: quick decisive zoom. Framing: keep the target centered or clearly readable during the scale change. End: finish on a stable tighter composition.",
+    "video_src": "previews/hq/06-fast-zoom-in-v2-hq.mp4",
+    "poster_src": "previews/hq/06-fast-zoom-in-v2-hq.jpg",
+    "slug": "06-fast-zoom-in-v2",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-06b",
+    "group": "Zoom/Lens",
+    "title": "Fast zoom out",
+    "prompt": "Camera: fast zoom out. Movement: quickly decrease lens focal length away from the main visual target. Speed: quick decisive zoom. Framing: keep the target readable as the surrounding space appears. End: finish on a stable wider composition.",
+    "video_src": "previews/hq/06b-fast-zoom-out-v2-hq.mp4",
+    "poster_src": "previews/hq/06b-fast-zoom-out-v2-hq.jpg",
+    "slug": "06b-fast-zoom-out-v2",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-07a",
+    "group": "Zoom/Lens",
+    "title": "Crash zoom in",
+    "prompt": "Camera: crash zoom in. Movement: snap the lens rapidly toward the main visual target. Speed: very fast and punchy. Framing: keep the target readable through the sudden scale change. End: land on a bold tighter composition.",
+    "video_src": "previews/hq/07a-crash-zoom-in-v2-hq.mp4",
+    "poster_src": "previews/hq/07a-crash-zoom-in-v2-hq.jpg",
+    "slug": "07a-crash-zoom-in-v2",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-07b",
+    "group": "Zoom/Lens",
+    "title": "Crash zoom out",
+    "prompt": "Camera: crash zoom out. Movement: snap the lens rapidly away from the main visual target. Speed: very fast and punchy. Framing: keep the target readable as the surrounding space appears. End: land on a bold wider composition.",
+    "video_src": "previews/hq/07b-crash-zoom-out-v2-hq.mp4",
+    "poster_src": "previews/hq/07b-crash-zoom-out-v2-hq.jpg",
+    "slug": "07b-crash-zoom-out-v2",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-08",
+    "group": "Dolly/Track",
+    "title": "Dolly in",
+    "prompt": "Camera: dolly in. Movement: move the camera physically forward in a straight line toward the main subject. Speed: smooth controlled push. Framing: keep camera height, lens direction and subject position consistent while distance closes. End: finish in a tighter composition.",
+    "video_src": "previews/hq/08-dolly-in-hq.mp4",
+    "poster_src": "previews/hq/08-dolly-in-hq.jpg",
+    "slug": "08-dolly-in",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-09",
+    "group": "Dolly/Track",
+    "title": "Dolly out",
+    "prompt": "Camera: dolly out. Movement: move the camera physically backward in a straight line away from the main subject. Speed: smooth controlled retreat. Framing: keep lens direction and camera height consistent while more environment enters frame. End: finish in a wider composition.",
+    "video_src": "previews/hq/09-dolly-out-hq.mp4",
+    "poster_src": "previews/hq/09-dolly-out-hq.jpg",
+    "slug": "09-dolly-out",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-10",
+    "group": "Physical Moves",
+    "title": "Truck right",
+    "prompt": "Camera: truck right. Movement: move the camera physically to the right on a straight horizontal path. Speed: smooth constant lateral travel. Framing: keep the lens facing the same direction while the scene slides across frame. End: finish on a clean lateral composition.",
+    "video_src": "previews/hq/10-truck-right-hq.mp4",
+    "poster_src": "previews/hq/10-truck-right-hq.jpg",
+    "slug": "10-truck-right",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-10b",
+    "group": "Physical Moves",
+    "title": "Truck left",
+    "prompt": "Camera: truck left. Movement: move the camera physically to the left on a straight horizontal path. Speed: smooth constant lateral travel. Framing: keep the lens facing the same direction while the scene slides across frame. End: finish on a clean lateral composition.",
+    "video_src": "previews/hq/10b-truck-left-hq.mp4",
+    "poster_src": "previews/hq/10b-truck-left-hq.jpg",
+    "slug": "10b-truck-left",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-11a",
+    "group": "Physical Moves",
+    "title": "Pedestal up",
+    "prompt": "Camera: pedestal up. Movement: move the entire camera vertically upward in a straight line. Speed: smooth constant lift. Framing: keep the lens level and pointed in the same direction during the vertical move. End: finish with the higher framing clearly readable.",
+    "video_src": "previews/hq/11a-pedestal-up-hq.mp4",
+    "poster_src": "previews/hq/11a-pedestal-up-hq.jpg",
+    "slug": "11a-pedestal-up",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-11b",
+    "group": "Physical Moves",
+    "title": "Pedestal down",
+    "prompt": "Camera: pedestal down. Movement: move the entire camera vertically downward in a straight line. Speed: smooth constant descent. Framing: keep the lens level and pointed in the same direction during the vertical move. End: finish with the lower framing clearly readable.",
+    "video_src": "previews/hq/11b-pedestal-down-hq.mp4",
+    "poster_src": "previews/hq/11b-pedestal-down-hq.jpg",
+    "slug": "11b-pedestal-down",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-12",
+    "group": "Physical Moves",
+    "title": "Slider right",
+    "prompt": "Camera: slider right. Movement: slide the camera a small distance to the right. Speed: slow controlled constant motion. Framing: keep foreground, subject and background layers readable as parallax shifts. End: finish on a refined composition with the new right-side angle visible.",
+    "video_src": "previews/hq/12-slider-right-hq.mp4",
+    "poster_src": "previews/hq/12-slider-right-hq.jpg",
+    "slug": "12-slider-right",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-12b",
+    "group": "Physical Moves",
+    "title": "Slider left",
+    "prompt": "Camera: slider left. Movement: slide the camera a small distance to the left. Speed: slow controlled constant motion. Framing: keep foreground, subject and background layers readable as parallax shifts. End: finish on a refined composition with the new left-side angle visible.",
+    "video_src": "previews/hq/12b-slider-left-hq.mp4",
+    "poster_src": "previews/hq/12b-slider-left-hq.jpg",
+    "slug": "12b-slider-left",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-13",
+    "group": "Physical Moves",
+    "title": "Push past / pass-by shot",
+    "prompt": "Camera: push past. Movement: move forward past a visible foreground object, edge or opening. Speed: smooth forward glide. Framing: let the foreground pass close to the lens while the space beyond becomes clearer. End: arrive inside or beyond the foreground layer.",
+    "video_src": "previews/hq/13-push-past-pass-by-shot-hq.mp4",
+    "poster_src": "previews/hq/13-push-past-pass-by-shot-hq.jpg",
+    "slug": "13-push-past-pass-by-shot",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-14",
+    "group": "Physical Moves",
+    "title": "Arc right",
+    "prompt": "Camera: arc right. Movement: move on a shallow curved path around the main subject toward the right side. Speed: smooth measured curve. Framing: keep distance, height and subject readability consistent while the angle changes. End: finish from a new right-side angle.",
+    "video_src": "previews/hq/14-arc-right-hq.mp4",
+    "poster_src": "previews/hq/14-arc-right-hq.jpg",
+    "slug": "14-arc-right",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-14b",
+    "group": "Physical Moves",
+    "title": "Arc left",
+    "prompt": "Camera: arc left. Movement: move on a shallow curved path around the main subject toward the left side. Speed: smooth measured curve. Framing: keep distance, height and subject readability consistent while the angle changes. End: finish from a new left-side angle.",
+    "video_src": "previews/hq/14b-arc-left-hq.mp4",
+    "poster_src": "previews/hq/14b-arc-left-hq.jpg",
+    "slug": "14b-arc-left",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-15",
+    "group": "Physical Moves",
+    "title": "Orbit clockwise",
+    "prompt": "Camera: clockwise orbit. Movement: circle clockwise around the main subject at a consistent radius. Speed: smooth controlled orbit. Framing: keep the subject centered while the background rotates around them. End: complete the intended arc or full circle with stable framing.",
+    "video_src": "previews/hq/15-orbit-clockwise-hq.mp4",
+    "poster_src": "previews/hq/15-orbit-clockwise-hq.jpg",
+    "slug": "15-orbit-clockwise",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-15b",
+    "group": "Physical Moves",
+    "title": "Orbit counterclockwise",
+    "prompt": "Camera: counterclockwise orbit. Movement: circle counterclockwise around the main subject at a consistent radius. Speed: smooth controlled orbit. Framing: keep the subject centered while the background rotates around them. End: complete the intended arc or full circle with stable framing.",
+    "video_src": "previews/hq/15b-orbit-counterclockwise-hq.mp4",
+    "poster_src": "previews/hq/15b-orbit-counterclockwise-hq.jpg",
+    "slug": "15b-orbit-counterclockwise",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-16",
+    "group": "Dolly/Track",
+    "title": "Tracking shot",
+    "prompt": "Camera: tracking shot. Movement: move through the scene with the main subject. Speed: match the subject's pace. Framing: keep the subject consistently readable while the environment moves around them. End: maintain a clear moving composition.",
+    "video_src": "previews/hq/16-tracking-shot-hq.mp4",
+    "poster_src": "previews/hq/16-tracking-shot-hq.jpg",
+    "slug": "16-tracking-shot",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-17",
+    "group": "Dolly/Track",
+    "title": "Follow shot / over-the-shoulder",
+    "prompt": "Camera: follow shot from behind. Movement: move behind the subject along their route at shoulder height. Speed: match the subject's pace. Framing: keep the back, shoulder or head as the foreground guide while the route ahead stays readable. End: continue following with the subject leading the frame.",
+    "video_src": "previews/hq/17-follow-shot-over-the-shoulder-hq.mp4",
+    "poster_src": "previews/hq/17-follow-shot-over-the-shoulder-hq.jpg",
+    "slug": "17-follow-shot-over-the-shoulder",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-18",
+    "group": "Dolly/Track",
+    "title": "Reverse tracking / walk-and-talk",
+    "prompt": "Camera: reverse tracking shot. Movement: move backward in front of the walking subject. Speed: match the subject's forward pace. Framing: keep front-facing face and body framing stable as the background moves behind them. End: hold a clear front-facing moving composition.",
+    "video_src": "previews/hq/18-reverse-tracking-walk-and-talk-hq.mp4",
+    "poster_src": "previews/hq/18-reverse-tracking-walk-and-talk-hq.jpg",
+    "slug": "18-reverse-tracking-walk-and-talk",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-19",
+    "group": "Dolly/Track",
+    "title": "Side tracking",
+    "prompt": "Camera: side tracking shot. Movement: move parallel beside the subject along their direction of travel. Speed: match the subject's motion. Framing: keep the subject in side profile or three-quarter profile at a stable distance. End: continue the parallel movement with clear horizontal motion.",
+    "video_src": "previews/hq/19-side-tracking-hq.mp4",
+    "poster_src": "previews/hq/19-side-tracking-hq.jpg",
+    "slug": "19-side-tracking",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-20",
+    "group": "Dolly/Track",
+    "title": "Low tracking",
+    "prompt": "Camera: low tracking shot. Movement: move at ground or below-waist height alongside the subject's movement path. Speed: match the subject, footsteps or wheels. Framing: keep the low detail readable while the ground plane moves through frame. End: finish with the low perspective clearly maintained.",
+    "video_src": "previews/hq/20-low-tracking-v2-hq.mp4",
+    "poster_src": "previews/hq/20-low-tracking-v2-hq.jpg",
+    "slug": "20-low-tracking-v2",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-21",
+    "group": "Dolly/Track",
+    "title": "Vehicle tracking",
+    "prompt": "Camera: vehicle tracking shot. Movement: move with the vehicle along its route. Speed: match the vehicle's pace. Framing: keep the vehicle stable in frame while the road or environment moves past. End: maintain a clear moving vehicle composition.",
+    "video_src": "previews/hq/21-vehicle-tracking-hq.mp4",
+    "poster_src": "previews/hq/21-vehicle-tracking-hq.jpg",
+    "slug": "21-vehicle-tracking",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-22",
+    "group": "Dolly/Track",
+    "title": "Chase shot",
+    "prompt": "Camera: chase shot. Movement: follow a moving subject quickly along the action route. Speed: fast, reactive and physically close. Framing: keep the subject visible while allowing energetic reframing. End: stay connected to the subject in motion.",
+    "video_src": "previews/hq/22-chase-shot-hq.mp4",
+    "poster_src": "previews/hq/22-chase-shot-hq.jpg",
+    "slug": "22-chase-shot",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-23",
+    "group": "Human Camera",
+    "title": "Handheld shot",
+    "prompt": "Camera: handheld shot. Movement: hold the camera at human operator height with natural body movement. Speed: responsive and organic. Framing: keep the subject readable while the frame has subtle sway and micro-adjustments. End: finish with a natural handheld composition.",
+    "video_src": "previews/hq/23-handheld-shot-hq.mp4",
+    "poster_src": "previews/hq/23-handheld-shot-hq.jpg",
+    "slug": "23-handheld-shot",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-24",
+    "group": "Human Camera",
+    "title": "Body-mounted camera / Snorricam",
+    "prompt": "Camera: body-mounted Snorricam. Movement: keep the camera fixed relative to the subject's torso or face while the subject moves. Speed: match the subject's body motion. Framing: keep the subject close, centered and facing the camera as the background moves around them. End: finish with the subject still locked in frame.",
+    "video_src": "previews/hq/24-snorricam-v2-hq.mp4",
+    "poster_src": "previews/hq/24-snorricam-v2-hq.jpg",
+    "slug": "24-snorricam-v2",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-25",
+    "group": "Drone/Crane",
+    "title": "Crane up",
+    "prompt": "Camera: crane up. Movement: travel smoothly upward through open space. Speed: slow controlled vertical lift. Framing: keep the subject or location readable as the camera rises. End: finish with the higher scale clearly visible.",
+    "video_src": "previews/hq/25-crane-up-hq.mp4",
+    "poster_src": "previews/hq/25-crane-up-hq.jpg",
+    "slug": "25-crane-up",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-25b",
+    "group": "Drone/Crane",
+    "title": "Crane down",
+    "prompt": "Camera: crane down. Movement: travel smoothly downward through open space. Speed: slow controlled vertical descent. Framing: keep the subject or location readable as the camera descends. End: finish with the lower subject or destination clearly visible.",
+    "video_src": "previews/hq/25b-crane-down-hq.mp4",
+    "poster_src": "previews/hq/25b-crane-down-hq.jpg",
+    "slug": "25b-crane-down",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-26",
+    "group": "Drone/Crane",
+    "title": "Drone push in",
+    "prompt": "Camera: drone push in. Movement: fly smoothly forward through open space toward the subject or destination. Speed: controlled aerial glide. Framing: keep the route and destination readable as the camera approaches. End: arrive at a closer aerial composition.",
+    "video_src": "previews/hq/26-drone-push-in-hq.mp4",
+    "poster_src": "previews/hq/26-drone-push-in-hq.jpg",
+    "slug": "26-drone-push-in",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-26b",
+    "group": "Drone/Crane",
+    "title": "Drone pull back",
+    "prompt": "Camera: drone pull back. Movement: fly smoothly backward away from the subject or destination. Speed: controlled aerial retreat. Framing: keep the subject readable as more landscape appears. End: finish on a wider aerial composition.",
+    "video_src": "previews/hq/26b-drone-pull-back-hq.mp4",
+    "poster_src": "previews/hq/26b-drone-pull-back-hq.jpg",
+    "slug": "26b-drone-pull-back",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-27",
+    "group": "Drone/Crane",
+    "title": "Helicopter shot",
+    "prompt": "Camera: helicopter-style aerial shot. Movement: move from high altitude along a broad gradual flight path. Speed: steady controlled aerial motion. Framing: keep the landscape or distant moving subject readable at wide scale. End: finish on a stable high-altitude composition.",
+    "video_src": "previews/hq/27-helicopter-shot-hq.mp4",
+    "poster_src": "previews/hq/27-helicopter-shot-hq.jpg",
+    "slug": "27-helicopter-shot",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-s1",
+    "group": "Specials",
+    "title": "First-person view",
+    "prompt": "Camera: first-person view. Movement: move forward at human eye height from the character's perspective. Speed: natural walking or reaching pace. Framing: use visible hands, arms or body edges as the viewer's physical reference. End: arrive at the next point of action from the same point of view.",
+    "video_src": "previews/hq/s1-first-person-view-hq.mp4",
+    "poster_src": "previews/hq/s1-first-person-view-hq.jpg",
+    "slug": "s1-first-person-view",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-s2",
+    "group": "Specials",
+    "title": "Tilt-shift",
+    "prompt": "Camera: tilt-shift miniature view. Movement: hold or glide from a high angled view over the scene. Speed: small precise movement. Framing: keep a narrow band of sharp focus across the key subject area with soft blur above and below. End: finish with the miniature-scale view intact.",
+    "video_src": "previews/hq/s2-tilt-shift-hq.mp4",
+    "poster_src": "previews/hq/s2-tilt-shift-hq.jpg",
+    "slug": "s2-tilt-shift",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-s3",
+    "group": "Specials",
+    "title": "Infinite zoom",
+    "prompt": "Camera: infinite zoom. Movement: zoom continuously inward toward the exact center target. Speed: smooth accelerating zoom. Framing: keep the circular target centered as it expands. End: finish when the next visual world fills the frame.",
+    "video_src": "previews/hq/s3-infinite-zoom-hq.mp4",
+    "poster_src": "previews/hq/s3-infinite-zoom-hq.jpg",
+    "slug": "s3-infinite-zoom",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-s4",
+    "group": "Specials",
+    "title": "Earth zoom out",
+    "prompt": "Camera: earth zoom out. Movement: pull upward from the starting point through street, city, landscape and planet scale. Speed: rapid expanding zoom out. Framing: keep the original location centered as scale grows. End: finish on a planet-scale view with the starting point still implied at center.",
+    "video_src": "previews/hq/s4-earth-zoom-out-hq.mp4",
+    "poster_src": "previews/hq/s4-earth-zoom-out-hq.jpg",
+    "slug": "s4-earth-zoom-out",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-s5",
+    "group": "Specials",
+    "title": "Time-lapse",
+    "prompt": "Camera: locked-camera time-lapse. Movement: hold one fixed camera position while time moves rapidly forward. Speed: fast time compression with a stable camera. Framing: keep the same composition and horizon as motion passes through the frame. End: finish from the same camera angle with visible passage of time.",
+    "video_src": "previews/hq/s5-time-lapse-hq.mp4",
+    "poster_src": "previews/hq/s5-time-lapse-hq.jpg",
+    "slug": "s5-time-lapse",
+    "source": "https://aicameramovements.com/"
+  },
+  {
+    "shot_id": "shot-s6",
+    "group": "Specials",
+    "title": "Pass-through objects",
+    "prompt": "Camera: pass-through movement. Movement: move forward toward a visible object, surface or barrier and continue into the space beyond. Speed: smooth centered glide. Framing: keep the opening or surface centered as the transition point. End: arrive inside the revealed space beyond.",
+    "video_src": "previews/hq/s6-pass-through-objects-hq.mp4",
+    "poster_src": "previews/hq/s6-pass-through-objects-hq.jpg",
+    "slug": "s6-pass-through-objects",
+    "source": "https://aicameramovements.com/"
+  }
+]

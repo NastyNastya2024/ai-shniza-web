@@ -135,12 +135,14 @@ def test_more_excludes_shown(make_assistant):
 def test_ask_type_then_choose(make_assistant):
     a = make_assistant()
     r = a.handle("котик в космосе", {}, SID)
-    assert r["intent"] == "ask_type" and {c.get("value") for c in r["chips"]} >= {"video", "image", "music"}
-    assert r["chips"][0]["action"] == "choose_type" and {c["value"] for c in r["chips"]} >= {"video", "image", "music"}
+    assert r["intent"] == "ask_type" and {c.get("value") for c in r["chips"]} >= {"prompt", "video", "image", "music"}
+    assert r["chips"][0]["value"] == "prompt"
     assert not any(bl.get("type") == "pipeline" for bl in r["blocks"])
     r2 = a.handle("", {}, SID, action={"type": "choose_type", "value": "image"})
-    assert len(r2["models"]) >= 2 and all(m["id"] for m in r2["models"])
-    assert "котик космосе" in r2["reply"]
+    assert r2["intent"] == "has_prompt"
+    r3 = a.handle("", {}, SID, action={"type": "has_prompt", "value": "no"})
+    assert len(r3["models"]) >= 2 and all(m["id"] for m in r3["models"])
+    assert "котик космосе" in r3["reply"]
 
 
 def test_unhealthy_model_offers_alternatives(make_assistant):
@@ -263,13 +265,16 @@ def test_off_topic_asks_format_not_examples(make_assistant):
     assert r["intent"] == "off_topic"
     assert r["chips"][0]["action"] == "choose_type"
     assert {c["action"] for c in r["chips"]} == {"choose_type"}
-    assert "тип генерации" in r["text"] and "промпт" in r["text"]
+    assert "промпт" in r["text"].lower() and "формат" in r["text"].lower()
     assert not any(c["action"] == "send" for c in r["chips"])
-    assert {c["value"] for c in r["chips"]} >= {"image", "video", "music", "text"}
+    assert r["chips"][0]["value"] == "prompt"
+    assert {c["value"] for c in r["chips"]} >= {"prompt", "image", "video", "music"}
     r2 = a.handle("", {}, SID, action={"type": "choose_type", "value": "video"})
-    assert r2["intent"] == "choose_type"
-    r3 = a.handle("яичница танцует на сковородке", {}, SID)
-    assert r3["intent"] == "generate_task"
+    assert r2["intent"] == "has_prompt"
+    r3 = a.handle("", {}, SID, action={"type": "has_prompt", "value": "yes"})
+    assert r3["intent"] in ("has_prompt", "need_subject", "choose_type")
+    r4 = a.handle("яичница танцует на сковородке", {}, SID)
+    assert r4["intent"] in ("generate_task", "brief", "variants", "has_prompt")
 
 
 def test_text_type_opens_chat_not_brief(make_assistant):
@@ -352,13 +357,16 @@ def test_concurrent_sessions(make_assistant):
 def test_screenshot_scenario_typos_and_buttons(make_assistant):
     a = make_assistant()
     r = a.handle("привет", {}, SID)
-    assert {c["value"] for c in r["chips"] if c["action"] == "choose_type"} >= {"image", "video", "music", "text"}
+    vals = {c["value"] for c in r["chips"] if c["action"] == "choose_type"}
+    assert vals >= {"prompt", "image", "video", "music"} and "prompt" in vals
     r = a.handle("надо сделать коты который жарит иишницу", {}, SID)
-    assert r["intent"] == "ask_type" and "картинку, видео, музыку или текст" in r["text"]
+    assert r["intent"] == "ask_type" and "промпт" in r["text"].lower()
     assert [c["action"] for c in r["chips"]].count("choose_type") == 5  # вопрос + кнопки, не «открытый»
+    assert r["chips"][0]["value"] == "prompt"
     r = a.handle("карттинку", {}, SID)                                     # опечатка — понимаем
-    assert r["intent"] == "choose_type" and block(r, "models") and all(
-        a.d.cards[m["id"]].kind in ("image", "edit") for m in r["models"])
+    assert r["intent"] == "has_prompt"
+    r = a.handle("", {}, SID, action={"type": "has_prompt", "value": "no"})
+    assert block(r, "models") and all(a.d.cards[m["id"]].kind in ("image", "edit") for m in r["models"])
     assert "коты" in r["text"]                                             # идею не потеряли
 
 
@@ -375,7 +383,9 @@ def test_chip_label_sent_as_text_is_action(make_assistant):
     a = make_assistant()
     a.handle("котик в космосе", {}, SID)
     r = a.handle("Видео", {}, SID)
-    assert r["intent"] == "choose_type" and block(r, "models")
+    assert r["intent"] == "has_prompt"
+    r = a.handle("", {}, SID, action={"type": "has_prompt", "value": "no"})
+    assert block(r, "models")
     r = a.handle("ещё варианты", {}, SID)
     assert r["intent"] == "more"
 
@@ -384,8 +394,20 @@ def test_unclear_answer_reasks_with_buttons(make_assistant):
     a = make_assistant()
     a.handle("котик в космосе", {}, SID)
     r = a.handle("ну не знаю", {}, SID)
-    assert r["intent"] == "ask_type" and len(r["chips"]) == 5   # image/video/music/text/sfx
-    assert a.handle("2", {}, SID)["intent"] == "choose_type"  # номер варианта тоже понимаем
+    assert r["intent"] == "ask_type" and len(r["chips"]) == 5   # prompt/image/video/music/sfx
+    assert r["chips"][0]["value"] == "prompt"
+    assert a.handle("2", {}, SID)["intent"] == "has_prompt"  # 2 = картинка → вопрос про промпт
+
+
+def test_prompt_chip_then_type_enters_prompt_assist(make_assistant):
+    a = make_assistant(brief=True)
+    a.handle("котик в космосе", {}, SID)
+    r = a.handle("", {}, SID, action={"type": "choose_type", "value": "prompt"})
+    assert r["intent"] == "choose_type" and {c["value"] for c in r["chips"]} >= {"image", "video", "music"}
+    assert "prompt" not in {c["value"] for c in r["chips"]}
+    r2 = a.handle("", {}, SID, action={"type": "choose_type", "value": "video"})
+    assert r2["intent"] in ("choose_type", "brief", "need_subject")
+    assert block(r2, "brief") or block(r2, "camera") or block(r2, "variants")
 
 
 def test_text_params_and_free_refine_after_pick(make_assistant):

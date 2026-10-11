@@ -31,17 +31,21 @@ def empty_session() -> dict[str, Any]:
     return {
         "lang": None,
         "kind": None,        # тип задачи
+        "assist_mode": None, # prompt — собираем промпт; direct — сразу к моделям
         "topic": "",         # 1–3 слова для ссылки на витрину
         "needs": [],
         "idea": "",          # исходный текст пользователя (для «вернуть мой текст»)
         "shown": [],         # какие модели уже показывали
         "picked": None,      # выбранная модель
-        "prompt": "",        # текущий адаптированный промпт
+        "prompt": "",        # текущий адаптированный промпт (с движением камеры для видео)
+        "prompt_base": "",   # промпт без инструкции камеры
+        "camera": None,      # id движения камеры (static / dolly-in / …)
+        "camera_cleared": False,  # пользователь явно снял движение («Без движения»)
         "params": {},
         "tokens": 0,         # потрачено LLM-токенов за сессию
         "llm_calls": 0,
         "turns": 0,
-        "await": None,       # чего ждём от пользователя: type | model | params | refine | idea
+        "await": None,       # type | gen_type | has_prompt | model | params | refine | idea | …
         "last_chips": [],    # кнопки прошлого ответа — чтобы понять, если их label пришёл текстом
         "owner": None,       # id пользователя: анонимный разговор продолжается после входа
         "degraded_told": False,

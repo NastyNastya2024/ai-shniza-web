@@ -2,7 +2,7 @@
 
 Сценарий (brief=on, по умолчанию):
   1. идея / тип                    → уточняющие вопросы и бриф
-  2. ответ / «Пропустить»          → 2–3 варианта промпта; человек выбирает один
+  2. ответ / «Продолжить — сделать промпт» → 2–3 варианта промпта; человек выбирает один
   3. выбор модели под готовый промпт → параметры + «Сгенерировать»
 Без брифа (brief=off): идея → модели → промпт под выбранную модель.
 
@@ -213,13 +213,25 @@ class Assistant:
                         lbl = ", ".join(P.label(k, v, lang) for k, v in fitted.items())
                         return self._show_variants(card, ses, lang, [t("settings_saved", lang, label=lbl)], False)
                 return self._variants(card, ses, ctx, lang, change=msg if ses.get("await") == "variants" else "")
-        # 2) ждём ответ «какой тип» — понимаем коротко и с опечатками
-        if ses.get("await") == "type" and len(msg.split()) <= 3:
-            k = detect_kind(msg, bool(ctx.get("has_image"))) or _kind_by_number(msg)
+        # 2) ждём «есть промпт?» — да/нет своими словами
+        if ses.get("await") == "has_prompt" and msg:
+            low = squeeze(msg).lower()
+            if low in ("да", "yes", "улучшить", "есть", "помоги", "промпт"):
+                return self._action("has_prompt", "yes", ctx, ses, lang)
+            if low in ("нет", "no", "модели", "сразу", "без промпта"):
+                return self._action("has_prompt", "no", ctx, ses, lang)
+        # 2б) ждём ответ «какой тип» / тип для промпта — коротко и с опечатками
+        if ses.get("await") in ("type", "gen_type") and len(msg.split()) <= 3:
+            k = detect_kind(msg, bool(ctx.get("has_image"))) or _kind_by_number(msg, ses.get("await") == "gen_type")
+            if k == "prompt" and ses.get("await") == "gen_type":
+                k = None
             if k:
                 return self._action("choose_type", k, ctx, ses, lang)
             it = route(msg, ctx, ses, self.titles)
             if it.name in ("ask_type", "off_topic"):
+                if ses.get("await") == "gen_type":
+                    return response([t("ask_gen_type", lang)], self._gen_type_chips(ctx, lang),
+                                    lang=lang, intent="ask_type")
                 ses["await"] = "type"
                 return self._offer_types([_junk_line(1, lang)], ctx, ses, lang, "ask_type")
         intent = route(msg, ctx, ses, self.titles)
@@ -386,25 +398,68 @@ class Assistant:
         return out
 
     def _offer_types(self, lines: list[str], ctx: dict, ses: dict, lang: str, intent: str) -> dict:
-        """Вопрос «что сделать» + кнопки типов (картинка / видео / музыка / …)."""
+        """Вопрос «что сделать» + кнопки: Промпт первым, затем типы генерации."""
         return response(list(lines) + [t("ask_type", lang)], self._type_chips(ctx, lang), lang=lang, intent=intent)
 
     def _type_chips(self, ctx: dict, lang: str) -> list[dict]:
-        kinds = ["image", "video", "music", "text", "edit" if ctx.get("has_image") else "sfx"]
+        """Верхний ряд: Промпт → картинка / видео / музыка / звук (или правка фото)."""
         if ctx.get("has_image"):
-            kinds = ["video", "edit", "image", "music", "text"]
+            kinds = ["prompt", "video", "edit", "image", "music"]
+        else:
+            kinds = ["prompt", "image", "video", "music", "sfx"]
+        return [chip(b("type_" + k, lang), "choose_type", k) for k in kinds]
+
+    def _gen_type_chips(self, ctx: dict, lang: str) -> list[dict]:
+        """Типы генерации после выбора «Промпт» (без пункта Промпт)."""
+        if ctx.get("has_image"):
+            kinds = ["video", "edit", "image", "music"]
+        else:
+            kinds = ["image", "video", "music", "sfx"]
         return [chip(b("type_" + k, lang), "choose_type", k) for k in kinds]
 
     def _ask_type(self, ses: dict, ctx: dict, lang: str) -> dict:
         ses["await"] = "type"
+        ses["assist_mode"] = None
         topic = ses.get("topic") or ""
         head = t("ask_type_idea", lang, topic=topic) if topic else t("ask_type_plain", lang)
         return response([head], self._type_chips(ctx, lang), lang=lang, intent="ask_type")
+
+    def _ask_has_prompt(self, ses: dict, lang: str, intent: str = "has_prompt") -> dict:
+        ses["await"] = "has_prompt"
+        chips = [
+            chip(b("has_prompt_yes", lang), "has_prompt", "yes", primary=True),
+            chip(b("has_prompt_no", lang), "has_prompt", "no"),
+        ]
+        return response([t("ask_has_prompt", lang)], chips, lang=lang, intent=intent)
+
+    def _start_prompt_assist(self, ctx: dict, ses: dict, lang: str, intent: str) -> dict:
+        """Помощник по промпту: бриф / идея → варианты → модели."""
+        ses["assist_mode"] = "prompt"
+        idea = ses.get("idea") or ""
+        if self.d.brief and not BR.has_subject(idea):
+            ses["idea"] = ""
+            return self._ask_subject(ses.get("kind") or "image", ses, ctx, lang)
+        if not idea:
+            ses["await"] = "idea"
+            return response([t("describe_idea", lang)], [], intent=intent)
+        if self.d.brief:
+            return self._enter_brief(ctx, ses, lang)
+        has_image = bool(ctx.get("has_image"))
+        return self._show_models(self._recommend(ses.get("kind") or "image", ses.get("needs") or [], has_image),
+                                 ses, lang, intent)
+
+    def _start_direct_models(self, ctx: dict, ses: dict, lang: str, intent: str) -> dict:
+        """Сразу модели для выбранного типа генерации (без сборки промпта)."""
+        ses["assist_mode"] = "direct"
+        k = ses.get("kind") or "image"
+        has_image = bool(ctx.get("has_image"))
+        return self._show_models(self._recommend(k, ses.get("needs") or [], has_image), ses, lang, intent)
 
     # ----------------------------------------------- prompt + params + summary
     def _setup_reply(self, card: Card, ses: dict, ctx: dict, lang: str, intent: str, head: str,
                      note: str = "", degraded: bool = False, adj: list[dict] | None = None) -> dict:
         if card.kind == "video":
+            CAM.ensure_default(ses)
             prompt = CAM.apply(ses)  # движение камеры дописывается к базовому промпту
         else:
             prompt = ses.get("prompt") or ""
@@ -539,8 +594,8 @@ class Assistant:
 
     # ============================================================== intents
     def _new_task(self, kind: str | None, msg: str, needs: list[str], topic: str, ses: dict) -> None:
-        ses.update(kind=kind, topic=topic, needs=needs, idea=msg, picked=None, prompt="", prompt_base="",
-                   camera=None, params={}, shown=[],
+        ses.update(kind=kind, assist_mode=None, topic=topic, needs=needs, idea=msg, picked=None, prompt="", prompt_base="",
+                   camera=None, camera_cleared=False, params={}, shown=[],
                    brief=None, brief_done=False, brief_guide=None, variants=[], var_round=0)
 
     def _ask_subject(self, kind: str, ses: dict, ctx: dict, lang: str, junk: bool = False) -> dict:
@@ -631,7 +686,7 @@ class Assistant:
             return self._variants(card, ses, ctx, lang)
         return self._brief(card, ses, ctx, lang)
 
-    def _brief(self, card: Card, ses: dict, ctx: dict, lang: str) -> dict:
+    def _brief(self, card: Card, ses: dict, ctx: dict, lang: str, note: str = "") -> dict:
         idea = ses.get("idea") or ""
         br = ses.get("brief") or {}
         ses["brief_guide"] = card.id
@@ -650,10 +705,17 @@ class Assistant:
         ses["await"] = "brief"
         ses["picked"] = None
         head = t("brief_head_summary", lang, summary=br["summary"]) if br.get("summary") else t("brief_head", lang)
-        lines = [head] + ([t("brief_saved", lang, detail="; ".join(br["extra"]))] if br.get("extra") else [])
+        lines = ([note] if note else []) + [head] + (
+            [t("brief_saved", lang, detail="; ".join(br["extra"]))] if br.get("extra") else [])
         blocks = [{"type": "brief", "model_id": card.id, "title": "",
                    "questions": BR.render_questions(br["q"], br["a"], lang)}]
-        chips = [std_chip("skip_brief", "variants", lang, "skip")]
+        if card.kind == "video":
+            CAM.ensure_default(ses)
+            blocks.append(CAM.block(ses.get("camera"), lang))
+        chips = [
+            std_chip("continue_prompt", "variants", lang, "skip", primary=True),
+            std_chip("back", "restart", lang),
+        ]
         return response(lines, chips, blocks, lang, intent="brief")
 
     def _answers_text(self, br: dict) -> dict[str, str]:
@@ -703,7 +765,13 @@ class Assistant:
         ses["await"] = "variants"
         items, params = ses.get("variants") or [], P.validate(card, ses.get("params"))
         blocks = [{"type": "variants", "model_id": card.id, "title": "", "items": items}]
-        chips = [std_chip("more_variants", "more_variants", lang), std_chip("back_brief", "back_brief", lang)]
+        if card.kind == "video":
+            CAM.ensure_default(ses)
+            blocks.append(CAM.block(ses.get("camera"), lang))
+        chips = [
+            std_chip("more_variants", "more_variants", lang),
+            std_chip("back_brief", "back_brief", lang),
+        ]
         return response(lines, chips, blocks, lang, intent="variants", degraded=degraded, generate_params=params)
 
     def _i_prompt_improve(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
@@ -781,11 +849,13 @@ class Assistant:
 
     def _i_off_topic(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
         # формат → содержание → модель; примеры сюжетов не подсовываем
-        ses.update({"await": "type", "idea": "", "topic": "", "kind": None, "picked": None, "prompt": "", "params": {}, "junk_count": 0})
+        ses.update({"await": "type", "assist_mode": None, "idea": "", "topic": "", "kind": None,
+                    "picked": None, "prompt": "", "params": {}, "junk_count": 0})
         return self._offer_types([t("off_topic", lang)], ctx, ses, lang, "off_topic")
 
     def _i_injection(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
-        ses.update({"await": "type", "idea": "", "topic": "", "kind": None, "picked": None, "prompt": "", "params": {}, "junk_count": 0})
+        ses.update({"await": "type", "assist_mode": None, "idea": "", "topic": "", "kind": None,
+                    "picked": None, "prompt": "", "params": {}, "junk_count": 0})
         return response([t("injection", lang)], self._type_chips(ctx, lang), intent="injection")
 
     def _i_safety(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
@@ -804,24 +874,39 @@ class Assistant:
         if kind == "pick_model":
             return self._pick(str(value or ""), ctx, ses, lang)
         if kind == "choose_type":
+            # «Промпт» — отдельный помощник: дальше выбираем тип генерации и собираем текст
+            if value == "prompt":
+                ses.update(assist_mode="prompt", kind=None, picked=None, prompt="", prompt_base="",
+                           camera=None, camera_cleared=False, params={}, shown=[], junk_count=0,
+                           brief=None, brief_done=False, brief_guide=None, variants=[], var_round=0)
+                ses["await"] = "gen_type"
+                return response([t("ask_gen_type", lang)], self._gen_type_chips(ctx, lang),
+                                lang=lang, intent="choose_type")
             if value not in KINDS:
                 return self._ask_type(ses, ctx, lang)
-            ses.update(kind=value, picked=None, prompt="", prompt_base="", camera=None, params={}, shown=[], junk_count=0,
+            from_prompt = ses.get("assist_mode") == "prompt" or ses.get("await") == "gen_type"
+            ses.update(kind=value, picked=None, prompt="", prompt_base="", camera=None, camera_cleared=False,
+                       params={}, shown=[], junk_count=0,
                        brief=None, brief_done=False, brief_guide=None, variants=[], var_round=0)
             if not ses.get("needs"):
                 ses["needs"] = detect_needs(ses.get("idea") or "")
             if value == "text":
+                ses["assist_mode"] = None
                 return self._text_chat_models(ses, ctx, lang, "choose_type")
-            idea = ses.get("idea") or ""
-            if self.d.brief and not BR.has_subject(idea):
-                ses["idea"] = ""
-                return self._ask_subject(value, ses, ctx, lang)
-            if not idea:
-                ses["await"] = "idea"
-                return response([t("describe_idea", lang)], [], intent="choose_type")
-            if self.d.brief:
-                return self._enter_brief(ctx, ses, lang)
-            return self._show_models(self._recommend(value, ses.get("needs") or [], has_image), ses, lang, "choose_type")
+            if from_prompt:
+                return self._start_prompt_assist(ctx, ses, lang, "choose_type")
+            # Картинка / видео / музыка / … с верхнего ряда — спросить про готовый промпт
+            ses["assist_mode"] = None
+            return self._ask_has_prompt(ses, lang, "has_prompt")
+        if kind == "has_prompt":
+            if not ses.get("kind") or ses["kind"] not in KINDS or ses["kind"] == "text":
+                return self._ask_type(ses, ctx, lang)
+            ans = str(value or "").lower().strip()
+            if ans in ("yes", "y", "да", "1"):
+                return self._start_prompt_assist(ctx, ses, lang, "has_prompt")
+            if ans in ("no", "n", "нет", "0"):
+                return self._start_direct_models(ctx, ses, lang, "has_prompt")
+            return self._ask_has_prompt(ses, lang, "has_prompt")
         if kind in {"more", "similar", "cheaper", "faster", "no_photo_model"}:
             cur = self._current_card(ses, ctx)
             k = ses.get("kind") or (cur.kind if cur else None)
@@ -852,20 +937,35 @@ class Assistant:
             ses["params"] = P.with_defaults(card, P.validate(card, ses.get("params")))
             return self._setup_reply(card, ses, ctx, lang, "use_mine", t("kept_text", lang))
         if kind == "pick_camera":
-            card = self._current_card(ses, ctx)
+            card = self._current_card(ses, ctx) or self._brief_guide(ses, ctx)
             if not card or card.kind != "video":
-                return self._ask_type(ses, ctx, lang)
+                if ses.get("kind") == "video":
+                    card = self._brief_guide(ses, ctx)
+                if not card or card.kind != "video":
+                    return self._ask_type(ses, ctx, lang)
             mid = str(value or "")
             if mid in {"", "none", "skip"}:
                 ses["camera"] = None
+                ses["camera_cleared"] = True
                 head = t("camera_cleared", lang)
             elif CAM.get(mid):
                 ses["camera"] = mid
+                ses["camera_cleared"] = False
                 head = t("camera_picked", lang, title=CAM.title(CAM.get(mid), lang))
             else:
                 head = t("camera_unknown", lang)
             if not ses.get("prompt_base") and not ses.get("prompt"):
                 ses["prompt_base"] = ses.get("idea") or ""
+            # На брифе / вариантах остаёмся на том же шаге — не прыгаем к запуску
+            if ses.get("await") == "brief":
+                r = self._brief(card, ses, ctx, lang, note=head)
+                r["intent"] = "pick_camera"
+                return r
+            if ses.get("await") == "variants":
+                lines = [head, t("variants_head", lang)]
+                r = self._show_variants(card, ses, lang, lines, False)
+                r["intent"] = "pick_camera"
+                return r
             return self._setup_reply(card, ses, ctx, lang, "pick_camera", head)
         if kind == "param" and isinstance(value, dict):
             card = self._current_card(ses, ctx)
@@ -913,7 +1013,11 @@ class Assistant:
                 if not v:
                     return self._variants(card, ses, ctx, lang)
                 ses["prompt_base"] = v["text"]
-                ses["prompt"] = v["text"]
+                if card.kind == "video":
+                    CAM.ensure_default(ses)
+                    ses["prompt"] = CAM.compose(v["text"], ses.get("camera"))
+                else:
+                    ses["prompt"] = v["text"]
                 ses["brief_done"] = True
                 ses["picked"] = None
                 ses["params"] = P.with_defaults(card, P.validate(card, ses.get("params")))
@@ -943,9 +1047,14 @@ class Assistant:
         return response([], [], intent="noop")
 
 
-def _kind_by_number(msg: str) -> str | None:
-    m = re.fullmatch(r"\s*([1-4])\s*[.)]?\s*", msg or "")
-    return ["image", "video", "music", "text", "sfx"][int(m.group(1)) - 1] if m else None
+def _kind_by_number(msg: str, gen_types_only: bool = False) -> str | None:
+    """Номер кнопки: верхний ряд 1=Промпт…; после «Промпт» — 1=картинка…"""
+    m = re.fullmatch(r"\s*([1-5])\s*[.)]?\s*", msg or "")
+    if not m:
+        return None
+    idx = int(m.group(1)) - 1
+    order = ["image", "video", "music", "sfx"] if gen_types_only else ["prompt", "image", "video", "music", "sfx"]
+    return order[idx] if 0 <= idx < len(order) else None
 
 
 def _unsafe(text: str) -> bool:

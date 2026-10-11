@@ -5191,13 +5191,20 @@ def _generate_cost_kop(model_id: str, params: dict | None = None, prompt: str = 
         from assistant.recommend import price_value as _pv
         from assistant.render import per_second as _ps, short_price as _sp
 
-        price = _sp(_integration_prices().get(model_id))
+        # Backup fal ids often missing from UI catalog — fall back to primary card price.
+        price_mid = model_id
+        price = _sp(_integration_prices().get(price_mid))
+        if not price:
+            bak_for = (INTEGRATED_MODELS.get(model_id) or {}).get("backup_for")
+            if bak_for:
+                price_mid = bak_for
+                price = _sp(_integration_prices().get(price_mid))
         if not price:
             return None
         per = _ps(price)
         if per is not None:
             assist = app.config.get("ASSISTANT")
-            card = assist.d.cards.get(model_id) if assist is not None else None
+            card = assist.d.cards.get(price_mid) if assist is not None else None
             sec = (_sec(card, _wd(card, dict(params or {}))) if card else None) or int((params or {}).get("duration") or 5)
             return int(math.ceil(per * sec * 100))
         v = _pv(price)
@@ -5205,6 +5212,24 @@ def _generate_cost_kop(model_id: str, params: dict | None = None, prompt: str = 
     except Exception:  # noqa: BLE001
         app.logger.exception("generate cost estimate failed")
         return None
+
+
+def _generate_quote_kop(
+    preferred_model_id: str,
+    routed_model_id: str | None,
+    params: dict | None = None,
+    prompt: str = "",
+) -> int | None:
+    """Pre-auth hold: max(preferred, routed) so overflow to a dearer fal channel cannot under-charge."""
+    a = _generate_cost_kop(preferred_model_id, params, prompt)
+    if not routed_model_id or routed_model_id == preferred_model_id:
+        return a
+    b = _generate_cost_kop(routed_model_id, params, prompt)
+    if a is None:
+        return b
+    if b is None:
+        return a
+    return max(a, b)
 
 
 def _generate_account() -> dict | None:
@@ -5285,17 +5310,81 @@ def api_generate():
     if spec["provider"] == "groq":
         return jsonify({"error": "use_chat", "detail": "Use /api/chat for assistant"}), 400
 
-    # Сначала вход, потом баланс — тот же порядок, что спрашивает ассистент в чате.
+    preferred_model_id = model_id
+    preferred_spec = spec
+    preferred_provider = spec["provider"]
+
+    # Скрепка медиа до роутинга (нужен has_image для FAILOVER_MAP t|i).
+    try:
+        image_data_url, audio_data_url, video_data_url = resolve_generate_media(
+            preferred_spec, image_data_url, audio_data_url, video_data_url
+        )
+    except UploadError as exc:
+        return jsonify(exc.to_dict()), exc.status
+
+    has_media_image = bool((image_data_url or "").strip())
+    route_meta: dict = {
+        "reason": "preferred",
+        "overflow": False,
+        "preferred_model_id": preferred_model_id,
+        "preferred_provider": preferred_provider,
+    }
+    try:
+        from queue_runtime.health import is_channel_healthy
+        from queue_runtime.load_balancer import resolve_route
+
+        decision = resolve_route(
+            preferred_model_id,
+            preferred_provider,
+            has_image=has_media_image,
+            failover_target=_failover_target,
+            models=INTEGRATED_MODELS,
+            is_healthy=is_channel_healthy,
+        )
+        route_meta = decision.to_dict()
+        if decision.reason == "preferred_unhealthy_no_backup":
+            return jsonify({
+                "error": "channel_unavailable",
+                "detail": f"{preferred_provider} is down; no healthy backup",
+                "provider": preferred_provider,
+                "route": route_meta,
+            }), 503
+        if decision.overflow and decision.model_id != preferred_model_id:
+            bak = INTEGRATED_MODELS.get(decision.model_id)
+            if not bak:
+                return jsonify({
+                    "error": "channel_unavailable",
+                    "detail": f"backup {decision.model_id} missing",
+                    "route": route_meta,
+                }), 503
+            model_id = decision.model_id
+            spec = bak
+    except Exception as exc:  # noqa: BLE001
+        # Balancer/Redis failure → sticky preferred, but still require healthy primary.
+        app.logger.warning("load balancer skipped: %s", exc)
+        try:
+            from queue_runtime.health import is_channel_healthy
+            if not is_channel_healthy(preferred_provider):
+                return jsonify({
+                    "error": "channel_unavailable",
+                    "detail": f"{preferred_provider} is down; model hidden from routing",
+                    "provider": preferred_provider,
+                }), 503
+        except Exception as hexc:  # noqa: BLE001
+            return jsonify({"error": "queue_unavailable", "detail": str(hexc)}), 503
+
+    provider = spec["provider"]
+
+    # Сначала вход, потом баланс — hold = max(preferred, routed) на случай overflow на более дорогой fal.
     if _generate_require_auth():
         acct = _generate_account()
         if not acct or not acct["authed"]:
             return jsonify({"error": "auth_required"}), 401
-        need = _generate_cost_kop(model_id, safe_params, prompt)
+        need = _generate_quote_kop(preferred_model_id, model_id, safe_params, prompt)
         if need and acct["available_kop"] < need:
             return jsonify({"error": "insufficient_funds", "need_kop": need,
                             "available_kop": acct["available_kop"]}), 402
 
-    provider = spec["provider"]
     if provider == "replicate":
         if not _replicate_token():
             return jsonify({"error": "not_configured", "detail": "REPLICATE_API_TOKEN missing"}), 503
@@ -5312,26 +5401,6 @@ def api_generate():
         return jsonify({"error": "unsupported_provider", "provider": provider}), 400
 
     try:
-        from queue_runtime.health import is_channel_healthy
-        if not is_channel_healthy(provider):
-            return jsonify({
-                "error": "channel_unavailable",
-                "detail": f"{provider} is down; model hidden from routing",
-                "provider": provider,
-            }), 503
-    except Exception as exc:  # noqa: BLE001
-        return jsonify({"error": "queue_unavailable", "detail": str(exc)}), 503
-
-    # Скрепка: «upl_…» из /api/uploads → ссылка, которую скачает провайдер (S3 / сайт / data URL).
-    # Файлы, которые модель не принимает (spec["inputs"]), отбрасываются.
-    try:
-        image_data_url, audio_data_url, video_data_url = resolve_generate_media(
-            spec, image_data_url, audio_data_url, video_data_url
-        )
-    except UploadError as exc:
-        return jsonify(exc.to_dict()), exc.status
-
-    try:
         input_payload = _build_provider_input(
             spec, prompt, image_data_url, audio_data_url, video_data_url
         )
@@ -5341,10 +5410,9 @@ def api_generate():
     input_payload = _apply_assist_params(
         input_payload,
         safe_params,
-        has_image=bool((image_data_url or "").strip()),
+        has_image=has_media_image,
     )
 
-    has_media_image = bool((image_data_url or "").strip())
     upstream_model = _provider_model_ref(spec, has_image=has_media_image)
     if not upstream_model and provider != "omniroute":
         return jsonify({"error": "bad_model", "detail": f"missing model ref for {provider}"}), 400
@@ -5355,6 +5423,7 @@ def api_generate():
             from queue_runtime.jobs import enqueue_inbound, wait_for_result
             job_id = enqueue_inbound({
                 "model_id": model_id,
+                "preferred_model_id": preferred_model_id,
                 "provider": provider,
                 "kind": spec["kind"],
                 "upstream_model": upstream_model,
@@ -5365,6 +5434,7 @@ def api_generate():
                 "owner_id": session.get("user_id"),
                 "prompt": prompt[:4000],          # для «Моих работ» и публикации на витрине
                 "params": safe_params or None,
+                "route": route_meta,
             })
         except Exception as exc:  # noqa: BLE001
             return jsonify({"error": "queue_unavailable", "detail": str(exc)}), 503
@@ -5377,9 +5447,11 @@ def api_generate():
                 "job_id": job_id,
                 "status": "queued",
                 "model": model_id,
+                "preferred_model": preferred_model_id,
                 "provider": provider,
                 "kind": spec["kind"],
                 "upstream_model": upstream_model,
+                "route": route_meta,
                 "poll_url": f"/api/generate/jobs/{job_id}",
                 "poll_after_ms": 2000,
             }), 202

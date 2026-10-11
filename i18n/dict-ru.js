@@ -24,8 +24,11 @@ window.AISH_DICT_RU = {
   'common.home.aria': '{brand} — на главную',
   'common.logo.alt': '{brand} — маркетплейс генеративных моделей',
   'common.brand.alt': '{brand}',
-  'common.theme.dark': 'Тёмная тема',
+  'common.theme.dark': 'Чёрная тема',
   'common.theme.light': 'Светлая тема',
+  'common.theme.white': 'Белая тема',
+  'common.theme.lilac': 'Сиреневая тема',
+  'common.theme.group': 'Тема оформления',
   'common.lang.aria': 'Язык: русский',
   'common.like': 'Лайк',
   'common.like.add': 'Поставить лайк',
@@ -590,6 +593,7 @@ window.AISH_DICT_RU = {
     many: '{n} работ',
     other: '{n} работ'
   },
+  'vitrina.prompt.label': 'Промпт',
   'vitrina.req.promptOrVideo': 'Запросить промпт или видео',
   'vitrina.req.promptOrOriginal': 'Запросить промпт или оригинал',
   'vitrina.req.title': 'Запрос к {name}',
@@ -837,6 +841,8 @@ window.AISH_DICT_RU = {
   'works.p08.title': 'Сияние — длинная версия',
   'works.date.draft': 'черновик',
 
+  'creators.acm.name': 'AI Camera Movements',
+  'creators.acm.about': 'Библиотека camera moves · aicameramovements.com',
   /* ================= creators (vitrina-data.js) ================= */
   'creators.c1.name': 'Мира Свет',
   'creators.c1.about': 'Неон, ночные города, кино-свет',

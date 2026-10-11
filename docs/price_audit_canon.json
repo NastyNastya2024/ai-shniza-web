@@ -1,0 +1,805 @@
+{
+  "wan-3-0": {
+    "url": "https://replicate.com/alibaba/wan-3",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "video_s",
+        0.025
+      ],
+      [
+        "video_s",
+        0.05
+      ],
+      [
+        "video_s",
+        0.1
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.020",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.025 per second of output video",
+      "$0.05 per second of output video",
+      "$0.1 per second of output video"
+    ]
+  },
+  "grok-imagine-video-1-5": {
+    "url": "https://replicate.com/xai/grok-imagine-video-1.5",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "video_s",
+        0.08
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.0037",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.08 per second of output video"
+    ]
+  },
+  "gen4-turbo": {
+    "url": "https://replicate.com/runwayml/gen4-turbo",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "video_s",
+        0.05
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.0025",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.05 per second of output video"
+    ]
+  },
+  "veo-3-1": {
+    "url": "https://replicate.com/google/veo-3.1",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "video_s",
+        0.4
+      ],
+      [
+        "video_s",
+        0.2
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.010",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.4 per second of output video",
+      "$0.2 per second of output video"
+    ]
+  },
+  "veo-3-1-fast": {
+    "url": "https://replicate.com/google/veo-3.1-fast",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "video_s",
+        0.15
+      ],
+      [
+        "video_s",
+        0.1
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.0098",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.15 per second of output video",
+      "$0.1 per second of output video"
+    ]
+  },
+  "hailuo-02": {
+    "url": "https://replicate.com/minimax/hailuo-02",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "video_item",
+        0.1
+      ],
+      [
+        "video_item",
+        0.15
+      ],
+      [
+        "video_item",
+        0.27
+      ],
+      [
+        "video_item",
+        0.45
+      ],
+      [
+        "video_item",
+        0.48
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.0097",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.1 per output video",
+      "$0.15 per output video",
+      "$0.27 per output video",
+      "$0.45 per output video",
+      "$0.48 per output video"
+    ]
+  },
+  "minimax-h3": {
+    "url": "https://replicate.com/minimax/h3",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "video_s",
+        0.08
+      ],
+      [
+        "video_s",
+        0.13
+      ]
+    ],
+    "headline": [
+      "$0.08 per second of output video",
+      "$0.13 per second of output video"
+    ]
+  },
+  "seedance-2-5": {
+    "url": "https://replicate.com/bytedance/seedance-2.5",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "video_s",
+        0.1028
+      ],
+      [
+        "video_s",
+        0.4304
+      ],
+      [
+        "video_s",
+        0.2312
+      ],
+      [
+        "video_s",
+        0.9676
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.023",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.1028 per second of output video",
+      "$0.4304 per second of output video",
+      "$0.2312 per second of output video",
+      "$0.9676 per second of output video"
+    ]
+  },
+  "pixverse-v6": {
+    "url": "https://replicate.com/pixverse/pixverse-v6",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "video_s",
+        0.05
+      ],
+      [
+        "video_s",
+        0.07
+      ],
+      [
+        "video_s",
+        0.09
+      ],
+      [
+        "video_s",
+        0.12
+      ],
+      [
+        "video_s",
+        0.18
+      ],
+      [
+        "video_s",
+        0.23
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.0087",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.05 per second of output video",
+      "$0.07 per second of output video",
+      "$0.09 per second of output video",
+      "$0.12 per second of output video",
+      "$0.18 per second of output video",
+      "$0.23 per second of output video"
+    ]
+  },
+  "kling-v2-5-turbo-pro": {
+    "url": "https://replicate.com/kwaivgi/kling-v2.5-turbo-pro",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "video_s",
+        0.07
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.015",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.07 per second of output video"
+    ]
+  },
+  "p-video": {
+    "url": "https://replicate.com/prunaai/p-video",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "video_s",
+        0.02
+      ],
+      [
+        "video_s",
+        0.005
+      ],
+      [
+        "video_s",
+        0.04
+      ],
+      [
+        "video_s",
+        0.01
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.001525 per second",
+          "p50": "$0.019",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.02 per second of output video",
+      "$0.005 per second of output video",
+      "$0.04 per second of output video",
+      "$0.01 per second of output video"
+    ]
+  },
+  "nano-banana-pro": {
+    "url": "https://replicate.com/google/nano-banana-pro",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "image",
+        0.15
+      ],
+      [
+        "image",
+        0.3
+      ],
+      [
+        "image",
+        0.035
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.0024",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.15 per output image",
+      "$0.3 per output image",
+      "$0.035 per output image"
+    ]
+  },
+  "nano-banana-2": {
+    "url": "https://replicate.com/google/nano-banana-2",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "image",
+        0.067
+      ],
+      [
+        "image",
+        0.101
+      ],
+      [
+        "image",
+        0.151
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.0011",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.067 per output image",
+      "$0.101 per output image",
+      "$0.151 per output image"
+    ]
+  },
+  "gpt-image-2": {
+    "url": "https://replicate.com/openai/gpt-image-2",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "image",
+        0.128
+      ],
+      [
+        "image",
+        0.012
+      ],
+      [
+        "image",
+        0.047
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.0015",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.128 per output image",
+      "$0.012 per output image",
+      "$0.047 per output image"
+    ]
+  },
+  "gpt-image-2-5-flare": {
+    "url": "https://replicate.com/openai/gpt-image-2.5-flare",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "image",
+        0.25
+      ],
+      [
+        "image",
+        0.012
+      ],
+      [
+        "image",
+        0.047
+      ],
+      [
+        "image",
+        0.128
+      ],
+      [
+        "image",
+        0.5
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.0011",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.25 per output image",
+      "$0.012 per output image",
+      "$0.047 per output image",
+      "$0.128 per output image",
+      "$0.5 per output image"
+    ]
+  },
+  "gpt-image-2-5-sunburst": {
+    "url": "https://replicate.com/openai/gpt-image-2.5-sunburst",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "image",
+        0.25
+      ],
+      [
+        "image",
+        0.012
+      ],
+      [
+        "image",
+        0.047
+      ],
+      [
+        "image",
+        0.128
+      ],
+      [
+        "image",
+        0.5
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.0023",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.25 per output image",
+      "$0.012 per output image",
+      "$0.047 per output image",
+      "$0.128 per output image",
+      "$0.5 per output image"
+    ]
+  },
+  "ideogram-v3-turbo": {
+    "url": "https://replicate.com/ideogram-ai/ideogram-v3-turbo",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "image",
+        0.03
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.00064",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.03 per output image"
+    ]
+  },
+  "seedream-5-pro": {
+    "url": "https://replicate.com/bytedance/seedream-5-pro",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "image",
+        0.045
+      ],
+      [
+        "image",
+        0.09
+      ],
+      [
+        "image",
+        0.0225
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.0070",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.045 per output image",
+      "$0.09 per output image",
+      "$0.0225 per output image"
+    ]
+  },
+  "elevenlabs-music": {
+    "url": "https://replicate.com/elevenlabs/music",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "audio_item",
+        8.3
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.00091",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$8.3 per thousand seconds of output audio"
+    ]
+  },
+  "stable-audio-2-5": {
+    "url": "https://replicate.com/stability-ai/stable-audio-2.5",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "audio_item",
+        0.2
+      ],
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.00035",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.2 per output audio file"
+    ]
+  },
+  "ace-step": {
+    "url": "https://replicate.com/lucataco/ace-step",
+    "in": null,
+    "out": null,
+    "rates": [
+      [
+        "hw",
+        {
+          "price_str": "$0.000975 per second",
+          "p50": "$0.018",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.000975 per second (p50 $0.018)"
+    ]
+  },
+  "deepseek-v3": {
+    "url": "https://replicate.com/deepseek-ai/deepseek-v3",
+    "in": 1.45,
+    "out": 1.45,
+    "rates": [
+      [
+        "hw",
+        {
+          "price_str": "$0.000025 per second",
+          "p50": "$0.00058",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$1.45 per million output tokens",
+      "$1.45 per million input tokens"
+    ]
+  },
+  "deepseek-v3-1": {
+    "url": "https://replicate.com/deepseek-ai/deepseek-v3.1",
+    "in": 0.672,
+    "out": 2.016,
+    "rates": [
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.0022",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$0.672 per million input tokens",
+      "$2.016 per million output tokens"
+    ]
+  },
+  "claude-sonnet-5": {
+    "url": "https://replicate.com/anthropic/claude-sonnet-5",
+    "in": 2.0,
+    "out": 10.0,
+    "rates": [
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.00024",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$2.0 per million input tokens",
+      "$0.01 per thousand output tokens"
+    ]
+  },
+  "claude-4-5-haiku": {
+    "url": "https://replicate.com/anthropic/claude-4.5-haiku",
+    "in": 1.0,
+    "out": 5.0,
+    "rates": [
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.00028",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$5.0 per million output tokens",
+      "$1.0 per million input tokens"
+    ]
+  },
+  "gemini-3-5-flash": {
+    "url": "https://replicate.com/google/gemini-3.5-flash",
+    "in": 1.5,
+    "out": 9.0,
+    "rates": [
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.00058",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$1.5 per million input tokens",
+      "$9.0 per million output tokens"
+    ]
+  },
+  "gemini-3-1-pro": {
+    "url": "https://replicate.com/google/gemini-3.1-pro",
+    "in": 4.0,
+    "out": 18.0,
+    "rates": [
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.0019",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$2.0 per million input tokens",
+      "$0.012 per thousand output tokens",
+      "$4.0 per million input tokens",
+      "$0.018 per thousand output tokens"
+    ]
+  },
+  "claude-opus-4-7": {
+    "url": "https://replicate.com/anthropic/claude-opus-4.7",
+    "in": 5.0,
+    "out": 25.0,
+    "rates": [
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.00028",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$5.0 per million input tokens",
+      "$0.025 per thousand output tokens"
+    ]
+  },
+  "gpt-5-4": {
+    "url": "https://replicate.com/openai/gpt-5.4",
+    "in": 2.5,
+    "out": 15.0,
+    "rates": [
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.00031",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$2.5 per million input tokens",
+      "$0.015 per thousand output tokens"
+    ]
+  },
+  "gpt-5-6-sol": {
+    "url": "https://replicate.com/openai/gpt-5.6-sol",
+    "in": 2.0,
+    "out": 10.0,
+    "rates": [
+      [
+        "hw",
+        {
+          "price_str": "$0.0001 per second",
+          "p50": "$0.00047",
+          "kind": "hw"
+        }
+      ]
+    ],
+    "headline": [
+      "$2.0 per million input tokens",
+      "$0.01 per thousand output tokens"
+    ]
+  }
+}

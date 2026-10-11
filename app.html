@@ -7,7 +7,7 @@
 <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/assets/brand/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/assets/brand/png/apple-touch-icon-180.png">
-<link rel="stylesheet" href="/assistant-ui.css">
+<link rel="stylesheet" href="/assistant-ui.css?v=8">
 <link rel="stylesheet" href="/attach.css">
 <link rel="stylesheet" href="/chat-history.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -469,13 +469,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 
     <div id="vitHint" class="vit-hint hidden" role="status"><button type="button" id="vitHintBtn"><span class="vh-th" id="vhTh"></span><span class="vh-t" id="vhT"></span><span class="vh-go" data-i18n="studio.hint.go">Смотреть →</span></button><button type="button" class="vh-x" id="vitHintX" aria-label="Скрыть подсказку" data-i18n-attr="aria-label:studio.hint.dismiss">×</button></div>
     <form id="form" style="width:100%;max-width:780px;margin:0 auto;box-sizing:border-box;padding:0 12px 6px">
-      <div id="assistBar" class="assist-bar" role="toolbar" aria-label="Управление помощником" data-i18n-attr="aria-label:studio.assist.bar">
-        <button type="button" id="assistToggle" class="assist-bar__btn" data-assist-toggle aria-pressed="true">
-          <span class="assist-bar__dot" aria-hidden="true"></span>
-          <span id="assistToggleLabel" data-i18n="studio.assist.on">Помощник вкл</span>
-        </button>
-        <button type="button" id="assistNew" class="assist-bar__btn" data-assist-new data-i18n="studio.assist.new" title="Сбросить диалог и начать с выбора типа" data-i18n-attr="title:studio.assist.newTitle">Новая генерация</button>
-      </div>
       <div class="composer glass" style="border-radius:26px;padding:14px 14px 12px 18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 24px 60px -26px var(--shadow)">
         <label for="prompt" class="sr-only" data-i18n="studio.composer.label">Задача для модели</label>
         <textarea id="prompt" class="prompt-input" rows="2" placeholder="Опишите ролик, картинку или трек…" data-i18n-attr="placeholder:studio.composer.placeholder" style="width:100%;box-sizing:border-box;border:none;background:transparent;resize:none;font-family:'Onest',sans-serif;font-size:17px;line-height:1.5;padding:2px 0 0"></textarea>
@@ -536,7 +529,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 <script src="/i18n/dict-en.js"></script>
 <script src="/i18n/runtime.js"></script>
 <script src="/vitrina-data.js"></script>
-<script src="/assistant-ui.js"></script>
+<script src="/vitrina-camera-moves.js?v=3"></script>
+<script src="/assistant-ui.js?v=8"></script>
 <script src="/attach.js"></script>
 <script src="/chat-history.js"></script>
 <script>
@@ -620,9 +614,10 @@ class Component extends DCLogic {
   init() {
     if (this._ready) return;
     this._ready = true;
-    let assistOn = true;
-    try { if (localStorage.getItem('aish-assist') === '0') assistOn = false; } catch (e) {}
-    this.state = Object.assign({ tab: 'all', query: '', sort: 'cheap', searchFocus: false, sel: '', text: URL_PROMPT || '', say: '', shown: 0, blink: false, chat: false, msgs: [], typing: false, assist: assistOn, authed: false, leftOpen: !IS_MOBILE, rightOpen: true, dark: (this.props.theme || 'light') === 'dark', userName: '', userLetter: '?', balanceText: tr('common.balance', { amount: AISH_I18N.money(0) }), modal: null, social: null, email: '', password: '', pwMode: false, consent: false, code: '', err: '', errField: '', resendIn: 0, checking: false, shake: false, locked: false, attempts: 0, afterLogin: null }, this.state || {});
+    // Помощник всегда включён (кнопку выключения убрали; старый localStorage aish-assist=0 сбрасываем)
+    try { localStorage.setItem('aish-assist', '1'); } catch (e) {}
+    this.state = Object.assign({ tab: 'all', query: '', sort: 'cheap', searchFocus: false, sel: '', text: URL_PROMPT || '', say: '', shown: 0, blink: false, chat: false, msgs: [], typing: false, assist: true, authed: false, leftOpen: !IS_MOBILE, rightOpen: true, dark: (this.props.theme || 'light') === 'dark', userName: '', userLetter: '?', balanceText: tr('common.balance', { amount: AISH_I18N.money(0) }), modal: null, social: null, email: '', password: '', pwMode: false, consent: false, code: '', err: '', errField: '', resendIn: 0, checking: false, shake: false, locked: false, attempts: 0, afterLogin: null }, this.state || {});
+    this.state.assist = true;
     this.timers = {};
     this.pendingPrompt = '';
     this.pendingSel = '';
@@ -680,7 +675,7 @@ class Component extends DCLogic {
       { slug: 'gpt-image-2-5-sunburst', model_key: 'gpt-image-2-5-sunburst', name: 'GPT Image 2.5 Sunburst', kindKey: 'studio.kind.image', type: 'image', cost: 1, rub: 1 },
       { slug: 'nano-banana-pro', model_key: 'nano-banana-pro', name: 'Nano Banana Pro', kindKey: 'studio.kind.image', type: 'image', cost: 34, rub: 34 },
       { slug: 'nano-banana-2', model_key: 'nano-banana-2', name: 'Nano Banana 2', kindKey: 'studio.kind.image', type: 'image', cost: 15, rub: 15 },
-      { slug: 'soul-cinema', model_key: 'soul-cinema', name: 'Soul Cinema', kindKey: 'studio.kind.image', type: 'image', cost: 20, rub: 20 },
+      { slug: 'soul-cinema', model_key: 'soul-cinema', name: 'Soul Cinema', kindKey: 'studio.kind.image', type: 'image', cost: 1, rub: 1 },
       { slug: 'ideogram-v3-turbo', model_key: 'ideogram-v3-turbo', name: 'Ideogram v3 Turbo', kindKey: 'studio.kind.image', type: 'image', cost: 8, rub: 8 },
       { slug: 'ace-step', model_key: 'ace-step', name: 'ACE-Step', kindKey: 'studio.kind.audio', type: 'music', cost: 8, rub: 8 },
       { slug: 'elevenlabs-music', model_key: 'elevenlabs-music', name: 'ElevenLabs Music', kindKey: 'studio.kind.audio', type: 'music', cost: 60, rub: 2, perSec: true },
@@ -688,6 +683,11 @@ class Component extends DCLogic {
     ].map(this.priceModel);
     if (URL_MODEL && this.MODELS.some((m) => m.slug === URL_MODEL)) this.state.sel = URL_MODEL;
     else this.state.sel = '';
+    // С текстовой моделью в селекте сабмит уводил в /api/generate вместо брифа видео
+    {
+      const selM = this.MODELS.find((m) => m.slug === this.state.sel);
+      if (selM && selM.type === 'text') this.state.sel = '';
+    }
     this.TAB_ICONS = {
       video: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"></rect><path d="m16 10 5-3v10l-5-3z"></path></svg>',
       image: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="9" cy="9" r="2"></circle><path d="m3 16 5-5 4 4 3-3 6 6"></path></svg>',
@@ -1080,14 +1080,11 @@ class Component extends DCLogic {
       });
     };
     this.syncAssistPref = () => {
-      try { localStorage.setItem('aish-assist', this.state.assist ? '1' : '0'); } catch (e) {}
+      try { localStorage.setItem('aish-assist', '1'); } catch (e) {}
     };
     this.toggleAssist = () => {
-      const on = !this.state.assist;
-      this.setState({ assist: on });
+      this.setState({ assist: true });
       this.syncAssistPref();
-      if (!on && this.eggy && this.eggy.softReset) this.eggy.softReset();
-      this.speak(tr(on ? 'studio.assist.enabled' : 'studio.assist.disabled'));
     };
     /** Сохранить текущий чат и начать с нуля: помощник снова спрашивает тип генерации. */
     this.newGeneration = async () => {
@@ -1111,25 +1108,17 @@ class Component extends DCLogic {
       if (e && e.preventDefault) e.preventDefault();
       const text = this.state.text.trim();
       if (!text) { this.speak(tr('studio.eggy.needIdea')); return; }
+      if (!this.state.assist) this.setState({ assist: true });
       const cur = this.MODELS.find((x) => x.slug === this.state.sel);
-      // текстовая модель — прямой чат; без модели или с медиа-моделью — к помощнику
-      if (cur && cur.type === 'text') { this.textChat(cur, text); return; }
+      // Прямой чат с LLM — только если помощник выключен. Иначе «машина едет…» уходит в бриф видео, а не в /api/generate.
+      if (cur && cur.type === 'text' && !this.state.assist) { this.textChat(cur, text); return; }
       this.pendingPrompt = text;
-      this.pendingSel = cur ? cur.slug : '';
+      this.pendingSel = (cur && cur.type !== 'text') ? cur.slug : '';
       this.setState({ chat: true, text: '' });
       if (window.AishAttach) {
         this._shownFiles = this._shownFiles || {};
         this._echoFiles = AishAttach.ready().filter((f) => !this._shownFiles[f.id]);
         this._echoFiles.forEach((f) => { this._shownFiles[f.id] = 1; });
-      }
-      // помощник выключен — сразу генерация по выбранной модели
-      if (!this.state.assist) {
-        const files = this._echoFiles || [];
-        this._echoFiles = null;
-        this.push(files.length ? { role: 'user', text: text, files: files } : { role: 'user', text: text });
-        if (window.AishAttach && AishAttach.park) AishAttach.park();   // плашки из композера — уже в пузыре
-        this.cook();
-        return;
       }
       if (!this.eggy) {
         this.push({ role: 'user', text: text });
@@ -1543,7 +1532,8 @@ function render() {
       selBtn.setAttribute('aria-label', tr(v.sel.empty ? 'studio.composer.pickModel.aria' : 'studio.composer.changeModel'));
     }
     const ta0 = $('prompt');
-    const ph = tr(v.sel.isText ? 'studio.text.placeholder' : 'studio.composer.placeholder');
+    // Помощник всегда ведёт сценарий — плейсхолдер «сообщение модели» только без помощника
+    const ph = tr((v.sel.isText && !app.state.assist) ? 'studio.text.placeholder' : 'studio.composer.placeholder');
     if (ta0 && ta0.placeholder !== ph) ta0.placeholder = ph;
     $('selPrice').textContent = v.sel.priceShort || '';
     $('selEst').textContent = v.sel.empty ? '' : tr('studio.eggy.priceEst', { price: v.sel.estimate });
@@ -2294,10 +2284,12 @@ loadIntegrations();
     $('vitBody').innerHTML = h;
   }
   function drawPreview(id) {
-    const w = WORKS.find((x) => x.id === id) || D.works.find((x) => x.id === id); if (!w) { preview = null; pvMode = 'view'; return draw(); }
+    const w = WORKS.find((x) => String(x.id) === String(id)) || (D.works || []).find((x) => String(x.id) === String(id));
+    if (!w) { preview = null; pvMode = 'view'; return draw(); }
+    preview = String(w.id);
     const c = CR[w.creator] || { id: w.creator, name: tr('vitrina.creator.fallback'), nick: '', works: 0, grad: '#FF8A2B,#F2668B' };
     const media = w.video
-      ? '<video src="' + esc2(w.video) + '" poster="' + esc2(w.src) + '" autoplay muted loop playsinline preload="metadata"></video>'
+      ? '<video src="' + esc2(w.video) + '" poster="' + esc2(w.src) + '" autoplay muted loop playsinline preload="auto"></video>'
       : '<img src="' + esc2(w.src) + '" alt="' + esc2(wTitle(w) || w.title || '') + '">';
     const resBadge = '<p class="vc-res">' + esc2(videoMetaText(w, null)) + '</p>';
     const slug = w.model_slug
@@ -2340,7 +2332,7 @@ loadIntegrations();
     const creatorCard = '<section class="creator" aria-label="' + esc2(tr('vitrina.creator.aria')) + '"><div class="c-head">' + ava
       + '<div class="c-main"><a class="c-name" href="' + cHref + '"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc2(cName || tr('vitrina.creator.fallback')) + '</span><span class="c-go" aria-hidden="true">' + chevron + '</span></a>'
       + '<div class="c-sub">' + (handle ? '@' + esc2(handle) : '') + (c.works ? (handle ? ' · ' : '') + esc2(tr('vitrina.creator.works', { n: c.works })) : '') + '</div></div></div>'
-      + (pvMode === 'view' ? '<div class="c-act"><a class="btn-profile" href="' + cHref + '">' + esc2(tr('vitrina.creator.viewProfile')) + '</a><button type="button" class="btn-primary" data-vreq>' + spark + reqLbl + '</button></div>' : '')
+      + (pvMode === 'view' && !w.prompt_open ? '<div class="c-act"><a class="btn-profile" href="' + cHref + '">' + esc2(tr('vitrina.creator.viewProfile')) + '</a><button type="button" class="btn-primary" data-vreq>' + spark + reqLbl + '</button></div>' : (pvMode === 'view' ? '<div class="c-act"><a class="btn-profile" href="' + cHref + '">' + esc2(tr('vitrina.creator.viewProfile')) + '</a></div>' : ''))
       + moreRow + '</section>';
     const modelLabel = slugName || w.model || '';
     const genBtn = modelLabel
@@ -2349,10 +2341,14 @@ loadIntegrations();
         : '<a class="btn-gen" href="/app?model=' + encodeURIComponent(String(w.model || '').toLowerCase().replace(/\s+/g, '-')) + '">' + esc2(tr('studio.vit.generateIn', { model: modelLabel })) + '</a>')
         + '</div>'
       : '';
+    const promptBox = (w.prompt_open && w.prompt)
+      ? '<div class="d-prompt-box" style="margin:12px 0;border:1px solid var(--panel-brd);border-radius:14px;background:var(--field);overflow:hidden"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--panel-brd)"><span style="font:800 11px/1 Onest,system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)">' + esc2(tr('vitrina.prompt.label')) + '</span><button type="button" class="copy" data-copy-prompt style="height:30px;padding:0 10px;border-radius:10px;border:1px solid var(--panel-brd);background:transparent;color:var(--muted);font:700 12px Onest,system-ui,sans-serif;cursor:pointer">' + esc2(tr('common.copy')) + '</button></div><pre id="vitOpenPrompt" style="margin:0;padding:12px;font:500 13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto">' + esc2(w.prompt) + '</pre></div>'
+      : '';
     $('vitCtx').innerHTML = '';
     $('vitBody').innerHTML = '<div class="vit-pv"><button type="button" class="vit-back" data-vback>' + esc2(tr('studio.vit.back')) + '</button><div class="media">' + media + '</div>'
       + '<h4>' + esc2(wTitle(w)) + '</h4>'
       + resBadge
+      + promptBox
       + genBtn + creatorCard + lower + '</div>';
     fillVideoMeta($('vitBody').querySelector('.vit-pv'), w);
     const f = $('vitReqForm');
@@ -2438,8 +2434,11 @@ loadIntegrations();
       app.setState({ leftOpen: false });
     }
     open = v;
-    preview = null;
-    pvMode = 'view';
+    /* Сбрасываем превью только при закрытии — иначе стрелка камеры мигает сеткой и теряет video */
+    if (!v) {
+      preview = null;
+      pvMode = 'view';
+    }
     $('vit').classList.toggle('hidden', !v);
     $('vitBtn').classList.toggle('hidden', !!v);
     $('vitBtn').setAttribute('aria-pressed', v ? 'true' : 'false');
@@ -2473,6 +2472,24 @@ loadIntegrations();
     lastKey = '';
     setTab('vit');
     setOpen(true);
+  };
+  /** Открыть работу в боковой витрине на этой же странице (камера / карточка). */
+  window.vitOpenWork = (workId) => {
+    const id = String(workId || '').trim();
+    if (!id) return false;
+    syncExampleWorks();
+    const hit = WORKS.find((w) => String(w.id) === id) || (D.works || []).find((w) => String(w.id) === id);
+    if (!hit) return false;
+    modelFilter = false;
+    preview = id;
+    pvMode = 'view';
+    lastKey = '';
+    if (rpTab !== 'vit') setTab('vit');
+    else { $('rpModels').classList.add('hidden'); $('rpVit').classList.remove('hidden'); }
+    if (!open) setOpen(true, true);
+    else drawPreview(id);
+    try { $('vitBody').scrollTop = 0; } catch (e) {}
+    return true;
   };
   $('vitBtn').addEventListener('click', () => setOpen(!open));
   $('vitClose').addEventListener('click', () => setOpen(false));
@@ -2521,6 +2538,15 @@ loadIntegrations();
     fit();
   }
   $('vitBody').addEventListener('click', (e) => {
+    const cp = e.target.closest('[data-copy-prompt]');
+    if (cp) {
+      const pre = $('vitOpenPrompt');
+      const text = (pre && pre.textContent) || '';
+      if (text && navigator.clipboard) navigator.clipboard.writeText(text);
+      cp.textContent = tr('common.copied');
+      setTimeout(() => { cp.textContent = tr('common.copy'); }, 1600);
+      return;
+    }
     const c = e.target.closest('[data-w]'); if (c) { preview = c.dataset.w; pvMode = 'view'; drawPreview(preview); $('vitBody').scrollTop = 0; return; }
     const go = e.target.closest('[data-go]'); if (go) { preview = go.dataset.go; pvMode = 'view'; drawPreview(preview); $('vitBody').scrollTop = 0; return; }
     if (e.target.closest('[data-vback]')) { preview = null; pvMode = 'view'; draw(); return; }

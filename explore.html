@@ -46,6 +46,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .head h1{margin:0;font-weight:800;font-size:clamp(34px,4.4vw,58px);letter-spacing:-.045em;line-height:1}
 .head p{margin:10px 0 0;color:var(--muted);font-size:16px;font-weight:500}
 .tools{display:flex;flex-direction:row;align-items:center;gap:8px;flex:1 1 420px;max-width:760px;min-width:0}
+.cam-groups{display:flex;flex-wrap:wrap;gap:6px;flex:1 0 100%;width:100%;margin-top:-6px}
+.cam-groups[hidden]{display:none!important}
+.cam-groups .chip{height:34px;padding:0 12px;font-size:13px}
 .tools.search-on .search{flex:1 1 auto;min-width:0}
 .tools:not(.search-on) .search input{padding:0;border-color:transparent;color:transparent;caret-color:transparent;cursor:pointer}
 .tools:not(.search-on) .search input::placeholder{color:transparent}
@@ -132,6 +135,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .d-gen{margin-top:14px;margin-bottom:6px;height:48px;padding:0 18px;border-radius:14px;border:1px solid rgba(80,60,160,.08);background:#F7F5FD;color:var(--violet-ink);font:800 15px 'Manrope',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;box-sizing:border-box;cursor:pointer;box-shadow:none;transition:background .15s,color .15s,border-color .15s,transform .15s}
 .d-gen:hover{background:#EFEAFB;color:var(--violet)}
 .d-gen:active{transform:scale(.98)}
+.d-prompt-box{margin:14px 0 4px;border:1px solid var(--line);border-radius:16px;background:var(--card);overflow:hidden}
+.d-prompt-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px 8px;border-bottom:1px solid var(--line)}
+.d-prompt-lbl{font-size:12.5px;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.d-prompt{margin:0;padding:12px 14px 14px;font:500 13.5px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--ink);white-space:pre-wrap;word-break:break-word;max-height:220px;overflow:auto;user-select:text;-webkit-user-select:text}
+.d-prompt-box .copy{margin-left:0;flex:0 0 auto}
 .creator{margin-top:14px;border:1px solid var(--line);border-radius:20px;background:var(--bg);overflow:hidden}
 .c-head{display:flex;align-items:center;gap:12px;padding:14px 16px 12px}
 .c-main{flex:1 1 auto;min-width:0}
@@ -386,6 +394,7 @@ html{transition:background-color .3s}
         <button class="chip" data-f="all" aria-pressed="true" data-i18n="explore.filter.all">Все</button>
         <button class="chip" data-f="video" aria-pressed="false" data-i18n="explore.filter.video">Видео</button>
         <button class="chip" data-f="image" aria-pressed="false" data-i18n="explore.filter.image">Картинки</button>
+        <button class="chip" data-f="Camera" aria-pressed="false">Camera</button>
         <button class="chip" data-f="Wan" aria-pressed="false">Wan</button>
         <button class="chip" data-f="Grok" aria-pressed="false">Grok</button>
         <button class="chip" data-f="Seedance" aria-pressed="false">Seedance</button>
@@ -412,6 +421,7 @@ html{transition:background-color .3s}
       <label><span class="sr" data-i18n="explore.sort.label">Сортировка</span><select class="sort" id="sort"><option value="new" data-i18n="explore.sort.new">Новые</option><option value="top" data-i18n="explore.sort.top">Популярные</option></select></label>
     </div>
   </div>
+  <div class="cam-groups" id="camGroups" role="group" aria-label="Типы движений камеры" hidden></div>
 </section>
 
 <main class="grid" id="grid" aria-label="Генерации" data-i18n-attr="aria-label:explore.grid.aria"></main>
@@ -430,6 +440,7 @@ html{transition:background-color .3s}
 </aside>
 
 <script src="/vitrina-data.js?v=3"></script>
+<script src="/vitrina-camera-moves.js?v=3"></script>
 <script>
 (function () {
   const tr = (k, p) => AISH_I18N.t(k, p);
@@ -496,15 +507,64 @@ html{transition:background-color .3s}
 
   let filter = 'all', query = '', sort = 'new', list = works.slice(), openIdx = -1, openId = null, mode = 'view', lastSent = null;
   let modelSlugFilter = '';
+  let camGroup = '';
+  const CAM_GROUP_LABELS = {
+    'Pan/Tilt': { ru: 'Пан / наклон', en: 'Pan / Tilt' },
+    'Zoom/Lens': { ru: 'Зум / объектив', en: 'Zoom / Lens' },
+    'Dolly/Track': { ru: 'Долли / трекинг', en: 'Dolly / Track' },
+    'Physical Moves': { ru: 'Физические', en: 'Physical moves' },
+    'Human Camera': { ru: 'С рук / тело', en: 'Human camera' },
+    'Drone/Crane': { ru: 'Дрон / кран', en: 'Drone / Crane' },
+    'Specials': { ru: 'Спецприёмы', en: 'Specials' }
+  };
+  const CAM_GROUP_ORDER = Object.keys(CAM_GROUP_LABELS);
+  function isCameraFilter() {
+    return filter === 'Camera' || String(filter || '').indexOf('Camera') === 0;
+  }
+  function camLabel(gid) {
+    const L = (window.AISH_I18N && window.AISH_I18N.LANG === 'en') ? 'en' : 'ru';
+    return (CAM_GROUP_LABELS[gid] && CAM_GROUP_LABELS[gid][L]) || gid;
+  }
+  function syncCamGroups() {
+    const box = $('camGroups');
+    if (!box) return;
+    const show = isCameraFilter();
+    box.hidden = !show;
+    if (!show) return;
+    const present = new Set();
+    works.forEach((w) => { if (w.category && String(w.model || '').indexOf('Camera') === 0) present.add(w.category); });
+    box.innerHTML = '';
+    const all = document.createElement('button');
+    all.type = 'button';
+    all.className = 'chip';
+    all.dataset.cam = '';
+    all.setAttribute('aria-pressed', camGroup ? 'false' : 'true');
+    all.textContent = tr('explore.filter.all');
+    box.appendChild(all);
+    CAM_GROUP_ORDER.forEach((gid) => {
+      if (!present.has(gid)) return;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.dataset.cam = gid;
+      b.setAttribute('aria-pressed', camGroup === gid ? 'true' : 'false');
+      b.textContent = camLabel(gid);
+      box.appendChild(b);
+    });
+  }
   (function applyUrlFilters() {
     const sp = new URLSearchParams(location.search);
     const q0 = (sp.get('q') || '').trim();
     const m0 = (sp.get('model') || '').trim();
+    const f0 = (sp.get('f') || '').trim();
+    const cam0 = (sp.get('cam') || '').trim();
     if (q0) {
       query = q0;
       const qi = $('q');
       if (qi) qi.value = q0;
     }
+    if (f0) filter = f0;
+    if (cam0) { camGroup = cam0; if (!f0) filter = 'Camera'; }
     if (m0) {
       modelSlugFilter = m0;
       const hit = works.find((w) => w.model_slug === m0);
@@ -523,12 +583,15 @@ html{transition:background-color .3s}
       if (filter === 'video' && w.type !== 'video') return false;
       if (filter === 'image' && w.type !== 'image') return false;
       if (filter !== 'all' && filter !== 'video' && filter !== 'image' && String(w.model || '').indexOf(filter) !== 0) return false;
-      return !q || (w.title + ' ' + wTitle(w) + ' ' + w.model + ' ' + c.name + ' ' + cName(c) + ' ' + c.nick).toLowerCase().includes(q);
+      if (camGroup && isCameraFilter() && String(w.category || '') !== camGroup) return false;
+      const hay = [w.title, wTitle(w), w.model, w.prompt, w.category, (w.tags || []).join(' '), c.name, cName(c), c.nick].join(' ').toLowerCase();
+      return !q || hay.includes(q);
     });
     if (sort === 'top') list.sort((a, b) => (b.likes || 0) - (a.likes || 0));
     if (openId) { openIdx = list.findIndex((w) => w.id === openId); }
     $('countTxt').textContent = tr('explore.count', { n: list.length });
     $('empty').hidden = list.length > 0;
+    syncCamGroups();
     $('grid').innerHTML = list.map((w, i) => {
       const c = C[w.creator] || { name: tr('vitrina.creator.fallback'), nick: '', grad: '#FF8A2B,#F2668B' };
       const media = w.video
@@ -581,10 +644,13 @@ html{transition:background-color .3s}
     const creatorCard = '<section class="creator" aria-label="' + esc(tr('vitrina.creator.aria')) + '"><div class="c-head">' + ava(cSafe, 48)
       + '<div class="c-main"><a class="c-name" href="' + cHref + '"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(cSafeName) + '</span><span class="c-go" aria-hidden="true">' + chevron + '</span></a>'
       + '<div class="c-sub">@' + esc(cSafe.nick || cSafe.handle || '') + (cSafe.works ? ' · ' + esc(tr('vitrina.creator.works', { n: cSafe.works })) : '') + '</div></div></div>'
-      + (mode === 'view' ? '<div class="c-act"><a class="btn btn-s" href="' + cHref + '">' + esc(tr('vitrina.creator.viewProfile')) + '</a><button type="button" class="btn btn-p" data-act="request">' + ICON.spark + reqLbl + '</button></div>' : '')
+      + (mode === 'view' ? '<div class="c-act"><a class="btn btn-s" href="' + cHref + '">' + esc(tr('vitrina.creator.viewProfile')) + '</a>' + (w.prompt_open ? '' : '<button type="button" class="btn btn-p" data-act="request">' + ICON.spark + reqLbl + '</button>') + '</div>' : '')
       + moreRow
       + '</section>';
     const likeBtn = '<button type="button" class="d-like' + (w.liked ? ' is-on' : '') + '" data-act="like" aria-pressed="' + (w.liked ? 'true' : 'false') + '" aria-label="' + esc(tr(w.liked ? 'common.like.remove' : 'common.like.add')) + '">' + ICON.heart + '<span>' + (w.likes || 0) + '</span></button>';
+    const promptBox = (w.prompt_open && w.prompt)
+      ? '<div class="d-prompt-box"><div class="d-prompt-head"><span class="d-prompt-lbl">' + esc(tr('vitrina.prompt.label')) + '</span><button type="button" class="copy" data-act="copy-prompt">' + esc(tr('common.copy')) + '</button></div><pre class="d-prompt" id="dOpenPrompt">' + esc(w.prompt) + '</pre></div>'
+      : '';
     const modelSlug = (w) => {
       if (w.model_slug) return w.model_slug;
       const m = String(w.model || '');
@@ -620,6 +686,7 @@ html{transition:background-color .3s}
     $('dBody').innerHTML = '<div class="media">' + media + (w.type === 'video' ? '<span class="wm" aria-hidden="true"></span><span class="wm-badge" aria-hidden="true"><b>{AI}</b>' + BR_SFX + '</span>' : '') + '</div>'
       + '<div class="d-title-row"><h2 class="d-title" id="dTitle">' + esc(wTitle(w)) + '</h2>' + likeBtn + '</div>'
       + genBtn
+      + promptBox
       + creatorCard
       + lower;
     const f = $('reqForm');
@@ -734,6 +801,14 @@ html{transition:background-color .3s}
       if (m === 'like') {
         const w = list[openIdx]; if (!w) return;
         toggleLike(w).then(() => { apply(); drawer(); }).catch(() => {});
+        return;
+      }
+      if (m === 'copy-prompt') {
+        const pre = $('dOpenPrompt');
+        const text = (pre && pre.textContent) || (list[openIdx] && list[openIdx].prompt) || '';
+        if (text && navigator.clipboard) navigator.clipboard.writeText(text);
+        a.textContent = tr('common.copied'); a.classList.add('done');
+        setTimeout(() => { a.textContent = tr('common.copy'); a.classList.remove('done'); }, 1600);
         return;
       }
       mode = m === 'back' ? 'view' : m; drawer(); return;
@@ -862,6 +937,7 @@ html{transition:background-color .3s}
     if (chip) {
       filter = chip.dataset.f;
       if (filter === 'all' || filter === 'video' || filter === 'image') modelSlugFilter = '';
+      if (!isCameraFilter()) camGroup = '';
       closeMore();
       syncChips();
       apply();
@@ -871,6 +947,15 @@ html{transition:background-color .3s}
       if (moreMenu.classList.contains('open')) closeMore(); else openMore();
     }
   });
+  const camGroupsEl = $('camGroups');
+  if (camGroupsEl) {
+    camGroupsEl.addEventListener('click', (e) => {
+      const chip = e.target.closest('.chip[data-cam]');
+      if (!chip) return;
+      camGroup = chip.dataset.cam || '';
+      apply();
+    });
+  }
   document.addEventListener('click', (e) => { if (!filtersMore.contains(e.target)) closeMore(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMore(); });
   addEventListener('resize', () => { layoutFilters(); });
@@ -879,6 +964,7 @@ html{transition:background-color .3s}
   $('q').addEventListener('blur', () => { setTimeout(syncSearch, 0); });
   $('sort').addEventListener('change', (e) => { sort = e.target.value; apply(); });
   syncSearch();
+  syncChips();
   requestAnimationFrame(layoutFilters);
 
   apply();

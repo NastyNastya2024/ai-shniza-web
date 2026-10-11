@@ -1,0 +1,225 @@
+{
+  "alibaba/wan-3.0": {
+    "status": 404,
+    "url": "https://replicate.com/alibaba/wan-3.0",
+    "snips": []
+  },
+  "alibaba/wan-3": {
+    "status": 404,
+    "url": "https://replicate.com/alibaba/wan-3.0",
+    "snips": []
+  },
+  "xai/grok-imagine-video-1.5": {
+    "status": 200,
+    "url": "https://replicate.com/xai/grok-imagine-video-1.5",
+    "snips": [
+      "around 12 seconds for $1\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second o"
+    ]
+  },
+  "google/veo-3.1-fast": {
+    "status": 200,
+    "url": "https://replicate.com/google/veo-3.1-fast",
+    "snips": [
+      "around 66 seconds for $10\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second",
+      "or 10 seconds for $1\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second o"
+    ]
+  },
+  "minimax/hailuo-02": {
+    "status": 200,
+    "url": "https://replicate.com/minimax/hailuo-02",
+    "snips": [
+      "or 10 videos for $1\", \"metric\": \"video_output_count\", \"metric_display\": \"output video\", \"pri",
+      "around 66 videos for $10\", \"metric\": \"video_output_count\", \"metric_display\": \"output video\", \"pr",
+      "around 37 videos for $10\", \"metric\": \"video_output_count\", \"metric_display\": \"output video\", \"pr",
+      "around 22 videos for $10\", \"metric\": \"video_output_count\", \"metric_display\": \"output video\", \"pr"
+    ]
+  },
+  "google/veo-3.1": {
+    "status": 200,
+    "url": "https://replicate.com/google/veo-3.1",
+    "snips": [
+      "or 25 seconds for $10\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second",
+      "or 50 seconds for $10\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second"
+    ]
+  },
+  "bytedance/seedance-2.5": {
+    "status": 200,
+    "url": "https://replicate.com/bytedance/seedance-2.5",
+    "snips": [
+      "around 97 seconds for $10\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second",
+      "around 23 seconds for $10\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second",
+      "around 43 seconds for $10\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second",
+      "around 10 seconds for $10\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second"
+    ]
+  },
+  "runwayml/gen4-turbo": {
+    "status": 200,
+    "url": "https://replicate.com/runwayml/gen4-turbo",
+    "snips": [
+      "or 20 seconds for $1\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second o"
+    ]
+  },
+  "kwaivgi/kling-v2.5-turbo-pro": {
+    "status": 200,
+    "url": "https://replicate.com/kwaivgi/kling-v2.5-turbo-pro",
+    "snips": [
+      "around 14 seconds for $1\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second o"
+    ]
+  },
+  "prunaai/p-video": {
+    "status": 200,
+    "url": "https://replicate.com/prunaai/p-video",
+    "snips": [
+      "or 50 seconds for $1\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second o",
+      "or 25 seconds for $1\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second o",
+      "or 100 seconds for $1\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second o"
+    ]
+  },
+  "openai/gpt-image-2": {
+    "status": 200,
+    "url": "https://replicate.com/openai/gpt-image-2",
+    "snips": [
+      "around 78 images for $10\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pr",
+      "around 83 images for $1\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pri",
+      "around 21 images for $1\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pri"
+    ]
+  },
+  "google/nano-banana-2": {
+    "status": 200,
+    "url": "https://replicate.com/google/nano-banana-2",
+    "snips": [
+      "around 14 images for $1\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pri",
+      "around 99 images for $10\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pr",
+      "around 66 images for $10\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pr"
+    ]
+  },
+  "pixverse/pixverse-v6": {
+    "status": 200,
+    "url": "https://replicate.com/pixverse/pixverse-v6",
+    "snips": [
+      "or 20 seconds for $1\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second o",
+      "around 14 seconds for $1\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second o",
+      "around 11 seconds for $1\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second o"
+    ]
+  },
+  "ideogram-ai/ideogram-v3-turbo": {
+    "status": 200,
+    "url": "https://replicate.com/ideogram-ai/ideogram-v3-turbo",
+    "snips": [
+      "around 33 images for $1\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pri"
+    ]
+  },
+  "google/nano-banana-pro": {
+    "status": 200,
+    "url": "https://replicate.com/google/nano-banana-pro",
+    "snips": [
+      "around 66 images for $10\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pr",
+      "around 33 images for $10\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pr",
+      "around 28 images for $1\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pri"
+    ]
+  },
+  "minimax/h3": {
+    "status": 200,
+    "url": "https://replicate.com/minimax/h3",
+    "snips": [
+      "around 12 seconds for $1\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second o",
+      "around 76 seconds for $10\", \"metric\": \"video_output_duration_seconds\", \"metric_display\": \"second"
+    ]
+  },
+  "openai/gpt-image-2.5-flare": {
+    "status": 200,
+    "url": "https://replicate.com/openai/gpt-image-2.5-flare",
+    "snips": [
+      "or 40 images for $10\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pr",
+      "around 83 images for $1\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pri",
+      "around 21 images for $1\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pri",
+      "around 78 images for $10\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pr"
+    ]
+  },
+  "openai/gpt-image-2.5-sunburst": {
+    "status": 200,
+    "url": "https://replicate.com/openai/gpt-image-2.5-sunburst",
+    "snips": [
+      "or 40 images for $10\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pr",
+      "around 83 images for $1\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pri",
+      "around 21 images for $1\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pri",
+      "around 78 images for $10\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pr"
+    ]
+  },
+  "bytedance/seedream-5-pro": {
+    "status": 200,
+    "url": "https://replicate.com/bytedance/seedream-5-pro",
+    "snips": [
+      "around 22 images for $1\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pri",
+      "around 11 images for $1\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pri",
+      "around 44 images for $1\", \"metric\": \"image_output_count\", \"metric_display\": \"output image\", \"pri"
+    ]
+  },
+  "lucataco/ace-step": {
+    "status": 200,
+    "url": "https://replicate.com/lucataco/ace-step",
+    "snips": [
+      "This model costs approximately $0",
+      "or 55 runs per $1, but this varies depending on your inputs"
+    ]
+  },
+  "stability-ai/stable-audio-2.5": {
+    "status": 200,
+    "url": "https://replicate.com/stability-ai/stable-audio-2.5",
+    "snips": []
+  },
+  "deepseek-ai/deepseek-v3": {
+    "status": 200,
+    "url": "https://replicate.com/deepseek-ai/deepseek-v3",
+    "snips": []
+  },
+  "deepseek-ai/deepseek-v3.1": {
+    "status": 200,
+    "url": "https://replicate.com/deepseek-ai/deepseek-v3.1",
+    "snips": []
+  },
+  "elevenlabs/music": {
+    "status": 200,
+    "url": "https://replicate.com/elevenlabs/music",
+    "snips": [
+      "around 120 seconds for $1\", \"metric\": \"audio_output_duration_seconds\", \"metric_display\": \"second o"
+    ]
+  },
+  "anthropic/claude-sonnet-5": {
+    "status": 200,
+    "url": "https://replicate.com/anthropic/claude-sonnet-5",
+    "snips": []
+  },
+  "anthropic/claude-4.5-haiku": {
+    "status": 200,
+    "url": "https://replicate.com/anthropic/claude-4.5-haiku",
+    "snips": [
+      "DESC:Claude Haiku 4.5 gives you similar levels of coding performance but at one-third the cost and more than twice the speed"
+    ]
+  },
+  "anthropic/claude-opus-4.7": {
+    "status": 200,
+    "url": "https://replicate.com/anthropic/claude-opus-4.7",
+    "snips": []
+  },
+  "google/gemini-3.5-flash": {
+    "status": 200,
+    "url": "https://replicate.com/google/gemini-3.5-flash",
+    "snips": []
+  },
+  "google/gemini-3.1-pro": {
+    "status": 200,
+    "url": "https://replicate.com/google/gemini-3.1-pro",
+    "snips": []
+  },
+  "openai/gpt-5.6-sol": {
+    "status": 200,
+    "url": "https://replicate.com/openai/gpt-5.6-sol",
+    "snips": []
+  },
+  "openai/gpt-5.4": {
+    "status": 200,
+    "url": "https://replicate.com/openai/gpt-5.4",
+    "snips": []
+  }
+}

@@ -1,0 +1,1441 @@
+{
+  "wan-3-0": {
+    "url": "https://replicate.com/alibaba/wan-3",
+    "headline": [
+      "$0.025 per second of output video",
+      "$0.05 per second of output video",
+      "$0.1 per second of output video"
+    ],
+    "units": [
+      {
+        "price": 0.025,
+        "title": "per second of output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.05,
+        "title": "per second of output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.1,
+        "title": "per second of output video",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.025,
+        "n": 40.0,
+        "dollars": 1.0,
+        "unit": "seconds",
+        "kind": "derived"
+      },
+      {
+        "per": 0.05,
+        "n": 20.0,
+        "dollars": 1.0,
+        "unit": "seconds",
+        "kind": "derived"
+      },
+      {
+        "per": 0.1,
+        "n": 10.0,
+        "dollars": 1.0,
+        "unit": "seconds",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.020",
+        "kind": "hw"
+      }
+    ]
+  },
+  "grok-imagine-video-1-5": {
+    "url": "https://replicate.com/xai/grok-imagine-video-1.5",
+    "headline": [
+      "$0.08 per second of output video"
+    ],
+    "units": [
+      {
+        "price": 0.08,
+        "title": "per second of output video",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.08333333333333333,
+        "n": 12.0,
+        "dollars": 1.0,
+        "unit": "seconds",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.0037",
+        "kind": "hw"
+      }
+    ]
+  },
+  "gen4-turbo": {
+    "url": "https://replicate.com/runwayml/gen4-turbo",
+    "headline": [
+      "$0.05 per second of output video"
+    ],
+    "units": [
+      {
+        "price": 0.05,
+        "title": "per second of output video",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.05,
+        "n": 20.0,
+        "dollars": 1.0,
+        "unit": "seconds",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.0025",
+        "kind": "hw"
+      }
+    ]
+  },
+  "veo-3-1": {
+    "url": "https://replicate.com/google/veo-3.1",
+    "headline": [
+      "$0.4 per second of output video",
+      "$0.2 per second of output video"
+    ],
+    "units": [
+      {
+        "price": 0.4,
+        "title": "per second of output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.2,
+        "title": "per second of output video",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.4,
+        "n": 25.0,
+        "dollars": 10.0,
+        "unit": "seconds",
+        "kind": "derived"
+      },
+      {
+        "per": 0.2,
+        "n": 50.0,
+        "dollars": 10.0,
+        "unit": "seconds",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.010",
+        "kind": "hw"
+      }
+    ]
+  },
+  "veo-3-1-fast": {
+    "url": "https://replicate.com/google/veo-3.1-fast",
+    "headline": [
+      "$0.15 per second of output video",
+      "$0.1 per second of output video"
+    ],
+    "units": [
+      {
+        "price": 0.15,
+        "title": "per second of output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.1,
+        "title": "per second of output video",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.15151515151515152,
+        "n": 66.0,
+        "dollars": 10.0,
+        "unit": "seconds",
+        "kind": "derived"
+      },
+      {
+        "per": 0.1,
+        "n": 10.0,
+        "dollars": 1.0,
+        "unit": "seconds",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.0098",
+        "kind": "hw"
+      }
+    ]
+  },
+  "hailuo-02": {
+    "url": "https://replicate.com/minimax/hailuo-02",
+    "headline": [
+      "$0.1 per output video",
+      "$0.15 per output video",
+      "$0.27 per output video",
+      "$0.45 per output video",
+      "$0.48 per output video"
+    ],
+    "units": [
+      {
+        "price": 0.1,
+        "title": "per output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.15,
+        "title": "per output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.27,
+        "title": "per output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.45,
+        "title": "per output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.48,
+        "title": "per output video",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.1,
+        "n": 10.0,
+        "dollars": 1.0,
+        "unit": "videos",
+        "kind": "derived"
+      },
+      {
+        "per": 0.15151515151515152,
+        "n": 66.0,
+        "dollars": 10.0,
+        "unit": "videos",
+        "kind": "derived"
+      },
+      {
+        "per": 0.2702702702702703,
+        "n": 37.0,
+        "dollars": 10.0,
+        "unit": "videos",
+        "kind": "derived"
+      },
+      {
+        "per": 0.45454545454545453,
+        "n": 22.0,
+        "dollars": 10.0,
+        "unit": "videos",
+        "kind": "derived"
+      },
+      {
+        "per": 0.5,
+        "n": 20.0,
+        "dollars": 10.0,
+        "unit": "videos",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.0097",
+        "kind": "hw"
+      }
+    ]
+  },
+  "minimax-h3": {
+    "url": "https://replicate.com/minimax/h3",
+    "headline": [
+      "$0.08 per second of output video",
+      "$0.13 per second of output video"
+    ],
+    "units": [
+      {
+        "price": 0.08,
+        "title": "per second of output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.13,
+        "title": "per second of output video",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.08333333333333333,
+        "n": 12.0,
+        "dollars": 1.0,
+        "unit": "seconds",
+        "kind": "derived"
+      },
+      {
+        "per": 0.13157894736842105,
+        "n": 76.0,
+        "dollars": 10.0,
+        "unit": "seconds",
+        "kind": "derived"
+      }
+    ],
+    "hw": []
+  },
+  "seedance-2-5": {
+    "url": "https://replicate.com/bytedance/seedance-2.5",
+    "headline": [
+      "$0.1028 per second of output video",
+      "$0.4304 per second of output video",
+      "$0.2312 per second of output video",
+      "$0.9676 per second of output video"
+    ],
+    "units": [
+      {
+        "price": 0.1028,
+        "title": "per second of output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.4304,
+        "title": "per second of output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.2312,
+        "title": "per second of output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.9676,
+        "title": "per second of output video",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.10309278350515463,
+        "n": 97.0,
+        "dollars": 10.0,
+        "unit": "seconds",
+        "kind": "derived"
+      },
+      {
+        "per": 0.43478260869565216,
+        "n": 23.0,
+        "dollars": 10.0,
+        "unit": "seconds",
+        "kind": "derived"
+      },
+      {
+        "per": 0.23255813953488372,
+        "n": 43.0,
+        "dollars": 10.0,
+        "unit": "seconds",
+        "kind": "derived"
+      },
+      {
+        "per": 1.0,
+        "n": 10.0,
+        "dollars": 10.0,
+        "unit": "seconds",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.023",
+        "kind": "hw"
+      }
+    ]
+  },
+  "pixverse-v6": {
+    "url": "https://replicate.com/pixverse/pixverse-v6",
+    "headline": [
+      "$0.05 per second of output video",
+      "$0.07 per second of output video",
+      "$0.09 per second of output video",
+      "$0.12 per second of output video",
+      "$0.18 per second of output video",
+      "$0.23 per second of output video"
+    ],
+    "units": [
+      {
+        "price": 0.05,
+        "title": "per second of output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.07,
+        "title": "per second of output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.09,
+        "title": "per second of output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.12,
+        "title": "per second of output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.18,
+        "title": "per second of output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.23,
+        "title": "per second of output video",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.05,
+        "n": 20.0,
+        "dollars": 1.0,
+        "unit": "seconds",
+        "kind": "derived"
+      },
+      {
+        "per": 0.07142857142857142,
+        "n": 14.0,
+        "dollars": 1.0,
+        "unit": "seconds",
+        "kind": "derived"
+      },
+      {
+        "per": 0.09090909090909091,
+        "n": 11.0,
+        "dollars": 1.0,
+        "unit": "seconds",
+        "kind": "derived"
+      },
+      {
+        "per": 0.12048192771084337,
+        "n": 83.0,
+        "dollars": 10.0,
+        "unit": "seconds",
+        "kind": "derived"
+      },
+      {
+        "per": 0.18181818181818182,
+        "n": 55.0,
+        "dollars": 10.0,
+        "unit": "seconds",
+        "kind": "derived"
+      },
+      {
+        "per": 0.23255813953488372,
+        "n": 43.0,
+        "dollars": 10.0,
+        "unit": "seconds",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.0087",
+        "kind": "hw"
+      }
+    ]
+  },
+  "kling-v2-5-turbo-pro": {
+    "url": "https://replicate.com/kwaivgi/kling-v2.5-turbo-pro",
+    "headline": [
+      "$0.07 per second of output video"
+    ],
+    "units": [
+      {
+        "price": 0.07,
+        "title": "per second of output video",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.07142857142857142,
+        "n": 14.0,
+        "dollars": 1.0,
+        "unit": "seconds",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.015",
+        "kind": "hw"
+      }
+    ]
+  },
+  "p-video": {
+    "url": "https://replicate.com/prunaai/p-video",
+    "headline": [
+      "$0.02 per second of output video",
+      "$0.005 per second of output video",
+      "$0.04 per second of output video",
+      "$0.01 per second of output video"
+    ],
+    "units": [
+      {
+        "price": 0.02,
+        "title": "per second of output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.005,
+        "title": "per second of output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.04,
+        "title": "per second of output video",
+        "kind": "unit"
+      },
+      {
+        "price": 0.01,
+        "title": "per second of output video",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.02,
+        "n": 50.0,
+        "dollars": 1.0,
+        "unit": "seconds",
+        "kind": "derived"
+      },
+      {
+        "per": 0.04,
+        "n": 25.0,
+        "dollars": 1.0,
+        "unit": "seconds",
+        "kind": "derived"
+      },
+      {
+        "per": 0.01,
+        "n": 100.0,
+        "dollars": 1.0,
+        "unit": "seconds",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.001525 per second",
+        "p50": "$0.019",
+        "kind": "hw"
+      }
+    ]
+  },
+  "nano-banana-pro": {
+    "url": "https://replicate.com/google/nano-banana-pro",
+    "headline": [
+      "$0.15 per output image",
+      "$0.3 per output image",
+      "$0.035 per output image"
+    ],
+    "units": [
+      {
+        "price": 0.15,
+        "title": "per output image",
+        "kind": "unit"
+      },
+      {
+        "price": 0.3,
+        "title": "per output image",
+        "kind": "unit"
+      },
+      {
+        "price": 0.035,
+        "title": "per output image",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.15151515151515152,
+        "n": 66.0,
+        "dollars": 10.0,
+        "unit": "images",
+        "kind": "derived"
+      },
+      {
+        "per": 0.30303030303030304,
+        "n": 33.0,
+        "dollars": 10.0,
+        "unit": "images",
+        "kind": "derived"
+      },
+      {
+        "per": 0.03571428571428571,
+        "n": 28.0,
+        "dollars": 1.0,
+        "unit": "images",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.0024",
+        "kind": "hw"
+      }
+    ]
+  },
+  "nano-banana-2": {
+    "url": "https://replicate.com/google/nano-banana-2",
+    "headline": [
+      "$0.067 per output image",
+      "$0.101 per output image",
+      "$0.151 per output image"
+    ],
+    "units": [
+      {
+        "price": 0.067,
+        "title": "per output image",
+        "kind": "unit"
+      },
+      {
+        "price": 0.101,
+        "title": "per output image",
+        "kind": "unit"
+      },
+      {
+        "price": 0.151,
+        "title": "per output image",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.07142857142857142,
+        "n": 14.0,
+        "dollars": 1.0,
+        "unit": "images",
+        "kind": "derived"
+      },
+      {
+        "per": 0.10101010101010101,
+        "n": 99.0,
+        "dollars": 10.0,
+        "unit": "images",
+        "kind": "derived"
+      },
+      {
+        "per": 0.15151515151515152,
+        "n": 66.0,
+        "dollars": 10.0,
+        "unit": "images",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.0011",
+        "kind": "hw"
+      }
+    ]
+  },
+  "gpt-image-2": {
+    "url": "https://replicate.com/openai/gpt-image-2",
+    "headline": [
+      "$0.128 per output image",
+      "$0.012 per output image",
+      "$0.047 per output image"
+    ],
+    "units": [
+      {
+        "price": 0.128,
+        "title": "per output image",
+        "kind": "unit"
+      },
+      {
+        "price": 0.012,
+        "title": "per output image",
+        "kind": "unit"
+      },
+      {
+        "price": 0.047,
+        "title": "per output image",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.1282051282051282,
+        "n": 78.0,
+        "dollars": 10.0,
+        "unit": "images",
+        "kind": "derived"
+      },
+      {
+        "per": 0.012048192771084338,
+        "n": 83.0,
+        "dollars": 1.0,
+        "unit": "images",
+        "kind": "derived"
+      },
+      {
+        "per": 0.047619047619047616,
+        "n": 21.0,
+        "dollars": 1.0,
+        "unit": "images",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.0015",
+        "kind": "hw"
+      }
+    ]
+  },
+  "gpt-image-2-5-flare": {
+    "url": "https://replicate.com/openai/gpt-image-2.5-flare",
+    "headline": [
+      "$0.25 per output image",
+      "$0.012 per output image",
+      "$0.047 per output image",
+      "$0.128 per output image",
+      "$0.5 per output image"
+    ],
+    "units": [
+      {
+        "price": 0.25,
+        "title": "per output image",
+        "kind": "unit"
+      },
+      {
+        "price": 0.012,
+        "title": "per output image",
+        "kind": "unit"
+      },
+      {
+        "price": 0.047,
+        "title": "per output image",
+        "kind": "unit"
+      },
+      {
+        "price": 0.128,
+        "title": "per output image",
+        "kind": "unit"
+      },
+      {
+        "price": 0.5,
+        "title": "per output image",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.25,
+        "n": 40.0,
+        "dollars": 10.0,
+        "unit": "images",
+        "kind": "derived"
+      },
+      {
+        "per": 0.012048192771084338,
+        "n": 83.0,
+        "dollars": 1.0,
+        "unit": "images",
+        "kind": "derived"
+      },
+      {
+        "per": 0.047619047619047616,
+        "n": 21.0,
+        "dollars": 1.0,
+        "unit": "images",
+        "kind": "derived"
+      },
+      {
+        "per": 0.1282051282051282,
+        "n": 78.0,
+        "dollars": 10.0,
+        "unit": "images",
+        "kind": "derived"
+      },
+      {
+        "per": 0.5,
+        "n": 20.0,
+        "dollars": 10.0,
+        "unit": "images",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.0011",
+        "kind": "hw"
+      }
+    ]
+  },
+  "gpt-image-2-5-sunburst": {
+    "url": "https://replicate.com/openai/gpt-image-2.5-sunburst",
+    "headline": [
+      "$0.25 per output image",
+      "$0.012 per output image",
+      "$0.047 per output image",
+      "$0.128 per output image",
+      "$0.5 per output image"
+    ],
+    "units": [
+      {
+        "price": 0.25,
+        "title": "per output image",
+        "kind": "unit"
+      },
+      {
+        "price": 0.012,
+        "title": "per output image",
+        "kind": "unit"
+      },
+      {
+        "price": 0.047,
+        "title": "per output image",
+        "kind": "unit"
+      },
+      {
+        "price": 0.128,
+        "title": "per output image",
+        "kind": "unit"
+      },
+      {
+        "price": 0.5,
+        "title": "per output image",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.25,
+        "n": 40.0,
+        "dollars": 10.0,
+        "unit": "images",
+        "kind": "derived"
+      },
+      {
+        "per": 0.012048192771084338,
+        "n": 83.0,
+        "dollars": 1.0,
+        "unit": "images",
+        "kind": "derived"
+      },
+      {
+        "per": 0.047619047619047616,
+        "n": 21.0,
+        "dollars": 1.0,
+        "unit": "images",
+        "kind": "derived"
+      },
+      {
+        "per": 0.1282051282051282,
+        "n": 78.0,
+        "dollars": 10.0,
+        "unit": "images",
+        "kind": "derived"
+      },
+      {
+        "per": 0.5,
+        "n": 20.0,
+        "dollars": 10.0,
+        "unit": "images",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.0023",
+        "kind": "hw"
+      }
+    ]
+  },
+  "ideogram-v3-turbo": {
+    "url": "https://replicate.com/ideogram-ai/ideogram-v3-turbo",
+    "headline": [
+      "$0.03 per output image"
+    ],
+    "units": [
+      {
+        "price": 0.03,
+        "title": "per output image",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.030303030303030304,
+        "n": 33.0,
+        "dollars": 1.0,
+        "unit": "images",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.00064",
+        "kind": "hw"
+      }
+    ]
+  },
+  "seedream-5-pro": {
+    "url": "https://replicate.com/bytedance/seedream-5-pro",
+    "headline": [
+      "$0.045 per output image",
+      "$0.09 per output image",
+      "$0.0225 per output image"
+    ],
+    "units": [
+      {
+        "price": 0.045,
+        "title": "per output image",
+        "kind": "unit"
+      },
+      {
+        "price": 0.09,
+        "title": "per output image",
+        "kind": "unit"
+      },
+      {
+        "price": 0.0225,
+        "title": "per output image",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.045454545454545456,
+        "n": 22.0,
+        "dollars": 1.0,
+        "unit": "images",
+        "kind": "derived"
+      },
+      {
+        "per": 0.09090909090909091,
+        "n": 11.0,
+        "dollars": 1.0,
+        "unit": "images",
+        "kind": "derived"
+      },
+      {
+        "per": 0.022727272727272728,
+        "n": 44.0,
+        "dollars": 1.0,
+        "unit": "images",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.0070",
+        "kind": "hw"
+      }
+    ]
+  },
+  "elevenlabs-music": {
+    "url": "https://replicate.com/elevenlabs/music",
+    "headline": [
+      "$8.3 per thousand seconds of output audio"
+    ],
+    "units": [
+      {
+        "price": 8.3,
+        "title": "per thousand seconds of output audio",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 0.008333333333333333,
+        "n": 120.0,
+        "dollars": 1.0,
+        "unit": "seconds",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.00091",
+        "kind": "hw"
+      }
+    ]
+  },
+  "stable-audio-2-5": {
+    "url": "https://replicate.com/stability-ai/stable-audio-2.5",
+    "headline": [
+      "$0.2 per output audio file"
+    ],
+    "units": [
+      {
+        "price": 0.2,
+        "title": "per output audio file",
+        "kind": "unit"
+      }
+    ],
+    "derived": [],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.00035",
+        "kind": "hw"
+      }
+    ]
+  },
+  "ace-step": {
+    "url": "https://replicate.com/lucataco/ace-step",
+    "headline": [
+      "$0.000975 per second (p50 $0.018)"
+    ],
+    "units": [],
+    "derived": [],
+    "hw": [
+      {
+        "price_str": "$0.000975 per second",
+        "p50": "$0.018",
+        "kind": "hw"
+      }
+    ]
+  },
+  "deepseek-v3": {
+    "url": "https://replicate.com/deepseek-ai/deepseek-v3",
+    "headline": [
+      "$1.45 per million output tokens",
+      "$1.45 per million input tokens"
+    ],
+    "units": [
+      {
+        "price": 1.45,
+        "title": "per million output tokens",
+        "kind": "unit"
+      },
+      {
+        "price": 1.45,
+        "title": "per million input tokens",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 1.4500003625000907e-06,
+        "n": 689655.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.000025 per second",
+        "p50": "$0.00058",
+        "kind": "hw"
+      }
+    ]
+  },
+  "deepseek-v3-1": {
+    "url": "https://replicate.com/deepseek-ai/deepseek-v3.1",
+    "headline": [
+      "$0.672 per million input tokens",
+      "$2.016 per million output tokens"
+    ],
+    "units": [
+      {
+        "price": 0.672,
+        "title": "per million input tokens",
+        "kind": "unit"
+      },
+      {
+        "price": 2.016,
+        "title": "per million output tokens",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 6.720001075200172e-07,
+        "n": 1488095.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      },
+      {
+        "per": 2.0160030320685604e-06,
+        "n": 496031.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.0022",
+        "kind": "hw"
+      }
+    ]
+  },
+  "claude-sonnet-5": {
+    "url": "https://replicate.com/anthropic/claude-sonnet-5",
+    "headline": [
+      "$2.0 per million input tokens",
+      "$0.01 per thousand output tokens"
+    ],
+    "units": [
+      {
+        "price": 2.0,
+        "title": "per million input tokens",
+        "kind": "unit"
+      },
+      {
+        "price": 0.01,
+        "title": "per thousand output tokens",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 2e-06,
+        "n": 500000.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      },
+      {
+        "per": 1e-05,
+        "n": 100000.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.00024",
+        "kind": "hw"
+      }
+    ]
+  },
+  "claude-4-5-haiku": {
+    "url": "https://replicate.com/anthropic/claude-4.5-haiku",
+    "headline": [
+      "$5.0 per million output tokens",
+      "$1.0 per million input tokens"
+    ],
+    "units": [
+      {
+        "price": 5.0,
+        "title": "per million output tokens",
+        "kind": "unit"
+      },
+      {
+        "price": 1.0,
+        "title": "per million input tokens",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 5e-06,
+        "n": 200000.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      },
+      {
+        "per": 1e-06,
+        "n": 1000000.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.00028",
+        "kind": "hw"
+      }
+    ]
+  },
+  "gemini-3-5-flash": {
+    "url": "https://replicate.com/google/gemini-3.5-flash",
+    "headline": [
+      "$1.5 per million input tokens",
+      "$9.0 per million output tokens"
+    ],
+    "units": [
+      {
+        "price": 1.5,
+        "title": "per million input tokens",
+        "kind": "unit"
+      },
+      {
+        "price": 9.0,
+        "title": "per million output tokens",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 1.5000015000015e-06,
+        "n": 666666.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      },
+      {
+        "per": 9.000009000009e-06,
+        "n": 111111.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.00058",
+        "kind": "hw"
+      }
+    ]
+  },
+  "gemini-3-1-pro": {
+    "url": "https://replicate.com/google/gemini-3.1-pro",
+    "headline": [
+      "$2.0 per million input tokens",
+      "$0.012 per thousand output tokens",
+      "$4.0 per million input tokens",
+      "$0.018 per thousand output tokens"
+    ],
+    "units": [
+      {
+        "price": 2.0,
+        "title": "per million input tokens",
+        "kind": "unit"
+      },
+      {
+        "price": 0.012,
+        "title": "per thousand output tokens",
+        "kind": "unit"
+      },
+      {
+        "price": 4.0,
+        "title": "per million input tokens",
+        "kind": "unit"
+      },
+      {
+        "price": 0.018,
+        "title": "per thousand output tokens",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 2e-06,
+        "n": 500000.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      },
+      {
+        "per": 1.2000048000192e-05,
+        "n": 83333.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      },
+      {
+        "per": 4e-06,
+        "n": 250000.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      },
+      {
+        "per": 1.800018000180002e-05,
+        "n": 55555.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.0019",
+        "kind": "hw"
+      }
+    ]
+  },
+  "claude-opus-4-7": {
+    "url": "https://replicate.com/anthropic/claude-opus-4.7",
+    "headline": [
+      "$5.0 per million input tokens",
+      "$0.025 per thousand output tokens"
+    ],
+    "units": [
+      {
+        "price": 5.0,
+        "title": "per million input tokens",
+        "kind": "unit"
+      },
+      {
+        "price": 0.025,
+        "title": "per thousand output tokens",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 5e-06,
+        "n": 200000.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      },
+      {
+        "per": 2.5e-05,
+        "n": 40000.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.00028",
+        "kind": "hw"
+      }
+    ]
+  },
+  "gpt-5-4": {
+    "url": "https://replicate.com/openai/gpt-5.4",
+    "headline": [
+      "$2.5 per million input tokens",
+      "$0.015 per thousand output tokens"
+    ],
+    "units": [
+      {
+        "price": 2.5,
+        "title": "per million input tokens",
+        "kind": "unit"
+      },
+      {
+        "price": 0.015,
+        "title": "per thousand output tokens",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 2.5e-06,
+        "n": 400000.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      },
+      {
+        "per": 1.5000150001500015e-05,
+        "n": 66666.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.00031",
+        "kind": "hw"
+      }
+    ]
+  },
+  "gpt-5-6-sol": {
+    "url": "https://replicate.com/openai/gpt-5.6-sol",
+    "headline": [
+      "$2.0 per million input tokens",
+      "$0.01 per thousand output tokens"
+    ],
+    "units": [
+      {
+        "price": 2.0,
+        "title": "per million input tokens",
+        "kind": "unit"
+      },
+      {
+        "price": 0.01,
+        "title": "per thousand output tokens",
+        "kind": "unit"
+      }
+    ],
+    "derived": [
+      {
+        "per": 2e-06,
+        "n": 500000.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      },
+      {
+        "per": 1e-05,
+        "n": 100000.0,
+        "dollars": 1.0,
+        "unit": "tokens",
+        "kind": "derived"
+      }
+    ],
+    "hw": [
+      {
+        "price_str": "$0.0001 per second",
+        "p50": "$0.00047",
+        "kind": "hw"
+      }
+    ]
+  }
+}
