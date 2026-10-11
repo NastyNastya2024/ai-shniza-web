@@ -29,12 +29,17 @@ def _dispatch_one(r, payload: dict) -> bool:
         return False
     allow_stub = (os.getenv("ALLOW_STUB_GEN") or "1").strip().lower() in {"1", "true", "yes"}
     omni_model = os.getenv("FREE_VIDEO_MODEL") or "veo-free/seedance"
+    studio_id = os.getenv("FREE_VIDEO_STUDIO_ID") or "veo-free-seedance"
     try:
+        if not free_quota.can_dispatch(r):
+            # час исчерпан — вернём в очередь и подождём следующего окна
+            free_quota.enqueue_free(r, payload, int(payload.get("score") or 0))
+            return False
         set_job(
             job_id,
             status="running",
             user_id=payload.get("user_id"),
-            model_key=payload.get("model_key"),
+            model_key=payload.get("model_key") or studio_id,
             prompt=payload.get("prompt"),
             is_free=True,
         )
@@ -57,9 +62,15 @@ def _dispatch_one(r, payload: dict) -> bool:
 
         inbound_id = enqueue_inbound(
             {
-                "model_id": omni_model,
+                "model_id": studio_id,
                 "provider": "omniroute",
+                "kind": "video",
+                "upstream_model": omni_model,
                 "prompt": payload.get("prompt") or "",
+                "input_payload": {
+                    "prompt": payload.get("prompt") or "",
+                    "duration": int((payload.get("params") or {}).get("duration_sec") or 5),
+                },
                 "user_id": payload.get("user_id"),
                 "price_kop": 0,
                 "billing_job_id": job_id,

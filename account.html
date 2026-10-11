@@ -110,6 +110,18 @@ html{scrollbar-gutter:stable}
 .p-side .hint-side{margin:0;font-size:12px;line-height:1.35;color:var(--muted2);font-weight:600;font-style:italic;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
 /* вкладки — в рамке, как раньше */
+.mode-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 16px;margin:0 0 4px;border-radius:18px;background:var(--violet-bg);border:1px solid rgba(91,53,224,.22);font-size:14px;font-weight:700;color:var(--violet-ink);box-sizing:border-box}
+.mode-bar .sp{flex:1}
+.seg2{display:flex;padding:3px;border-radius:999px;background:var(--field);border:1px solid var(--line)}
+.seg2 button{height:34px;padding:0 14px;border-radius:999px;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:13px;cursor:pointer}
+.seg2 button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+:root[data-theme=dark] .seg2 button[aria-pressed=true]{color:#1E1238}
+.wk-filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 14px}
+.wk-filters .tab{height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line2);background:var(--field);color:var(--muted);font-weight:800;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.wk-filters .tab small{font-size:12px;opacity:.85}
+.wk-filters .tab[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+:root[data-theme=dark] .wk-filters .tab[aria-selected=true]{color:#1E1238}
+.wk-filters .hint{margin:0 0 0 auto;font-size:12.5px;color:var(--muted2);font-weight:600}
 .tabs{display:flex;gap:4px;padding:5px;border-radius:999px;width:max-content;max-width:100%;overflow-x:auto;scrollbar-width:none;margin:14px 0 18px;background:var(--panel);border:1px solid var(--brd);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 24px 60px -40px var(--shadow);box-sizing:border-box;flex:0 0 auto}
 .tabs.glass{border-radius:999px}
 .tabs::-webkit-scrollbar{display:none}
@@ -297,6 +309,8 @@ body.is-chat .msgs{position:static;flex:1 1 0;min-height:0!important;height:auto
   .stats{gap:14px 18px;justify-content:center;margin-top:10px}
   .stats b{font-size:18px}
   .stats span{font-size:11.5px;justify-content:center}
+  .mode-bar{font-size:13px;padding:8px 12px}
+  .wk-filters .hint{display:none}
   .p-side{max-width:none;align-self:stretch}
   .p-side .btn{height:40px;padding:0 12px;font-size:13.5px}
   .p-side .hint-side{display:none}
@@ -328,6 +342,14 @@ body.is-chat .msgs{position:static;flex:1 1 0;min-height:0!important;height:auto
 </header>
 
 <div class="wrap">
+  <div class="mode-bar" id="modeBar" aria-label="Режим просмотра">
+    <span>Это ваш профиль</span>
+    <div class="seg2" role="group" aria-label="Режим просмотра">
+      <button type="button" id="mEdit" aria-pressed="true">Как вижу я</button>
+      <button type="button" id="mPublic" aria-pressed="false">Как видят другие</button>
+    </div>
+    <span class="sp"></span>
+  </div>
   <section class="glass prof" id="prof" aria-label="Профиль"></section>
     <div class="tabs glass" role="tablist" id="tabs"></div>
   <main class="main" id="view"></main>
@@ -435,7 +457,7 @@ if (!D) D = EMPTY();
 const saveLocal = () => { if (!DEMO) try { localStorage.setItem(KEY, JSON.stringify(D)); } catch (e) {} };
 let save = saveLocal;
 let LIVE = false;
-let tab = qs.get('tab') || 'settings', openThread = null, filter = 'all', pickAmt = 499, editing = null;
+let tab = qs.get('tab') || 'settings', openThread = null, filter = 'pub', pickAmt = 499, editing = null;
 
 /* ================= утилиты ================= */
 const rub = (n) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(n);
@@ -489,7 +511,6 @@ function renderSide() {
     + '<button class="btn btn-logout" type="button" data-act="logout">' + I.logout + 'Выйти</button>'
     + '<button class="btn btn-gen" data-act="assistant">' + I.spark + 'Заполнить с помощником</button>'
     + sideHint
-    + (u.nick ? '<a class="btn btn-g" href="/@' + encodeURIComponent(u.nick) + '">Как видят другие →</a>' : '')
     + '</div>';
 }
 
@@ -536,9 +557,22 @@ function expLeft(iso) {
 }
 function vWorks() {
   if (!D.works.length) return $('view').innerHTML = '<div class="glass empty"><div class="ill">' + I.img + '</div><h3>Здесь появятся ваши работы</h3><p>Создайте первую генерацию в студии и опубликуйте лучшее на витрине — клиенты смогут запросить у вас промпт, оригинал или заказать работу.</p><div class="btns"><a class="btn btn-gen" href="/app">' + I.spark + 'Создать первую работу</a><a class="btn btn-s" href="/explore">Посмотреть витрину</a></div><p class="hint">Совет: Seedance сейчас бесплатно — попробуйте видео со звуком.</p></div>';
-  const hasExp = D.works.some((w) => !w.pub && w.exp);
-  $('view').innerHTML = (hasExp ? '<p class="wk-ttl-note">Неопубликованные работы хранятся 24 часа, потом удаляются вместе с файлом. Опубликуйте на витрине — и работа останется в профиле.</p>' : '')
-    + '<div class="grid">' + D.works.map((w) => '<div class="wk"><img src="' + esc(w.src) + '" alt="' + esc(w.title) + '">' + (!w.pub && w.exp ? '<span class="wk-exp" title="Без публикации работа удалится">' + esc(expLeft(w.exp)) + '</span>' : '') + '<button type="button" class="st' + (w.pub ? '' : ' h') + '" data-pub="' + esc(String(w.id)) + '" aria-pressed="' + (w.pub ? 'true' : 'false') + '" title="' + (w.pub ? 'Скрыть с витрины' : 'Опубликовать на витрине') + '">' + (w.pub ? 'На витрине' : 'Скрыта') + '</button></div>').join('') + '</div>';
+  const nPub = D.works.filter((w) => w.pub).length;
+  const nHid = D.works.length - nPub;
+  if (filter !== 'pub' && filter !== 'hid') filter = 'pub';
+  const list = D.works.filter((w) => (filter === 'hid' ? !w.pub : w.pub));
+  const hasExp = list.some((w) => !w.pub && w.exp);
+  const filters = '<div class="wk-filters" role="tablist" aria-label="Фильтр работ">'
+    + '<button class="tab" type="button" role="tab" data-wfilter="pub" aria-selected="' + (filter === 'pub') + '">На витрине<small>' + nPub + '</small></button>'
+    + '<button class="tab" type="button" role="tab" data-wfilter="hid" aria-selected="' + (filter === 'hid') + '">Скрытые<small>' + nHid + '</small></button>'
+    + '<span class="hint">Нажмите «На витрине / Скрыта» на карточке, чтобы изменить</span></div>';
+  if (!list.length) {
+    $('view').innerHTML = filters + '<div class="glass empty"><div class="ill">' + I.img + '</div><h3>' + (filter === 'hid' ? 'Скрытых работ нет' : 'На витрине пока пусто') + '</h3><p>' + (filter === 'hid' ? 'Скрытые с витрины работы появятся здесь.' : 'Опубликуйте работу — она появится в публичном профиле.') + '</p></div>';
+    return;
+  }
+  $('view').innerHTML = filters
+    + (hasExp ? '<p class="wk-ttl-note">Неопубликованные работы хранятся 24 часа, потом удаляются вместе с файлом. Опубликуйте на витрине — и работа останется в профиле.</p>' : '')
+    + '<div class="grid">' + list.map((w) => '<div class="wk"><img src="' + esc(w.src) + '" alt="' + esc(w.title) + '">' + (!w.pub && w.exp ? '<span class="wk-exp" title="Без публикации работа удалится">' + esc(expLeft(w.exp)) + '</span>' : '') + '<button type="button" class="st' + (w.pub ? '' : ' h') + '" data-pub="' + esc(String(w.id)) + '" aria-pressed="' + (w.pub ? 'true' : 'false') + '" title="' + (w.pub ? 'Скрыть с витрины' : 'Опубликовать на витрине') + '">' + (w.pub ? 'На витрине' : 'Скрыта') + '</button></div>').join('') + '</div>';
 }
 async function toggleWorkPub(w, btn) {
   if (!w || w._busy) return;
@@ -766,6 +800,12 @@ document.addEventListener('click', (e) => {
     if (w) toggleWorkPub(w, pubBtn);
     return;
   }
+  const wf = e.target.closest('[data-wfilter]');
+  if (wf) {
+    filter = wf.dataset.wfilter === 'hid' ? 'hid' : 'pub';
+    if (tab === 'works') vWorks();
+    return;
+  }
   const g = e.target.closest('[data-go]'); if (g) { e.preventDefault(); syncForm(); if (g.dataset.go !== 'settings') editing = null; tab = g.dataset.go; if (tab !== 'messages') openThread = null; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   const a = e.target.closest('[data-act]'); const act = a && a.dataset.act;
   if (act === 'assistant') return openAssistant();
@@ -859,6 +899,20 @@ document.addEventListener('submit', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey && e.target.id === 'cIn') { e.preventDefault(); e.target.form.requestSubmit(); }
   if (e.key === 'Escape' && $('crop') && !$('crop').hidden) return closeCrop();
+});
+$('mEdit').addEventListener('click', () => {
+  $('mEdit').setAttribute('aria-pressed', 'true');
+  $('mPublic').setAttribute('aria-pressed', 'false');
+});
+$('mPublic').addEventListener('click', () => {
+  const nick = (D.user && D.user.nick) || '';
+  if (!nick) {
+    toast('Сначала укажите ник в профиле');
+    tab = 'settings';
+    render();
+    return;
+  }
+  location.href = '/@' + encodeURIComponent(nick);
 });
 $('themeBtn').addEventListener('click', () => { const n = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = n; try { localStorage.setItem('aish-vitrina-theme', n);localStorage.setItem('aish-theme', n);localStorage.setItem('theme', n); } catch (e) {} $('logo').src = '/assets/brand/svg/lockup-' + n + '.svg'; });
 if (document.documentElement.dataset.theme === 'dark') $('logo').src = '/assets/brand/svg/lockup-dark.svg';

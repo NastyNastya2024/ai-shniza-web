@@ -95,8 +95,9 @@ def price_rub_text_per_msg_approx(cost_in: float, cost_out: float, markup: float
 
 # Seed catalog (step 4). needs_verify → enabled False until owner confirms.
 PRICING_SEED: list[PricingRow] = [
-    PricingRow("veo-free/seedance", "omniroute", "veoaifree-web/seedance", "video", "per_item", 0, is_free=True, has_audio=False, description_ru="Бесплатное видео Seedance (очередь)", quality_score=40, family="free-video"),
-    PricingRow("veo-free/veo", "omniroute", "veoaifree-web/veo", "video", "per_item", 0, is_free=True, description_ru="Бесплатное видео VEO 3.1 (очередь)", quality_score=45, family="free-video"),
+    PricingRow("veo-free-seedance", "omniroute", "veo-free/seedance", "video", "per_item", 0, is_free=True, has_audio=False, description_ru="Бесплатное видео Seedance (OmniRoute · 6/час)", quality_score=40, family="free-video", version_label="Free"),
+    PricingRow("veo-free/seedance", "omniroute", "veo-free/seedance", "video", "per_item", 0, is_free=True, has_audio=False, enabled=False, description_ru="alias → veo-free-seedance", quality_score=40, family="free-video"),
+    PricingRow("veo-free/veo", "omniroute", "veo-free/veo", "video", "per_item", 0, is_free=True, enabled=False, description_ru="Бесплатное видео VEO 3.1 (очередь)", quality_score=45, family="free-video"),
     PricingRow("bytedance/seedance-1-pro-fast", "replicate", "bytedance/seedance-1-pro-fast", "video", "per_second", 0.025, needs_verify=True, enabled=False, description_ru="Seedance 1 Pro Fast", family="seedance", version_label="1 Pro Fast", quality_score=55),
     PricingRow("bytedance/seedance-1-lite", "replicate", "bytedance/seedance-1-lite", "video", "per_second", 0.036, needs_verify=True, enabled=False, description_ru="Seedance 1 Lite", family="seedance", version_label="1 Lite", quality_score=50),
     PricingRow("bytedance/seedance-2.0-mini", "replicate", "bytedance/seedance-2.0-mini", "video", "per_second", 0.05, needs_verify=True, enabled=False, has_audio=True, description_ru="Seedance 2.0 Mini со звуком", family="seedance", version_label="2.0 Mini", quality_score=70),

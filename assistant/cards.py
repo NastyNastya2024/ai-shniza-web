@@ -31,11 +31,20 @@ class Card:
     prompt_style: str
     avoid: str = ""
     defaults: dict[str, Any] = field(default_factory=dict)  # что сейчас ставит builder на сервере
+    # профиль промпта под модель (уточнить / структура / пример) — см. model_cards._prompt_profile
+    clarify: dict[str, list[str]] = field(default_factory=dict)   # {"ru": [...], "en": [...]}
+    structure: dict[str, str] = field(default_factory=dict)       # {"ru": "...", "en": "..."}
+    prompt_example: str = ""
     extra: dict[str, Any] = field(default_factory=dict)
 
     def text(self, key: str, lang: str) -> str:
         v = getattr(self, key)
         return (v.get(lang) or v.get("ru") or "") if isinstance(v, dict) else str(v)
+
+    def clarify_list(self, lang: str) -> list[str]:
+        L = "en" if lang == "en" else "ru"
+        raw = self.clarify.get(L) or self.clarify.get("ru") or []
+        return [str(x).strip() for x in raw if str(x).strip()]
 
     @property
     def needs_image(self) -> bool:
@@ -88,14 +97,22 @@ def validate(cards: Iterable[Card], integrated_ids: Iterable[str] | None = None)
                 raise CardError(f"{c.id}: default {name}={val!r} not in options")
         if not c.prompt_style:
             raise CardError(f"{c.id}: prompt_style is empty")
+        if c.clarify:
+            for L in ("ru", "en"):
+                qs = c.clarify.get(L)
+                if qs is not None and (not isinstance(qs, list) or not all(isinstance(x, str) and x.strip() for x in qs)):
+                    raise CardError(f"{c.id}: clarify.{L} must be a list of non-empty strings")
+        if c.structure:
+            if not isinstance(c.structure, dict) or not (c.structure.get("ru") or c.structure.get("en")):
+                raise CardError(f"{c.id}: structure needs ru or en text")
         if ids is not None and c.id not in ids:
             warnings.append(f"card {c.id} has no model in INTEGRATED_MODELS")
     return warnings
 
 
 def mini(card: Card, lang: str) -> dict[str, Any]:
-    """Сжатая карточка для LLM — только то, что нужно для промпта (экономия токенов)."""
-    return {
+    """Сжатая карточка для LLM при сборке промпта: style + structure + example (не clarify)."""
+    out: dict[str, Any] = {
         "id": card.id,
         "title": card.title,
         "strengths": card.text("strengths", "en"),
@@ -103,3 +120,9 @@ def mini(card: Card, lang: str) -> dict[str, Any]:
         "prompt_style": card.prompt_style,
         "avoid": card.avoid,
     }
+    structure = card.text("structure", "en") or card.text("structure", "ru")
+    if structure:
+        out["structure"] = structure
+    if card.prompt_example:
+        out["prompt_example"] = card.prompt_example[:700]
+    return out

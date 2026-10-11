@@ -18,7 +18,7 @@ PriceFn = Callable[[str], "str | None"]
 HealthFn = Callable[[str], bool]
 
 # Первая карточка в подборе по типу (если модель доступна и подходит).
-PIN_FIRST = {"video": "seedance-2-5", "text": "omni-auto-free"}
+PIN_FIRST = {"text": "omni-auto-free"}
 
 
 @dataclass

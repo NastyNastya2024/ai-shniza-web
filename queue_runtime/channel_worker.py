@@ -67,6 +67,7 @@ def _wait_seconds(model_id: str, kind: str) -> int:
         "wan-3-0-i2v-fal",
         "seedance-2-5",
         "seedance-2-5-hf",
+        "veo-free-seedance",
         "kling-v2-5-turbo-pro-hf",
         "kling-v3-0-hf",
         "veo-3-1-hf",
@@ -194,11 +195,17 @@ def _fail_from_result(job: dict[str, Any], channel: str, result: dict[str, Any])
 def _run_omniroute(job: dict[str, Any]) -> dict[str, Any]:
     import server as srv
 
-    wait = _wait_seconds(job["model_id"], job.get("kind") or "llm")
+    kind = job.get("kind") or "llm"
+    wait = _wait_seconds(job["model_id"], kind)
     upstream = job.get("upstream_model") or "auto/chat"
     payload = job.get("input_payload") or {}
+    if not payload and job.get("prompt"):
+        payload = {"prompt": job.get("prompt"), "duration": 5}
     set_job(job["id"], status="running", chosen_channel="omniroute", started_at=time.time())
-    result = srv._run_omniroute_prediction(upstream, payload, wait_seconds=wait)
+    if kind == "video" or "seedance" in str(upstream).lower() or str(job.get("model_id") or "").startswith("veo-free"):
+        result = srv._run_omniroute_video(upstream, payload, wait_seconds=wait)
+    else:
+        result = srv._run_omniroute_prediction(upstream, payload, wait_seconds=wait)
     if not result.get("ok"):
         return _fail_from_result(job, "omniroute", result)
     write_health("omniroute", True, "job_ok")

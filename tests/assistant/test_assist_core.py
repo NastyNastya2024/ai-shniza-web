@@ -12,15 +12,23 @@ from assistant.ui_help import HELP
 # ---------------- cards
 def test_cards_load_and_valid(cards):
     c, nb = cards
-    assert len(c) == 25
+    assert len(c) == 30
     assert validate(c.values()) == []
     assert all(k in nb for k in ("image", "edit", "music", "sfx", "video", "text"))
+    assert "veo-free-seedance" not in c
+    seed = c["seedance-2-5"]
+    assert seed.clarify_list("ru")
+    assert seed.text("structure", "ru")
+    assert seed.prompt_example
+    from assistant.cards import mini
+    m = mini(seed, "ru")
+    assert "structure" in m and "prompt_example" in m and "clarify" not in m
 
 
 def test_cards_warn_on_unknown_ids(cards):
     c, _ = cards
     warns = validate(c.values(), integrated_ids=["veo-3-1"])
-    assert len(warns) == 24
+    assert len(warns) == 29
 
 
 def test_card_validation_errors():
@@ -101,9 +109,6 @@ def test_recommend_at_least_two_each_kind(cards, price_fn):
         pick = recommend(c, kind, [], False, None, price_fn, nb)
         assert len(pick.cards) >= 2, kind
         assert len({x.id for x in pick.cards}) == len(pick.cards)
-    assert recommend(c, "video", [], False, None, price_fn, nb).cards[0].id == "seedance-2-5"
-
-
 def test_recommend_neighbors_mark_not_exact(cards, price_fn):
     c, nb = cards
     pick = recommend(c, "sfx", ["звуковые эффекты"], False, None, price_fn, nb)
@@ -114,10 +119,9 @@ def test_recommend_neighbors_mark_not_exact(cards, price_fn):
 def test_recommend_needs_tags(cards, price_fn):
     c, nb = cards
     assert recommend(c, "image", ["логотип", "типографика"], False, None, price_fn, nb).cards[0].id == "ideogram-v3-turbo"
-    # видео: Seedance всегда первой, даже если теги сильнее тянут к Veo
     pick = recommend(c, "video", ["кино", "речь"], False, None, price_fn, nb)
-    assert pick.cards[0].id == "seedance-2-5"
     assert "veo-3-1" in {x.id for x in pick.cards}
+    assert "veo-free-seedance" not in {x.id for x in pick.cards}
 
 
 def test_recommend_health_filter(cards, price_fn):
@@ -138,6 +142,7 @@ def test_recommend_image_modes(cards, price_fn):
 
 def test_recommend_adds_cheap_third(cards, price_fn):
     c, nb = cards
+    # среди трёх — самый дешёвый платный (p-video) третьим, если его ещё нет
     pick = recommend(c, "video", ["кино"], False, None, price_fn, nb)
     assert len(pick.cards) == 3 and pick.cards[2].id == "p-video"
 
@@ -162,9 +167,10 @@ def test_render_limits():
 
 
 def test_response_dedupes_and_caps_chips():
+    from assistant.render import MAX_CHIPS
     chips = [{"label": "a", "action": "more"}] * 3 + [{"label": str(i), "action": "pick_model", "value": i} for i in range(9)]
     r = response(["x"], chips)
-    assert len(r["chips"]) == 6 and [c["action"] for c in r["chips"]].count("more") == 1
+    assert len(r["chips"]) == MAX_CHIPS and [c["action"] for c in r["chips"]].count("more") == 1
 
 
 # ---------------- errors
@@ -202,7 +208,7 @@ def test_ui_help_all_topics_short():
 def test_recommend_family_diversity(cards, price_fn):
     c, nb = cards
     pick = recommend(c, "video", ["кино", "речь"], False, None, price_fn, nb, with_cheap=False)
-    assert pick.cards[0].id == "seedance-2-5"
+    assert "veo-free-seedance" not in {x.id for x in pick.cards}
     assert {x.title.split()[0] for x in pick.cards} != {"Veo"}
     assert "veo-3-1" in {x.id for x in pick.cards}
 

@@ -433,7 +433,7 @@ a{color:var(--ink-ui)}a:hover{opacity:.82}
           <div class="i1-say"><span class="i1-orb"><i></i><i></i></span><div class="i1-bub" data-i18n="index.features.s1.say">Рекомендую так:</div></div>
           <div class="i1-out">
             <p data-i18n="index.features.s1.out">Котик-повар жарит яичницу на рассвете, тёплый кинематографичный свет</p>
-            <div class="i1-model"><span class="i1-star" data-i18n="index.features.s1.best">★ Лучшая модель</span><div><b>Seedance Lite</b><span data-i18n="index.features.s1.meta">видео · бесплатно</span></div><span class="i1-ic">▶</span></div>
+            <div class="i1-model"><span class="i1-star" data-i18n="index.features.s1.best">★ Лучшая модель</span><div><b>Seedance 2.5</b><span data-i18n="index.features.s1.meta">видео · со звуком</span></div><span class="i1-ic">▶</span></div>
           </div>
         </div></div>
         <div class="fb-txt"><span class="fb-num"><i>1</i><span data-i18n="index.features.s1.num">Идея и помощник</span></span><h3 data-i18n="index.features.s1.title">ИИ-помощник подберёт промпт и модель</h3><p data-i18n="index.features.s1.text">Опишите идею своими словами — помощник допишет промпт и подскажет лучшую модель по задаче и цене.</p></div>
@@ -596,7 +596,7 @@ class Component extends DCLogic {
     const opt = (labelKey, promptKey) => ({ label: tr(labelKey), go: () => { this.append(tr(promptKey)); this.goStudio(); } });
     this.flows = {
       start: [
-        { icon: 'seedance', label: tr('index.reply.seedance'), free: true, go: () => { this.setState({ text: tr('index.prompt.prefix.seedance') }); this.goStudio(); } },
+        { icon: 'seedance', label: tr('index.reply.seedance'), go: () => { this.setState({ text: tr('index.prompt.prefix.seedance') }); this.goStudio(); } },
         { icon: 'video', label: tr('index.reply.video'), go: () => { this.setState({ text: tr('index.prompt.prefix.video') }); this.goStudio(); } },
         { icon: 'image', label: tr('index.reply.image'), go: () => { this.setState({ text: tr('index.prompt.prefix.image') }); this.goStudio(); } },
         { icon: 'music', label: tr('index.reply.music'), go: () => { this.setState({ text: tr('index.prompt.prefix.music') }); this.goStudio(); } }
@@ -659,8 +659,13 @@ class Component extends DCLogic {
     };
     this.goStudio = (extra) => {
       const q = new URLSearchParams(extra || {});
+      q.set('new', '1');   // всегда новый чат в студии
       const prompt = (this.state.text || '').trim();
       if (prompt) q.set('prompt', prompt);
+      // не оставляем текст в поле главной (назад из кэша / медленный переход)
+      try { this.setState({ text: '' }); } catch (_) {}
+      const ta = document.getElementById('prompt');
+      if (ta) ta.value = '';
       location.href = '/app?' + q.toString();
     };
     this.onSubmit = (e) => {
@@ -854,9 +859,12 @@ async function refreshLoginUi() {
 }
 loginBtn.addEventListener('click', goAuth);
 document.getElementById('modelsBtn').addEventListener('click', () => {
-  const q = new URLSearchParams({ models: '1' });
+  const q = new URLSearchParams({ models: '1', new: '1' });
   const prompt = (app.state.text || '').trim();
   if (prompt) q.set('prompt', prompt);
+  try { app.setState({ text: '' }); } catch (_) {}
+  const ta = document.getElementById('prompt');
+  if (ta) ta.value = '';
   location.href = '/app?' + q.toString();
 });
 document.getElementById('attachBtn').addEventListener('click', () => document.getElementById('attachFile').click());

@@ -212,8 +212,8 @@ window.AISH_DICT_EN = {
     'Your signature recipe? Type away!'
   ],
   'index.say.seedance': [
-    "Seedance is on the house! What's the shot?",
-    "Free Seedance refill! What's in frame?"
+    "Seedance — video with sound! What's the shot?",
+    "Seedance 2.5 — what's in frame?"
   ],
   'index.say.video': [
     "Video—love it! What's it about?",
@@ -299,7 +299,7 @@ window.AISH_DICT_EN = {
   'index.features.s1.say': "Here's what I'd suggest:",
   'index.features.s1.out': 'A chef cat frying eggs at sunrise, warm cinematic light',
   'index.features.s1.best': '★ Best model',
-  'index.features.s1.meta': 'video · free',
+  'index.features.s1.meta': 'video · with sound',
   'index.features.s2.num': 'Showcase',
   'index.features.s2.title': 'Show off your best',
   'index.features.s2.text': 'After each generation, choose to publish or keep it private. Your profile shows your works and the contacts you choose.',
@@ -460,7 +460,7 @@ window.AISH_DICT_EN = {
   'studio.history.deleteShort': 'Delete',
   'studio.history.confirmDelete': 'Delete this chat? This can’t be undone.',
   'studio.history.noteAuthed': 'Chats are kept for {days} days. Source files and unpublished generations — 24 hours.',
-  'studio.history.noteGuest': 'This chat is kept for 24 hours in this browser only. Log in to keep it for {days} days. Source files and generations — 24 hours.',
+  'studio.history.noteGuest': 'History isn’t saved while signed out. Log in to keep chats for {days} days.',
   'studio.history.note.restored': 'Chat restored.',
   'studio.history.note.opened': 'This is a saved chat. Write a message to continue with a new request.',
   'studio.history.note.guest': 'Chat restored from this browser. It’s kept for 24 hours — log in to save it to your account.',
@@ -487,8 +487,8 @@ window.AISH_DICT_EN = {
   'studio.publish.mediaGone': 'The file at this link is no longer available.',
   'studio.publish.openWork': 'Open work',
   'studio.history.current': 'Current chat',
-  'studio.history.guestWhen': 'in this browser · 24 hours',
-  'studio.history.guestEmpty': 'Log in to keep all your chats here — we store them for {days} days.',
+  'studio.history.guestWhen': 'draft · kept after you sign in',
+  'studio.history.guestEmpty': 'Sign in to keep chats in your account ({days} days). For now the draft stays in this browser.',
   'studio.rp.aria': 'Showcase and models',
   'studio.rp.tabs': 'Showcase and model catalog',
   'studio.rp.models': 'Models',
@@ -502,6 +502,7 @@ window.AISH_DICT_EN = {
   'studio.text.model': 'You',
   'studio.text.context': 'Previous messages in this conversation:',
   'studio.text.newMessage': 'New user message:',
+  'studio.text.polishAsk': 'Polish this generation prompt: keep the meaning and camera move, make it more vivid and specific. Return only the improved prompt.\n\n{prompt}',
   'studio.chat.failedRetry': 'The AI couldn’t finish — failed generations are not charged. Try again?',
   'studio.chat.estimateFailed': "Couldn't estimate the price. Please try again",
   'studio.chat.needMoney': "You're {price} short for this generation. Top up and we'll continue",
@@ -509,6 +510,7 @@ window.AISH_DICT_EN = {
   'studio.chat.cancelled': 'Okay, cancelled. Pick another model or shorten the task',
   'studio.chat.insufficient': 'Not enough balance for this generation. Please top up',
   'studio.chat.freeLimit': 'Free generations for today are used up. Back tomorrow — or pick a paid model',
+  'studio.chat.freeHourExhausted': 'Free Seedance is used up for this hour (limit 6). It will return next hour — or pick a paid model',
   'studio.chat.freeQueueFull': 'The free queue is full. Try a bit later or run it paid',
   'studio.chat.needLogin': 'Log in so the AI can start — takes two seconds',
   'studio.chat.welcomed': "You're in! Starting the AI",

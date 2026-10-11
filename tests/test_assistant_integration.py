@@ -106,6 +106,11 @@ def test_flow_without_llm_keys(client, monkeypatch):
     r = _post(client, {"message": "сделай вертикальное видео: кот в снегу"})
     assert r.status_code == 200, r.get_json()
     d = r.get_json()
+    assert d["intent"] == "generate_task" and any(b.get("type") == "models" for b in d["blocks"])
+    mid0 = next(m["id"] for m in d["models"] if m["id"] == "seedance-2-5")
+    d = _post(client, {"action": {"type": "pick_model", "value": mid0}}).get_json()
+    assert d["intent"] == "has_prompt"
+    d = _post(client, {"action": {"type": "has_prompt", "value": "yes"}}).get_json()
     assert d["intent"] == "brief" and d["blocks"][0]["type"] == "brief"
     v = _post(client, {"action": {"type": "variants"}}).get_json()
     assert v["intent"] == "variants" and len(v["blocks"][0]["items"]) >= 2 and v["degraded"] is True
@@ -113,8 +118,10 @@ def test_flow_without_llm_keys(client, monkeypatch):
     d2 = _post(client, {"action": {"type": "use_variant", "value": "v1"}}).get_json()
     assert d2["intent"] == "use_variant" and len(d2["models"]) >= 2 and d2["blocks"][0]["type"] == "prompt"
     assert d2["blocks"][0]["text"].startswith("Кот в снегу")
-    mid = d2["models"][0]["id"]
-    assert mid == "seedance-2-5"
+    assert {m["id"] for m in d2["models"]} & {"claude-sonnet-5", "gpt-5-4"}
+    d3 = _post(client, {"action": {"type": "skip_polish"}}).get_json()
+    assert d3["intent"] == "skip_polish"
+    mid = next(m["id"] for m in d3["models"] if m["id"] == "seedance-2-5")
     setup = _post(client, {"action": {"type": "pick_model", "value": mid}}).get_json()
     assert setup["generate_model"] == mid and setup["generate_prompt"].startswith("Кот в снегу")
     assert "job_id" not in setup
@@ -125,9 +132,17 @@ def test_prices_come_from_catalog(client, server):
 
     prices = server._integration_prices()
     d = _post(client, {"message": "сделай картинку: логотип кофейни"}).get_json()
+    assert d["intent"] == "generate_task" and any(b.get("type") == "models" for b in d["blocks"])
+    mid = d["models"][0]["id"]
+    d = _post(client, {"action": {"type": "pick_model", "value": mid}}).get_json()
+    assert d["intent"] == "has_prompt"
+    d = _post(client, {"action": {"type": "has_prompt", "value": "yes"}}).get_json()
     assert d["intent"] in ("brief", "variants")
-    _post(client, {"action": {"type": "variants"}})
+    if d["intent"] == "brief":
+        d = _post(client, {"action": {"type": "variants"}}).get_json()
     d = _post(client, {"action": {"type": "use_variant", "value": "v1"}}).get_json()
+    assert d["intent"] == "use_variant"
+    d = _post(client, {"action": {"type": "skip_polish"}}).get_json()
     for m in d["models"]:
         assert m["price"] == (short_price(prices.get(m["id"])) or "цена уточняется")
 

@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 
+import re
 from typing import Any
 from urllib.parse import quote
 
@@ -215,7 +216,6 @@ GROUP_ORDER = [
 ]
 
 _BY_ID = {m["id"]: m for m in MOVES}
-_PROMPTS = tuple(m["prompt"] for m in MOVES)
 
 
 def get(move_id: str | None) -> dict[str, str] | None:
@@ -224,6 +224,24 @@ def get(move_id: str | None) -> dict[str, str] | None:
 
 def title(move: dict[str, str], lang: str) -> str:
     return move["title_en"] if lang == "en" else move["title_ru"]
+
+
+def labeled_prompt(move: dict[str, str]) -> str:
+    """Текст движения для вставки в промпт: явно помечен как camera movement (как на витрине)."""
+    raw = (move.get("prompt") or "").strip()
+    if not raw:
+        return ""
+    if re.match(r"(?i)^camera(\s+movement)?\s*:", raw):
+        return raw
+    # «Camera movement — Whip pan right: whip pan right. Movement: …»
+    name = (move.get("title_en") or move.get("id") or "").strip()
+    head = f"Camera movement — {name}" if name else "Camera movement"
+    return f"{head}: {raw}"
+
+
+_PROMPTS = tuple(dict.fromkeys(
+    [labeled_prompt(m) for m in MOVES] + [m["prompt"] for m in MOVES]
+))
 
 
 def ensure_default(ses: dict) -> None:
@@ -253,8 +271,10 @@ def compose(base: str, move_id: str | None) -> str:
     base = (base or "").strip()
     if not move:
         return base
-    frag = move["prompt"]
-    if frag.lower() in base.lower():
+    frag = labeled_prompt(move)
+    raw = (move.get("prompt") or "").strip()
+    # уже вставлено (с подписью или без)
+    if frag.lower() in base.lower() or (raw and raw.lower() in base.lower()):
         return base
     if not base:
         return frag
@@ -311,7 +331,7 @@ def block(selected: str | None, lang: str) -> dict[str, Any]:
     groups = []
     for gid, ru, en in GROUP_ORDER:
         groups.append({"id": gid, "label": en if L == "en" else ru})
-    label = "Движение камеры" if L == "ru" else "Camera move"
+    label = "Добавим движение камеры?" if L == "ru" else "Add a camera move?"
     hint = ("Сначала тип (пан / зум / трекинг…), затем конкретное движение. По умолчанию — без движения"
             if L == "ru" else
             "First pick a type (pan / zoom / tracking…), then a specific move. No move by default")

@@ -24,6 +24,7 @@ from assistant.llm import CircuitBreaker, LLMChain, LLMProvider, TransportTimeou
 from assistant.session import MemoryStore  # noqa: E402
 
 PRICES = {
+    "veo-free-seedance": "бесплатно",
     "seedance-2-5": "45 ₽", "wan-3-0": "20 ₽", "veo-3-1": "120 ₽", "veo-3-1-fast": "60 ₽",
     "kling-v2-5-turbo-pro": "50 ₽", "pixverse-v6": "35 ₽", "p-video": "8 ₽", "hailuo-02": "40 ₽",
     "grok-imagine-video-1-5": "30 ₽", "gen4-turbo": "35 ₽", "seedream-5-pro": "6 ₽", "gpt-image-2": "4 ₽",
@@ -92,5 +93,26 @@ def make_chain(transport, clock=None, **kw):
     clock = clock or FakeClock()
     return LLMChain([LLMProvider(**OMNI.__dict__), LLMProvider(**GROQ.__dict__)], transport=transport,
                     clock=clock, breaker=CircuitBreaker(clock=clock), **kw)
+
+
+def pick_want_prompt(a, sid: str, model_id: str):
+    """Выбрать модель и ответить «да, улучшить промпт» (новый флоу: модель → has_prompt → бриф)."""
+    r = a.handle("", {}, sid, action={"type": "pick_model", "value": model_id})
+    if r.get("intent") == "has_prompt":
+        r = a.handle("", {}, sid, action={"type": "has_prompt", "value": "yes"})
+    return r
+
+
+def answer_open_brief(a, sid: str, text: str = "рыжий кот на кухне жарит яичницу, тёплый свет"):
+    """Ответ на этап 1 (открытые вопросы) → этап 2 (кнопки слотов)."""
+    return a.handle(text, {}, sid)
+
+
+def to_variants(a, sid: str):
+    """С этапа брифa дойти до вариантов (открытые → слоты → variants при необходимости)."""
+    r = a.handle("", {}, sid, action={"type": "variants", "value": "skip"})
+    if r.get("intent") == "brief":
+        r = a.handle("", {}, sid, action={"type": "variants", "value": "skip"})
+    return r
 
 

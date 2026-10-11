@@ -12,7 +12,8 @@
   reply   — тот же ответ ОДНИМ простым текстом (для старого фронта, который не умеет blocks)
 
 Кнопка (chip) = {"label", "action", "value"?}. На сервер (как {"action":{type,value}}) уходят:
-  pick_model · more · choose_type · use_mine · param · pick_camera · refine · improve · send · similar · cheaper · faster · no_photo_model · rephrase
+  pick_model · more · choose_type · use_mine · param · pick_camera · refine · improve · skip_polish · send ·
+  similar · cheaper · faster · no_photo_model · rephrase · back · back_brief · restart · has_prompt · variants · …
 Фронт сам: generate · edit_prompt · open_models · open_topup · open_vitrina · login · attach · retry · wait · support
 """
 from __future__ import annotations
@@ -27,7 +28,7 @@ from .texts import b, t
 
 MAX_LINES = 12
 MAX_CHARS = 1200
-MAX_CHIPS = 6
+MAX_CHIPS = 8
 
 
 def chip(label: str, action: str, value: Any = None, primary: bool = False) -> dict[str, Any]:

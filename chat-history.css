@@ -11,7 +11,8 @@
 .chats-new{flex:0 0 auto;height:32px;padding:0 12px;border-radius:10px;border:1px solid var(--field-brd);background:transparent;color:var(--ink);font:700 12px 'Onest',system-ui,sans-serif;cursor:pointer;white-space:nowrap}
 .chats-new:hover:not(:disabled),.chats-new:focus-visible{background:var(--soft-hover,rgba(120,100,200,.1))}
 .chats-new:disabled{opacity:.45;cursor:default}
-.chats-list{list-style:none;margin:0 -4px;padding:0;display:flex;flex-direction:column;gap:2px;max-height:min(200px,24vh);overflow-y:auto}
+.chats-list{list-style:none;margin:0 -4px;padding:0;display:flex;flex-direction:column;gap:2px;max-height:min(200px,24vh);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}
+.chats-list::-webkit-scrollbar{width:0;height:0;display:none}
 .chats-item{display:flex;align-items:center;gap:2px;border-radius:10px}
 .chats-item.is-on{background:var(--soft,rgba(120,100,200,.12))}
 .chats-open{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:6px 8px;border:0;border-radius:10px;background:transparent;color:var(--ink);text-align:left;cursor:pointer;font-family:inherit}

@@ -7,7 +7,7 @@
 <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/assets/brand/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/assets/brand/png/apple-touch-icon-180.png">
-<link rel="stylesheet" href="/assistant-ui.css?v=8">
+<link rel="stylesheet" href="/assistant-ui.css?v=16">
 <link rel="stylesheet" href="/attach.css">
 <link rel="stylesheet" href="/chat-history.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,6 +20,9 @@
 .t-light .brand-logo-dark,.t-light .brand-mark-dark{display:none}
 
 body{margin:0;background:#EEEAF8}
+/* скролл работает, полоса не видна ни в одном состоянии */
+*{scrollbar-width:none;-ms-overflow-style:none}
+*::-webkit-scrollbar{width:0;height:0;display:none}
 .t-light{--bg:#EEEAF8;--ink:#1E1238;--muted:#5B4D93;--muted2:#6E62A3;--glass:rgba(255,255,255,.66);--glass-brd:rgba(255,255,255,.95);--soft:rgba(255,255,255,.6);--soft-hover:rgba(255,255,255,.95);--field:rgba(244,241,252,.85);--field-brd:rgba(80,60,160,.12);--nav-on:rgba(255,255,255,.95);--seg-bg:rgba(60,40,130,.07);--seg-on:#FFFFFF;--card:rgba(255,255,255,.6);--card-on:#FFFFFF;--accent-ink:#4B2BB8;--shadow:rgba(75,43,184,.28);--free:#B5470C;--caret:#E8691C;--bubble-tail:rgba(255,255,255,.66);--panel-surface:#F7F5FC;--panel-brd:rgba(80,60,160,.10)}
 .t-dark{--bg:#15122A;--ink:#F6F3FF;--muted:#C9C0EE;--muted2:#A79DD6;--glass:rgba(46,38,78,.86);--glass-brd:rgba(255,255,255,.15);--soft:rgba(255,255,255,.08);--soft-hover:rgba(255,255,255,.15);--field:rgba(255,255,255,.09);--field-brd:rgba(255,255,255,.2);--nav-on:rgba(255,255,255,.16);--seg-bg:rgba(10,6,24,.32);--seg-on:rgba(255,255,255,.2);--card:rgba(255,255,255,.075);--card-on:rgba(255,255,255,.16);--accent-ink:#D4C8FF;--shadow:rgba(0,0,0,.6);--free:#FFB06B;--caret:#FF9A3D;--bubble-tail:#2E264E;--panel-surface:rgba(46,38,78,.92);--panel-brd:rgba(255,255,255,.15)}
 .bg-light{background-image:url(assets/bg-light.jpg)}
@@ -119,7 +122,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .model .m-ex:hover{color:var(--ink);border-color:rgba(255,162,53,.4);background:rgba(255,162,53,.12)}
 .model-on .m-kind,.model-on .m-ex{border-color:rgba(255,162,53,.35);background:rgba(255,162,53,.1);color:var(--ink)}
 .t-dark .model .m-kind,.t-dark .model .m-ex{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
-.ttl{scrollbar-width:thin}
 .ttl{-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 26px),transparent);padding-bottom:18px!important}
 .cabinet{border-radius:18px;background:var(--card-on);border:1px solid var(--glass-brd);box-shadow:0 -14px 30px -18px var(--shadow),0 10px 24px -18px var(--shadow);overflow:hidden;flex:0 0 auto}
 .cab-row{display:flex;align-items:center;gap:12px;padding:10px 12px;min-height:56px;box-sizing:border-box}
@@ -530,9 +532,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 <script src="/i18n/runtime.js"></script>
 <script src="/vitrina-data.js"></script>
 <script src="/vitrina-camera-moves.js?v=3"></script>
-<script src="/assistant-ui.js?v=8"></script>
+<script src="/assistant-ui.js?v=14"></script>
 <script src="/attach.js"></script>
-<script src="/chat-history.js"></script>
+<script src="/chat-history.js?v=6"></script>
 <script>
 /* Тема общая со витриной/профилем: localStorage aish-vitrina-theme (+ theme). ?theme= перекрывает. */
 function readSharedTheme() {
@@ -553,8 +555,10 @@ function writeSharedTheme(name) {
   } catch (e) {}
 }
 const DEFAULT_THEME = readSharedTheme();
-const URL_PROMPT = (new URLSearchParams(location.search).get('prompt') || '').trim();
-const URL_MODEL = (new URLSearchParams(location.search).get('model') || '').trim();
+const _qs = new URLSearchParams(location.search);
+const URL_PROMPT = (_qs.get('prompt') || '').trim();
+const URL_MODEL = (_qs.get('model') || '').trim();
+const URL_NEW = _qs.get('new') === '1';   // с главной — всегда новый чат
 const mq = (q) => typeof matchMedia === 'function' && matchMedia(q).matches;
 const IS_MOBILE = mq('(max-width:760px)');
 const MOBILE = () => mq('(max-width:760px)');
@@ -851,6 +855,7 @@ class Component extends DCLogic {
         const err = start.data.error || 'error';
         if (err === 'insufficient_funds') this.botSay({ text: tr('studio.chat.insufficient'), topup: true }, 200);
         else if (err === 'free_limit') this.botSay({ text: tr('studio.chat.freeLimit') }, 200);
+        else if (err === 'free_hour_exhausted') this.botSay({ text: tr('studio.chat.freeHourExhausted') }, 200);
         else if (err === 'free_queue_full') this.botSay({ text: tr('studio.chat.freeQueueFull') }, 200);
         else if (err === 'auth_required') this.botSay({ text: tr('studio.chat.needLogin'), loginCta: true }, 200);
         else if (m && m.integrated) { await this.runGenerate(m, prompt, genParams); return; }
@@ -1060,18 +1065,32 @@ class Component extends DCLogic {
      *  а не через помощника по генерациям. История диалога — последние сообщения, отправляются вместе с вопросом. */
     this.textHistory = [];
     this.textModel = '';
-    this.textChat = (m, text) => {
+    this.textDirect = false;   // true — выбранная текстовая модель, сообщения идут в неё, не в помощника
+    this.textChat = (m, text, opts) => {
+      opts = opts || {};
       if (this.textModel !== m.slug) { this.textHistory = []; this.textModel = m.slug; }
+      this.textDirect = true;
       this.setState({ chat: true, text: '' });
-      this.push({ role: 'user', text: text });
+      if (!opts.resume) this.push({ role: 'user', text: text });
+      this.pendingPrompt = text;
+      this.pendingSel = m.slug;
+      this.pendingParams = {};
+      // как у видео: сначала вход, потом баланс (баланс проверит /api/generate → 402)
+      if (!this.state.authed) {
+        this.botSay({ text: tr('studio.chat.needLogin'), loginCta: true }, 200);
+        return;
+      }
       const hist = this.textHistory.slice(-8);
       let prompt = text;
       if (hist.length) {
         const ctx = hist.map((h) => (h.role === 'user' ? tr('studio.text.you') : tr('studio.text.model')) + ': ' + h.content).join('\n');
         prompt = tr('studio.text.context') + '\n' + ctx.slice(-6000) + '\n\n' + tr('studio.text.newMessage') + '\n' + text;
       }
-      this.textHistory.push({ role: 'user', content: text });
-      this.pendingPrompt = prompt; this.pendingSel = m.slug; this.pendingParams = {};
+      if (!opts.resume) this.textHistory.push({ role: 'user', content: text });
+      else if (!this.textHistory.length || this.textHistory[this.textHistory.length - 1].content !== text) {
+        this.textHistory.push({ role: 'user', content: text });
+      }
+      this.pendingPrompt = prompt;
       this.botSay({ text: tr('studio.chat.thinking'), job: true }, 200);
       this.later('cook', 300, async () => {
         const data = await this.runGenerate(m, prompt, {});
@@ -1092,6 +1111,7 @@ class Component extends DCLogic {
       clearTimeout(this.timers.bot); clearTimeout(this.timers.cook); clearTimeout(this.timers.lead); clearTimeout(this.timers.ck); clearTimeout(this.timers.intro);
       this.pendingPrompt = ''; this.pendingSel = ''; this.pendingParams = {};
       this.textHistory = [];
+      this.textDirect = false;
       this._shownFiles = {};
       if (window.AishAttach && AishAttach.consume) AishAttach.consume();
       lastMsgs = -1;
@@ -1110,8 +1130,8 @@ class Component extends DCLogic {
       if (!text) { this.speak(tr('studio.eggy.needIdea')); return; }
       if (!this.state.assist) this.setState({ assist: true });
       const cur = this.MODELS.find((x) => x.slug === this.state.sel);
-      // Прямой чат с LLM — только если помощник выключен. Иначе «машина едет…» уходит в бриф видео, а не в /api/generate.
-      if (cur && cur.type === 'text' && !this.state.assist) { this.textChat(cur, text); return; }
+      // Прямой чат с LLM: textDirect (после «Доработать» / выбора текста) или помощник выключен
+      if (cur && cur.type === 'text' && (this.textDirect || !this.state.assist)) { this.textChat(cur, text); return; }
       this.pendingPrompt = text;
       this.pendingSel = (cur && cur.type !== 'text') ? cur.slug : '';
       this.setState({ chat: true, text: '' });
@@ -1134,11 +1154,24 @@ class Component extends DCLogic {
     };
     this.login = () => {
       try {
-        sessionStorage.setItem('aish-auth-return', JSON.stringify({
-          after: this.state.chat && !this.state.authed ? 'chat' : 'idle',
+        const hasMsgs = (this.state.msgs || []).some((m) => m && (m.role === 'user' || m.role === 'bot'));
+        const fromChat = !!(!this.state.authed && (this.state.chat || hasMsgs || this.pendingPrompt));
+        // черновик гостя на диск — иначе после /auth msgs пустые
+        if (window.AishHistory && AishHistory.saveGuestDraft) AishHistory.saveGuestDraft();
+        else if (window.AishHistory && AishHistory.flush) AishHistory.flush(true);
+        const ret = JSON.stringify({
+          after: fromChat ? 'chat' : 'idle',
           prompt: this.pendingPrompt || '',
-          sel: this.pendingSel || this.state.sel || ''
-        }));
+          sel: this.pendingSel || this.state.sel || '',
+          params: this.pendingParams && typeof this.pendingParams === 'object' ? this.pendingParams : {}
+        });
+        // sessionStorage + localStorage: Safari / редирект иногда роняет sessionStorage
+        sessionStorage.setItem('aish-auth-return', ret);
+        localStorage.setItem('aish-auth-return', ret);
+        if (fromChat) {
+          sessionStorage.setItem('aish-assist-resume', '1');
+          localStorage.setItem('aish-assist-resume', String(Date.now()));
+        }
       } catch (e) {}
       location.href = '/auth?next=' + encodeURIComponent('/app');
     };
@@ -1207,6 +1240,10 @@ class Component extends DCLogic {
       const wasChat = this.state.afterLogin === 'chat';
       this.setState({ modal: null, password: '', code: '', err: '', errField: '' });
       await refreshUser();
+      if (wasChat && this.textDirect && this.pendingPrompt && this.pendingSel) {
+        this.afterAuth();
+        return;
+      }
       if (wasChat && this.eggy && this.eggy.resume) { this.eggy.resume(); return; }
       if (wasChat && this.pendingPrompt) {
         this.botSay({ text: tr('studio.chat.welcomed') }, 600);
@@ -1214,6 +1251,16 @@ class Component extends DCLogic {
     };
     this.logout = async () => { await api('/api/auth/logout', { method: 'POST' }); await refreshUser(); this.goHome(); this.speak(tr('studio.eggy.loggedOut')); };
     this.afterAuth = () => {
+      // после входа — продолжить прямой чат с текстовой моделью (Claude/GPT)
+      if (this.textDirect && this.pendingPrompt && this.pendingSel) {
+        const m = this.MODELS.find((x) => x.slug === this.pendingSel || x.model_key === this.pendingSel);
+        if (m && m.type === 'text') {
+          const t = this.pendingPrompt;
+          this.setState({ chat: true });
+          this.textChat(m, t, { resume: true });
+          return;
+        }
+      }
       if (this.eggy && this.eggy.resume) { this.setState({ chat: true }); this.eggy.resume(); return; }
       if (this.state.chat && this.pendingPrompt) {
         this.botSay({ text: tr('studio.chat.welcomed') }, 600);
@@ -1222,7 +1269,11 @@ class Component extends DCLogic {
     this.goHome = (e) => {
       if (e && e.preventDefault) e.preventDefault();
       clearTimeout(this.timers.bot); clearTimeout(this.timers.cook); clearTimeout(this.timers.lead); clearTimeout(this.timers.ck);
-      this.pendingPrompt = ''; this.pendingSel = '';
+      this.pendingPrompt = ''; this.pendingSel = ''; this.pendingParams = {};
+      this.textHistory = [];
+      this.textDirect = false;
+      this._shownFiles = {};
+      if (this.eggy && this.eggy.softReset) this.eggy.softReset();
       lastMsgs = -1;
       this.setState({ chat: false, msgs: [], typing: false, text: '' });
       this.intro(0);
@@ -1271,7 +1322,8 @@ class Component extends DCLogic {
   }
   componentDidMount() {
     this.init();
-    this.intro(0);
+    // с главной с промптом — не запускаем приветствие, сообщение уйдёт само после boot
+    if (!URL_PROMPT) this.intro(0);
     const blink = (cb) => { this.setState({ blink: true }); this.later('bu', 130, () => { this.setState({ blink: false }); if (cb) this.later('b2', 160, cb); }); };
     const loop = () => this.later('bl', 2200 + Math.random() * 2600, () => { if (Math.random() < 0.3) blink(() => blink(loop)); else { blink(); loop(); } });
     loop();
@@ -1388,6 +1440,28 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
       topup: chips.some((c) => c && c.action === 'open_topup'),
       loginCta: chips.some((c) => c && c.action === 'login'),
     });
+    // «Доработать» → подключили Claude/GPT: сразу первое сообщение модели с текущим промптом
+    if (data.intent === 'polish_chat' && data.generate_model) {
+      app.textDirect = true;
+      const mid = data.generate_model;
+      const draft = String(data.generate_prompt || '').trim();
+      app.later('polishKick', 350, () => {
+        let m = app.MODELS.find((x) => x.model_key === mid || x.slug === mid);
+        if (!m) {
+          m = app.priceModel({
+            slug: mid, model_key: mid, name: mid,
+            type: 'text', kind: tr('studio.kind.text'), kinds: [tr('studio.kind.text')],
+            cost: 0, rub: 0, viaGenerate: true, integrated: true
+          });
+          app.MODELS = app.MODELS.concat([m]);
+        }
+        app.setState({ sel: m.slug });
+        const ask = draft
+          ? tr('studio.text.polishAsk', { prompt: draft })
+          : tr('studio.text.placeholder');
+        app.textChat(m, ask);
+      });
+    }
   },
   onTyping: (on) => app.setState({ typing: on }),
   onFillForm: ({ model, prompt, params }) => {
@@ -1404,6 +1478,7 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
       }
       app.pendingSel = byKey.slug;
       app.setState({ sel: byKey.slug });
+      if (byKey.type === 'text') app.textDirect = true;
     }
     if (prompt) app.pendingPrompt = String(prompt);
     app.pendingParams = params && typeof params === 'object' ? params : {};
@@ -1420,7 +1495,10 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
   onUiAction: (action, value) => {
     if (action === 'open_models') { app.openPanel(); return; }
     if (action === 'open_topup') {
-      try { sessionStorage.setItem('aish-assist-resume', '1'); } catch (e) {}   // вернётся — продолжим с того же места
+      try {
+        sessionStorage.setItem('aish-assist-resume', '1');
+        localStorage.setItem('aish-assist-resume', String(Date.now()));
+      } catch (e) {}
       location.href = '/account#balance';
       return;
     }
@@ -1533,7 +1611,7 @@ function render() {
     }
     const ta0 = $('prompt');
     // Помощник всегда ведёт сценарий — плейсхолдер «сообщение модели» только без помощника
-    const ph = tr((v.sel.isText && !app.state.assist) ? 'studio.text.placeholder' : 'studio.composer.placeholder');
+    const ph = tr((v.sel.isText && (app.textDirect || !app.state.assist)) ? 'studio.text.placeholder' : 'studio.composer.placeholder');
     if (ta0 && ta0.placeholder !== ph) ta0.placeholder = ph;
     $('selPrice').textContent = v.sel.priceShort || '';
     $('selEst').textContent = v.sel.empty ? '' : tr('studio.eggy.priceEst', { price: v.sel.estimate });
@@ -1789,7 +1867,11 @@ document.addEventListener('click', async (e) => {
   }
   const t = e.target.closest('[data-home],[data-login],[data-logout],[data-toggle-left],[data-toggle-right],[data-toggle-right-open],[data-works]');
   if (!t) return;
-  if (t.hasAttribute('data-home')) { if (window.AishHistory) AishHistory.detach(); app.goHome(e); }   // на главную = новый чат, прежний сохранён
+  if (t.hasAttribute('data-home')) {
+    // дождаться сброса cookie/сессии помощника — иначе следующее сообщение уходит в старый контекст
+    e.preventDefault();
+    Promise.resolve(window.AishHistory ? AishHistory.detach() : null).finally(() => app.goHome());
+  }
   else if (t.hasAttribute('data-login')) app.login();
   else if (t.hasAttribute('data-logout')) app.logout();
   else if (t.hasAttribute('data-toggle-left')) app.toggleLeft();
@@ -1958,14 +2040,16 @@ async function loadIntegrations() {
       // текст: «≈ 0,19 ₽ за ответ» вместо «58 ₽/млн» — понятно, сколько стоит один вопрос
       const priceRaw = ((type === 'text' && it.price_answer) ? it.price_answer : (it.price_full || it.price || '')).trim();
       const rub = parsePriceRub(priceRaw);
-      const free = /бесплат|free/i.test(priceRaw) || (!priceRaw && (it.is_assistant || it.provider === 'omniroute'));
-      const viaGenerate = !!(it.is_assistant || type === 'text' || it.provider === 'replicate' || it.provider === 'fal' || it.provider === 'omniroute');
+      const free = !!(it.is_free) || /бесплат|free/i.test(priceRaw) || (!priceRaw && (it.is_assistant || it.provider === 'omniroute'));
+      // бесплатное видео Seedance — через очередь /api/jobs (лимит 6/час), не напрямую /api/generate
+      const freeVideoQueue = free && type === 'video' && (it.is_free || it.id === 'veo-free-seedance');
+      const viaGenerate = !freeVideoQueue && !!(it.is_assistant || type === 'text' || it.provider === 'replicate' || it.provider === 'fal' || it.provider === 'omniroute' || it.provider === 'higgsfield');
       const thumb = (it.image_url || it.cover_url || '').trim();
       const example = (it.example_url || it.example_image || thumb).trim();
       const exampleVideo = (it.example_video_url || '').trim();
       return app.priceModel({
         slug: it.id,
-        model_key: it.id,
+        model_key: it.id === 'veo-free-seedance' ? 'veo-free-seedance' : it.id,
         name: integrationDisplayName(it.name),
         type: type,
         kinds: integrationKindLabels(it, type),
@@ -2020,7 +2104,7 @@ if (window.AishAttach) {
   });
 }
 
-// История переписки: вошёл — в аккаунте (/api/chats), гость — 24 часа в этом браузере. Исходные файлы не храним.
+// История: вошёл — /api/chats; гость — без сохранения. Исходные файлы не храним.
 if (window.AishHistory) {
   AishHistory.init({
     box: '#chatsBox',
@@ -2034,9 +2118,11 @@ if (window.AishHistory) {
       lastMsgs = -1;
       app._shownFiles = {};
       app.textHistory = [];
+      app.textDirect = false;
+      if (app.eggy && app.eggy.softReset) app.eggy.softReset();
       app.setState({ chat: true, typing: false, msgs: msgs.map((m) => Object.assign({ id: Date.now() + Math.random() }, m)) });
     },
-    onNew: () => app.goHome()
+    onNew: () => app.newGeneration()   // «+ Новый»: сохранить чат, сбросить сессию помощника, спросить тип заново
   });
 }
 
@@ -2046,18 +2132,76 @@ $('userBalance').textContent = tr('common.balance', { amount: moneyText(0) });
 render();
 app.componentDidMount();
 refreshUser().then(async (user) => {
-  if (window.AishHistory) await AishHistory.boot(user);   // вернулись с /auth, /account, после перезагрузки — переписка на месте
-  if (!app.state.authed) return;
+  const RESUME_TTL_MS = 30 * 60 * 1000;
   let resumeAssist = false;
-  try { resumeAssist = sessionStorage.getItem('aish-assist-resume') === '1'; sessionStorage.removeItem('aish-assist-resume'); } catch (e) {}
-  if (resumeAssist && app.eggy && app.eggy.resume) { app.setState({ chat: true }); app.eggy.resume(); return; }
+  try {
+    if (sessionStorage.getItem('aish-assist-resume') === '1') resumeAssist = true;
+  } catch (e) {}
+  try {
+    const t = Number(localStorage.getItem('aish-assist-resume') || 0);
+    if (t && Date.now() - t < RESUME_TTL_MS) resumeAssist = true;
+  } catch (e) {}
+  try {
+    const g = JSON.parse(localStorage.getItem('aish-chat-guest') || 'null');
+    if (Array.isArray(g) && g.length) resumeAssist = true;
+  } catch (e) {}
+  // после входа не сбрасываем помощника; ?new / ?prompt — чистый лист (НЕ !resumeAssist)
+  if (window.AishHistory) {
+    await AishHistory.boot(user, {
+      fresh: URL_NEW || !!URL_PROMPT,
+      resume: resumeAssist && !URL_NEW && !URL_PROMPT,
+    });
+  }
+  if (URL_NEW || URL_PROMPT) {
+    try {
+      const u = new URL(location.href);
+      u.searchParams.delete('new');
+      u.searchParams.delete('prompt');
+      const s = u.searchParams.toString();
+      history.replaceState({}, '', u.pathname + (s ? '?' + s : '') + u.hash);
+    } catch (_) {}
+  }
+  // с главной: сразу отправляем промпт как сообщение в чат (не оставляем во второй раз в строке)
+  if (URL_PROMPT) {
+    try {
+      sessionStorage.removeItem('aish-assist-resume');
+      localStorage.removeItem('aish-assist-resume');
+    } catch (e) {}
+    ['intro', 'bot', 'cook', 'lead', 'ck'].forEach((k) => clearTimeout((app.timers || {})[k]));
+    app.setState({ text: URL_PROMPT });
+    try { await app.onSubmit(); } catch (_) {}
+    return;
+  }
+  if (!app.state.authed) return;
+  try {
+    sessionStorage.removeItem('aish-assist-resume');
+    localStorage.removeItem('aish-assist-resume');
+  } catch (e) {}
   let ret = null;
-  try { ret = JSON.parse(sessionStorage.getItem('aish-auth-return') || 'null'); sessionStorage.removeItem('aish-auth-return'); } catch (e) {}
+  try {
+    ret = JSON.parse(sessionStorage.getItem('aish-auth-return') || 'null');
+    sessionStorage.removeItem('aish-auth-return');
+  } catch (e) {}
+  if (!ret) {
+    try {
+      ret = JSON.parse(localStorage.getItem('aish-auth-return') || 'null');
+    } catch (e) {}
+  }
+  try { localStorage.removeItem('aish-auth-return'); } catch (e) {}
+  if (ret && ret.sel) app.setState({ sel: ret.sel });
+  if (resumeAssist && app.eggy && app.eggy.resume) {
+    app.setState({ chat: true });
+    if (ret && ret.prompt) app.pendingPrompt = ret.prompt;
+    if (ret && ret.sel) app.pendingSel = ret.sel;
+    if (ret && ret.params && typeof ret.params === 'object') app.pendingParams = ret.params;
+    app.eggy.resume();
+    return;
+  }
   if (!ret) return;
-  if (ret.sel) app.setState({ sel: ret.sel });
   if (ret.after === 'chat') {
     app.pendingPrompt = ret.prompt;
     app.pendingSel = ret.sel || app.state.sel;
+    if (ret.params && typeof ret.params === 'object') app.pendingParams = ret.params;
     app.setState({ chat: true });
     app.afterAuth();
   } else app.speak(tr('studio.eggy.welcomeBack'));

@@ -11,6 +11,9 @@ FREE_QUEUE = "queue:free_video"
 FREE_DISPATCH_KEY = "free_video:last_dispatch"
 FREE_PAUSE_KEY = "free_video:pause_until"
 FREE_ERR_KEY = "free_video:errors"
+FREE_HOUR_PREFIX = "free_video:hour:"
+# Глобальный лимит OmniRoute Veo AI Free: 6 запросов/час на IP провайдера
+FREE_HOUR_CAP = 6
 
 
 def msk_day_key(now: Optional[datetime] = None) -> str:
@@ -18,8 +21,33 @@ def msk_day_key(now: Optional[datetime] = None) -> str:
     return now.strftime("%Y-%m-%d")
 
 
+def msk_hour_key(now: Optional[datetime] = None) -> str:
+    now = now or datetime.now(MSK)
+    return now.strftime("%Y%m%d%H")
+
+
 def daily_cap(base: int = 1, bonus: int = 0) -> int:
     return min(3, base + max(0, bonus))
+
+
+def hourly_used(redis_client, now: Optional[datetime] = None) -> int:
+    if redis_client is None:
+        return 0
+    try:
+        return int(redis_client.get(FREE_HOUR_PREFIX + msk_hour_key(now)) or 0)
+    except Exception:
+        return 0
+
+
+def hourly_left(redis_client, now: Optional[datetime] = None) -> int:
+    return max(0, FREE_HOUR_CAP - hourly_used(redis_client, now))
+
+
+def hour_available(redis_client, now: Optional[datetime] = None) -> bool:
+    """True, пока в текущем часе (МСК) ещё есть слоты бесплатного Seedance."""
+    if redis_client is None:
+        return True
+    return hourly_left(redis_client, now) > 0
 
 
 def get_quota(db, FreeQuota, user_id: int):
@@ -124,21 +152,27 @@ def capacity_24h() -> int:
 
 
 def can_dispatch(redis_client) -> bool:
+    """Можно отдать следующий бесплатный ролик: не на паузе и < 6 за текущий час."""
     now = time.time()
     try:
         pause = float(redis_client.get(FREE_PAUSE_KEY) or 0)
         if pause > now:
             return False
-        last = float(redis_client.get(FREE_DISPATCH_KEY) or 0)
-        if now - last < 600:  # 1 per 10 minutes
-            return False
-        return True
+        return hour_available(redis_client)
     except Exception:
         return False
 
 
 def mark_dispatched(redis_client) -> None:
     redis_client.set(FREE_DISPATCH_KEY, str(time.time()))
+    try:
+        key = FREE_HOUR_PREFIX + msk_hour_key()
+        n = int(redis_client.incr(key) or 0)
+        # ключ живёт до конца часа + запас, потом счётчик сам обнулится
+        if n == 1:
+            redis_client.expire(key, 3600 + 180)
+    except Exception:
+        pass
 
 
 def record_error(redis_client) -> None:

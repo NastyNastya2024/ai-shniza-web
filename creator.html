@@ -513,32 +513,54 @@ html[lang=en] .pc.off::after{content:'hidden'}
   const $ = (id) => document.getElementById(id);
   const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const qs = new URLSearchParams(location.search);
-  const ME = 'c1';                                   // демо: «вошедший» креатор
+  const ME = 'c1';                                   // демо-креатор в витрине (не «текущий юзер»)
   let cidParam = qs.get('c');
   if (!cidParam && window.__CREATOR_HANDLE__) {
     const h = String(window.__CREATOR_HANDLE__).replace(/^@/, '').toLowerCase();
     const found = D.creators.find((c) => String(c.nick || '').toLowerCase() === h);
     if (found) cidParam = found.id;
   }
-  const isOwnerPage = qs.get('me') === '1' || cidParam === ME;
-  const cid = isOwnerPage ? ME : (cidParam || 'c3');
+  const wantOwn = qs.get('me') === '1';
+  // Владелец только после сверки с /api/auth/me — не по ME/c1 и не по ?me=1 вслепую
+  let isOwnerPage = false;
+  const handleHint = window.__CREATOR_HANDLE__
+    ? String(window.__CREATOR_HANDLE__).replace(/^@/, '')
+    : '';
+  const cid = cidParam || (wantOwn ? ME : (handleHint ? ('h:' + handleHint.toLowerCase()) : 'c3'));
 
   // --- хранилище правок креатора (в демо — в браузере; на сайте — ваш API) ---
   const KEY = 'aishnitsa-creator-' + cid;
   let saved = null; try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
-  const base = D.creators.find((c) => c.id === cid);
+  const base = (cidParam && D.creators.find((c) => c.id === cidParam)) || {
+    id: cid,
+    name: handleHint || 'Креатор',
+    nick: handleHint || '',
+    grad: '#8A66FF,#5B35E0',
+    about: '',
+    contacts: []
+  };
   const C = JSON.parse(JSON.stringify(base));
   let pubMap = {};
   if (saved) { Object.assign(C, saved.profile || {}); pubMap = saved.pub || {}; }
   C.askMode = 'ask'; // всегда спрашиваем при создании
   /* имя: если креатор сам его менял — показываем введённое, иначе перевод из словаря */
-  const cn = () => (C.name !== base.name ? C.name : L.creatorName(base));
+  const cn = () => {
+    if (cidParam && C.name === base.name && L.creatorName) return L.creatorName(base);
+    return C.name || handleHint || 'Креатор';
+  };
   const persist = () => { try { localStorage.setItem(KEY, JSON.stringify({ profile: { name: C.name, about: C.about, contacts: C.contacts, askMode: 'ask' }, pub: pubMap })); } catch (e) {} };
-  let allMine = D.works.filter((w) => w.creator === cid).map((w) => Object.assign({}, w, { published: pubMap[w.id] != null ? pubMap[w.id] : w.published !== false }));
+  // демо-работы только у известных id витрины; чужой/@свой ник без демо — пустая сетка до API
+  let allMine = cidParam
+    ? D.works.filter((w) => w.creator === cidParam).map((w) => Object.assign({}, w, { published: pubMap[w.id] != null ? pubMap[w.id] : w.published !== false }))
+    : [];
   if (window.AISH_LIKES) window.AISH_LIKES.hydrate(allMine);
 
-  let view = isOwnerPage ? 'owner' : 'public';     // owner | public
-  let tab = (isOwnerPage && qs.get('tab') === 'req') ? 'req' : 'all', query = '', list = [], openId = null, mode = 'view', editing = null, lastSent = null;
+  let view = 'public';     // owner | public — owner только после auth
+  let tab = 'all', query = '', list = [], openId = null, mode = 'view', editing = null, lastSent = null;
+  if (qs.get('tab') === 'req') {
+    location.replace('/account#messages');
+    return;
+  }
 
   const ICON = {
     play: '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.87l12-7.5a1 1 0 0 0 0-1.74l-12-7.5A1 1 0 0 0 7 4.5z"></path></svg>',
@@ -591,11 +613,13 @@ html[lang=en] .pc.off::after{content:'hidden'}
   function renderTabs() {
     const pub = allMine.filter((w) => w.published).length, hid = allMine.length - pub;
     const nReq = REQ().filter((r) => r.status === 'new').length;
-    const T = owner() ? [['all', tr('creator.tab.all'), allMine.length], ['pub', tr('creator.tab.published'), pub], ['hid', tr('creator.tab.hidden'), hid], ['req', tr('creator.tab.requests'), nReq]] : [['all', tr('creator.tab.works'), pub]];
+    const T = owner() ? [['all', tr('creator.tab.all'), allMine.length], ['pub', tr('creator.tab.published'), pub], ['hid', tr('creator.tab.hidden'), hid]] : [['all', tr('creator.tab.works'), pub]];
     if (!owner() && tab !== 'all') tab = 'all';
-    $('tabs').innerHTML = '<div role="tablist" style="display:flex;gap:6px;flex-wrap:wrap">' + T.map(([id, l, n]) => '<button class="tab" role="tab" data-tab="' + id + '" aria-selected="' + (tab === id) + '">' + esc(l) + '<small>' + n + '</small></button>').join('') + '</div><span class="sp"></span>'
-      + (owner() ? '<span style="font-size:13px;color:var(--muted2);font-weight:700">' + esc(tab === 'req' ? tr('creator.hint.requests') : tr('creator.hint.cards')) + '</span>' : '');
-    $('tabs').querySelectorAll('[data-tab=req]').forEach((b) => { if (nReq) b.classList.add('has-new'); });
+    if (owner() && tab === 'req') tab = 'all';
+    $('tabs').innerHTML = '<div role="tablist" style="display:flex;gap:6px;flex-wrap:wrap">' + T.map(([id, l, n]) => '<button class="tab" role="tab" data-tab="' + id + '" aria-selected="' + (tab === id) + '">' + esc(l) + '<small>' + n + '</small></button>').join('')
+      + (owner() ? '<a class="tab' + (nReq ? ' has-new' : '') + '" href="/account#messages" style="text-decoration:none">' + esc(tr('creator.tab.requests')) + '<small>' + nReq + '</small></a>' : '')
+      + '</div><span class="sp"></span>'
+      + (owner() ? '<span style="font-size:13px;color:var(--muted2);font-weight:700">' + esc(tr('creator.hint.cards')) + '</span>' : '');
   }
 
   // --- запросы клиентов (оплаты на платформе нет — только заявки с контактами) ---
@@ -811,7 +835,12 @@ html[lang=en] .pc.off::after{content:'hidden'}
     const b = e.target.closest('.card'); if (b) open(list[+b.dataset.i].id);
   });
   $('grid').addEventListener('mouseover', (e) => { const b = e.target.closest('.card'); const v = b && b.querySelector('video'); if (v) v.play().catch(() => {}); });
-  $('tabs').addEventListener('click', (e) => { const t = e.target.closest('[data-tab]'); if (t) { tab = t.dataset.tab; renderTabs(); renderGrid(); } });
+  $('tabs').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-tab]');
+    if (!t) return;
+    if (t.dataset.tab === 'req') { location.href = '/account#messages'; return; }
+    tab = t.dataset.tab; renderTabs(); renderGrid();
+  });
   $('prof').addEventListener('click', (e) => {
     const d = e.target.closest('[data-do]'); if (!d) return;
     if (d.dataset.do === 'settings') { openId = null; renderGrid(); editing = JSON.parse(JSON.stringify({ name: cn(), about: C.about, contacts: C.contacts, askMode: C.askMode })); drawer(); }
@@ -861,8 +890,8 @@ html[lang=en] .pc.off::after{content:'hidden'}
   $('askDemo').addEventListener('click', showAsk);
 
   const setHdr = () => document.documentElement.style.setProperty('--hdr', document.querySelector('.top').offsetHeight + ($('modeBar').hidden ? 0 : 0) + 'px'); setHdr(); addEventListener('resize', setHdr);
-  if (isOwnerPage) $('modeBar').hidden = false;
-  document.title = isOwnerPage ? tr('creator.title.own') : tr('creator.title.other', { name: cn() });
+  $('modeBar').hidden = true;
+  document.title = tr('creator.title.other', { name: cn() });
   renderAll();
 
   function mergeApiWork(it, published) {
@@ -887,24 +916,67 @@ html[lang=en] .pc.off::after{content:'hidden'}
       published: published !== false && (it.status ? it.status === 'published' : true)
     });
   }
-  // подмешиваем реальные генерации (видео / картинки / аудио) с API
-  if (isOwnerPage) {
-    fetch('/api/works/mine', { credentials: 'same-origin' }).then((r) => r.json()).then((data) => {
+  function applyOwnerMode(on) {
+    isOwnerPage = !!on;
+    view = on ? 'owner' : 'public';
+    $('modeBar').hidden = !on;
+    document.title = on ? tr('creator.title.own') : tr('creator.title.other', { name: cn() });
+    setHdr();
+    renderAll();
+  }
+  async function loadMineWorks() {
+    try {
+      const data = await fetch('/api/works/mine', { credentials: 'same-origin' }).then((r) => r.json());
       (data.items || []).forEach((it) => mergeApiWork(it, it.status === 'published'));
       if (window.AISH_LIKES) window.AISH_LIKES.hydrate(allMine);
       renderAll();
-    }).catch(() => {});
-  } else {
-    const handle = C.handle || C.nick;
-    if (handle) {
-      fetch('/api/creators/' + encodeURIComponent(handle), { credentials: 'same-origin' }).then((r) => r.json()).then((data) => {
-        if (!data || data.error) return;
-        (data.works || []).forEach((it) => mergeApiWork(it, true));
-        if (window.AISH_LIKES) window.AISH_LIKES.hydrate(allMine);
-        renderAll();
-      }).catch(() => {});
-    }
+    } catch (_) {}
   }
+  async function loadPublicWorks() {
+    const handle = C.handle || C.nick || window.__CREATOR_HANDLE__;
+    if (!handle) return;
+    try {
+      const data = await fetch('/api/creators/' + encodeURIComponent(String(handle).replace(/^@/, '')), { credentials: 'same-origin' }).then((r) => r.json());
+      if (!data || data.error) return;
+      if (data.display_name) C.name = data.display_name;
+      if (data.handle) C.nick = data.handle;
+      if (data.bio != null) C.about = data.bio || '';
+      (data.works || []).forEach((it) => mergeApiWork(it, true));
+      if (window.AISH_LIKES) window.AISH_LIKES.hydrate(allMine);
+      renderAll();
+    } catch (_) {}
+  }
+  (async function bootOwner() {
+    let me = {};
+    try {
+      me = await fetch('/api/auth/me', { credentials: 'same-origin' }).then((r) => r.json());
+    } catch (_) {}
+    const myHandle = String((me.profile && me.profile.handle) || (me.user && me.user.handle) || '')
+      .replace(/^@/, '').toLowerCase();
+    if (wantOwn) {
+      if (!me.user) {
+        location.replace('/auth?next=' + encodeURIComponent('/creator?me=1'));
+        return;
+      }
+      if (myHandle) {
+        location.replace('/@' + encodeURIComponent(myHandle));
+        return;
+      }
+      location.replace('/account');
+      return;
+    }
+    const pageHandle = String(C.handle || C.nick || window.__CREATOR_HANDLE__ || '')
+      .replace(/^@/, '').toLowerCase();
+    const isMine = !!(myHandle && pageHandle && myHandle === pageHandle);
+    if (isMine && me.profile) {
+      if (me.profile.display_name) C.name = me.profile.display_name;
+      if (me.profile.handle) C.nick = me.profile.handle;
+      if (me.profile.bio != null) C.about = me.profile.bio || '';
+    }
+    applyOwnerMode(isMine);
+    if (isMine) await loadMineWorks();
+    else await loadPublicWorks();
+  })();
 })();
 </script>
 <script>

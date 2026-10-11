@@ -2236,6 +2236,21 @@ INTEGRATED_MODELS = {
         "outputs": ["text"],
         "notes": "бесплатно",
     },
+    # OmniRoute Veo AI Free — бэкенд/очередь есть, в UI каталога и подборе не показываем
+    "veo-free-seedance": {
+        "id": "veo-free-seedance",
+        "name": "Seedance Free",
+        "provider": "omniroute",
+        "kind": "video",
+        "group": "video",
+        "omniroute_model": "veo-free/seedance",
+        "inputs": ["text"],
+        "outputs": ["video"],
+        "notes": "бесплатно · текст→видео · очередь · до 6/час",
+        "is_free": True,
+        "wait_sec": 600,
+        "listed": False,
+    },
 }
 
 
@@ -2353,12 +2368,37 @@ _FAL_I2V_BACKUP_IDS = frozenset(
 )
 
 
+def _free_video_redis():
+    try:
+        return _assist_redis()
+    except Exception:
+        return None
+
+
+def _free_video_open() -> bool:
+    """Глобальный слот OmniRoute free Seedance (≤6/час). Без Redis — показываем (локалка)."""
+    try:
+        import free_quota as _fq
+        r = _free_video_redis()
+        if r is None:
+            return True
+        return _fq.hour_available(r)
+    except Exception:
+        return True
+
+
 def _is_studio_visible(spec: dict) -> bool:
     """Hide nets until they are onboarded via the Replicate scheme."""
     if spec.get("listed") is False:
         return False
     mid = str(spec.get("id") or "")
-    return mid in STUDIO_ONBOARD_IDS
+    if mid not in STUDIO_ONBOARD_IDS:
+        return False
+    # После 6 бесплатных за час — убираем из списка моделей
+    if mid == "veo-free-seedance" or spec.get("is_free"):
+        if mid == "veo-free-seedance" and not _free_video_open():
+            return False
+    return True
 
 
 def _replicate_token() -> str:
@@ -2829,6 +2869,12 @@ def _build_replicate_input(
             "duration": 5,
             "resolution": "720p",
             "aspect_ratio": "auto",
+        }
+
+    if model_id == "veo-free-seedance":
+        return {
+            "prompt": prompt,
+            "duration": 5,
         }
 
     if model_id == "seedance-2-5":
@@ -4123,8 +4169,95 @@ def _groq_chat_completion(messages: list, wait_seconds: int = 60) -> dict:
     return last
 
 
+def _run_omniroute_video(omni_model: str, input_payload: dict, wait_seconds: int = 600) -> dict:
+    """Call OmniRoute /v1/videos/generations (veo-free/seedance и др.)."""
+    key = _omniroute_key()
+    if not key:
+        return {"error": "not_configured", "detail": "OMNIROUTE_API_KEY missing", "status": 503}
+    prompt = ""
+    duration = 5
+    if isinstance(input_payload, dict):
+        prompt = (input_payload.get("prompt") or input_payload.get("text") or "").strip()
+        try:
+            duration = int(input_payload.get("duration") or input_payload.get("duration_sec") or 5)
+        except (TypeError, ValueError):
+            duration = 5
+    else:
+        prompt = str(input_payload or "").strip()
+    if not prompt:
+        return {"error": "empty", "detail": "prompt required", "status": 400}
+
+    base = _omniroute_base()
+    url = f"{base}/v1/videos/generations"
+    headers = {
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+    }
+    body: dict = {"model": omni_model, "prompt": prompt, "duration": max(1, min(duration, 10))}
+    if isinstance(input_payload, dict):
+        for k in ("image", "image_url", "aspect_ratio", "resolution"):
+            if input_payload.get(k):
+                body[k] = input_payload[k]
+    try:
+        resp = requests.post(url, headers=headers, json=body, timeout=max(30, wait_seconds + 30))
+    except requests.RequestException as exc:
+        return {"error": "upstream", "detail": str(exc.__class__.__name__), "status": 502}
+    try:
+        data = resp.json()
+    except ValueError:
+        return {"error": "bad_response", "detail": (resp.text or "")[:300], "status": 502}
+    if resp.status_code >= 400:
+        detail = data.get("error") or data.get("detail") or (resp.text or "")[:300]
+        if isinstance(detail, dict):
+            detail = detail.get("message") or detail
+        return {"error": "upstream", "detail": detail, "status": resp.status_code, "body": data}
+
+    # Ответ: [{url}|{b64_json}] или {data:[...]} / {url} / {video:{url}}
+    urls: list[str] = []
+    rows = data
+    if isinstance(data, dict):
+        if isinstance(data.get("data"), list):
+            rows = data["data"]
+        else:
+            for key in ("url", "video_url", "output"):
+                val = data.get(key)
+                if isinstance(val, str) and val.startswith("http"):
+                    urls.append(val)
+                elif isinstance(val, dict) and isinstance(val.get("url"), str):
+                    urls.append(val["url"])
+            if isinstance(data.get("video"), dict) and isinstance(data["video"].get("url"), str):
+                urls.append(data["video"]["url"])
+    if isinstance(rows, list):
+        for item in rows:
+            if isinstance(item, str) and item.startswith("http"):
+                urls.append(item)
+            elif isinstance(item, dict):
+                for key in ("url", "video_url", "href"):
+                    val = item.get(key)
+                    if isinstance(val, str) and val.startswith("http"):
+                        urls.append(val)
+                        break
+    urls = list(dict.fromkeys(urls))
+    if not urls:
+        return {"error": "bad_response", "detail": "no video url", "status": 502, "body": data}
+    return {
+        "ok": True,
+        "prediction": {
+            "id": (data.get("id") if isinstance(data, dict) else None),
+            "status": "succeeded",
+            "output": urls[0] if len(urls) == 1 else urls,
+            "raw": data,
+        },
+    }
+
+
 def _run_omniroute_prediction(omni_model: str, input_payload: dict, wait_seconds: int = 120) -> dict:
-    """Call OmniRoute OpenAI-compatible /v1/chat/completions."""
+    """Call OmniRoute OpenAI-compatible /v1/chat/completions or video generations."""
+    # Video models (veo-free/seedance) — отдельный endpoint
+    mid = str(omni_model or "").lower()
+    if "seedance" in mid or mid.startswith("veo-free/") or "/video" in mid:
+        return _run_omniroute_video(omni_model, input_payload, wait_seconds=wait_seconds)
+
     key = _omniroute_key()
     prompt = ""
     if isinstance(input_payload, dict):
@@ -4143,7 +4276,7 @@ def _run_omniroute_prediction(omni_model: str, input_payload: dict, wait_seconds
     omni_err: dict | None = None
     groq_key = (os.getenv("GROQ_API_KEY") or "").strip()
     # auto/coding:free и подобные free-роуты OmniRoute часто 10–20с 403 — для них сразу Groq
-    free_omni = "free" in str(omni_model or "").lower()
+    free_omni = "free" in str(omni_model or "").lower() and "seedance" not in mid
     if free_omni and groq_key:
         fallback = _groq_chat_completion(messages, wait_seconds=min(wait_seconds, 45))
         if fallback.get("ok"):
@@ -4975,6 +5108,11 @@ def api_integrations():
         healthy_fn = lambda _ch: True  # noqa: E731
 
     prices = _integration_prices()
+    try:
+        import free_quota as _fq
+        free_left_h = _fq.hourly_left(_free_video_redis())
+    except Exception:
+        free_left_h = 6
     items = []
     for spec in INTEGRATED_MODELS.values():
         if not _is_studio_visible(spec):
@@ -4987,10 +5125,11 @@ def api_integrations():
         group = spec.get("group") or kind
         price = prices.get(mid) or ""
         price_full = prices.get(f"{mid}__full") or price
-        # OmniRoute chat is always free for the user (fallback elsewhere)
-        if mid == "assistant" or (provider == "omniroute" and kind in {"chat", "llm"}):
-            price = price or "Бесплатно"
-            price_full = price_full or price
+        is_free = bool(spec.get("is_free")) or mid == "veo-free-seedance"
+        # OmniRoute chat / free video — для пользователя бесплатно
+        if is_free or mid == "assistant" or (provider == "omniroute" and kind in {"chat", "llm"}):
+            price = "Бесплатно"
+            price_full = "Бесплатно"
         items.append({
             "id": mid,
             "name": _public_model_name(spec.get("name") or mid),
@@ -5009,17 +5148,21 @@ def api_integrations():
             "example_url": _integration_example(spec),
             "example_video_url": _integration_example_video(spec),
             "is_assistant": group == "assistants" or kind in {"chat", "llm"},
+            "is_free": is_free,
         })
-    # Assistants first within text, then cheaper-ish by name
+    # free Seedance первым среди видео; assistants first within text
     items.sort(key=lambda it: (
         0 if it.get("is_assistant") else 1,
         {"image": 0, "video": 1, "audio": 2, "stt": 3, "llm": 4, "chat": 4}.get(it.get("kind") or "", 9),
+        0 if it.get("id") == "veo-free-seedance" else 1,
         (it.get("name") or "").lower(),
     ))
     return jsonify({
         "items": items,
         "channels": health,
         "usd_rub_rate": prices.get("__usd_rub_rate") or f"{_usd_rub_rate():.4f}".rstrip("0").rstrip("."),
+        "free_hour_left": free_left_h,
+        "free_hour_cap": 6,
     })
 
 
@@ -5261,6 +5404,17 @@ def api_generate():
     if not spec:
         return jsonify({"error": "unknown_model", "detail": model_id}), 400
 
+    # Бесплатный Seedance — только через /api/jobs (очередь + лимит 6/час)
+    if model_id == "veo-free-seedance" or spec.get("is_free"):
+        if model_id == "veo-free-seedance":
+            if not _free_video_open():
+                return jsonify({"error": "free_hour_exhausted", "detail": "use /api/jobs/start"}), 429
+            return jsonify({
+                "error": "use_jobs",
+                "detail": "Free Seedance goes through /api/jobs/start",
+                "model_key": "veo-free-seedance",
+            }), 400
+
     safe_params: dict = {}
     assist = app.config.get("ASSISTANT")
     if assist is not None and raw_params:
@@ -5323,6 +5477,18 @@ def api_generate():
         return jsonify(exc.to_dict()), exc.status
 
     has_media_image = bool((image_data_url or "").strip())
+
+    # Сначала вход и баланс — до Redis/роутинга, иначе гость видит «сервис недоступен» вместо «войдите».
+    acct = None
+    if _generate_require_auth():
+        acct = _generate_account()
+        if not acct or not acct["authed"]:
+            return jsonify({"error": "auth_required"}), 401
+        need0 = _generate_quote_kop(preferred_model_id, preferred_model_id, safe_params, prompt)
+        if need0 and acct["available_kop"] < need0:
+            return jsonify({"error": "insufficient_funds", "need_kop": need0,
+                            "available_kop": acct["available_kop"]}), 402
+
     route_meta: dict = {
         "reason": "preferred",
         "overflow": False,
@@ -5375,11 +5541,8 @@ def api_generate():
 
     provider = spec["provider"]
 
-    # Сначала вход, потом баланс — hold = max(preferred, routed) на случай overflow на более дорогой fal.
-    if _generate_require_auth():
-        acct = _generate_account()
-        if not acct or not acct["authed"]:
-            return jsonify({"error": "auth_required"}), 401
+    # после роутинга — hold = max(preferred, routed), если overflow увёл на более дорогой канал
+    if _generate_require_auth() and acct is not None:
         need = _generate_quote_kop(preferred_model_id, model_id, safe_params, prompt)
         if need and acct["available_kop"] < need:
             return jsonify({"error": "insufficient_funds", "need_kop": need,
@@ -5683,15 +5846,33 @@ def _assist_on_event(ev: dict) -> None:
 
 load_env(BASE_DIR)
 os.environ.setdefault("ASSIST_VITRINA_URL", "/explore")
+def _assist_price(mid: str):
+    if mid == "veo-free-seedance":
+        return "Бесплатно"
+    return _integration_prices().get(mid)
+
+
 ASSISTANT = _assist_build(
     models=INTEGRATED_MODELS,
-    price_fn=lambda mid: _integration_prices().get(mid),
+    price_fn=_assist_price,
     channel_healthy=_assist_channel_healthy,
     redis_client=_assist_redis(),
     on_event=_assist_on_event,
     cost_fn=_generate_cost_kop,
     visible_fn=lambda mid: _is_studio_visible(INTEGRATED_MODELS.get(mid) or {}),   # этапы проекта: только модели студии
 )
+# После 6 free/час — ассистент не предлагает Seedance Free
+_assist_health0 = ASSISTANT.d.health_fn
+def _assist_health(mid: str) -> bool:
+    if mid == "veo-free-seedance" and not _free_video_open():
+        return False
+    if _assist_health0 is None:
+        return True
+    try:
+        return bool(_assist_health0(mid))
+    except Exception:
+        return True
+ASSISTANT.d.health_fn = _assist_health
 register_assistant(
     app, ASSISTANT,
     user_id_fn=lambda: session.get("user_id"),
@@ -5712,9 +5893,12 @@ register_generation_works(app, db)
 @app.after_request
 def _no_cache_html(resp):
     ct = (resp.headers.get("Content-Type") or "").lower()
-    if "text/html" in ct:
+    path = (request.path or "").lower()
+    # HTML и ассеты студии (js/css) — без кэша, иначе «ничего не изменилось» после правок UI
+    if "text/html" in ct or path.endswith((".js", ".css")):
         resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         resp.headers["Pragma"] = "no-cache"
+        resp.headers["Expires"] = "0"
     return resp
 
 @app.route("/")
@@ -5801,4 +5985,5 @@ if __name__ == "__main__":
     debug = (os.getenv("FLASK_DEBUG") or "").strip().lower() in {"1", "true", "yes"}
     # Production: gunicorn -c deploy/gunicorn.conf.py wsgi:app
     host = (os.getenv("HOST") or "0.0.0.0").strip() or "0.0.0.0"
-    app.run(host=host, port=int(os.getenv("PORT") or 8000), debug=debug)
+    # threaded: иначе длинный LLM/видео-стрим блокирует POST /api/assistant/chat
+    app.run(host=host, port=int(os.getenv("PORT") or 8000), debug=debug, threaded=True)

@@ -250,6 +250,13 @@ def register_product(app, db, User):
                 return jsonify({"error": "free_limit"}), 429
             # capacity check
             r = getattr(g, "redis", None)
+            # Глобально ≤6 бесплатных Seedance в час (лимит OmniRoute Veo AI Free)
+            if r is not None and not free_quota.hour_available(r):
+                return jsonify({
+                    "error": "free_hour_exhausted",
+                    "free_hour_left": 0,
+                    "free_hour_cap": free_quota.FREE_HOUR_CAP,
+                }), 429
             if r is not None and free_quota.queue_len(r) >= free_quota.capacity_24h() and int(fq.lifetime_success or 0) > 0:
                 return jsonify({"error": "free_queue_full"}), 429
             score = free_quota.priority_score(fq, 0)

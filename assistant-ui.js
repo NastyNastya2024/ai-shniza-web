@@ -21,7 +21,7 @@
   'use strict';
   var SERVER = { pick_model: 1, more: 1, choose_type: 1, has_prompt: 1, use_mine: 1, param: 1, pick_camera: 1, refine: 1, improve: 1, send: 1,
     similar: 1, cheaper: 1, faster: 1, no_photo_model: 1, rephrase: 1, resume: 1,
-    brief: 1, variants: 1, more_variants: 1, back_brief: 1, use_variant: 1, restart: 1 };
+    brief: 1, variants: 1, more_variants: 1, back_brief: 1, back: 1, use_variant: 1, skip_polish: 1, restart: 1 };
   var KIND_ICON = { prompt: '✍️', image: '🖼', video: '🎬', music: '🎵', text: '✍️', sfx: '🔊', edit: '✏️' };
 
   function el(tag, cls, text) {
@@ -40,6 +40,7 @@
     var setupNode = null;
     var lastBody = null;
     var allNodes = [];
+    var pendingCamPreview = null;   // «смотреть пример» → сначала выбрать движение, потом открыть витрину
 
     function L(ru, en) { return lang === 'en' ? en : ru; }
 
@@ -90,17 +91,23 @@
         if (it.badge) top.appendChild(el('span', 'aich-badge', it.badge));
         card.appendChild(top);
         card.appendChild(el('div', 'aich-model__why', it.why));
-        card.appendChild(el('div', 'aich-model__price', it.estimate || it.price));
-        card.appendChild(el('div', 'aich-model__sub', it.estimate ? (it.price + ' · ' + it.speed) : it.speed));
-        var link = el('a', 'aich-model__link', L('Примеры на витрине →', 'Examples in showcase →'));
-        link.href = it.vitrina_url || '#';
-        link.addEventListener('click', function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          if (opts.onUiAction) opts.onUiAction('open_vitrina', it.id);
-          else if (it.vitrina_url) location.href = it.vitrina_url;
-        });
-        card.appendChild(link);
+        var priceLine = it.estimate || it.price;
+        if (priceLine) card.appendChild(el('div', 'aich-model__price', priceLine));
+        var subLine = it.estimate ? ((it.price || '') + (it.price && it.speed ? ' · ' : '') + (it.speed || '')) : it.speed;
+        if (subLine) card.appendChild(el('div', 'aich-model__sub', subLine));
+        if (it.cta) {
+          card.appendChild(el('span', 'aich-model__cta', it.cta));
+        } else if (it.vitrina_url) {
+          var link = el('a', 'aich-model__link', L('Примеры на витрине →', 'Examples in showcase →'));
+          link.href = it.vitrina_url;
+          link.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (opts.onUiAction) opts.onUiAction('open_vitrina', it.id);
+            else location.href = it.vitrina_url;
+          });
+          card.appendChild(link);
+        }
         card.addEventListener('click', function () { onChip({ label: it.title, action: 'pick_model', value: it.id }); });
         grid.appendChild(card);
       });
@@ -145,11 +152,11 @@
       return wrap;
     }
 
-    /** Движения камеры: сначала тип, затем сабменю; по умолчанию — без движения. */
+    /** Движения камеры: сначала тип, затем сабменю-табы; по умолчанию — без движения. */
     function renderCamera(bl) {
       var wrap = el('div', 'aich-camera');
       var head = el('div', 'aich-camera__head');
-      head.appendChild(el('div', 'aich-param__label', bl.label || L('Движение камеры', 'Camera move')));
+      head.appendChild(el('div', 'aich-param__label', bl.label || L('Добавим движение камеры?', 'Add a camera move?')));
       if (bl.hint) head.appendChild(el('div', 'aich-prompt__hint', bl.hint));
       wrap.appendChild(head);
 
@@ -177,6 +184,20 @@
         if (window.vitOpenWork && workId && window.vitOpenWork(workId)) return;
         if (fallbackHref) location.href = fallbackHref;
       }
+      function pickMove(it, alsoPreview) {
+        if (it.selected) {
+          if (alsoPreview) openVitSide(it.work_id, it.vitrina);
+          return;
+        }
+        /* таб: выбираем движение; «смотреть пример» ещё и открывает витрину после ответа */
+        if (alsoPreview) pendingCamPreview = { work_id: it.work_id, vitrina: it.vitrina };
+        post({ action: { type: 'pick_camera', value: it.id } }, true).then(function () {
+          if (!alsoPreview || !pendingCamPreview) return;
+          var p = pendingCamPreview;
+          pendingCamPreview = null;
+          openVitSide(p.work_id, p.vitrina);
+        });
+      }
       function paintGroups() {
         gRow.textContent = '';
         gRow.appendChild(clear);
@@ -199,6 +220,7 @@
         }
         sub.hidden = false;
         var row = el('div', 'aich-camera__row');
+        row.setAttribute('role', 'tablist');
         var n = 0;
         (bl.items || []).forEach(function (it) {
           if (it.group !== activeGroup) return;
@@ -206,23 +228,22 @@
           var card = el('div', 'aich-camera__chip' + (it.selected ? ' is-on' : ''));
           var pick = el('button', 'aich-camera__name');
           pick.type = 'button';
+          pick.setAttribute('role', 'tab');
+          pick.setAttribute('aria-selected', it.selected ? 'true' : 'false');
           pick.setAttribute('aria-pressed', it.selected ? 'true' : 'false');
           pick.textContent = it.title;
-          pick.addEventListener('click', function () {
-            if (it.selected) return;
-            post({ action: { type: 'pick_camera', value: it.id } }, true);
-          });
+          pick.addEventListener('click', function () { pickMove(it, false); });
           card.appendChild(pick);
           if (it.work_id || it.vitrina) {
             var ex = el('button', 'aich-camera__example');
             ex.type = 'button';
-            ex.setAttribute('aria-label', L('Смотреть пример', 'Watch example'));
-            ex.title = L('Смотреть пример', 'Watch example');
+            ex.setAttribute('aria-label', L('Выбрать и смотреть пример', 'Select and watch example'));
+            ex.title = L('Выбрать и смотреть пример', 'Select and watch example');
             ex.textContent = L('смотреть пример →', 'watch example →');
             ex.addEventListener('click', function (e) {
               e.preventDefault();
               e.stopPropagation();
-              openVitSide(it.work_id, it.vitrina);
+              pickMove(it, true);
             });
             card.appendChild(ex);
           }

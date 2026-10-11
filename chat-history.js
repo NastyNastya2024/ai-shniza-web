@@ -1,15 +1,19 @@
 /* История переписки студии (/app).
  *
  * Вошёл в аккаунт → переписка сохраняется на сервере (/api/chats), слева список «Чаты».
- * Гость → 24 часа в этом браузере (localStorage) и честная подпись «войдите, чтобы сохранить».
+ * Гость → черновик текущего чата в localStorage (aish-chat-guest), чтобы пережить вход через /auth;
+ *   после логина черновик поднимается в UI и уезжает в /api/chats.
  * Сами прикреплённые файлы НЕ сохраняются: в истории остаются только плашки «Фото: cat.png»,
  * файлы живут 24 часа (как на сервере, UPLOAD_TTL_SEC) — потом плашка помечается «файл удалён».
  *
  *   AishHistory.init({ api, csrf, t, ago, getMsgs, onRestore, onNew, box: '#chatsBox' })
- *   AishHistory.watch(msgs)      — из render(): сохранить с задержкой, если сообщения поменялись
- *   AishHistory.boot(user)       — после /api/auth/me: восстановить текущий чат (или перенести гостевой в аккаунт)
- *   AishHistory.detach()         — «Новый чат» / на главную: сохранить текущий и начать новый
- *   AishHistory.logout()         — выход: стереть локальную историю с устройства
+ *   AishHistory.watch(msgs)      — из render(): сохранить с задержкой (только для вошедших)
+ *   AishHistory.boot(user, {fresh, resume}) — после /api/auth/me; по умолчанию чистый лист
+ *     (не подтягиваем прошлый чат, сбрасываем сессию помощника). resume=true или наличие
+ *     aish-chat-guest — после входа поднять черновик, память помощника не сбрасывать.
+ *     fresh=true (?new / ?prompt) — стереть гостевой черновик.
+ *   AishHistory.detach()         — «Новый чат» / на главную: сохранить текущий (если вошли) и начать новый
+ *   AishHistory.logout()         — выход: стереть локальные ключи
  *   AishHistory.clean(msgs)      — то, что уходит в хранилище (без номеров файлов и временных полей)
  */
 (function () {
@@ -111,17 +115,22 @@
     else ls('del', ACTIVE_KEY);
   }
 
+  function saveGuestDraft(msgs) {
+    var data = clean(msgs != null ? msgs : (o && o.getMsgs ? o.getMsgs() : []));
+    if (!data.length) { ls('del', GUEST_KEY); return data; }
+    try { ls('set', GUEST_KEY, JSON.stringify(data)); } catch (e) {}
+    return data;
+  }
+
   function saveNow(msgs, keepalive) {
+    if (!user) {
+      saveGuestDraft(msgs);   // пережить уход на /auth и случайный reload
+      return Promise.resolve();
+    }
     var data = clean(msgs);
     var json = JSON.stringify(data);
     if (!data.length || json === lastJson) return Promise.resolve();
     lastJson = json;
-    if (!user) {
-      var payload = { at: Date.now(), msgs: data };
-      while (JSON.stringify(payload).length > MAX_LOCAL && payload.msgs.length > 2) payload.msgs = payload.msgs.slice(2);
-      ls('set', GUEST_KEY, JSON.stringify(payload));
-      return Promise.resolve();
-    }
     var my = gen;             // «Новый чат» / другой чат / выход во время запроса — ответ уже не про текущий чат
     var id = chatId;
     if (id) {
@@ -160,17 +169,21 @@
     if (!o || !booted || msgs === lastRef) return;
     lastRef = msgs;
     clearTimeout(timer);
-    timer = setTimeout(function () { saveNow(o.getMsgs()); }, 1200);
-    // не перерисовываем список чатов на каждый статус «думаю…» — только заголовок текущего
-    if (!user && o.side) {
+    // и гость, и аккаунт — периодически сохраняем (гость → localStorage, аккаунт → /api/chats)
+    timer = setTimeout(function () { saveNow(o.getMsgs()); }, user ? 1200 : 400);
+    if (!user) {
+      var has = (msgs || []).some(function (m) { return m.role === 'user' || m.role === 'bot'; });
       var box = document.querySelector(o.box || '#chatsBox');
-      var name = box && box.querySelector('.chats-item.is-on .chats-name');
-      if (name) {
+      var on = box && box.querySelector('.chats-item.is-on');
+      if (!on && has) { renderBox(); return; }
+      if (on) {
+        var name = on.querySelector('.chats-name');
         var first = (msgs || []).filter(function (m) { return m.role === 'user' && m.text; })[0];
-        if (first) name.textContent = String(first.text).replace(/\s+/g, ' ').slice(0, 60);
+        if (name && first) name.textContent = String(first.text).replace(/\s+/g, ' ').slice(0, 60);
       }
       var nw = box && box.querySelector('[data-chat-new]');
-      if (nw) nw.disabled = !(msgs || []).some(function (m) { return m.role === 'user' || m.role === 'bot'; });
+      if (nw) nw.disabled = !has;
+      if (!has && on) renderBox();
     }
   }
 
@@ -191,7 +204,10 @@
     var text = t('studio.history.note.' + note);
     if (hadFiles) text += ' ' + t(gone ? 'studio.history.note.filesGone' : 'studio.history.note.files24');
     // помощник помнит разговор 24 часа (та же cookie) — можно продолжить с того же места: модель, промпт, параметры
-    out.push({ role: 'note', history: 'note', text: text, resume: note === 'restored' || note === 'guest' });
+    out.push({
+      role: 'note', history: 'note', text: text,
+      resume: note === 'restored' || note === 'guest' || note === 'moved'
+    });
     o.onRestore(out);
     lastRef = null;
   }
@@ -210,29 +226,37 @@
     }).catch(function () { return false; });
   }
 
-  function boot(u) {
+  function boot(u, opts) {
     user = u && u.id != null ? { id: u.id } : null;
-    var guest = readJSON(GUEST_KEY);
-    if (guest && !(guest.at && Date.now() - guest.at < DAY && Array.isArray(guest.msgs))) { ls('del', GUEST_KEY); guest = null; }
-    var done;
-    if (!user) {
-      ls('del', ACTIVE_KEY);
-      if (guest && guest.msgs.length) restore(guest.msgs, { note: 'guest' });
-      done = Promise.resolve();
-    } else if (guest && guest.msgs.length) {
-      // вошли после гостевой переписки → переносим её в аккаунт
+    var fresh = !!(opts && opts.fresh);     // ?new / ?prompt — явно чистый лист
+    var resume = !!(opts && opts.resume);   // флаг после /auth (sessionStorage / localStorage)
+    var guestDraft = readJSON(GUEST_KEY);
+    if (!Array.isArray(guestDraft) || !guestDraft.length) guestDraft = null;
+    // Есть черновик гостя → всегда поднимаем после входа/возврата (флаг resume мог потеряться)
+    if (guestDraft && !fresh) resume = true;
+    if (fresh) {
       ls('del', GUEST_KEY);
-      done = req('POST', '/api/chats', { messages: clean(guest.msgs) }).then(function (r) {
-        if (r.ok && r.data && r.data.id) setActive(r.data.id);
-        restore(guest.msgs, { note: 'moved' });
-      }).catch(function () { restore(guest.msgs, { note: 'guest' }); });
-    } else {
-      var act = readJSON(ACTIVE_KEY);
-      if (act && act.uid === user.id && act.id && Date.now() - (act.at || 0) < DAY) done = loadChat(act.id, 'restored');
-      else { ls('del', ACTIVE_KEY); done = Promise.resolve(); }
+      guestDraft = null;
+      resume = false;
     }
-    return done.then(function () {
+    // обновление страницы без resume = чистый лист: не подтягиваем ACTIVE_KEY и не оставляем
+    // серверную сессию помощника (иначе «pop» дописывает старые варианты промпта)
+    gen++;
+    creating = null;
+    chatId = null;
+    lastJson = '';
+    ls('del', ACTIVE_KEY);
+    var done = resume ? Promise.resolve() : resetAssistant();
+    return Promise.resolve(done).then(function () {
       booted = true;
+      if (resume && guestDraft) {
+        restore(guestDraft, { note: user ? 'moved' : 'guest' });
+        ls('del', GUEST_KEY);
+        lastRef = null;
+        var p = user ? flush() : Promise.resolve();
+        return p.then(function () { if (user) return refreshList(); renderBox(); });
+      }
+      // черновик не трогали — не удаляем: при следующем заходе после входа ещё пригодится
       lastRef = o.getMsgs();
       if (user) refreshList(); else renderBox();
     });
@@ -256,9 +280,10 @@
     lastJson = '';
     ls('del', ACTIVE_KEY);
     if (!user) ls('del', GUEST_KEY);
-    resetAssistant();
+    try { sessionStorage.removeItem('aish-assist-resume'); } catch (e) {}
+    var reset = resetAssistant();
     renderBox();
-    return p.then(function () { if (user) return refreshList(); });
+    return Promise.all([p, reset]).then(function () { if (user) return refreshList(); });
   }
 
   function openChat(id) {
@@ -266,8 +291,8 @@
     return flush().then(function () {
       gen++;
       creating = null;
-      resetAssistant();       // память помощника принадлежала прежнему чату
-      return loadChat(id, 'opened');
+      try { sessionStorage.removeItem('aish-assist-resume'); } catch (e) {}
+      return resetAssistant().then(function () { return loadChat(id, 'opened'); });
     });
   }
 
@@ -298,15 +323,16 @@
     if ((user && user.id) === id || (!user && id == null)) return;
     if (id == null) { logout(); return; }
     clearTimeout(timer);
-    gen++;
-    creating = null;
+    // текущие сообщения уже в памяти → после смены user flush увезёт их в /api/chats
     user = { id: id };
     chatId = null;
     lastJson = '';
-    ls('del', GUEST_KEY);     // гостевая переписка переезжает в аккаунт
     ls('del', ACTIVE_KEY);
-    flush();
-    refreshList();
+    // GUEST_KEY не трогаем до успешного flush — иначе при сбое вход «съест» черновик
+    flush().then(function () {
+      ls('del', GUEST_KEY);
+      return refreshList();
+    });
   }
 
   /* ---------- левая панель: «Чаты» ---------- */
@@ -337,12 +363,13 @@
     nw.title = t('studio.history.newTitle');
     nw.setAttribute('data-chat-new', '');
     nw.disabled = !msgs.length;
-    nw.addEventListener('click', function () { detach(); o.onNew(); });
+    // только onNew: приложение само делает detach + сброс помощника (иначе гонка со старой сессией)
+    nw.addEventListener('click', function () { if (o.onNew) o.onNew(); });
     head.appendChild(nw);
     box.appendChild(head);
 
     if (!user && o.side) {
-      // гость: один текущий чат в этом браузере + приглашение войти
+      // гость: только текущий чат в памяти вкладки — без сохранённой истории
       var gl = el('ul', 'chats-list');
       if (msgs.length) {
         var gi = el('li', 'chats-item is-on');
@@ -352,8 +379,9 @@
         gb.appendChild(el('span', 'chats-when', t('studio.history.guestWhen')));
         gi.appendChild(gb);
         gl.appendChild(gi);
+      } else {
+        gl.appendChild(el('li', 'chats-empty', t('studio.history.guestEmpty', { days: days })));
       }
-      gl.appendChild(el('li', 'chats-empty', t('studio.history.guestEmpty', { days: days })));
       box.appendChild(gl);
     }
     if (user && (open || o.side)) {
@@ -394,6 +422,7 @@
   window.AishHistory = {
     init: init, watch: watch, boot: boot, setUser: setUser, detach: detach, logout: logout, flush: flush,
     openChat: openChat, refreshList: refreshList, clean: clean,
+    saveGuestDraft: function () { return saveGuestDraft(); },
     current: function () { return chatId; },
     _DAY: DAY
   };

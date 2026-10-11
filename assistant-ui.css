@@ -20,6 +20,8 @@
 .aich-model__sub{font-size:12px;color:var(--muted2,#6E62A3)}
 .aich-model__link{font-size:13px;font-weight:600;color:var(--accent-ink,#4B2BB8);text-decoration:none;margin-top:2px}
 .aich-model__link:hover{text-decoration:underline}
+.aich-model__cta{display:inline-flex;align-items:center;margin-top:8px;padding:0;border:none;background:none;box-shadow:none;font-size:13px;font-weight:600;line-height:1.25;letter-spacing:0;color:var(--accent-ink,#4B2BB8)}
+.aich-model:hover .aich-model__cta{color:var(--ink,#1E1238);text-decoration:underline}
 
 .aich-prompt{border:1.5px dashed rgba(232,105,28,.55);background:rgba(255,154,61,.07);border-radius:16px;padding:12px 16px}
 .aich-prompt__label{font-size:12px;font-weight:600;color:var(--muted,#5B4D93);margin-bottom:6px}

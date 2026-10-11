@@ -130,11 +130,17 @@ def test_free_model_needs_login_only(srv, monkeypatch):
 def test_assistant_asks_login_then_topup_then_generate(srv):
     c = srv.app.test_client()
     d = _chat(c, {"message": "видео: кот жарит яичницу"})
-    assert d["intent"] == "brief"                      # сначала уточняем детали, потом модель
+    assert d["intent"] == "generate_task" and any(b.get("type") == "models" for b in d["blocks"])
+    d = _chat(c, {"action": {"type": "pick_model", "value": "veo-3-1"}})
+    assert d["intent"] == "has_prompt"
+    d = _chat(c, {"action": {"type": "has_prompt", "value": "yes"}})
+    assert d["intent"] == "brief"
     d = _chat(c, {"action": {"type": "variants"}})
     assert d["intent"] == "variants" and len(d["blocks"][0]["items"]) >= 2
     d = _chat(c, {"action": {"type": "use_variant", "value": "v1"}})
     assert d["intent"] == "use_variant" and len(d["models"]) >= 2
+    d = _chat(c, {"action": {"type": "skip_polish"}})
+    assert d["intent"] == "skip_polish" and len(d["models"]) >= 2
     d = _chat(c, {"action": {"type": "pick_model", "value": "veo-3-1"}})
     assert d["gate"] == "login" and d["ready"] is False
     assert d["chips"][0]["action"] == "login" and not any(x["action"] == "generate" for x in d["chips"])
