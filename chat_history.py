@@ -30,7 +30,8 @@ MAX_ASSIST_JSON = 20_000
 MAX_BODY = 600_000
 ROLES = ("user", "bot")
 MEDIA_KINDS = ("image", "video", "audio", "music")
-BLOCK_TYPES = ("models", "prompt", "params", "summary", "brief", "variants")
+BLOCK_TYPES = ("models", "prompt", "params", "summary", "brief", "variants",
+               "reel_steps", "reel_character", "reel_script", "reel_storyboard", "reel_final")
 _URL_RX = re.compile(r"^(https?://[^\s\"'<>]{1,1000}|/[^\s\"'<>]{0,1000})$")
 _ID_RX = re.compile(r"^c_[0-9a-f]{20}$")
 

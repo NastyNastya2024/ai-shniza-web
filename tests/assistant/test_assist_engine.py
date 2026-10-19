@@ -29,19 +29,22 @@ def test_full_video_flow_ru(make_assistant):
     assert len(models) >= 2 and all(m["vitrina_url"].startswith("/vitrina.html?model=") for m in models)
     assert all(m["price"] and m["why"] for m in models)
     assert "veo-free-seedance" not in {m["id"] for m in models}
-    prices = [float(m["price"].split()[0].replace(",", ".")) for m in models if m["price"][0].isdigit()]
-    assert prices == sorted(prices)  # по цене
+    # Seedance первым, остальные — от дешёвых к дорогим
+    assert models[0]["id"] == "seedance-2-5"
+    tail = [float(m["price"].split()[0].replace(",", ".")) for m in models[1:] if m["price"][0].isdigit()]
+    assert tail == sorted(tail)
     assert r["llm"]["used"] is False and not tr.calls  # подбор — 0 токенов
     assert_short(r)
 
-    # параметры смотрим на Seedance 2.5
+    # параметры смотрим на Seedance 2.5 — на экране только настройки + камера, без редактора промпта
     r2 = a.handle("", {}, SID, action={"type": "pick_model", "value": "seedance-2-5"})
     assert r2["generate_model"] == "seedance-2-5" and r2["generate_prompt"].startswith("A fried egg")
-    assert block(r2, "prompt")["text"] == r2["generate_prompt"] and block(r2, "prompt")["note"]
+    assert block(r2, "prompt") is None and block(r2, "camera") and block(r2, "params")
     assert r2["llm"]["used"] and r2["llm"]["provider"] == "omniroute" and r2["llm"]["tokens"] == 360
     groups = block(r2, "params")["groups"]
     assert groups and all(sum(o["selected"] for o in g["options"]) == 1 for g in groups)
     assert r2["ready"] is True and r2["chips"][0]["action"] == "generate" and r2["chips"][0].get("primary")
+    assert not any(c.get("action") == "improve" for c in r2["chips"])
     assert_short(r2)
 
     g = groups[0]
@@ -66,7 +69,9 @@ def test_english_flow(make_assistant):
     r = a.handle("make a short video of a cat surfing", {"lang": "en"}, SID)
     assert r["lang"] == "en" and ("models for" in r["text"].lower() or "pick a model" in r["text"].lower())
     r2 = a.handle("", {"lang": "en"}, SID, action={"type": "pick_model", "value": r["models"][0]["id"]})
-    assert r2["lang"] == "en" and ("prompt for" in r2["text"].lower() or "model" in r2["text"].lower())
+    assert r2["lang"] == "en"
+    low = r2["text"].lower()
+    assert "settings" in low or "camera" in low or "prompt for" in low or "model" in low
 
 
 def test_ui_lang_overrides_message_lang(make_assistant):
@@ -128,8 +133,10 @@ def test_more_excludes_shown(make_assistant):
     a = make_assistant()
     r = a.handle("сделай видео про море", {}, SID)
     shown = {m["id"] for m in r["models"]}
+    assert len(shown) == 6
     r2 = a.handle("", {}, SID, action={"type": "more"})
-    assert r2["models"] and not shown & {m["id"] for m in r2["models"]}
+    assert r2.get("intent") == "more"
+    assert r2.get("models") and not shown & {m["id"] for m in r2["models"]}
 
 
 def test_ask_type_then_choose(make_assistant):
@@ -266,10 +273,11 @@ def test_off_topic_asks_format_not_examples(make_assistant):
     assert r["intent"] == "off_topic"
     assert r["chips"][0]["action"] == "choose_type"
     assert {c["action"] for c in r["chips"]} == {"choose_type"}
-    assert "промпт" in r["text"].lower() and "формат" in r["text"].lower()
+    assert "reel_start" not in {c["action"] for c in r["chips"]}
+    assert "формат" in r["text"].lower() and "генерир" in r["text"].lower()
     assert not any(c["action"] == "send" for c in r["chips"])
     assert r["chips"][0]["value"] == "prompt"
-    assert {c["value"] for c in r["chips"]} >= {"prompt", "image", "video", "music"}
+    assert {c.get("value") for c in r["chips"]} >= {"prompt", "image", "video", "music"}
     r2 = a.handle("", {}, SID, action={"type": "choose_type", "value": "video"})
     assert block(r2, "models")
     r3 = a.handle("", {}, SID, action={"type": "pick_model", "value": "seedance-2-5"})
@@ -330,9 +338,22 @@ def test_three_models_fit_without_truncation(make_assistant):
                  "make a cinematic realistic video with dialogue of an astronaut cooking eggs on the moon"):
         r = a.handle(text, {}, "s-" + text[:5])
         items = block(r, "models")["items"]
-        assert len(items) == len(r["models"]) >= 2
-        for m in r["models"]:
-            assert m["title"] in r["reply"], m  # и в простом тексте для старого фронта
+        assert len(items) == len(r["models"]) == 6  # первая страница видео
+        for m in r["models"][:3]:
+            assert m["title"] in r["reply"], m
+
+
+def test_video_first_page_then_more_rest(make_assistant, cards):
+    c, _ = cards
+    all_video = {mid for mid, card in c.items() if card.kind == "video"}
+    a = make_assistant()
+    r = a.handle("видео кот бежит", {}, SID)
+    first = {m["id"] for m in block(r, "models")["items"]}
+    assert len(first) == 6 and first <= all_video
+    r2 = a.handle("", {}, SID, action={"type": "more"})
+    rest = {m["id"] for m in block(r2, "models")["items"]}
+    assert first.isdisjoint(rest) and first | rest == all_video
+    assert r2.get("intent") == "more"
 
 
 def test_concurrent_sessions(make_assistant):
@@ -359,8 +380,8 @@ def test_screenshot_scenario_typos_and_buttons(make_assistant):
     vals = {c["value"] for c in r["chips"] if c["action"] == "choose_type"}
     assert vals >= {"prompt", "image", "video", "music"} and "prompt" in vals
     r = a.handle("надо сделать коты который жарит иишницу", {}, SID)
-    assert r["intent"] == "ask_type" and "промпт" in r["text"].lower()
-    assert [c["action"] for c in r["chips"]].count("choose_type") == 5  # вопрос + кнопки, не «открытый»
+    assert r["intent"] == "ask_type" and "генерир" in r["text"].lower()
+    assert [c["action"] for c in r["chips"]].count("choose_type") == 4  # вопрос + кнопки, не «открытый»
     assert r["chips"][0]["value"] == "prompt"
     r = a.handle("карттинку", {}, SID)                                     # опечатка — понимаем
     assert block(r, "models") and all(a.d.cards[m["id"]].kind in ("image", "edit") for m in r["models"])
@@ -391,7 +412,7 @@ def test_unclear_answer_reasks_with_buttons(make_assistant):
     a = make_assistant()
     a.handle("котик в космосе", {}, SID)
     r = a.handle("ну не знаю", {}, SID)
-    assert r["intent"] == "ask_type" and len(r["chips"]) == 5   # prompt/image/video/music/sfx
+    assert r["intent"] == "ask_type" and [c["action"] for c in r["chips"]].count("choose_type") == 4   # prompt/image/video/music
     assert r["chips"][0]["value"] == "prompt"
     assert block(a.handle("2", {}, SID), "models")  # 2 = картинка → модели
 
@@ -404,13 +425,20 @@ def test_prompt_chip_then_type_enters_prompt_assist(make_assistant):
     assert r["intent"] == "choose_type" and vals >= {"image", "video", "music"}
     assert "prompt" not in vals and any(c.get("action") == "back" for c in r["chips"])
     r2 = a.handle("", {}, SID, action={"type": "choose_type", "value": "video"})
-    # «Промпт» → тип → сразу модели (без has_prompt), потом вопросы под выбранную
-    assert block(r2, "models") and "нейросеть" in r2["text"].lower()
-    assert any(c.get("action") == "back" for c in r2["chips"])
-    r3 = a.handle("", {}, SID, action={"type": "pick_model", "value": "seedance-2-5"})
-    assert r3["intent"] == "brief" and "Seedance" in r3["text"]
+    # «Промпт» → тип → только «опишите идею», без брифа / нейросетей / «кто в кадре?»
+    assert r2["intent"] == "need_subject" and not block(r2, "models") and not block(r2, "brief")
+    assert "идею промпта" in r2["text"].lower()
+    assert "кто в кадре" not in r2["text"].lower()
+    assert "не совсем поняла" not in r2["text"].lower()
+    # мусор на этом шаге — снова коротко про идею, без опросника
+    r_junk = a.handle("ооло", {}, SID)
+    assert r_junk["intent"] == "need_subject" and "идею промпта" in r_junk["text"].lower()
+    assert "кто в кадре" not in r_junk["text"].lower()
+    r3 = a.handle("кот жарит яичницу на сковороде", {}, SID)
+    assert r3["intent"] == "variants" and block(r3, "variants")
     r4 = a.handle("", {}, SID, action={"type": "back"})
-    assert block(r4, "models")  # назад с брифа → снова модели
+    # с вариантов в prompt-режиме назад → бриф или тип; главное — не уходим в модели
+    assert not block(r4, "models")
 
 
 def test_text_params_and_free_refine_after_pick(make_assistant):
@@ -455,21 +483,41 @@ def test_video_estimate_on_cards(make_assistant, cards):
 
 
 
-# ---------- перед запуском: сначала вход, потом баланс ----------
+# ---------- сначала вход (до типа), потом баланс перед запуском ----------
 def _setup(a, sid, ctx):
     a.handle("видео кот жарит яичницу", ctx, sid)
     return a.handle("", ctx, sid, action={"type": "pick_model", "value": "veo-3-1"})
 
 
+def test_guest_asked_login_before_type(make_assistant):
+    a = make_assistant()
+    guest = {"_account": {"authed": False}}
+    r = a.handle("видео кот жарит яичницу", guest, "g0")
+    assert r["gate"] == "login" and r["ready"] is False and r["chips"][0]["action"] == "login"
+    assert "войдите" in r["text"].lower() and "кто в кадре" not in r["text"].lower()
+    assert not block(r, "models")
+    # после входа — сразу к моделям по сохранённой идее, без повторного «что генерируем»
+    r = a.handle("", {"_account": {"authed": True, "available_kop": 10 ** 7}, "_uid": "7"}, "g0",
+                 action={"type": "resume"})
+    assert block(r, "models") and r.get("gate") != "login"
+
+
 def test_gate_order_login_then_topup_then_generate(make_assistant):
     a = make_assistant()
-    r = _setup(a, "g1", {"_account": {"authed": False}})
-    assert r["gate"] == "login" and r["ready"] is False and r["chips"][0]["action"] == "login"
+    # гость: вход ещё до выбора модели
+    r = a.handle("видео кот жарит яичницу", {"_account": {"authed": False}}, "g1")
+    assert r["gate"] == "login" and r["chips"][0]["action"] == "login"
     assert not any(c["action"] == "generate" for c in r["chips"])
-    r = a.handle("", {"_account": {"authed": True, "available_kop": 100}, "_uid": "7"}, "g1", action={"type": "resume"})
+    # вошли, мало денег → модели → pick → topup
+    r = a.handle("", {"_account": {"authed": True, "available_kop": 100}, "_uid": "7"}, "g1",
+                 action={"type": "resume"})
+    assert block(r, "models")
+    r = a.handle("", {"_account": {"authed": True, "available_kop": 100}, "_uid": "7"}, "g1",
+                 action={"type": "pick_model", "value": "veo-3-1"})
     assert r["gate"] == "topup" and r["chips"][0]["action"] == "open_topup"
     assert {c["action"] for c in r["chips"]} >= {"resume", "cheaper"}
-    r = a.handle("", {"_account": {"authed": True, "available_kop": 10 ** 7}, "_uid": "7"}, "g1", action={"type": "resume"})
+    r = a.handle("", {"_account": {"authed": True, "available_kop": 10 ** 7}, "_uid": "7"}, "g1",
+                 action={"type": "resume"})
     assert r["gate"] == "ok" and r["ready"] and r["chips"][0]["action"] == "generate"
     assert "спишется" in r["text"]
 

@@ -1,10 +1,11 @@
 """Подбор моделей — без LLM.
 
 Правила:
-* по умолчанию 3 модели в ряд (если доступно; минимум 2 при узком каталоге);
+* по умолчанию (n=None) — все модели выбранного типа; UI для видео режет первой страницей (n=6);
 * модели с упавшим каналом (health_fn → False) не предлагаем;
-* без фото не предлагаем модели «только из фото», с фото для видео — сначала i2v;
-* если среди трёх нет самой дешёвой — подменяем последнюю на неё (with_cheap).
+* с фото для видео — i2v выше в ранге, но без фото i2v-модели тоже показываем;
+* если среди первых нет самой дешёвой и n ограничен — подменяем последнюю (with_cheap);
+* общее видео: Seedance первым, остальные — от дешёвых к дорогим.
 """
 from __future__ import annotations
 
@@ -18,7 +19,7 @@ PriceFn = Callable[[str], "str | None"]
 HealthFn = Callable[[str], bool]
 
 # Первая карточка в подборе по типу (если модель доступна и подходит).
-PIN_FIRST = {"text": "omni-auto-free"}
+PIN_FIRST = {"text": "omni-auto-free", "video": "seedance-2-5"}
 
 
 @dataclass
@@ -64,55 +65,84 @@ def score(card: Card, needs: Iterable[str], has_image: bool, price_fn: PriceFn |
     return s
 
 
+def _price_key(card: Card, price_fn: PriceFn | None) -> float:
+    if price_fn is None:
+        return 1e9
+    v = price_value(price_fn(card.id))
+    return v if v is not None else 1e9
+
+
 def recommend(cards: dict[str, Card], kind: str, needs: list[str] | None = None, has_image: bool = False,
               health_fn: HealthFn | None = None, price_fn: PriceFn | None = None,
-              neighbors: dict[str, list[str]] | None = None, exclude: Iterable[str] = (), n: int = 3,
+              neighbors: dict[str, list[str]] | None = None, exclude: Iterable[str] = (), n: int | None = None,
               with_cheap: bool = True) -> Pick:
     needs = needs or []
     excl = set(exclude)
 
     def pool(kinds: Iterable[str]) -> list[Card]:
         ks = set(kinds)
+        # Все модели типа — включая i2v-only (Grok, Gen-4 Turbo) без фото.
         return [c for c in cards.values()
-                if c.kind in ks and c.id not in excl and c.supports(has_image) and _healthy(c, health_fn)]
+                if c.kind in ks and c.id not in excl and _healthy(c, health_fn)]
 
-    main = sorted(pool([kind]), key=lambda c: (-score(c, needs, has_image, price_fn), c.id))
+    # общее «видео» без узких тегов — Seedance + дешёвые; иначе score важнее
+    prefer_price = kind == "video" and not needs
+
+    def _sort_key(c: Card) -> tuple:
+        sc = -score(c, needs, has_image, price_fn)
+        if prefer_price:
+            return (_price_key(c, price_fn), sc, c.id)
+        return (sc, _price_key(c, price_fn), c.id)
+
+    main = sorted(pool([kind]), key=_sort_key)
     pin_id = PIN_FIRST.get(kind)
     if pin_id:
         pinned = next((c for c in main if c.id == pin_id), None)
         if pinned is not None:
             main = [pinned] + [c for c in main if c.id != pin_id]
-    exact = not needs or any(set(needs) & set(c.tags) for c in main[:n])
-    # разнообразие: не показываем две модели одного семейства (Veo 3.1 + Veo 3.1 Fast), если есть альтернатива
+    limit = len(main) if n is None else max(0, int(n))
+    exact = not needs or any(set(needs) & set(c.tags) for c in main[: max(limit, 1)])
+    # разнообразие семейств только когда режем список; при полном каталоге — все модели
     picked: list[Card] = []
-    for c in main:
-        if len(picked) >= n:
-            break
-        if family(c) not in {family(p) for p in picked}:
-            picked.append(c)
-    for c in main:
-        if len(picked) >= n:
-            break
-        if c not in picked:
-            picked.append(c)
-    if len(picked) < n:
-        extra = sorted(pool((neighbors or {}).get(kind, [])), key=lambda c: (-score(c, needs, has_image, price_fn), c.id))
-        picked += extra[: n - len(picked)]
-        if extra and len(main) < n:
+    if n is None:
+        picked = list(main)
+    else:
+        for c in main:
+            if len(picked) >= limit:
+                break
+            if family(c) not in {family(p) for p in picked}:
+                picked.append(c)
+        for c in main:
+            if len(picked) >= limit:
+                break
+            if c not in picked:
+                picked.append(c)
+    # узкий тип (sfx и т.п.) — добираем соседей, чтобы было из чего выбрать
+    need = 2 if n is None else limit
+    if len(picked) < need:
+        extra = sorted(pool((neighbors or {}).get(kind, [])), key=_sort_key)
+        picked += [c for c in extra if c not in picked][: need - len(picked)]
+        if extra and len(main) < need:
             exact = False if needs else exact
 
-    if with_cheap and price_fn is not None and picked:
+    if with_cheap and n is not None and price_fn is not None and picked:
         rest = [c for c in main if c not in picked]
         prices = [price_value(price_fn(c.id)) for c in picked]
         known = [p for p in prices if p is not None]
         if rest and known:
-            cheap = min(rest, key=lambda c: (price_value(price_fn(c.id)) if price_value(price_fn(c.id)) is not None else 1e9))
+            cheap = min(rest, key=lambda c: _price_key(c, price_fn))
             cv = price_value(price_fn(cheap.id))
             if cv is not None and cv < min(known):
-                if len(picked) < n:
+                if len(picked) < limit:
                     picked.append(cheap)
                 elif len(picked) >= 2 and picked[-1].id != pin_id:
                     picked[-1] = cheap
+    # общее видео в UI: Seedance первым, остальные — от дешёвых к дорогим
+    if prefer_price and picked and price_fn is not None:
+        head = [c for c in picked if c.id == pin_id]
+        tail = [c for c in picked if c.id != pin_id]
+        tail.sort(key=lambda c: (_price_key(c, price_fn), c.id))
+        picked = head + tail if head else sorted(picked, key=lambda c: (_price_key(c, price_fn), c.id))
     return Pick(picked, exact)
 
 

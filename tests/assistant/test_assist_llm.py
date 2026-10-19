@@ -59,7 +59,7 @@ def test_contract_validation():
         validate_output({"prompt": "Here is your prompt: a cat"})
     assert validate_output({"prompt": "", "note": "unsafe"}) == {"prompt": "", "note": "unsafe"}
     long = validate_output({"prompt": "A sentence. " * 200})
-    assert len(long["prompt"]) <= 1200 and long["prompt"].endswith(".")
+    assert len(long["prompt"]) <= 2000 and long["prompt"].endswith(".")
 
 
 def test_all_fail_raises_with_attempts_and_tokens():

@@ -21,7 +21,9 @@
   'use strict';
   var SERVER = { pick_model: 1, more: 1, choose_type: 1, has_prompt: 1, use_mine: 1, param: 1, pick_camera: 1, refine: 1, improve: 1, send: 1,
     similar: 1, cheaper: 1, faster: 1, no_photo_model: 1, rephrase: 1, resume: 1,
-    brief: 1, variants: 1, more_variants: 1, back_brief: 1, back: 1, use_variant: 1, skip_polish: 1, restart: 1 };
+    brief: 1, variants: 1, more_variants: 1, back_brief: 1, back: 1, use_variant: 1, skip_polish: 1, restart: 1,
+    reel_start: 1, reel_answer: 1, reel_next: 1, reel_back: 1, reel_edit: 1, reel_frame: 1, reel_rebuild: 1,
+    reel_sheet: 1, reel_exit: 1 };
   var KIND_ICON = { prompt: '✍️', image: '🖼', video: '🎬', music: '🎵', text: '✍️', sfx: '🔊', edit: '✏️' };
 
   function el(tag, cls, text) {
@@ -45,7 +47,7 @@
     function L(ru, en) { return lang === 'en' ? en : ru; }
 
     function chipBtn(c) {
-      var btn = el('button', 'aich-chip' + (c.primary ? ' aich-chip--primary' : ''), c.label);
+      var btn = el('button', 'aich-chip' + (c.primary ? ' aich-chip--primary' : '') + (c.action === 'reel_start' ? ' aich-chip--reel' : ''), c.label);
       btn.type = 'button';
       if (c.action === 'choose_type' && KIND_ICON[c.value]) btn.textContent = KIND_ICON[c.value] + ' ' + c.label;
       btn.addEventListener('click', function () { onChip(c); });
@@ -58,7 +60,7 @@
       (list || []).forEach(function (c) {
         // устаревшие кнопки воронки «создать ролик» / этапы проекта — больше не показываем
         if (!c || !c.action || /^project_/.test(c.action)) return;
-        if (c.action === 'choose_type') types.push(c);
+        if (c.action === 'choose_type' || (c.action === 'reel_start' && c.value !== 'new')) types.push(c);
         else if (c.example || (c.action === 'send' && c.value && String(c.value).length > 12)) examples.push(c);
         else rest.push(c);
       });
@@ -91,10 +93,10 @@
         if (it.badge) top.appendChild(el('span', 'aich-badge', it.badge));
         card.appendChild(top);
         card.appendChild(el('div', 'aich-model__why', it.why));
+        // видео: только «≈ N ₽ за 5 с»; строку «₽/сек · N мин» не дублируем
         var priceLine = it.estimate || it.price;
         if (priceLine) card.appendChild(el('div', 'aich-model__price', priceLine));
-        var subLine = it.estimate ? ((it.price || '') + (it.price && it.speed ? ' · ' : '') + (it.speed || '')) : it.speed;
-        if (subLine) card.appendChild(el('div', 'aich-model__sub', subLine));
+        if (!it.estimate && it.speed) card.appendChild(el('div', 'aich-model__sub', it.speed));
         if (it.cta) {
           card.appendChild(el('span', 'aich-model__cta', it.cta));
         } else if (it.vitrina_url) {
@@ -335,6 +337,234 @@
       return box;
     }
 
+    /* ------------------------------------------------ режим «Рилс» (reels.py) */
+    var REEL_BLOCKS = { reel_steps: 1, choice: 1, reel_character: 1, reel_script: 1, reel_storyboard: 1, reel_final: 1 };
+
+    function reelEdit(path, value) { post({ action: { type: 'reel_edit', value: { path: path, value: value } } }, true); }
+
+    /** Поле, которое правят прямо в карточке: сохраняем на сервере, когда человек ушёл из поля. */
+    function editable(tag, cls, text, path) {
+      var n = el(tag, cls, text || '');
+      n.contentEditable = 'true';
+      n.spellcheck = false;
+      var was = text || '';
+      n.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && tag !== 'div') { e.preventDefault(); n.blur(); } });
+      n.addEventListener('blur', function () {
+        var now = n.textContent.trim();
+        if (now !== was.trim()) { was = now; reelEdit(path, now); }
+      });
+      return n;
+    }
+
+    function renderSteps(bl) {
+      var box = el('div', 'reel-steps');
+      if (!bl.current) { box.appendChild(el('span', 'reel-steps__label', L('Подготовка · ', 'Setup · ') + bl.label)); return box; }
+      box.appendChild(el('span', 'reel-steps__label', L('Шаг ', 'Step ') + bl.current + L(' из ', ' of ') + bl.total + ' · ' + bl.label));
+      var bar = el('div', 'reel-steps__bar');
+      bl.steps.forEach(function (s) { var seg = el('i', 'is-' + s.state); seg.title = s.title; bar.appendChild(seg); });
+      box.appendChild(bar);
+      return box;
+    }
+
+    /** Уточняющее окно как в Buzzy: пронумерованные варианты, первый раскрыт, свой текст последним, «Продолжить». */
+    function renderChoice(bl) {
+      var card = el('div', 'reel-choice');
+      card.appendChild(el('div', 'reel-choice__title', bl.title));
+      var picked = bl.options.length ? bl.options[0].id : null;
+      var style = bl.extra ? (bl.extra.selected || (bl.extra.options[0] || {}).id) : null;
+      var items = [];
+      var list = el('div', 'reel-choice__list');
+      function paint() {
+        items.forEach(function (it) {
+          var on = it.id === picked;
+          it.node.classList.toggle('is-on', on);
+          it.node.setAttribute('aria-expanded', on ? 'true' : 'false');
+        });
+      }
+      bl.options.forEach(function (o, i) {
+        var b = el('button', 'reel-opt');
+        b.type = 'button';
+        var head = el('span', 'reel-opt__head');
+        head.appendChild(el('span', 'reel-opt__n', String(i + 1)));
+        head.appendChild(el('span', 'reel-opt__label', o.label));
+        head.appendChild(el('span', 'reel-opt__chev', '›'));
+        b.appendChild(head);
+        if (o.detail) b.appendChild(el('span', 'reel-opt__detail', o.detail));
+        b.addEventListener('click', function () { picked = o.id; ta.value = ''; paint(); });
+        list.appendChild(b);
+        items.push({ id: o.id, node: b });
+      });
+      var own = el('label', 'reel-opt reel-opt--own');
+      own.appendChild(el('span', 'reel-opt__n', String(bl.options.length + 1)));
+      var ta = el('textarea', 'reel-opt__input');
+      ta.rows = 2;
+      ta.placeholder = bl.custom_placeholder || '';
+      ta.addEventListener('input', function () { if (ta.value.trim()) { picked = null; paint(); } });
+      own.appendChild(ta);
+      list.appendChild(own);
+      card.appendChild(list);
+      if (bl.extra) {
+        var ex = el('div', 'reel-choice__extra');
+        ex.appendChild(el('div', 'reel-choice__sub', bl.extra.title));
+        var pills = el('div', 'aich-param__opts');
+        bl.extra.options.forEach(function (o) {
+          var p = el('button', 'aich-opt' + (o.id === style ? ' is-on' : ''), o.label);
+          p.type = 'button';
+          p.title = o.detail || '';
+          p.addEventListener('click', function () {
+            style = o.id;
+            Array.prototype.forEach.call(pills.children, function (x) { x.classList.toggle('is-on', x === p); });
+          });
+          pills.appendChild(p);
+        });
+        ex.appendChild(pills);
+        card.appendChild(ex);
+      }
+      var go = el('button', 'reel-choice__go', bl.cta || L('Продолжить', 'Continue'));
+      go.type = 'button';
+      go.addEventListener('click', function () {
+        var text = ta.value.trim();
+        if (!text && !picked) { ta.focus(); return; }
+        var opt = bl.options.filter(function (o) { return o.id === picked; })[0];
+        var value = { q: bl.id, option: text ? '' : picked, text: text };
+        if (bl.extra) value.style = style;
+        opts.onUser && opts.onUser(text || (opt ? opt.label : ''));
+        lastBody = { action: { type: 'reel_answer', value: value } };
+        post(lastBody);
+      });
+      card.appendChild(go);
+      paint();
+      return card;
+    }
+
+    /** Карточка персонажа на светло-сером фоне: поля правятся прямо в ней. */
+    function renderCharacter(bl) {
+      var wrap = el('div', 'reel-chars');
+      (bl.characters || []).forEach(function (c, i) {
+        var card = el('div', 'reel-char');
+        var head = el('div', 'reel-char__head');
+        head.appendChild(editable('span', 'reel-char__name', c.name, 'characters.' + i + '.name'));
+        head.appendChild(editable('span', 'reel-char__role', c.role, 'characters.' + i + '.role'));
+        card.appendChild(head);
+        if (bl.refs && bl.refs.length) card.appendChild(el('div', 'reel-char__ref', L('Лицо с фото: ', 'Face from: ') + bl.refs.join(', ')));
+        var grid = el('dl', 'reel-char__grid');
+        bl.fields.forEach(function (f) {
+          if (f === 'name' || f === 'role') return;
+          grid.appendChild(el('dt', null, bl.labels[f]));
+          var dd = el('dd');
+          dd.appendChild(editable('span', 'reel-edit', c[f], 'characters.' + i + '.' + f));
+          grid.appendChild(dd);
+        });
+        card.appendChild(grid);
+        var det = el('details', 'reel-char__sheet');
+        det.appendChild(el('summary', null, bl.sheet_label));
+        det.appendChild(editable('div', 'reel-edit reel-mono', c.sheet_prompt, 'characters.' + i + '.sheet_prompt'));
+        card.appendChild(det);
+        wrap.appendChild(card);
+      });
+      return wrap;
+    }
+
+    function renderScript(bl) {
+      var card = el('div', 'reel-card');
+      if (bl.title) card.appendChild(editable('div', 'reel-card__title', bl.title, 'script.title'));
+      var lab = bl.labels || {};
+      function row(key, label) {
+        var r = el('div', 'reel-row');
+        r.appendChild(el('div', 'reel-row__label', label));
+        r.appendChild(editable('div', 'reel-edit', bl[key], 'script.' + key));
+        card.appendChild(r);
+      }
+      row('logline', lab.logline);
+      row('hook', lab.hook);
+      var r = el('div', 'reel-row');
+      r.appendChild(el('div', 'reel-row__label', lab.beats));
+      var ol = el('ol', 'reel-beats');
+      (bl.beats || []).forEach(function (b, i) { var li = el('li'); li.appendChild(editable('span', 'reel-edit', b, 'script.beats.' + i)); ol.appendChild(li); });
+      r.appendChild(ol);
+      card.appendChild(r);
+      row('ending', lab.ending);
+      row('mood', lab.mood);
+      return card;
+    }
+
+    function cameraSelect(bl, f) {
+      var sel = el('select', 'reel-cam');
+      var none = el('option', null, bl.labels.none); none.value = ''; sel.appendChild(none);
+      var groups = {};
+      (bl.cameras || []).forEach(function (m) {
+        if (!groups[m.group]) { groups[m.group] = el('optgroup'); groups[m.group].label = m.group; sel.appendChild(groups[m.group]); }
+        var o = el('option', null, m.title); o.value = m.id; groups[m.group].appendChild(o);
+      });
+      sel.value = f.camera || '';
+      sel.addEventListener('change', function () { reelEdit('frames.' + (f.n - 1) + '.camera', sel.value); });
+      return sel;
+    }
+
+    /** Раскадровка: кадр = время, план, действие, камера, промпт; «Переписать кадр» — своими словами. */
+    function renderStoryboard(bl) {
+      var list = el('div', 'reel-board');
+      bl.frames.forEach(function (f) {
+        var card = el('div', 'reel-frame');
+        var top = el('div', 'reel-frame__top');
+        top.appendChild(el('span', 'aich-variant__n', String(f.n)));
+        top.appendChild(el('b', null, f.role || ''));
+        top.appendChild(el('span', 'reel-frame__time', f.start + '–' + f.end + L(' с', ' s') + (f.shot ? ' · ' + f.shot : '')));
+        card.appendChild(top);
+        card.appendChild(editable('div', 'reel-edit', f.action, 'frames.' + (f.n - 1) + '.action'));
+        var cam = el('label', 'reel-frame__cam');
+        cam.appendChild(el('span', null, bl.labels.camera));
+        cam.appendChild(cameraSelect(bl, f));
+        card.appendChild(cam);
+        var det = el('details', 'reel-frame__prompt');
+        det.appendChild(el('summary', null, bl.labels.prompt));
+        det.appendChild(editable('div', 'reel-edit reel-mono', f.prompt, 'frames.' + (f.n - 1) + '.prompt'));
+        card.appendChild(det);
+        var redo = el('div', 'reel-frame__redo');
+        var inp = el('input', 'reel-frame__input');
+        inp.placeholder = bl.labels.redo_ph;
+        var b = el('button', 'aich-opt', bl.labels.redo);
+        b.type = 'button';
+        function send() { post({ action: { type: 'reel_frame', value: { n: f.n, text: inp.value.trim() } } }, true); }
+        b.addEventListener('click', send);
+        inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); send(); } });
+        redo.appendChild(inp);
+        redo.appendChild(b);
+        card.appendChild(redo);
+        list.appendChild(card);
+      });
+      return list;
+    }
+
+    /** Общий промпт: правится на месте, модель — пилюлями. «Сгенерировать» — обычная кнопка запуска. */
+    function renderFinal(bl) {
+      var box = el('div', 'aich-prompt reel-final');
+      box.appendChild(el('div', 'aich-prompt__label', bl.labels.prompt + ' · ' + bl.seconds + L(' с · ', ' s · ') + bl.aspect));
+      var txt = el('div', 'aich-prompt__text reel-mono', bl.prompt);
+      txt.contentEditable = 'true';
+      txt.spellcheck = false;
+      txt.addEventListener('input', function () {
+        form.prompt = txt.innerText.trim();
+        opts.onFillForm && opts.onFillForm({ model: form.model, prompt: form.prompt, params: form.params, ready: true, files: form.files });
+      });
+      txt.addEventListener('blur', function () { if (txt.innerText.trim() !== bl.prompt.trim()) reelEdit('final', txt.innerText.trim()); });
+      box.appendChild(txt);
+      box.appendChild(el('div', 'aich-prompt__hint', bl.labels.hint));
+      var m = el('div', 'aich-param');
+      m.appendChild(el('div', 'aich-param__label', bl.labels.model));
+      var pills = el('div', 'aich-param__opts');
+      bl.models.forEach(function (o) {
+        var p = el('button', 'aich-opt' + (o.selected ? ' is-on' : ''), o.title + (o.price ? ' · ' + o.price : ''));
+        p.type = 'button';
+        p.addEventListener('click', function () { if (!o.selected) reelEdit('model', o.id); });
+        pills.appendChild(p);
+      });
+      m.appendChild(pills);
+      box.appendChild(m);
+      if (bl.files && bl.files.length) box.appendChild(el('div', 'aich-summary__files', bl.labels.files + ': ' + bl.files.join(' · ')));
+      return box;
+    }
+
     function fill(row, data) {
       if (data.lang) lang = data.lang;
       row.textContent = '';
@@ -351,11 +581,17 @@
         else if (bl.type === 'brief') col.appendChild(renderBrief(bl));
         else if (bl.type === 'variants') col.appendChild(renderVariants(bl));
         else if (bl.type === 'camera') col.appendChild(renderCamera(bl));
+        else if (bl.type === 'reel_steps') col.appendChild(renderSteps(bl));
+        else if (bl.type === 'choice') col.appendChild(renderChoice(bl));
+        else if (bl.type === 'reel_character') col.appendChild(renderCharacter(bl));
+        else if (bl.type === 'reel_script') col.appendChild(renderScript(bl));
+        else if (bl.type === 'reel_storyboard') col.appendChild(renderStoryboard(bl));
+        else if (bl.type === 'reel_final') col.appendChild(renderFinal(bl));
       });
       if (data.chips && data.chips.length) col.appendChild(renderChips(data.chips));
       row.appendChild(col);
       var setup = (data.blocks || []).some(function (b) {
-        return b.type === 'params' || b.type === 'prompt' || b.type === 'brief' || b.type === 'camera';
+        return b.type === 'params' || b.type === 'prompt' || b.type === 'brief' || b.type === 'camera' || (REEL_BLOCKS[b.type] && b.type !== 'reel_steps');
       });
       if (setup) setupNode = row;
       return row;

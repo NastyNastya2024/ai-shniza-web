@@ -404,6 +404,8 @@ window.AISH_DICT_RU = {
   'studio.eggy.modelFree': '{model} {does} — бесплатно. Опишите идею, и начнём',
   'studio.eggy.modelPrice': '{model} {does} — {price}. Опишите идею, и начнём',
   'studio.eggy.sameModel': 'Беру {model}, как в этой работе. Опишите свою идею — сделаю похожее',
+  'studio.eggy.vitSeed': 'Беру промпт и раскадровку из «{title}» — генерирую в {model}',
+  'studio.eggy.vitSeedAttach': 'Подкладываю раскадровку…',
   'studio.eggy.priceEst': '≈ {price}',
 
   /* чат */
@@ -543,6 +545,7 @@ window.AISH_DICT_RU = {
   'studio.vit.meta.res': 'разрешение {size}',
   'studio.vit.meta.resTier': 'качество {tier} (разрешение {size})',
   'studio.vit.meta.dur': '{n} сек',
+  'studio.vit.meta.compressed': 'Все видео на витрине показаны в сжатом качестве',
   'studio.hint.go': 'Смотреть →',
   'studio.hint.dismiss': 'Скрыть подсказку',
   'studio.hint.count': {
@@ -574,7 +577,13 @@ window.AISH_DICT_RU = {
   'explore.filter.all': 'Все',
   'explore.filter.video': 'Видео',
   'explore.filter.image': 'Картинки',
+  'explore.filter.prompt': 'С промптом',
+  'explore.filter.noPrompt': 'Без промпта',
   'explore.filter.more': 'Ещё',
+  'explore.cam.aspect': 'Кадр',
+  'explore.cam.aspect.aria': 'Формат превью движений камеры',
+  'explore.cam.aspect.916': '9:16',
+  'explore.cam.aspect.169': '16:9',
   'explore.sort.label': 'Сортировка',
   'explore.sort.new': 'Новые',
   'explore.sort.top': 'Популярные',
@@ -596,6 +605,7 @@ window.AISH_DICT_RU = {
     other: '{n} работ'
   },
   'vitrina.prompt.label': 'Промпт',
+  'vitrina.refs.label': 'Раскадровка',
   'vitrina.req.promptOrVideo': 'Запросить промпт или видео',
   'vitrina.req.promptOrOriginal': 'Запросить промпт или оригинал',
   'vitrina.req.title': 'Запрос к {name}',
@@ -845,6 +855,7 @@ window.AISH_DICT_RU = {
 
   'creators.acm.name': 'AI Camera Movements',
   'creators.acm.about': 'Библиотека camera moves · aicameramovements.com',
+  'creators.aish.about': 'Официальные работы {AI}-шницы · открытые промпты',
   /* ================= creators (vitrina-data.js) ================= */
   'creators.c1.name': 'Мира Свет',
   'creators.c1.about': 'Неон, ночные города, кино-свет',

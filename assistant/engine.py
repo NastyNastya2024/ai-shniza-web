@@ -2,8 +2,9 @@
 
 Сценарий (brief=on, по умолчанию):
   «Промпт»: тип генерации → модель → уточнения (clarify модели) → варианты → polish → запуск.
-  Тип сразу (картинка/видео/…): модель → «нужен промпт?» → да: clarify модели → варианты → polish;
-                                                      нет: идея как промпт → параметры → запуск.
+  Видео сразу: модель → идея как промпт → параметры → запуск (без «улучшить промпт?»).
+  Картинка/музыка/…: модель → «нужен промпт?» → да: clarify → варианты → polish;
+                                            нет: идея как промпт → параметры → запуск.
 Без брифа (brief=off): идея → модели → промпт под выбранную модель.
 
 Контракт ответа: см. render.py (text, blocks, chips, reply) + поля:
@@ -165,6 +166,12 @@ class Assistant:
         act = self._text_as_action(msg, ses)
         if act:
             return self._action(act[0], act[1], ctx, ses, lang)
+        # Режим «Рилс» отключён: если остался старый черновик в сессии — сбрасываем и идём обычным путём.
+        if ses.get("assist_mode") == "reel" or isinstance(ses.get("reel"), dict):
+            ses["assist_mode"] = None
+            ses["reel"] = None
+            if ses.get("await") == "reel":
+                ses["await"] = "type"
         # 1б) мусор вроде «ооло» никуда не пишем — переспрашиваем по месту
         if msg and not re.fullmatch(r"\s*\d{1,2}\s*[.)]?\s*", msg) and BR.is_junk(msg):
             n = ses["junk_count"] = int(ses.get("junk_count") or 0) + 1
@@ -182,6 +189,8 @@ class Assistant:
                 out["text"] = note + "\n" + out["text"]
                 out["reply"] = note + "\n" + out["reply"]
                 return out
+            if ses.get("assist_mode") == "prompt" and ses.get("kind"):
+                return self._ask_prompt_idea(ses, lang, junk=True)
             if ses.get("kind"):
                 return self._ask_subject(ses["kind"], ses, ctx, lang, junk=True)
             ses["await"] = "type"
@@ -191,7 +200,10 @@ class Assistant:
             it0 = route(msg, ctx, ses, self.titles)
             if it0.name in ("ask_type", "off_topic", "generate_task", "smalltalk") and (it0.kind in (None, ses["kind"])):
                 ses.update(idea=msg, topic=topic_of(msg), needs=detect_needs(msg) or ses.get("needs") or [],
-                           brief=None, brief_done=False, prompt="")
+                           brief=None, brief_done=False, prompt="", junk_count=0)
+                if ses.get("assist_mode") == "prompt":
+                    # ветка «Промпт»: идея → сразу варианты промпта, без доп. вопросов и без нейросети
+                    return self._prompt_from_idea(ctx, ses, lang)
                 if ses.get("picked") and ses["picked"] in self.d.cards:
                     return self._pick(ses["picked"], ctx, ses, lang)
                 # модель ещё не выбрана — сначала нейросеть, потом вопросы / промпт
@@ -246,7 +258,32 @@ class Assistant:
                                     lang=lang, intent="ask_type")
                 ses["await"] = "type"
                 return self._offer_types([_junk_line(1, lang)], ctx, ses, lang, "ask_type")
+        # 2в) длинный готовый промпт на шаге выбора типа — сразу выводим тип из текста
+        if ses.get("await") in ("type", "gen_type") and len(msg.split()) > 3 and BR.has_subject(msg):
+            k = detect_kind(msg, bool(ctx.get("has_image")))
+            if k and k != "prompt":
+                ses.update(idea=msg, topic=topic_of(msg), needs=detect_needs(msg) or ses.get("needs") or [])
+                return self._action("choose_type", k, ctx, ses, lang)
+            ses.update(idea=msg, topic=topic_of(msg), needs=detect_needs(msg) or ses.get("needs") or [])
+            if ses.get("await") == "gen_type":
+                return response([t("ask_gen_type", lang)], self._gen_type_chips(ctx, lang),
+                                lang=lang, intent="ask_type")
+            return self._ask_type(ses, ctx, lang)
         intent = route(msg, ctx, ses, self.titles)
+        # уже выбран тип (видео/картинка…), а в тексте типа нет — это идея/промпт, не сбрасываем тип
+        if (intent.name == "ask_type" and ses.get("kind") in KINDS and ses["kind"] != "text"
+                and len(msg.split()) >= 6 and BR.has_subject(msg)):
+            ses.update(idea=msg, topic=topic_of(msg) or ses.get("topic") or "",
+                       needs=detect_needs(msg) or ses.get("needs") or [])
+            if ses.get("picked") and ses["picked"] in self.d.cards:
+                return self._pick(ses["picked"], ctx, ses, lang)
+            ses["assist_mode"] = ses.get("assist_mode") or "direct"
+            return self._offer_models_for_kind(ctx, ses, lang, "generate_task",
+                                              mode=ses.get("assist_mode") or "direct")
+        # тип в тексте не совпал с уже выбранным — новая задача (не правка промпта)
+        if (intent.name == "generate_task" and intent.kind and ses.get("kind") in KINDS
+                and intent.kind != ses["kind"] and len(msg.split()) >= 6):
+            return self._i_generate_task(intent, msg, ctx, ses, lang)
         # 3) модель уже выбрана: «вертикально», «10 секунд», «в 4к» — меняем параметры без LLM;
         #    любой другой короткий текст без новой задачи — правка промпта
         card = self._current_card(ses, ctx) if ses.get("picked") else None
@@ -292,14 +329,22 @@ class Assistant:
             return True
 
     def _recommend(self, kind: str, needs: list[str], has_image: bool, exclude: list[str] | tuple = (),
-                   with_cheap: bool = True) -> Pick:
+                   with_cheap: bool = True, n: int | None = None) -> Pick:
+        # Видео: сначала 6, по «Ещё» — все оставшиеся (n=None при exclude).
+        if n is None and kind == "video" and not exclude:
+            n = 6
         return recommend(self.d.cards, kind, needs, has_image, self.d.health_fn, self._price, self.d.neighbors,
-                         exclude=exclude, with_cheap=with_cheap)
+                         exclude=exclude, n=n, with_cheap=with_cheap)
 
     def _sec_hint(self, ses: dict, card: Card) -> int | None:
+        """Длительность для оценки цены на карточке. Без явной длительности в идее — 5 с (как в прайсе)."""
+        if card.kind != "video":
+            return None
         raw = P.extract(ses.get("idea") or "")
-        params, _ = P.fit(raw, card)
-        return P.seconds(card, P.with_defaults(card, params))
+        if "duration" in raw:
+            params, _ = P.fit(raw, card)
+            return P.seconds(card, P.with_defaults(card, params))
+        return 5
 
     def _show_models(self, pick: Pick, ses: dict, lang: str, intent: str, head: str | None = None,
                      extra_top: list[str] | None = None) -> dict[str, Any]:
@@ -316,7 +361,7 @@ class Assistant:
         cheapest_id = min((c.id for c in cards if prices[c.id] is not None), key=lambda i: prices[i], default=None)
         best_id = max(cards, key=lambda c: c.rank).id
         items = []
-        # Seedance / Omni free и т.п. — первой карточкой; остальные — по цене
+        # Seedance (pin) первым; остальные — от дешёвых к дорогим
         pinned = set(PIN_FIRST.values())
         def _order(c: Card) -> tuple:
             pin = 0 if c.id in pinned else 1
@@ -468,25 +513,41 @@ class Assistant:
 
     def _offer_types(self, lines: list[str], ctx: dict, ses: dict, lang: str, intent: str) -> dict:
         """Вопрос «что сделать» + кнопки: Промпт первым, затем типы генерации."""
+        if self._is_guest(ctx):
+            return self._ask_login(ses, lang, intent)
         return response(list(lines) + [t("ask_type", lang)], self._type_chips(ctx, lang), lang=lang, intent=intent)
 
     def _type_chips(self, ctx: dict, lang: str) -> list[dict]:
-        """Верхний ряд: Промпт → картинка / видео / музыка / звук (или правка фото)."""
+        """Верхний ряд: Промпт → видео / картинка / музыка / звук (или правка фото)."""
         if ctx.get("has_image"):
             kinds = ["prompt", "video", "edit", "image", "music"]
         else:
-            kinds = ["prompt", "image", "video", "music", "sfx"]
+            kinds = ["prompt", "video", "image", "music"]
         return [chip(b("type_" + k, lang), "choose_type", k) for k in kinds]
 
     def _gen_type_chips(self, ctx: dict, lang: str) -> list[dict]:
-        """Типы генерации после выбора «Промпт» (без пункта Промпт)."""
+        """Типы генерации после выбора «Промпт» (без пункта Промпт). Видео раньше картинки — готовые кинопромпты чаще."""
         if ctx.get("has_image"):
             kinds = ["video", "edit", "image", "music"]
         else:
-            kinds = ["image", "video", "music", "sfx"]
+            kinds = ["video", "image", "music"]
         return self._with_back([chip(b("type_" + k, lang), "choose_type", k) for k in kinds], lang)
 
+    @staticmethod
+    def _is_guest(ctx: dict) -> bool:
+        acct = ctx.get("_account")
+        return isinstance(acct, dict) and not acct.get("authed")
+
+    def _ask_login(self, ses: dict, lang: str, intent: str = "login") -> dict:
+        """Гость: просьба войти до выбора типа / идеи / моделей."""
+        ses["await"] = "login"
+        return response([t("gate_login_early", lang)],
+                        [std_chip("login_run", "login", lang, primary=True)],
+                        lang=lang, intent=intent, gate="login", ready=False)
+
     def _ask_type(self, ses: dict, ctx: dict, lang: str) -> dict:
+        if self._is_guest(ctx):
+            return self._ask_login(ses, lang, "ask_type")
         ses["await"] = "type"
         ses["assist_mode"] = None
         ses["prompt_gate"] = False
@@ -539,16 +600,27 @@ class Assistant:
             return self._offer_models_for_kind(ctx, ses, lang, "back", mode=mode)
         if aw == "brief":
             mid = ses.get("brief_for_model") or ses.get("brief_guide")
-            ses.update(brief=None, brief_done=False, brief_for_model=None)
+            ses.update(brief=None, brief_done=False, brief_for_model=None, brief_guide=None)
             if ses.get("prompt_gate") and mid:
                 ses["picked"] = mid
                 return self._ask_has_prompt(ses, lang, "back")
             ses["picked"] = None
-            mode = "prompt" if ses.get("assist_mode") == "prompt" else "direct"
+            if ses.get("assist_mode") == "prompt":
+                # ветка «Промпт»: назад к выбору типа, без шага нейросети
+                ses["kind"] = None
+                ses["await"] = "gen_type"
+                return response([t("ask_gen_type", lang)], self._gen_type_chips(ctx, lang),
+                                lang=lang, intent="back")
             if not ses.get("kind") and mid and mid in self.d.cards:
                 ses["kind"] = self.d.cards[mid].kind
-            return self._offer_models_for_kind(ctx, ses, lang, "back", mode=mode or "direct")
+            return self._offer_models_for_kind(ctx, ses, lang, "back", mode="direct")
         if aw == "variants":
+            # ветка «Промпт» без опросника — назад к «опишите идею»
+            br = ses.get("brief") or {}
+            if ses.get("assist_mode") == "prompt" and (br.get("src") == "prompt-direct" or not br.get("q")):
+                ses.update(brief=None, brief_done=False, brief_guide=None, brief_for_model=None,
+                           variants=[], var_round=0, idea="")
+                return self._ask_prompt_idea(ses, lang, intent="back")
             card = self._brief_card(ses)
             if card:
                 ses["brief_done"] = False
@@ -562,6 +634,12 @@ class Assistant:
                 return self._variants(card, ses, ctx, lang)
             return self._ask_type(ses, ctx, lang)
         if aw in ("params", "refine", "idea"):
+            if aw == "idea" and ses.get("assist_mode") == "prompt":
+                # ветка «Промпт»: с «опишите идею» назад к выбору типа
+                ses["kind"] = None
+                ses["await"] = "gen_type"
+                return response([t("ask_gen_type", lang)], self._gen_type_chips(ctx, lang),
+                                lang=lang, intent="back")
             k = ses.get("kind") or ses.get("gen_kind")
             if k and k != "text":
                 ses["kind"] = k
@@ -583,26 +661,27 @@ class Assistant:
             if idea and (ses.get("brief_done") or BR.detail_level(idea) >= 12):
                 return self._variants(card, ses, ctx, lang)
             return self._brief(card, ses, ctx, lang)
-        if self.d.brief and not BR.has_subject(idea):
+        if not BR.has_subject(idea):
             ses["idea"] = ""
-            return self._ask_subject(ses.get("kind") or (card.kind if card else "image"), ses, ctx, lang)
-        if not idea:
-            ses["await"] = "idea"
-            return response([t("describe_idea", lang)], [], intent=intent,
-                            generate_model=card.id if card else None)
+            return self._ask_prompt_idea(ses, lang, intent=intent,
+                                         generate_model=card.id if card else None)
         if self.d.brief:
-            # модели ещё нет — сначала выбрать нейросеть под тип
-            return self._offer_models_for_kind(ctx, ses, lang, intent, mode="prompt")
+            # модели ещё нет — бриф по типу (нейросеть выберем позже, после промпта)
+            return self._enter_brief(ctx, ses, lang)
         if card:
             return self._setup_from_idea(card, ctx, ses, lang, intent)
-        return self._offer_models_for_kind(ctx, ses, lang, intent, mode="prompt")
+        return self._enter_brief(ctx, ses, lang)
 
     def _offer_models_for_kind(self, ctx: dict, ses: dict, lang: str, intent: str,
                                mode: str = "direct") -> dict:
         """Показать модели выбранного типа. mode=prompt|direct — что делать после pick."""
+        if self._is_guest(ctx):
+            return self._ask_login(ses, lang, intent)
+        k = ses.get("kind")
+        if k not in KINDS or k == "text":
+            return self._ask_type(ses, ctx, lang)
         ses["assist_mode"] = mode
         ses["from_polish"] = False
-        k = ses.get("kind") or "image"
         has_image = bool(ctx.get("has_image"))
         kind_word = err_mod.KIND_WORD.get(lang, err_mod.KIND_WORD["ru"]).get(k, k)
         head = t("pick_model_for_prompt", lang) if mode == "prompt" else t("pick_model_for_kind", lang, kind=kind_word)
@@ -627,8 +706,8 @@ class Assistant:
         ses["params"] = params
         ses["picked"] = card.id
         ses["kind"] = card.kind
-        return self._setup_reply(card, ses, ctx, lang, intent, t("model_for_prompt", lang, title=card.title),
-                                 "", False, adj)
+        head = t("video_settings" if card.kind == "video" else "model_for_prompt", lang, title=card.title)
+        return self._setup_reply(card, ses, ctx, lang, intent, head, "", False, adj)
 
     # ----------------------------------------------- prompt + params + summary
     def _setup_reply(self, card: Card, ses: dict, ctx: dict, lang: str, intent: str, head: str,
@@ -652,7 +731,10 @@ class Assistant:
         # Скрепка: какой файл чем станет — по имени («Фото «cat.png» — первый кадр видео»)
         fplan = F.plan(card, ses.get("files") or [], lang, self.d.inputs_fn)
         lines += F.lines(card, fplan, lang)
-        blocks: list[dict] = [{"type": "prompt", "model_id": card.id, "title": card.title, "text": prompt, "note": note}]
+        blocks: list[dict] = []
+        # видео: только настройки + камера (промпт уходит в generate_prompt, без редактора на экране)
+        if card.kind != "video":
+            blocks.append({"type": "prompt", "model_id": card.id, "title": card.title, "text": prompt, "note": note})
         if card.kind == "video":
             blocks.append(CAM.block(ses.get("camera"), lang))
         groups = P.groups(card, params, lang, has_image)
@@ -701,29 +783,30 @@ class Assistant:
 
     def _gate(self, card: Card, params: dict, ctx: dict, lang: str) -> tuple[str | None, list[str], list[dict]]:
         """Порядок обязателен: 1) вход, 2) баланс, 3) «Сгенерировать». Сервер /api/generate проверяет то же самое."""
-        tail = [std_chip("improve", "improve", lang), std_chip("other_model", "more", lang), self._back_chip(lang)]
+        # видео: только запуск (+ назад); картинка/музыка — ещё улучшить / другая модель
+        video = card.kind == "video"
+        tail = ([self._back_chip(lang)] if video
+                else [std_chip("improve", "improve", lang), std_chip("other_model", "more", lang), self._back_chip(lang)])
         acct = ctx.get("_account")
         cost = self._cost_kop(card, params)
+        gen_primary = [std_chip("generate", "generate", lang, card.id, primary=True)]
         if acct is None:  # адаптер не передал аккаунт — проверку делает только сервер генерации
-            gen = self._with_back([
-                std_chip("generate", "generate", lang, card.id, primary=True), std_chip("improve", "improve", lang),
-                std_chip("mine", "use_mine", lang), std_chip("other_model", "more", lang)], lang)
-            return None, [t("gate_ready", lang)], gen
+            extras = [] if video else [std_chip("improve", "improve", lang), std_chip("mine", "use_mine", lang),
+                                       std_chip("other_model", "more", lang)]
+            return None, [t("gate_ready", lang)], self._with_back(gen_primary + extras, lang)
         if not acct.get("authed"):
-            return "login", [t("gate_login", lang)], [std_chip("login", "login", lang, primary=True)] + tail
+            return "login", [t("gate_login", lang)], [std_chip("login_run", "login", lang, primary=True)] + tail
         if cost == 0:
-            return "free", [t("gate_free", lang)], self._with_back(
-                [std_chip("generate", "generate", lang, card.id, primary=True)] + tail[:-1], lang)
+            return "free", [t("gate_free", lang)], self._with_back(gen_primary + ([] if video else tail[:-1]), lang)
         have = int(acct.get("available_kop") or 0)
         if cost is not None and have < cost:
             return "topup", [t("gate_topup", lang, have=_rub(have), need=_rub(cost))], self._with_back([
                 std_chip("topup", "open_topup", lang, primary=True), std_chip("resume_topup", "resume", lang),
                 std_chip("cheaper", "cheaper", lang)], lang)
         head = t("gate_ready_cost", lang, cost=_rub(cost)) if cost else t("gate_ready", lang)
-        return "ok", [head], self._with_back([
-            std_chip("generate", "generate", lang, card.id, primary=True),
-            std_chip("improve", "improve", lang), std_chip("mine", "use_mine", lang),
-            std_chip("other_model", "more", lang)], lang)
+        extras = [] if video else [std_chip("improve", "improve", lang), std_chip("mine", "use_mine", lang),
+                                   std_chip("other_model", "more", lang)]
+        return "ok", [head], self._with_back(gen_primary + extras, lang)
 
     def _pick(self, mid: str, ctx: dict, ses: dict, lang: str, intent: str = "pick_model") -> dict:
         card = self.d.cards.get(mid or "")
@@ -764,11 +847,14 @@ class Assistant:
             raw_params, adj = P.fit(P.extract(idea or ses["prompt"]), card)
             params = P.with_defaults(card, {**P.validate(card, ses.get("params")), **raw_params})
             ses["params"] = params
-            head = t("model_for_prompt", lang, title=card.title)
+            head = t("video_settings" if card.kind == "video" else "model_for_prompt", lang, title=card.title)
             return self._setup_reply(card, ses, ctx, lang, intent, head, "", False, adj)
         if self.d.brief:
             mode = ses.get("assist_mode")
-            # тип выбран сразу → сначала «нужен промпт?», потом clarify под модель
+            # видео: сразу к настройкам с идеей, без «собрать/улучшить промпт?»
+            if card.kind == "video" and mode != "prompt":
+                return self._setup_from_idea(card, ctx, ses, lang, intent)
+            # картинка/музыка/… → сначала «нужен промпт?», потом clarify под модель
             # (не спрашиваем «опишите идею» до этого — иначе двойной опрос)
             if mode != "prompt" and ses.get("await") != "has_prompt":
                 return self._ask_has_prompt(ses, lang, "has_prompt")
@@ -786,7 +872,10 @@ class Assistant:
         ses["prompt_base"] = prompt
         ses["prompt"] = CAM.compose(prompt, ses.get("camera")) if card.kind == "video" else prompt
         ses["params"] = params
-        head = t("prompt_ready_simple" if degraded else "prompt_ready", lang, title=card.title)
+        if card.kind == "video":
+            head = t("video_settings", lang, title=card.title)
+        else:
+            head = t("prompt_ready_simple" if degraded else "prompt_ready", lang, title=card.title)
         return self._setup_reply(card, ses, ctx, lang, intent, head, note, degraded, adj)
 
     # ============================================================== intents
@@ -795,10 +884,23 @@ class Assistant:
                    camera=None, camera_cleared=False, params={}, shown=[], gen_model=None, gen_kind=None,
                    brief=None, brief_done=False, brief_guide=None, brief_for_model=None, variants=[], var_round=0)
 
+    def _ask_prompt_idea(self, ses: dict, lang: str, junk: bool = False,
+                         intent: str = "need_subject", generate_model: str | None = None) -> dict:
+        """Ветка «Промпт»: только просьба описать идею, без опросника «кто в кадре?»."""
+        ses["await"] = "idea"
+        ses["assist_mode"] = "prompt"
+        head = t("describe_idea", lang)
+        if junk:
+            head = _junk_line(int(ses.get("junk_count") or 1), lang) + "\n" + head
+        return response([head], [self._back_chip(lang)], intent=intent, generate_model=generate_model)
+
     def _ask_subject(self, kind: str, ses: dict, ctx: dict, lang: str, junk: bool = False) -> dict:
         """Пустая или непонятная идея → уточняющие вопросы. Без примеров сюжетов.
         Если человек раз за разом пишет непонятное — не повторяем одно и то же: на 2-й раз коротко,
-        с 3-го — кнопки категорий (жанр / тема), чтобы можно было двигаться дальше без текста."""
+        с 3-го — кнопки категорий (жанр / тема), чтобы можно было двигаться дальше без текста.
+        В ветке «Промпт» — только короткая просьба описать идею."""
+        if ses.get("assist_mode") == "prompt":
+            return self._ask_prompt_idea(ses, lang, junk=junk)
         ses["await"] = "idea"
         k = kind if kind in KINDS else "image"
         n = int(ses.get("junk_count") or 0) if junk else 0
@@ -839,7 +941,14 @@ class Assistant:
     def _i_generate_task(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
         if (it.kind or "") == "text":
             self._new_task("text", msg, it.needs, it.topic, ses)
+            if self._is_guest(ctx):
+                return self._ask_login(ses, lang, "generate_task")
             return self._text_chat_models(ses, ctx, lang, "generate_task")
+        if self._is_guest(ctx):
+            # гость: сначала вход, идею/тип сохраняем и продолжим после resume
+            idea = msg if BR.has_subject(msg) else ""
+            self._new_task(it.kind, idea, it.needs, it.topic if idea else "", ses)
+            return self._ask_login(ses, lang, "generate_task")
         if self.d.brief and not BR.has_subject(msg):   # «нужно сделать видео» — о чём? сначала суть
             self._new_task(it.kind, "", it.needs, "", ses)
             ses["assist_mode"] = "direct"
@@ -882,6 +991,17 @@ class Assistant:
         if ses.get("brief_done") or BR.detail_level(idea) >= 12:
             return self._variants(card, ses, ctx, lang)
         return self._brief(card, ses, ctx, lang)
+
+    def _prompt_from_idea(self, ctx: dict, ses: dict, lang: str) -> dict:
+        """Ветка «Промпт»: идея уже есть → сразу варианты промпта, без опросника и без выбора модели."""
+        ses["assist_mode"] = "prompt"
+        if ses.get("kind") == "text":
+            return self._text_chat_models(ses, ctx, lang, "generate_task")
+        card = self._brief_guide(ses, ctx)
+        if not card:
+            return response([t("describe_idea", lang)], [self._back_chip(lang)], intent="need_subject")
+        ses["brief"] = {"q": [], "a": {}, "extra": [], "summary": "", "src": "prompt-direct", "phase": "done"}
+        return self._variants(card, ses, ctx, lang)
 
     @staticmethod
     def _profile_brief(br: dict) -> bool:
@@ -980,14 +1100,14 @@ class Assistant:
         params = P.with_defaults(card, {**P.validate(card, ses.get("params")), **raw_params})
         answers_text = self._answers_text(br)
         data = self._llm_json(BR.VARIANTS_SYSTEM, BR.variants_user(card, idea, answers_text, br.get("extra") or [],
-                                                                  params, lang, change), BR.validate_variants, ses, 1000,
+                                                                  params, lang, change), BR.validate_variants, ses, 1400,
                               timeout_scale=2.5, task="variants")
         if data is None and self.d.llm is not None and self._llm_info.get("error") != "budget":
-            # на 3 варианта модели не хватило (время/формат) — просим ОДИН промпт (короче и надёжнее)
+            # на 3 варианта модели не хватило (время/формат) — просим ОДИН промпт
             full = "; ".join([idea] + [f"{k}: {v}" for k, v in answers_text.items()] + list(br.get("extra") or []))
             if change:
                 full += "; " + change
-            one = self._llm_json(SYSTEM, build_user(card, full, params, lang), validate_output, ses, 300,
+            one = self._llm_json(SYSTEM, build_user(card, full, params, lang), validate_output, ses, 450,
                                  timeout_scale=1.5, task="variants_one")
             if one and one.get("prompt") and one.get("note") != "unsafe" and not _unsafe(one["prompt"]):
                 data = {"variants": BR.variants_from_one(card, one["prompt"], lang)}
@@ -1123,16 +1243,25 @@ class Assistant:
         if kind == "pick_model":
             return self._pick(str(value or ""), ctx, ses, lang)
         if kind == "choose_type":
+            if self._is_guest(ctx):
+                # тип запомним после входа; сейчас — только просьба войти
+                if value == "prompt":
+                    ses.update(assist_mode="prompt", kind=None, idea="", topic="", needs=[])
+                elif value == "sfx" or value in KINDS:
+                    ses["kind"] = "music" if value == "sfx" else value
+                return self._ask_login(ses, lang, "choose_type")
             # «Промпт» — отдельный помощник: дальше выбираем тип генерации и собираем текст
             if value == "prompt":
-                ses.update(assist_mode="prompt", kind=None, picked=None, prompt="", prompt_base="",
+                ses.update(assist_mode="prompt", kind=None, idea="", topic="", picked=None, prompt="", prompt_base="",
                            camera=None, camera_cleared=False, params={}, shown=[], junk_count=0,
-                           gen_model=None, gen_kind=None,
+                           gen_model=None, gen_kind=None, needs=[],
                            brief=None, brief_done=False, brief_guide=None, brief_for_model=None,
                            variants=[], var_round=0, prompt_gate=False, from_polish=False)
                 ses["await"] = "gen_type"
                 return response([t("ask_gen_type", lang)], self._gen_type_chips(ctx, lang),
                                 lang=lang, intent="choose_type")
+            if value == "sfx":
+                value = "music"  # «звук» = музыка, отдельной кнопки нет
             if value not in KINDS:
                 return self._ask_type(ses, ctx, lang)
             from_prompt = ses.get("assist_mode") == "prompt" or ses.get("await") == "gen_type"
@@ -1145,9 +1274,16 @@ class Assistant:
             if value == "text":
                 ses["assist_mode"] = None
                 return self._text_chat_models(ses, ctx, lang, "choose_type")
-            # «Промпт» → тип → модель → вопросы; тип сразу → модель → «нужен промпт?»
-            return self._offer_models_for_kind(ctx, ses, lang, "choose_type",
-                                               mode="prompt" if from_prompt else "direct")
+            # «Промпт» → тип → просто «опишите идею», без брифа и без выбора нейросети
+            if from_prompt:
+                ses["assist_mode"] = "prompt"
+                idea = (ses.get("idea") or "").strip()
+                if BR.has_subject(idea):
+                    return self._prompt_from_idea(ctx, ses, lang)
+                ses["junk_count"] = 0
+                return self._ask_prompt_idea(ses, lang)
+            # тип сразу → модель → «нужен промпт?»
+            return self._offer_models_for_kind(ctx, ses, lang, "choose_type", mode="direct")
         if kind == "has_prompt":
             if not ses.get("kind") or ses["kind"] not in KINDS or ses["kind"] == "text":
                 return self._ask_type(ses, ctx, lang)
@@ -1174,9 +1310,6 @@ class Assistant:
             exclude = list(ses.get("shown") or []) if kind == "more" else ([cur.id] if cur else [])
             pick = self._recommend(k, needs, False if kind == "no_photo_model" else has_image, exclude=exclude,
                                    with_cheap=False)
-            if not pick.cards and kind == "more":
-                ses["shown"] = [cur.id] if cur else []  # всё показали — начинаем круг заново
-                pick = self._recommend(k, needs, has_image, exclude=ses["shown"], with_cheap=False)
             if not pick.cards:
                 return response([t("no_more", lang)], [std_chip("open_models", "open_models", lang)], intent=kind)
             head = t("more", lang) if kind == "more" else t("alternatives", lang)
@@ -1319,13 +1452,36 @@ class Assistant:
             ses["prompt_gate"] = False
             ses["from_polish"] = False
             return self._ask_type(ses, ctx, lang)
+        if kind.startswith("reel_"):
+            # Режим «Рилс» снят с продукта — любые старые кнопки ведут в обычный выбор формата.
+            ses["assist_mode"] = None
+            ses["reel"] = None
+            return self._ask_type(ses, ctx, lang)
         if kind == "resume":  # вернулись после входа / пополнения — показать то же место с новой проверкой
+            if self._is_guest(ctx):
+                return self._ask_login(ses, lang, "resume")
             card = self._current_card(ses, ctx) if ses.get("picked") else None
             if card and (ses.get("prompt") or ses.get("idea")):
                 if not ses.get("prompt"):
                     ses["prompt"] = ses.get("idea")
                 ses["params"] = P.with_defaults(card, P.validate(card, ses.get("params")))
                 return self._setup_reply(card, ses, ctx, lang, "resume", t("resumed", lang))
+            # ранний вход (ещё до типа/моделей) — продолжаем сборку с сохранённого места
+            if ses.get("assist_mode") == "prompt":
+                if not ses.get("kind"):
+                    ses["await"] = "gen_type"
+                    return response([t("ask_gen_type", lang)], self._gen_type_chips(ctx, lang),
+                                    lang=lang, intent="resume")
+                if BR.has_subject(ses.get("idea") or ""):
+                    return self._prompt_from_idea(ctx, ses, lang)
+                return self._ask_prompt_idea(ses, lang, intent="resume")
+            if ses.get("kind") and ses["kind"] != "text":
+                if BR.has_subject(ses.get("idea") or ""):
+                    return self._offer_models_for_kind(ctx, ses, lang, "resume",
+                                                      mode=ses.get("assist_mode") or "direct")
+                return self._ask_subject(ses["kind"], ses, ctx, lang)
+            if ses.get("kind") == "text":
+                return self._text_chat_models(ses, ctx, lang, "resume")
             ses["await"] = "type"
             return self._offer_types([t("nothing_to_resume", lang)], ctx, ses, lang, "resume")
         if kind == "edit_prompt":
@@ -1336,14 +1492,13 @@ class Assistant:
             return self._message(value, ctx, ses, lang)
         return response([], [], intent="noop")
 
-
 def _kind_by_number(msg: str, gen_types_only: bool = False) -> str | None:
     """Номер кнопки: верхний ряд 1=Промпт…; после «Промпт» — 1=картинка…"""
     m = re.fullmatch(r"\s*([1-5])\s*[.)]?\s*", msg or "")
     if not m:
         return None
     idx = int(m.group(1)) - 1
-    order = ["image", "video", "music", "sfx"] if gen_types_only else ["prompt", "image", "video", "music", "sfx"]
+    order = ["image", "video", "music"] if gen_types_only else ["prompt", "image", "video", "music"]
     return order[idx] if 0 <= idx < len(order) else None
 
 

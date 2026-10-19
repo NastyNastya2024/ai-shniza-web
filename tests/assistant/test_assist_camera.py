@@ -38,7 +38,7 @@ def test_pick_camera_appends_prompt(make_assistant):
     assert "dolly in" in r["generate_prompt"].lower()
     assert before in r["generate_prompt"] or CAM.strip(r["generate_prompt"]) == before
     assert next(it for it in blk(r, "camera")["items"] if it["id"] == "dolly-in")["selected"]
-    assert blk(r, "prompt")["text"] == r["generate_prompt"]
+    assert blk(r, "prompt") is None  # видео: промпт не показываем, только настройки + камера
     # смена движения не копит старые фразы
     r = a.handle("", {}, SID, action={"type": "pick_camera", "value": "pan-right"})
     assert "pan right" in r["generate_prompt"].lower()
@@ -111,4 +111,4 @@ def test_camera_persists_across_turns_into_prompt(make_assistant):
     a.handle("", {}, sid, action={"type": "skip_polish"})
     r = a.handle("", {}, sid, action={"type": "pick_model", "value": "seedance-2-5"})
     assert "dolly in" in (r.get("generate_prompt") or "").lower()
-    assert "dolly in" in (blk(r, "prompt")["text"] or "").lower()
+    assert blk(r, "prompt") is None and blk(r, "camera")

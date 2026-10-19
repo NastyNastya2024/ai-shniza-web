@@ -38,12 +38,19 @@ INJECTION = _rx(r"игнорир\w* (все |всё |эти |свои )?(пре�
 
 # --- типы задач ---
 TYPE_RULES: list[tuple[str, re.Pattern]] = [
-    ("sfx", _rx(r"звуков\w* эффект", r"\bsfx\b", r"\bшум(ы)?\b", r"эмбиент", r"\bлуп\w*", r"звук (дожд|ветр|шаг|моря|город|огня|прибо)",
-                r"sound effect", r"ambien", r"\bloop\b")),
+    # музыка и звук — один тип (music); отдельные sfx-модели не предлагаем
     ("music", _rx(r"музык", r"музон", r"\bтрек", r"песенк", r"\bпесн", r"\bбит\b", r"мелоди", r"саундтрек", r"джингл", r"вокал", r"\bспой",
-                  r"\bmusic\b", r"\btrack\b", r"\bsong\b", r"\bbeat\b", r"melod", r"jingle", r"soundtrack")),
+                  r"\bmusic\b", r"\btrack\b", r"\bsong\b", r"\bbeat\b", r"melod", r"jingle", r"soundtrack",
+                  r"звуков\w* эффект", r"\bsfx\b", r"\bшум(ы)?\b", r"эмбиент", r"\bлуп\w*",
+                  r"звук (дожд|ветр|шаг|моря|город|огня|прибо)", r"\bзвук\b", r"sound effect", r"ambien", r"\bloop\b", r"\bsound\b")),
     ("video", _rx(r"видео", r"видос", r"видяшк", r"\bролик", r"мульт", r"\bгифк", r"\bgif\b", r"\bклип", r"анимац", r"анимир", r"оживи", r"оживить", r"в движени", r"трейлер", r"\breels?\b", r"рилс",
-                  r"шортс", r"сторис", r"tiktok", r"тикток", r"\bvideo\b", r"\banimat", r"\bmotion\b", r"\bclip\b", r"bring .* to life")),
+                  r"шортс", r"сторис", r"tiktok", r"тикток", r"\bvideo\b", r"\banimat", r"\bmotion\b", r"\bclip\b", r"bring .* to life",
+                  # готовый кино-/камерный промпт без слова «video»
+                  r"\bcinematic\b", r"(launch|short|feature|promo|tesla) film\b", r"\bmusic video\b",
+                  r"tracking shot", r"side[- ]?tracking", r"camera[: ]", r"\b(crane|dolly|orbit|pan|tilt|whip pan)s?\b",
+                  r"(low|high)[- ]?angle", r"three[- ]?quarter", r"wide (cinematic )?shot", r"\bdrone shot\b",
+                  r"\btime[- ]?lapse\b", r"раскадров", r"съ[её]мк", r"прол[её]т камер", r"обл[её]т",
+                  r"движени[ея] камер", r"траектори[яи] камер")),
     ("image", _rx(r"картин", r"картинк", r"пикч", r"\bфотк", r"изображ", r"\bмем\b", r"\bобои\b", r"wallpaper", r"постер", r"плакат", r"\bфото\b", r"\bарт\b", r"логотип", r"\bлого\b", r"баннер", r"обложк",
                   r"иллюстрац", r"аватар", r"\bпринт", r"открытк", r"рисун", r"нарисуй", r"\bиконк", r"стикер", r"\bimage\b", r"\bpicture\b",
                   r"\bposter\b", r"\blogo\b", r"\bbanner\b", r"illustrat", r"\bavatar\b", r"\bdraw\b", r"\bicon\b", r"\bsticker\b")),
@@ -130,9 +137,9 @@ KIND_WORDS: dict[str, list[str]] = {
     "image": ["картинку", "картинка", "картинки", "картинок", "изображение", "рисунок", "логотип", "постер", "фотографию",
               "иллюстрацию", "image", "picture"],
     "video": ["видео", "видеоролик", "ролик", "анимацию", "мультик", "video", "клип"],
-    "music": ["музыку", "музыка", "мелодию", "песню", "песня", "трек", "music", "song"],
+    "music": ["музыку", "музыка", "мелодию", "песню", "песня", "трек", "music", "song",
+              "звук", "звуковой", "эффект", "sfx", "sound"],
     "text": ["текст", "текста", "текстом", "статью", "статья", "пост", "письмо", "стих", "эссе", "text", "essay", "poem"],
-    "sfx": ["звуковой", "эффект", "звук"],
 }
 
 

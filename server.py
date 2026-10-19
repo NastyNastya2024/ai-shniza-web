@@ -15,7 +15,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 from auth import load_env, register_auth
 from security import configure_security, apply_rate_limits, ensure_csrf_token
-from pricing import list_pricing_public, price_rub_media, get_usd_rub_rate
+from pricing import DEFAULT_MARKUP, TAX_FACTOR, list_pricing_public, price_rub_media, get_usd_rub_rate
 from assistant_rules import recommend as assistant_recommend
 from product_routes import register_product
 from uploads import UploadError, register_uploads, resolve_generate_media
@@ -4454,7 +4454,7 @@ def _format_rub(amount_rub: float) -> str:
 
 
 def _price_usd_to_rub(price: str, rate: float | None = None) -> str:
-    """Replace $ amounts in a price string with ₽ at the given USD rate."""
+    """Replace $ amounts in a price string with list ₽: COGS × курс × налог × наценка (×1.5)."""
     text = (price or "").strip()
     if not text:
         return ""
@@ -4465,6 +4465,7 @@ def _price_usd_to_rub(price: str, rate: float | None = None) -> str:
             return "бесплатно"
         return text
     fx = rate if rate is not None else _usd_rub_rate()
+    list_mult = fx * TAX_FACTOR * DEFAULT_MARKUP
 
     def repl(match: re.Match[str]) -> str:
         raw = match.group(1).replace(",", "")
@@ -4472,7 +4473,7 @@ def _price_usd_to_rub(price: str, rate: float | None = None) -> str:
             usd = float(raw)
         except ValueError:
             return match.group(0)
-        return _format_rub(usd * fx)
+        return _format_rub(usd * list_mult)
 
     out = re.sub(r"\$\s*(\d+(?:[.,]\d+)?)", repl, text)
     # подчистить англ. хвосты вокруг уже сконвертированных сумм
@@ -4494,6 +4495,8 @@ def _price_usd_to_rub(price: str, rate: float | None = None) -> str:
     out = out.replace(" per prediction", " / генерацию")
     out = out.replace(" per 1M tokens", " / млн токенов")
     out = out.replace(" per million tokens", " / млн токенов")
+    out = re.sub(r"₽/s\b", "₽/сек", out, flags=re.I)
+    out = re.sub(r"/\s*s\b", "/ сек", out, flags=re.I)
     out = re.sub(r"\s*\(or around [^)]+\)", "", out, flags=re.I)
     out = re.sub(r"\s*\(or [^)]+\)", "", out, flags=re.I)
     out = re.sub(r"\s{2,}", " ", out).strip(" ·")
@@ -4501,10 +4504,22 @@ def _price_usd_to_rub(price: str, rate: float | None = None) -> str:
 
 
 def _short_price_label(price: str) -> str:
+    """Короткая цена для UI. Для видео предпочитаем «₽/сек», а не «₽/млн токенов»."""
     text = (price or "").strip()
     if not text:
         return ""
-    part = text.split("·")[0].strip()
+    parts = [p.strip(" ~") for p in text.split("·") if p.strip()]
+    def _is_sec(p: str) -> bool:
+        return bool(re.search(r"/\s*сек", p, re.I))
+    def _is_tokens(p: str) -> bool:
+        return bool(re.search(r"/\s*млн\s*токен", p, re.I) or re.search(r"1M\s*token", p, re.I))
+    sec_parts = [p for p in parts if _is_sec(p)]
+    if sec_parts:
+        part = sec_parts[0]
+    else:
+        non_tok = [p for p in parts if not _is_tokens(p)]
+        part = (non_tok or parts)[0]
+    part = re.sub(r"\s+at\s+\S+.*$", "", part, flags=re.I).strip()
     if len(part) > 72:
         return part[:69] + "…"
     return part
@@ -5169,9 +5184,11 @@ def api_integrations():
 _JOB_ID_RE = re.compile(r"^[a-f0-9]{16,64}$")
 
 
-# Пока hold/estimate не учитывают duration/resolution/quality/size — в генерацию только «нейтральные» ключи.
+# Ключи ассистента, которые можно класть в payload без отдельного пересчёта hold.
+# duration учитывается в _generate_cost_kop (₽/сек × длительность).
 _ASSIST_PARAMS_BILLING_NEUTRAL = frozenset({
     "aspect_ratio",
+    "duration",
     "generate_audio",
     "generate_audio_switch",
     "style_type",
@@ -5195,16 +5212,13 @@ def _apply_assist_params(
     """Наложить белый список параметров ассистента на payload провайдера.
 
     Только ключи, уже присутствующие в payload (имя совпадает со схемой).
-    Не трогаем match_input_image / adaptive, если есть картинка.
+    Явный формат из ассистента (9:16 / 16:9 / …) перекрывает adaptive / match_input_image.
     """
     if not safe_params or not isinstance(input_payload, dict):
         return input_payload
     out = dict(input_payload)
     for key, value in safe_params.items():
         if key not in out:
-            continue
-        cur = out.get(key)
-        if has_image and cur in {"match_input_image", "adaptive"}:
             continue
         out[key] = value
     return out

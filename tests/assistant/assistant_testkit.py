@@ -96,7 +96,11 @@ def make_chain(transport, clock=None, **kw):
 
 
 def pick_want_prompt(a, sid: str, model_id: str):
-    """Выбрать модель и ответить «да, улучшить промпт» (новый флоу: модель → has_prompt → бриф)."""
+    """Войти в бриф под модель (для тестов). Видео в UI сразу к настройкам — здесь форсим путь «Промпт»."""
+    ses = a.d.store.get(sid)
+    if ses is not None:
+        ses["assist_mode"] = "prompt"
+        a.d.store.set(sid, ses)
     r = a.handle("", {}, sid, action={"type": "pick_model", "value": model_id})
     if r.get("intent") == "has_prompt":
         r = a.handle("", {}, sid, action={"type": "has_prompt", "value": "yes"})

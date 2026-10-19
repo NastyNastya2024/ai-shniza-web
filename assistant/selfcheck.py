@@ -50,8 +50,8 @@ def main(argv: list[str]) -> int:
         print(f"\n-- {p.name} / {p.model}")
         for task, system, user, validate, mt, scale in (
             ("brief", BR.BRIEF_SYSTEM, BR.brief_user(card, idea, "ru"), BR.validate_brief, 450, 1.5),
-            ("variants", BR.VARIANTS_SYSTEM, BR.variants_user(card, idea, {}, [], {}, "ru"), BR.validate_variants, 1000, 2.5),
-            ("one_prompt", SYSTEM, build_user(card, idea, {}, "ru"), validate_output, 300, 1.5),
+            ("variants", BR.VARIANTS_SYSTEM, BR.variants_user(card, idea, {}, [], {}, "ru"), BR.validate_variants, 1400, 2.5),
+            ("one_prompt", SYSTEM, build_user(card, idea, {}, "ru"), validate_output, 450, 1.5),
         ):
             t0 = time.monotonic()
             try:

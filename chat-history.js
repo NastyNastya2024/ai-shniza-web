@@ -27,7 +27,8 @@
   var MAX_MSGS = 200;
   var KINDS = { image: 1, audio: 1, video: 1 };
   var MEDIA = { image: 1, video: 1, audio: 1, music: 1 };
-  var BLOCKS = { models: 1, prompt: 1, params: 1, summary: 1, brief: 1, variants: 1 };
+  var BLOCKS = { models: 1, prompt: 1, params: 1, summary: 1, brief: 1, variants: 1,
+    reel_steps: 1, reel_character: 1, reel_script: 1, reel_storyboard: 1, reel_final: 1 };
 
   var o = null;
   var user = null;            // {id} — вошёл; null — гость

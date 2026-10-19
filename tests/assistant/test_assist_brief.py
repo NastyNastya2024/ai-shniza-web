@@ -177,7 +177,8 @@ def test_rule_brief_answer_then_three_distinct_variants(make_assistant):
     # модель уже выбрана на первом шаге — сразу настройки, без второго выбора
     assert r["intent"] == "skip_polish" and not blk(r, "models")
     assert r["generate_model"] == "kling-v2-5-turbo-pro"
-    assert r["generate_prompt"] == v2[1]["text"] and blk(r, "params") and blk(r, "prompt")
+    assert r["generate_prompt"] == v2[1]["text"] and blk(r, "params") and blk(r, "camera")
+    assert blk(r, "prompt") is None  # видео: настройки + камера, без редактора промпта
 
 
 def test_more_variants_are_different(make_assistant):
@@ -238,7 +239,7 @@ def test_llm_tailored_questions_and_variants(make_assistant):
     sent = json.loads(tr.calls[0]["payload"]["messages"][1]["content"])
     assert "structure" in sent["model"] and "prompt_example" in sent["model"]
     assert "clarify" not in sent["model"]
-    assert r["llm"]["used"] and tr.calls[0]["payload"]["max_tokens"] >= 900
+    assert r["llm"]["used"] and tr.calls[0]["payload"]["max_tokens"] >= 1400
 
 
 def test_llm_says_unclear_asks_subject(make_assistant):
@@ -400,22 +401,35 @@ def test_repeated_junk_escalates_not_loops(make_assistant):
     assert "Не совсем поняла" in r["text"] or "Похоже" in r["text"] or r["intent"] in ("brief", "variants", "has_prompt", "need_subject", "generate_task")
 
 
-def test_pick_model_asks_has_prompt_before_idea(make_assistant):
-    """Выбор модели без идеи → сразу «улучшить промпт?», без лишнего «опишите идею одной фразой»."""
+def test_pick_video_skips_improve_prompt(make_assistant):
+    """Видео: после выбора модели сразу к настройкам/идее, без «улучшить промпт?»."""
     a = make_assistant(brief=True)
-    r = a.handle("", {}, SID, action={"type": "choose_type", "value": "video"})
+    r = a.handle("видео кот бежит по пляжу", {}, SID)
     assert blk(r, "models")
     r = a.handle("", {}, SID, action={"type": "pick_model", "value": "veo-3-1"})
+    assert r["intent"] != "has_prompt"
+    assert r["intent"] != "brief"
+    assert "улучшить промпт" not in (r.get("text") or "").lower()
+    assert r.get("generate_model") == "veo-3-1"
+    assert blk(r, "params") or blk(r, "summary") or any(
+        (c.get("action") == "generate") for c in (r.get("chips") or []))
+
+
+def test_pick_image_asks_has_prompt_before_idea(make_assistant):
+    """Картинка без идеи → «улучшить промпт?», без лишнего «опишите идею одной фразой»."""
+    a = make_assistant(brief=True)
+    r = a.handle("", {}, SID, action={"type": "choose_type", "value": "image"})
+    assert blk(r, "models")
+    r = a.handle("", {}, SID, action={"type": "pick_model", "value": "seedream-5-pro"})
     assert r["intent"] == "has_prompt"
     assert "Опишите идею одной фразой" not in r["text"]
     assert any(c.get("action") == "has_prompt" and c.get("value") == "yes" for c in r["chips"])
     r = a.handle("", {}, SID, action={"type": "has_prompt", "value": "yes"})
     assert r["intent"] == "brief"
     assert "Опишите идею одной фразой" not in r["text"]
-    # идея в ответе на clarify → дальше слоты, идея сохранена
-    r = a.handle("машина едет по мосту над морем", {}, SID)
+    r = a.handle("кот на кухне жарит яичницу", {}, SID)
     assert r["intent"] in ("brief", "variants")
-    assert a.d.store.get(SID).get("idea", "").startswith("машина")
+    assert a.d.store.get(SID).get("idea", "").startswith("кот")
 
 
 def test_skip_polish_keeps_first_model(make_assistant):
@@ -441,7 +455,7 @@ def test_restart_button(make_assistant):
     assert blk(r, "models")  # тип сразу → сначала модели
     pick_want_prompt(a, SID, "seedance-2-5")
     r = a.handle("", {}, SID, action={"type": "restart"})
-    assert r["intent"] == "ask_type" and len(r["chips"]) == 5   # prompt/image/video/music/sfx
+    assert r["intent"] == "ask_type" and [c["action"] for c in r["chips"]].count("choose_type") == 4   # prompt/image/video/music
     assert r["chips"][0]["value"] == "prompt"
 
 

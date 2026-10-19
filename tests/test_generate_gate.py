@@ -129,32 +129,38 @@ def test_free_model_needs_login_only(srv, monkeypatch):
 # ---------------- ассистент: тот же порядок вопросов
 def test_assistant_asks_login_then_topup_then_generate(srv):
     c = srv.app.test_client()
+    # гость: вход сразу, ещё до выбора типа / моделей
     d = _chat(c, {"message": "видео: кот жарит яичницу"})
-    assert d["intent"] == "generate_task" and any(b.get("type") == "models" for b in d["blocks"])
-    d = _chat(c, {"action": {"type": "pick_model", "value": "veo-3-1"}})
-    assert d["intent"] == "has_prompt"
-    d = _chat(c, {"action": {"type": "has_prompt", "value": "yes"}})
-    assert d["intent"] == "brief"
-    d = _chat(c, {"action": {"type": "variants"}})
-    assert d["intent"] == "variants" and len(d["blocks"][0]["items"]) >= 2
-    d = _chat(c, {"action": {"type": "use_variant", "value": "v1"}})
-    assert d["intent"] == "use_variant" and len(d["models"]) >= 2
-    d = _chat(c, {"action": {"type": "skip_polish"}})
-    assert d["intent"] == "skip_polish" and len(d["models"]) >= 2
-    d = _chat(c, {"action": {"type": "pick_model", "value": "veo-3-1"}})
     assert d["gate"] == "login" and d["ready"] is False
     assert d["chips"][0]["action"] == "login" and not any(x["action"] == "generate" for x in d["chips"])
-    assert "войдите" in d["text"]
+    assert "войдите" in d["text"].lower()
+    assert not any(b.get("type") == "models" for b in d.get("blocks") or [])
 
     u = _login(srv, c, balance_kop=1000)               # вошли (session.clear в реальном входе не мешает: своя cookie)
     with c.session_transaction() as s:
         s.clear()
         s["user_id"] = u.id
     d = _chat(c, {"action": {"type": "resume"}})
-    assert d["intent"] == "resume" and d["gate"] == "topup"
-    assert d["chips"][0]["action"] == "open_topup" and any(x["action"] == "resume" for x in d["chips"])
+    assert any(b.get("type") == "models" for b in d["blocks"])
+    d = _chat(c, {"action": {"type": "pick_model", "value": "veo-3-1"}})
+    assert d["intent"] == "has_prompt"
+    d = _chat(c, {"action": {"type": "has_prompt", "value": "yes"}})
+    assert d["intent"] == "brief"
+    d = _chat(c, {"action": {"type": "variants", "value": "skip"}})
+    if d["intent"] == "brief":
+        d = _chat(c, {"action": {"type": "variants", "value": "skip"}})
+    assert d["intent"] == "variants" and len(d["blocks"][0]["items"]) >= 2
+    d = _chat(c, {"action": {"type": "use_variant", "value": "v1"}})
+    assert d["intent"] == "use_variant" and len(d["models"]) >= 2
+    d = _chat(c, {"action": {"type": "skip_polish"}})
+    # модель уже выбрана до polish → сразу к запуску (или снова список моделей)
+    if d.get("gate") != "topup":
+        if d.get("intent") == "skip_polish" or any(b.get("type") == "models" for b in d.get("blocks") or []):
+            d = _chat(c, {"action": {"type": "pick_model", "value": "veo-3-1"}})
+    assert d["gate"] == "topup" and d["chips"][0]["action"] == "open_topup"
+    assert any(x["action"] == "resume" for x in d["chips"])
     assert "10 ₽" in d["text"] and "136 ₽" in d["text"]
-    assert d["generate_prompt"]                        # промпт и параметры не потерялись после входа
+    assert d["generate_prompt"]
 
     bal = __import__("billing").get_or_create_balance(srv.db, srv.app.extensions["product_models"]["Balance"], u.id)
     bal.balance_kop = 20000
@@ -166,22 +172,26 @@ def test_assistant_asks_login_then_topup_then_generate(srv):
 
 def test_assistant_cookie_survives_session_clear(srv):
     c = srv.app.test_client()
-    _chat(c, {"message": "картинка: логотип кофейни"})
-    _chat(c, {"action": {"type": "variants"}})
-    _chat(c, {"action": {"type": "use_variant", "value": "v1"}})
-    _chat(c, {"action": {"type": "pick_model", "value": "seedream-5-pro"}})
+    u = _login(srv, c, balance_kop=50000)
+    with c.session_transaction() as s:
+        s["user_id"] = u.id
+    d = _chat(c, {"message": "картинка: логотип кофейни"})
+    assert any(b.get("type") == "models" for b in d.get("blocks") or [])
+    d = _chat(c, {"action": {"type": "pick_model", "value": "seedream-5-pro"}})
+    if d.get("intent") == "has_prompt":
+        d = _chat(c, {"action": {"type": "has_prompt", "value": "no"}})
+    assert d.get("generate_model") == "seedream-5-pro"
     with c.session_transaction() as s:
         s.clear()                                      # так делает вход в auth.py
+        s["user_id"] = u.id                            # снова «вошли» — cookie ассистента та же
     d = _chat(c, {"action": {"type": "resume"}})
     assert d["intent"] == "resume" and d["generate_model"] == "seedream-5-pro"
 
 
 def test_client_cannot_fake_account(srv):
     c = srv.app.test_client()
-    _chat(c, {"message": "видео: кот"})
-    _chat(c, {"action": {"type": "variants"}})
-    _chat(c, {"action": {"type": "use_variant", "value": "v1"}})
-    d = _chat(c, {"action": {"type": "pick_model", "value": "veo-3-1"},
+    # клиентский _account игнорируется — гость всё равно получает gate=login сразу
+    d = _chat(c, {"message": "видео: кот",
                   "context": {"_account": {"authed": True, "available_kop": 10 ** 9}}})
     assert d["gate"] == "login"
 

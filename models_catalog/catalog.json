@@ -685,7 +685,7 @@
       "category": "video",
       "inputs": "text",
       "outputs": "video",
-      "price": "$21.875 / 1M tokens · ~$0.125/s at 720p",
+      "price": "$0.125 per second of output video · $21.875 / 1M tokens at 720p",
       "price_source": "fal.ai llms.txt / model page",
       "url": "https://fal.ai/models/google/gemini-omni-flash",
       "notes": "t2v · synced audio · ~8s"
@@ -698,7 +698,7 @@
       "category": "video",
       "inputs": "text",
       "outputs": "video",
-      "price": "$21.875 / 1M tokens · ~$0.125/s at 720p",
+      "price": "$0.125 per second of output video · $21.875 / 1M tokens at 720p",
       "price_source": "fal.ai llms.txt / model page",
       "url": "https://fal.ai/models/google/gemini-omni-flash",
       "notes": "alias of gemini-omni-flash"
@@ -711,8 +711,8 @@
       "category": "image",
       "inputs": "text, image",
       "outputs": "image",
-      "price": "Higgsfield credits (see higgsfield.ai/pricing)",
-      "price_source": "higgsfield.ai/soul-cinema",
+      "price": "$0.0032 per output image",
+      "price_source": "higgsfield API from $0.0032",
       "url": "https://higgsfield.ai/soul-cinema",
       "notes": "кинокадры · t2i/i2i · 720p/1080p · Soul ID/HEX"
     },
@@ -1053,6 +1053,58 @@
       "price_source": "omniroute",
       "url": "",
       "notes": ""
+    },
+    {
+      "id": "kling-v2-5-turbo-pro-hf",
+      "name": "Kling 2.5 Turbo Pro HF",
+      "provider": "higgsfield",
+      "upstream": "kling-video/v2.5-turbo/pro/text-to-video",
+      "category": "video",
+      "inputs": "text, image",
+      "outputs": "video",
+      "price": "$0.021 per second of output video",
+      "price_source": "higgsfield API (50% off)",
+      "url": "https://open.higgsfield.ai/pricing",
+      "notes": "HF sibling · t2v/i2v · 5/10s"
+    },
+    {
+      "id": "kling-v3-0-hf",
+      "name": "Kling 3.0",
+      "provider": "higgsfield",
+      "upstream": "kling-video/v3.0/pro/text-to-video",
+      "category": "video",
+      "inputs": "text, image",
+      "outputs": "video",
+      "price": "$0.042 per second of output video",
+      "price_source": "higgsfield API (50% off)",
+      "url": "https://open.higgsfield.ai/pricing",
+      "notes": "HF · Pro · t2v/i2v · audio · up to 15s"
+    },
+    {
+      "id": "seedance-2-5-hf",
+      "name": "Seedance 2.5 HF",
+      "provider": "higgsfield",
+      "upstream": "bytedance/seedance-2.5/text-to-video",
+      "category": "video",
+      "inputs": "text, image",
+      "outputs": "video",
+      "price": "$0.144 per second of output video",
+      "price_source": "higgsfield API (30% off)",
+      "url": "https://open.higgsfield.ai/pricing",
+      "notes": "HF sibling · audio"
+    },
+    {
+      "id": "veo-3-1-hf",
+      "name": "Veo 3.1 HF",
+      "provider": "higgsfield",
+      "upstream": "veo3.1/text-to-video",
+      "category": "video",
+      "inputs": "text, image",
+      "outputs": "video",
+      "price": "$0.20 per second of output video",
+      "price_source": "higgsfield / aligned to Replicate silent floor",
+      "url": "https://open.higgsfield.ai/pricing",
+      "notes": "HF sibling · audio endpoint may be disabled upstream"
     }
   ]
 }

@@ -13,6 +13,10 @@ import requests
 _FALLBACK_USD_RUB = 90.0
 _cbr_cache: dict[str, Any] = {"rate": None, "fetched_at": 0.0, "stale_penalty": False}
 
+# list-цена = COGS × курс × налог/оверхед × наценка
+DEFAULT_MARKUP = 1.5
+TAX_FACTOR = 1.30
+
 
 @dataclass
 class PricingRow:
@@ -24,7 +28,7 @@ class PricingRow:
     cost_usd: float = 0.0
     cost_in_per_1m: float = 0.0
     cost_out_per_1m: float = 0.0
-    markup: float = 2.0
+    markup: float = DEFAULT_MARKUP
     region: str = "RU"  # RU|INTL
     max_duration_sec: Optional[int] = None
     fixed_resolution: Optional[str] = "720p"
@@ -39,7 +43,7 @@ class PricingRow:
 
 
 def _clamp_markup(unit: str, markup: float) -> float:
-    default = 3.0 if unit == "per_run_approx" else 2.0
+    default = 3.0 if unit == "per_run_approx" else DEFAULT_MARKUP
     m = markup if markup and markup > 0 else default
     if m < 1.5:
         raise ValueError("markup_min_1_5")
@@ -76,20 +80,21 @@ def get_usd_rub_rate(force: bool = False) -> tuple[float, bool]:
     return float(rate), bool(_cbr_cache.get("stale_penalty"))
 
 
-def price_rub_media(cost_usd: float, markup: float, unit: str = "per_second") -> int:
+def price_rub_media(cost_usd: float, markup: float = DEFAULT_MARKUP, unit: str = "per_second") -> int:
     m = _clamp_markup(unit, markup)
     rate, stale = get_usd_rub_rate()
     if stale:
         rate *= 1.0  # already applied in getter when using cache; keep explicit path clear
-    raw = cost_usd * rate * 1.30 * m
+    raw = cost_usd * rate * TAX_FACTOR * m
     return max(1, int(math.ceil(raw - 1e-9)))
 
 
-def price_rub_text_per_msg_approx(cost_in: float, cost_out: float, markup: float = 2.0, tokens_in: int = 800, tokens_out: int = 300) -> float:
+def price_rub_text_per_msg_approx(cost_in: float, cost_out: float, markup: float = DEFAULT_MARKUP,
+                                  tokens_in: int = 800, tokens_out: int = 300) -> float:
     m = _clamp_markup("per_tokens", markup)
     rate, _ = get_usd_rub_rate()
     usd = (tokens_in / 1_000_000) * cost_in + (tokens_out / 1_000_000) * cost_out
-    rub = usd * rate * 1.30 * m
+    rub = usd * rate * TAX_FACTOR * m
     return max(0.10, round(math.ceil(rub * 100 - 1e-9) / 100, 2))
 
 
@@ -106,6 +111,11 @@ PRICING_SEED: list[PricingRow] = [
     PricingRow("bytedance/seedance-1-pro", "replicate", "bytedance/seedance-1-pro", "video", "per_second", 0.06, needs_verify=True, enabled=False, description_ru="Seedance 1 Pro", family="seedance", version_label="1 Pro", quality_score=68),
     PricingRow("bytedance/seedance-2.0", "replicate", "bytedance/seedance-2.0", "video", "per_second", 0.10, has_audio=True, description_ru="Seedance 2.0 со звуком", family="seedance", version_label="2.0", quality_score=85, enabled=True),
     PricingRow("bytedance/seedance-2.5", "replicate", "bytedance/seedance-2.5", "video", "per_second", 0.1028, has_audio=True, max_duration_sec=30, description_ru="Seedance 2.5 — видео со звуком", family="seedance", version_label="2.5", quality_score=90, enabled=True),
+    PricingRow("seedance-2-5", "replicate", "bytedance/seedance-2.5", "video", "per_second", 0.1028, has_audio=True, max_duration_sec=30, description_ru="Seedance 2.5 — видео со звуком", family="seedance", version_label="2.5", quality_score=90, enabled=True),
+    PricingRow("seedance-2-5-hf", "higgsfield", "bytedance/seedance-2.5/text-to-video", "video", "per_second", 0.144, has_audio=True, max_duration_sec=30, description_ru="Seedance 2.5 HF", family="seedance", version_label="2.5 HF", quality_score=90, enabled=True),
+    PricingRow("veo-3-1", "replicate", "google/veo-3.1", "video", "per_second", 0.20, has_audio=True, max_duration_sec=8, description_ru="Veo 3.1 — видео со звуком", quality_score=95, enabled=True),
+    PricingRow("veo-3-1-hf", "higgsfield", "veo3.1/text-to-video", "video", "per_second", 0.20, has_audio=True, max_duration_sec=8, description_ru="Veo 3.1 HF", quality_score=95, enabled=True),
+    PricingRow("soul-cinema", "higgsfield", "higgsfield-ai/soul/cinema", "image", "per_item", 0.0032, description_ru="Soul Cinema — кинокадры t2i/i2i", quality_score=90, enabled=True),
     PricingRow("alibaba/wan-3", "replicate", "alibaba/wan-3", "video", "per_second", 0.10, description_ru="Wan 3.0 — видео 720p", quality_score=88, enabled=True),
     PricingRow("xai/grok-imagine-video-1.5", "replicate", "xai/grok-imagine-video-1.5", "video", "per_second", 0.08, has_audio=True, max_duration_sec=15, description_ru="Grok Imagine Video 1.5 — image→video со звуком", quality_score=86, enabled=True),
     PricingRow("google/veo-3.1", "replicate", "google/veo-3.1", "video", "per_second", 0.20, has_audio=True, max_duration_sec=8, description_ru="Veo 3.1 — видео со звуком", quality_score=95, enabled=True),
@@ -114,6 +124,10 @@ PRICING_SEED: list[PricingRow] = [
     PricingRow("openai/sora-2", "replicate", "openai/sora-2", "video", "per_second", 0.10, region="INTL", description_ru="Sora 2", quality_score=92),
     PricingRow("runwayml/gen4-turbo", "replicate", "runwayml/gen4-turbo", "video", "per_second", 0.05, max_duration_sec=10, description_ru="Gen-4 Turbo — быстрый i2v 720p", quality_score=86, enabled=True),
     PricingRow("kwaivgi/kling-v2.5-turbo-pro", "replicate", "kwaivgi/kling-v2.5-turbo-pro", "video", "per_second", 0.07, max_duration_sec=10, description_ru="Kling 2.5 Turbo Pro — cinematic t2v/i2v", quality_score=89, enabled=True),
+    # студийные id (= slug в /api/integrations) — иначе estimate/hold не находит цену
+    PricingRow("kling-v2-5-turbo-pro", "replicate", "kwaivgi/kling-v2.5-turbo-pro", "video", "per_second", 0.07, max_duration_sec=10, description_ru="Kling 2.5 Turbo Pro — cinematic t2v/i2v", quality_score=89, enabled=True),
+    PricingRow("kling-v2-5-turbo-pro-hf", "higgsfield", "kling-video/v2.5-turbo/pro/text-to-video", "video", "per_second", 0.021, max_duration_sec=10, description_ru="Kling 2.5 Turbo Pro HF — 50% off API", quality_score=89, enabled=True),
+    PricingRow("kling-v3-0-hf", "higgsfield", "kling-video/v3.0/pro/text-to-video", "video", "per_second", 0.042, max_duration_sec=15, has_audio=True, description_ru="Kling 3.0 HF — Pro t2v/i2v + звук", quality_score=92, enabled=True),
     PricingRow("pixverse/pixverse-v6", "replicate", "pixverse/pixverse-v6", "video", "per_second", 0.05, has_audio=True, max_duration_sec=15, description_ru="PixVerse V6 — видео со звуком", quality_score=92, enabled=True),
     PricingRow("prunaai/p-video", "replicate", "prunaai/p-video", "video", "per_second", 0.005, has_audio=True, max_duration_sec=20, description_ru="P-Video — быстрое видео + draft", quality_score=84, enabled=True),
     PricingRow("fal-ai/kling-o3-i2v", "fal", "fal-ai/kling-video/o3/standard/image-to-video", "video", "per_second", 0.084, has_audio=False, description_ru="Kling O3 image-to-video", quality_score=82, enabled=True),
@@ -136,6 +150,8 @@ PRICING_SEED: list[PricingRow] = [
     PricingRow("fal/nano-banana-pro", "fal", "fal-ai/nano-banana-pro", "image", "per_item", 0.15, description_ru="Nano Banana Pro (fal)", quality_score=92, enabled=True),
     PricingRow("higgsfield/soul-cinema", "higgsfield", "higgsfield-ai/soul/cinema", "image", "per_item", 0.0032, description_ru="Soul Cinema — кинокадры t2i/i2i (HF API from $0.0032)", quality_score=90, enabled=True),
     PricingRow("fal/gemini-omni-flash", "fal", "google/gemini-omni-flash", "video", "per_second", 0.125, has_audio=True, max_duration_sec=8, description_ru="Gemini Omni Flash — t2v + audio ~720p", quality_score=88, enabled=True),
+    PricingRow("gemini-omni-flash", "fal", "google/gemini-omni-flash", "video", "per_second", 0.125, has_audio=True, max_duration_sec=8, description_ru="Gemini Omni Flash — t2v + audio ~720p", quality_score=88, enabled=True),
+    PricingRow("gemini-omni-flash-fal", "fal", "google/gemini-omni-flash", "video", "per_second", 0.125, has_audio=True, max_duration_sec=8, description_ru="Gemini Omni Flash — t2v + audio ~720p", quality_score=88, enabled=True),
     PricingRow("openai/gpt-5.6-sol", "replicate", "openai/gpt-5.6-sol", "text", "per_tokens", cost_in_per_1m=2.0, cost_out_per_1m=10.0, region="INTL", description_ru="GPT-5.6 Sol", quality_score=91, enabled=True),
     PricingRow("deepseek-ai/deepseek-v3", "replicate", "deepseek-ai/deepseek-v3", "text", "per_tokens", cost_in_per_1m=1.45, cost_out_per_1m=1.45, description_ru="DeepSeek V3", quality_score=72, enabled=True),
     PricingRow("851-labs/background-remover", "replicate", "851-labs/background-remover", "tool", "per_run_approx", 0.0004, markup=3.0, description_ru="Удаление фона", quality_score=50, enabled=True),

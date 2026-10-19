@@ -375,6 +375,33 @@
     },
     open: function () { if (S.input) { syncAccept(); S.input.click(); } },
     add: addFiles,
+    /* Скачать картинку/файл по URL (раскадровка с витрины) и загрузить как вложение. */
+    addFromUrl: function (url, name) {
+      if (!url) return Promise.reject(new Error('empty url'));
+      return fetch(url, { credentials: 'same-origin' }).then(function (r) {
+        if (!r.ok) throw new Error('http ' + r.status);
+        return r.blob();
+      }).then(function (blob) {
+        var fname = name || decodeURIComponent(String(url).split('?')[0].split('/').pop() || 'storyboard.jpg');
+        var file = new File([blob], fname, { type: blob.type || 'image/jpeg' });
+        var before = {};
+        S.items.filter(isLive).forEach(function (x) { before[x.lid] = 1; });
+        addFiles([file]);
+        var item = S.items.filter(isLive).filter(function (x) { return !before[x.lid]; })[0];
+        if (!item) throw new Error('attach failed');
+        return new Promise(function (resolve, reject) {
+          var n = 0;
+          var t = setInterval(function () {
+            n += 1;
+            if (item.status === 'ready') { clearInterval(t); resolve({ kind: item.kind, name: item.name, id: item.id }); }
+            else if (item.status === 'error' || item.status === 'removed') {
+              clearInterval(t);
+              reject(new Error(item.error || 'upload failed'));
+            } else if (n > 300) { clearInterval(t); reject(new Error('timeout')); }
+          }, 100);
+        });
+      });
+    },
     remove: function (lid) { remove(lid); },
     refresh: render,
     busy: function () { return S.items.some(function (x) { return x.status === 'uploading'; }); },

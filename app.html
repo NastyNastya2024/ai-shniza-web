@@ -7,7 +7,7 @@
 <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/assets/brand/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/assets/brand/png/apple-touch-icon-180.png">
-<link rel="stylesheet" href="/assistant-ui.css?v=16">
+<link rel="stylesheet" href="/assistant-ui.css?v=17">
 <link rel="stylesheet" href="/attach.css">
 <link rel="stylesheet" href="/chat-history.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -249,13 +249,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .vit-pv h4{margin:2px 4px 0;font-size:18px;font-weight:700;color:var(--ink);line-height:1.25}
 .vit-pv .vc-res{margin:0 4px;font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.01em;line-height:1.35}
 .vit-pv .vc-res:empty{display:none}
+.vit-pv .vc-compress{margin:4px 4px 2px;padding:0;border:0;background:none;color:var(--muted);font:600 12.5px/1.35 'Onest',system-ui,sans-serif;letter-spacing:.01em}
 .vit-pv .by{margin:0 4px;font-size:13px;color:var(--muted)}
 .vit-pv .acts{display:flex;flex-direction:column;gap:8px;margin:4px 0 10px}
-.vit-pv .acts button,.vit-pv .acts a,.vit-pv .btn-gen{min-height:48px;height:auto;padding:12px 16px;border-radius:14px;font-family:'Onest',sans-serif;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-decoration:none;box-sizing:border-box;width:100%;color:var(--purple-ink);background:#F7F5FD;box-shadow:none}
-.vit-pv .acts .btn-purple,.vit-pv .btn-gen{background:#F7F5FD;border:1px solid rgba(80,60,160,.08);color:var(--purple-ink)}
-.vit-pv .acts .btn-purple:hover,.vit-pv .btn-gen:hover{background:#EFEAFB;color:var(--purple);filter:none}
-.t-dark .vit-pv .acts .btn-purple,.t-dark .vit-pv .btn-gen{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--purple-ink);box-shadow:none}
-.t-dark .vit-pv .acts .btn-purple:hover,.t-dark .vit-pv .btn-gen:hover{background:rgba(255,255,255,.1);color:#EDE8FF}
+.vit-pv .acts button,.vit-pv .acts a,.vit-pv .btn-gen{min-height:48px;height:auto;padding:12px 16px;border-radius:14px;font-family:'Onest',sans-serif;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-decoration:none;box-sizing:border-box;width:100%;border:none;color:#fff;background:linear-gradient(135deg,#7A55FF,#5B35E0);box-shadow:0 14px 30px -14px rgba(91,53,224,.65)}
+.vit-pv .acts .btn-purple,.vit-pv .btn-gen{background:linear-gradient(135deg,#7A55FF,#5B35E0);border:none;color:#fff;box-shadow:0 14px 30px -14px rgba(91,53,224,.65)}
+.vit-pv .acts .btn-purple:hover,.vit-pv .btn-gen:hover{background:linear-gradient(135deg,#8763FF,#6340EA);color:#fff;filter:none}
+.t-dark .vit-pv .acts .btn-purple,.t-dark .vit-pv .btn-gen{background:linear-gradient(135deg,#8763FF,#5B35E0);border:none;color:#fff;box-shadow:0 14px 30px -14px rgba(122,85,255,.7)}
+.t-dark .vit-pv .acts .btn-purple:hover,.t-dark .vit-pv .btn-gen:hover{background:linear-gradient(135deg,#9474FF,#6743F0);color:#fff}
 .vit-pv .ava{flex:0 0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff}
 .vit-pv .creator{margin-top:0;border:1px solid rgba(80,60,160,.08);border-radius:20px;background:#F7F5FD;overflow:hidden}
 .t-dark .vit-pv .creator{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1)}
@@ -267,12 +268,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .vit-pv .c-sub{font-size:13px;color:var(--muted);font-weight:600;margin-top:2px}
 .vit-pv .c-act{padding:4px 16px 14px;display:flex;flex-direction:column;gap:8px}
 .vit-pv .c-act .btn-primary,.vit-pv .c-act .btn-profile{height:48px;border-radius:14px;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;box-sizing:border-box;width:100%;cursor:pointer;font-family:'Onest',sans-serif;font-weight:700}
-.vit-pv .c-act .btn-primary{border:none;background:linear-gradient(135deg,#7A55FF,#5B35E0);box-shadow:0 14px 30px -14px rgba(91,53,224,.65);color:#fff}
-.vit-pv .c-act .btn-primary:hover{background:linear-gradient(135deg,#8763FF,#6340EA);filter:none}
+.vit-pv .c-act .btn-primary{border:1.5px solid rgba(91,53,224,.22);background:rgba(91,53,224,.1);box-shadow:none;color:var(--purple-ink,#4A2CC0)}
+.vit-pv .c-act .btn-primary:hover{background:rgba(91,53,224,.16);border-color:rgba(91,53,224,.32);color:var(--purple,#5B35E0);filter:none}
 .vit-pv .c-act .btn-profile{border:1.5px solid rgba(80,60,160,.18);background:rgba(255,255,255,.75);color:var(--ink,#1B0D3A)}
 .vit-pv .c-act .btn-profile:hover{background:#fff}
-.t-dark .vit-pv .c-act .btn-primary{background:linear-gradient(135deg,#8763FF,#5B35E0);box-shadow:0 14px 30px -14px rgba(122,85,255,.7)}
-.t-dark .vit-pv .c-act .btn-primary:hover{background:linear-gradient(135deg,#9474FF,#6743F0)}
+.t-dark .vit-pv .c-act .btn-primary{background:rgba(155,123,255,.16);border-color:rgba(155,123,255,.28);box-shadow:none;color:var(--purple-ink,#D2C4FF)}
+.t-dark .vit-pv .c-act .btn-primary:hover{background:rgba(155,123,255,.24);border-color:rgba(155,123,255,.4);color:#EDE8FF}
 .t-dark .vit-pv .c-act .btn-profile{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12);color:#eee}
 .vit-pv .c-more{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:0;border-top:1px solid var(--field-brd)}
 .vit-pv .c-more button{padding:0;border:none;border-radius:0;overflow:hidden;aspect-ratio:1;cursor:pointer;background:var(--field);max-height:none}
@@ -532,7 +533,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 <script src="/i18n/runtime.js"></script>
 <script src="/vitrina-data.js"></script>
 <script src="/vitrina-camera-moves.js?v=3"></script>
-<script src="/assistant-ui.js?v=14"></script>
+<script src="/vitrina-aishnitsa.js?v=14"></script>
+<script src="/assistant-ui.js?v=16"></script>
 <script src="/attach.js"></script>
 <script src="/chat-history.js?v=6"></script>
 <script>
@@ -559,6 +561,76 @@ const _qs = new URLSearchParams(location.search);
 const URL_PROMPT = (_qs.get('prompt') || '').trim();
 const URL_MODEL = (_qs.get('model') || '').trim();
 const URL_NEW = _qs.get('new') === '1';   // с главной — всегда новый чат
+const VITRINA_SEED_KEY = 'aish-vitrina-seed';
+function absMediaUrl(src) {
+  const s = String(src || '').trim();
+  if (!s) return '';
+  if (/^https?:\/\//i.test(s) || s.charAt(0) === '/') return s;
+  return '/' + s.replace(/^\.\//, '');
+}
+function vitrinaSeedFromWork(w, slug) {
+  if (!w || !w.prompt_open || !String(w.prompt || '').trim()) return null;
+  const refs = Array.isArray(w.refs) ? w.refs.filter((r) => r && r.src) : (w.ref ? [{ src: w.ref, label: 'storyboard' }] : []);
+  if (!refs.length) return null;
+  return {
+    model: slug || w.model_slug || '',
+    prompt: String(w.prompt),
+    title: w.title || w.name || '',
+    refs: refs.map((r) => {
+      const src = absMediaUrl(r.src);
+      let name = '';
+      try { name = decodeURIComponent(src.split('?')[0].split('/').pop() || ''); } catch (_) { name = src.split('/').pop() || ''; }
+      return { src: src, name: name || 'storyboard.jpg' };
+    })
+  };
+}
+function saveVitrinaSeed(seed) {
+  try { sessionStorage.setItem(VITRINA_SEED_KEY, JSON.stringify(seed)); } catch (_) {}
+}
+function takeVitrinaSeed() {
+  try {
+    const raw = sessionStorage.getItem(VITRINA_SEED_KEY);
+    sessionStorage.removeItem(VITRINA_SEED_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) { return null; }
+}
+window.AishVitrinaSeed = { fromWork: vitrinaSeedFromWork, save: saveVitrinaSeed, abs: absMediaUrl };
+async function applyVitrinaSeed(seed) {
+  if (!seed || !String(seed.prompt || '').trim()) return false;
+  const slug = String(seed.model || '').trim();
+  const m = slug ? app.MODELS.find((x) => x.slug === slug || x.model_key === slug) : null;
+  if (!m) return false;
+  app.pendingPrompt = String(seed.prompt);
+  app.pendingSel = m.slug;
+  app.setState({ sel: m.slug, chat: true, text: '', assist: true });
+  if (!app.state.authed) {
+    saveVitrinaSeed(seed);
+    app.login();
+    return true;
+  }
+  app.speak(tr('studio.eggy.vitSeed', { title: seed.title || m.name, model: m.name }));
+  const refs = Array.isArray(seed.refs) ? seed.refs : [];
+  if (window.AishAttach && refs.length) {
+    try {
+      if (AishAttach.consume) AishAttach.consume();
+      app.setState({ typing: true, say: tr('studio.eggy.vitSeedAttach') });
+      for (let i = 0; i < refs.length; i++) {
+        await AishAttach.addFromUrl(refs[i].src, refs[i].name);
+      }
+      app.setState({ typing: false });
+    } catch (_) {
+      app.setState({ typing: false });
+      /* промпт всё равно отправим — без раскадровки */
+    }
+  }
+  const files = (window.AishAttach && AishAttach.ready) ? AishAttach.ready() : [];
+  app._shownFiles = app._shownFiles || {};
+  files.forEach((f) => { if (f.id) app._shownFiles[f.id] = 1; });
+  app.push(files.length ? { role: 'user', text: seed.prompt, files: files } : { role: 'user', text: seed.prompt });
+  if (window.AishAttach && AishAttach.park) AishAttach.park();
+  app.cook();
+  return true;
+}
 const mq = (q) => typeof matchMedia === 'function' && matchMedia(q).matches;
 const IS_MOBILE = mq('(max-width:760px)');
 const MOBILE = () => mq('(max-width:760px)');
@@ -668,7 +740,7 @@ class Component extends DCLogic {
       { slug: 'seedance-2-5', model_key: 'seedance-2-5', name: 'Seedance 2.5', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 44, rub: 8.8, perSec: true },
       { slug: 'veo-3-1', model_key: 'veo-3-1', name: 'Veo 3.1', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 136, rub: 17, perSec: true },
       { slug: 'veo-3-1-fast', model_key: 'veo-3-1-fast', name: 'Veo 3.1 Fast', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 72, rub: 9, perSec: true },
-      { slug: 'kling-v2-5-turbo-pro', model_key: 'kling-v2-5-turbo-pro', name: 'Kling 2.5 Turbo Pro', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 30, rub: 6, perSec: true },
+      { slug: 'kling-v2-5-turbo-pro', model_key: 'kling-v2-5-turbo-pro', name: 'Kling 2.5 Turbo Pro', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 65, rub: 13, perSec: true },
       { slug: 'pixverse-v6', model_key: 'pixverse-v6', name: 'PixVerse V6', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 22, rub: 4.3, perSec: true },
       { slug: 'p-video', model_key: 'p-video', name: 'P-Video', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 9, rub: 1.7, perSec: true },
       { slug: 'gen4-turbo', model_key: 'gen4-turbo', name: 'Gen-4 Turbo', kindKeys: ['studio.kind.imageToVideo'], type: 'video', cost: 60, rub: 12, perSec: true },
@@ -2172,6 +2244,18 @@ refreshUser().then(async (user) => {
     try { await app.onSubmit(); } catch (_) {}
     return;
   }
+  // витрина: промпт + раскадровка → сразу в генерацию (и для гостя — через вход)
+  {
+    const seed = takeVitrinaSeed();
+    if (seed) {
+      try {
+        sessionStorage.removeItem('aish-assist-resume');
+        localStorage.removeItem('aish-assist-resume');
+      } catch (e) {}
+      ['intro', 'bot', 'cook', 'lead', 'ck'].forEach((k) => clearTimeout((app.timers || {})[k]));
+      try { if (await applyVitrinaSeed(seed)) return; } catch (_) {}
+    }
+  }
   if (!app.state.authed) return;
   try {
     sessionStorage.removeItem('aish-assist-resume');
@@ -2354,12 +2438,33 @@ loadIntegrations();
     }
     return parts.join(' \u00b7 ');
   }
+  function compressNoteHtml(work) {
+    if (!(work && (work.video || work.type === 'video'))) return '';
+    return '<p class="vc-compress">' + esc2(tr('studio.vit.meta.compressed')) + '</p>';
+  }
+  function isCameraWork(w) {
+    return !!(w && (String(w.id || '').indexOf('cam-') === 0 || String(w.model || '').indexOf('Camera') === 0));
+  }
+  function camAspectPref() {
+    try {
+      const v = localStorage.getItem('aish-cam-aspect');
+      if (v === '9:16' || v === '16:9') return v;
+    } catch (e) {}
+    return '16:9';
+  }
+  function displayAspect(w) {
+    if (isCameraWork(w)) {
+      return camAspectPref() === '9:16' ? { aw: 9, ah: 16 } : { aw: 16, ah: 9 };
+    }
+    return { aw: Number(w.w) || 16, ah: Number(w.h) || 9 };
+  }
   function fillVideoMeta(root, work) {
     const vid = root && root.querySelector('video');
     const badge = root && root.querySelector('.vc-res');
     if (!badge) return;
     const paint = () => {
-      if (vid && vid.videoWidth && vid.videoHeight) {
+      /* Камеры: w/h — кадр превью (9:16/16:9), не трогаем; пиксели берём из video* */
+      if (vid && vid.videoWidth && vid.videoHeight && !isCameraWork(work)) {
         work.w = vid.videoWidth;
         work.h = vid.videoHeight;
       }
@@ -2370,8 +2475,9 @@ loadIntegrations();
     else vid.addEventListener('loadedmetadata', paint, { once: true });
   }
   const card = (w) => {
-    const aw = Number(w.w) || 16;
-    const ah = Number(w.h) || 9;
+    const sz = displayAspect(w);
+    const aw = sz.aw;
+    const ah = sz.ah;
     const ratio = aw + ' / ' + ah;
     const poster = (w.src || '').trim();
     const media = w.video
@@ -2435,7 +2541,7 @@ loadIntegrations();
     const media = w.video
       ? '<video src="' + esc2(w.video) + '" poster="' + esc2(w.src) + '" autoplay muted loop playsinline preload="auto"></video>'
       : '<img src="' + esc2(w.src) + '" alt="' + esc2(wTitle(w) || w.title || '') + '">';
-    const resBadge = '<p class="vc-res">' + esc2(videoMetaText(w, null)) + '</p>';
+    const resBadge = '<p class="vc-res">' + esc2(videoMetaText(w, null)) + '</p>' + compressNoteHtml(w);
     const slug = w.model_slug
       || Object.keys(MODEL_OF).find((k) => MODEL_OF[k] === w.model)
       || (/^Wan/i.test(w.model) ? 'wan-3-0' : /^Grok/i.test(w.model) ? 'grok-imagine-video-1-5' : /^Seedance/i.test(w.model) ? 'seedance-2-5' : /Veo\s*3\.1\s*Fast/i.test(w.model) ? 'veo-3-1-fast' : /^Veo/i.test(w.model) ? 'veo-3-1' : /^Kling/i.test(w.model) ? 'kling-v2-5-turbo-pro' : /^PixVerse/i.test(w.model) ? 'pixverse-v6' : /^P-?Video/i.test(w.model) ? 'p-video' : /Gen-?4\s*Turbo/i.test(w.model) ? 'gen4-turbo' : /Hailuo\s*0?2/i.test(w.model) ? 'hailuo-02' : /Seedream/i.test(w.model) ? 'seedream-5-pro' : /GPT\s*Image\s*2\.5\s*Flare/i.test(w.model) ? 'gpt-image-2-5-flare' : /GPT\s*Image\s*2\.5\s*Sunburst/i.test(w.model) ? 'gpt-image-2-5-sunburst' : /^GPT\s*Image\s*2(?!\.5)/i.test(w.model) ? 'gpt-image-2' : /Nano\s*Banana\s*Pro/i.test(w.model) ? 'nano-banana-pro' : /Nano\s*Banana\s*2/i.test(w.model) ? 'nano-banana-2' : /Soul\s*Cinema/i.test(w.model) ? 'soul-cinema' : /Ideogram/i.test(w.model) ? 'ideogram-v3-turbo' : /ACE-?Step/i.test(w.model) ? 'ace-step' : /ElevenLabs\s*Music/i.test(w.model) ? 'elevenlabs-music' : /Stable\s*Audio\s*2\.5/i.test(w.model) ? 'stable-audio-2-5' : null);
@@ -2488,11 +2594,29 @@ loadIntegrations();
     const promptBox = (w.prompt_open && w.prompt)
       ? '<div class="d-prompt-box" style="margin:12px 0;border:1px solid var(--panel-brd);border-radius:14px;background:var(--field);overflow:hidden"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--panel-brd)"><span style="font:800 11px/1 Onest,system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)">' + esc2(tr('vitrina.prompt.label')) + '</span><button type="button" class="copy" data-copy-prompt style="height:30px;padding:0 10px;border-radius:10px;border:1px solid var(--panel-brd);background:transparent;color:var(--muted);font:700 12px Onest,system-ui,sans-serif;cursor:pointer">' + esc2(tr('common.copy')) + '</button></div><pre id="vitOpenPrompt" style="margin:0;padding:12px;font:500 13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto">' + esc2(w.prompt) + '</pre></div>'
       : '';
+    const refItems = Array.isArray(w.refs) ? w.refs.filter((r) => r && r.src) : (w.ref ? [{ src: w.ref, label: 'storyboard' }] : []);
+    const refFileName = (src) => {
+      try { return decodeURIComponent(String(src || '').split('?')[0].split('/').pop() || ''); } catch (_) { return String(src || '').split('/').pop() || ''; }
+    };
+    const refFileExt = (name) => {
+      const m = String(name || '').match(/\.([a-z0-9]+)$/i);
+      return m ? m[1].toUpperCase() : 'IMG';
+    };
+    const refsBox = refItems.length
+      ? '<div class="d-refs" style="margin:12px 0;border:1px solid var(--panel-brd);border-radius:14px;background:var(--field);overflow:hidden"><div style="padding:8px 12px;border-bottom:1px solid var(--panel-brd)"><span style="font:800 11px/1 Onest,system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)">' + esc2(tr('vitrina.refs.label')) + '</span></div><div style="display:flex;flex-direction:column;gap:8px;padding:10px 12px 12px">'
+        + refItems.map((r) => {
+          const name = refFileName(r.src) || (r.label || tr('vitrina.refs.label'));
+          const sub = refFileExt(name);
+          return '<a href="' + esc2(r.src) + '" target="_blank" rel="noopener" download="' + esc2(name) + '" style="display:flex;align-items:center;gap:10px;min-width:0;padding:6px;border-radius:12px;border:1px solid var(--panel-brd);background:var(--panel,#fff);color:inherit;text-decoration:none"><span style="flex:0 0 auto;width:44px;height:44px;border-radius:10px;overflow:hidden;background:rgba(0,0,0,.04)"><img src="' + esc2(r.src) + '" alt="" style="display:block;width:100%;height:100%;object-fit:cover"></span><span style="display:flex;flex-direction:column;min-width:0;gap:2px"><span style="font:600 13px/1.2 Onest,system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)">' + esc2(name) + '</span><span style="font:600 12px/1.2 Onest,system-ui,sans-serif;color:var(--muted)">' + esc2(sub) + '</span></span></a>';
+        }).join('')
+        + '</div></div>'
+      : '';
     $('vitCtx').innerHTML = '';
     $('vitBody').innerHTML = '<div class="vit-pv"><button type="button" class="vit-back" data-vback>' + esc2(tr('studio.vit.back')) + '</button><div class="media">' + media + '</div>'
       + '<h4>' + esc2(wTitle(w)) + '</h4>'
       + resBadge
       + promptBox
+      + refsBox
       + genBtn + creatorCard + lower + '</div>';
     fillVideoMeta($('vitBody').querySelector('.vit-pv'), w);
     const f = $('vitReqForm');
@@ -2704,12 +2828,22 @@ loadIntegrations();
         if (SHUTTERS_COVER()) {
           setOpen(false);
           leftWasOpen = false;
-          app.setState({ sel: m.slug, leftOpen: false, chat: false });
+          app.setState({ sel: m.slug, leftOpen: false, chat: true });
         } else {
-          app.setState({ sel: m.slug, chat: false });
+          app.setState({ sel: m.slug, chat: true });
         }
-        app.speak(tr('studio.eggy.sameModel', { model: m.name }));
-        try { $('prompt').focus({ preventScroll: true }); } catch (err) {}
+        const w = WORKS.find((x) => x.id === preview) || WORKS.find((x) => String(x.id) === String(preview));
+        const seed = vitrinaSeedFromWork(w, m.slug);
+        if (seed) {
+          applyVitrinaSeed(seed).catch(() => {
+            app.speak(tr('studio.eggy.sameModel', { model: m.name }));
+            try { $('prompt').focus({ preventScroll: true }); } catch (err) {}
+          });
+        } else {
+          app.setState({ chat: false });
+          app.speak(tr('studio.eggy.sameModel', { model: m.name }));
+          try { $('prompt').focus({ preventScroll: true }); } catch (err) {}
+        }
       }
       return;
     }

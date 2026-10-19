@@ -59,3 +59,6 @@ package-lock.json
 
 # Local test tooling (e.g. redis-memory-server)
 .tools/
+
+# showcase video compress markers
+*.aish-pub3

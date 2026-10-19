@@ -104,23 +104,6 @@ window.VITRINA = {
   "video": "works/seedance25fal.mp4"
  },
  {
-  "id": "ex-veo-3-1",
-  "file": "veo31",
-  "title": "Девушка в футболке Veo",
-  "model": "Veo 3.1",
-  "type": "video",
-  "dur": "0:08",
-  "creator": "c1",
-  "likes": 590,
-  "date": "сегодня",
-  "w": 720,
-  "h": 406,
-  "src": "works/veo31.jpg",
-  "video": "works/veo31.mp4",
-  "published": true,
-  "model_slug": "veo-3-1"
- },
- {
   "id": "ex-veo-3-1-fal",
   "file": "veo31fal",
   "title": "Прогулка под дождём",

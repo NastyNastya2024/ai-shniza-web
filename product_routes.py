@@ -535,7 +535,7 @@ def register_product(app, db, User):
         bad = re.search(r"(убий|террор|porn|порно|suicide)", f"{title} {work.prompt}", re.I)
         if bad:
             return jsonify({"error": "moderation"}), 400
-        # watermark
+        # image: watermark for public; video: compress ~3× for public, keep original_url pristine
         if work.original_url and work.kind in {"image", "video"}:
             try:
                 raw = media_store.download_url_to_bytes(work.original_url)
@@ -544,8 +544,12 @@ def register_product(app, db, User):
                     key = f"works/{user.id}/{work.id}_wm.jpg"
                     work.watermarked_url = media_store.upload_bytes(key, wm, "image/jpeg")
                     work.thumb_url = work.watermarked_url
+                elif raw and work.kind == "video":
+                    # original_url stays full quality (owner / download); public gets compressed copy
+                    pub = media_store.compress_video_bytes(raw, size_ratio=media_store.PUBLISH_VIDEO_SIZE_RATIO)
+                    key = f"works/{user.id}/{work.id}_pub.mp4"
+                    work.watermarked_url = media_store.upload_bytes(key, pub, "video/mp4")
                 elif work.kind == "video":
-                    # keep original as watermarked fallback until worker ffmpeg
                     work.watermarked_url = work.watermarked_url or work.original_url
             except Exception:
                 work.watermarked_url = work.watermarked_url or work.original_url

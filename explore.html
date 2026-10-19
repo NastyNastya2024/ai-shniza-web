@@ -46,29 +46,22 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .head h1{margin:0;font-weight:800;font-size:clamp(34px,4.4vw,58px);letter-spacing:-.045em;line-height:1}
 .head p{margin:10px 0 0;color:var(--muted);font-size:16px;font-weight:500}
 .tools{display:flex;flex-direction:row;align-items:center;gap:8px;flex:1 1 420px;max-width:760px;min-width:0}
-.cam-groups{display:flex;flex-wrap:wrap;gap:6px;flex:1 0 100%;width:100%;margin-top:-6px}
+.cam-groups{display:flex;flex-wrap:wrap;gap:6px;flex:1 0 100%;width:100%;margin-top:-6px;align-items:center}
 .cam-groups[hidden]{display:none!important}
 .cam-groups .chip{height:34px;padding:0 12px;font-size:13px}
+.cam-groups .cam-aspect{display:inline-flex;flex-wrap:wrap;gap:6px;margin-left:auto;align-items:center}
+.cam-groups .cam-aspect__lbl{font:700 12px/1 'Manrope',system-ui,sans-serif;color:var(--muted2);letter-spacing:.04em;text-transform:uppercase;margin-right:2px}
+.card.is-cam video,.card.is-cam img{object-fit:cover;width:100%;height:auto}
 .tools.search-on .search{flex:1 1 auto;min-width:0}
 .tools:not(.search-on) .search input{padding:0;border-color:transparent;color:transparent;caret-color:transparent;cursor:pointer}
 .tools:not(.search-on) .search input::placeholder{color:transparent}
 .tools:not(.search-on) .search input::-webkit-search-cancel-button{display:none}
-.filters{display:flex;flex-wrap:nowrap;gap:4px;align-items:center;flex:1 1 auto;min-width:0;overflow:visible;transition:opacity .2s ease,flex-basis .28s ease,max-width .28s ease,padding .2s ease,border-width .2s ease}
-.filters-main{display:flex;flex-wrap:nowrap;gap:4px;align-items:center;flex:1 1 auto;min-width:0;overflow:hidden}
-.filters-more{position:relative;flex:0 0 auto}
-.more-btn{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto}
-.more-btn .more-label{white-space:nowrap}
-.more-btn[aria-expanded=true],.more-btn.is-active{background:var(--ink);color:#121113;border-color:var(--ink)}
-.more-menu{position:absolute;top:calc(100% + 8px);right:0;z-index:30;min-width:180px;padding:6px;border-radius:16px;background:var(--panel);border:1px solid var(--line);box-shadow:0 18px 40px -20px rgba(30,18,56,.45);display:none;flex-direction:column;gap:2px}
-.more-menu.open{display:flex}
-.more-menu .chip{width:100%;justify-content:flex-start;border-radius:12px;height:40px}
+.filters{display:flex;flex-wrap:wrap;gap:4px;align-items:center;flex:1 1 auto;min-width:0;overflow:visible;transition:opacity .2s ease,flex-basis .28s ease,max-width .28s ease,padding .2s ease,border-width .2s ease}
+.filters-main{display:flex;flex-wrap:wrap;gap:4px;align-items:center;flex:1 1 auto;min-width:0}
 .tools.search-on .filters{flex:0 0 0;max-width:0;opacity:0;padding-left:0;padding-right:0;border-width:0;pointer-events:none;overflow:hidden}
 .chip{height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;flex:0 0 auto;display:inline-flex;align-items:center}
 .chip:hover{color:var(--ink);border-color:var(--line2)}
 .chip[aria-pressed=true]{background:var(--ink);color:#121113;border-color:var(--ink)}
-.filters > label{flex:0 0 auto;margin-left:2px}
-.sort{height:40px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);padding:0 14px;font:700 14px 'Manrope',sans-serif;cursor:pointer}
-.sort option{color:#141220}
 
 /* сетка-пинтерест */
 .grid{column-count:5;column-gap:14px;padding:0 clamp(16px,3vw,40px) 80px}
@@ -96,10 +89,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 
 /* водяной знак на видео */
-.wm{position:absolute;inset:0;pointer-events:none;z-index:2;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27260%27%20height%3D%27150%27%3E%3Cg%20transform%3D%27rotate%28-24%20130%2075%29%27%20font-family%3D%27Arial%2CHelvetica%2Csans-serif%27%20font-weight%3D%27700%27%20font-size%3D%2722%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.20%29%27%20stroke%3D%27rgba%280%2C0%2C0%2C0.14%29%27%20stroke-width%3D%270.8%27%20paint-order%3D%27stroke%27%3E%3Ctext%20x%3D%2718%27%20y%3D%2770%27%3E%7BAI%7D-%D1%88%D0%BD%D0%B8%D1%86%D0%B0%3C%2Ftext%3E%3Ctext%20x%3D%27150%27%20y%3D%27145%27%3E%7BAI%7D-%D1%88%D0%BD%D0%B8%D1%86%D0%B0%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fsvg%3E");background-size:260px 150px;mix-blend-mode:normal}
-.wm-badge{position:absolute;right:10px;bottom:10px;z-index:3;pointer-events:none;height:26px;padding:0 10px;border-radius:999px;background:rgba(18,17,19,.55);backdrop-filter:blur(6px);display:flex;align-items:center;font-family:'Days One',sans-serif;font-size:12px;color:rgba(238,238,240,.9);letter-spacing:.01em;transition:opacity .25s}
-.wm-badge b{color:#FF9A3D;font-weight:400}
-.card:hover .wm-badge,.card:focus-visible .wm-badge{opacity:0}
+.wm{position:absolute;inset:0;pointer-events:none;z-index:2;opacity:.33;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27260%27%20height%3D%27150%27%3E%3Cg%20transform%3D%27rotate%28-24%20130%2075%29%27%20font-family%3D%27Arial%2CHelvetica%2Csans-serif%27%20font-weight%3D%27700%27%20font-size%3D%2722%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.20%29%27%20stroke%3D%27rgba%280%2C0%2C0%2C0.14%29%27%20stroke-width%3D%270.8%27%20paint-order%3D%27stroke%27%3E%3Ctext%20x%3D%2718%27%20y%3D%2770%27%3E%7BAI%7D-%D1%88%D0%BD%D0%B8%D1%86%D0%B0%3C%2Ftext%3E%3Ctext%20x%3D%27150%27%20y%3D%27145%27%3E%7BAI%7D-%D1%88%D0%BD%D0%B8%D1%86%D0%B0%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fsvg%3E");background-size:260px 150px;mix-blend-mode:normal}
+.wm-badge{display:none!important}
 .media{position:relative}
 .media .wm{background-size:320px 185px}
 .media .wm-badge{right:14px;bottom:auto;top:14px;height:30px;font-size:13px}
@@ -125,6 +116,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .media img,.media video{display:block;width:100%;max-height:58vh;object-fit:contain}
 .d-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin:18px 0 10px}
 .d-title{margin:0;flex:1;min-width:0;font-weight:800;font-size:24px;letter-spacing:-.03em;line-height:1.15}
+.d-res{margin:0 0 8px;font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.01em;line-height:1.35}
+.d-res:empty{display:none}
+.d-compress{margin:0 0 12px;padding:0;border:0;background:none;color:var(--muted);font:600 12.5px/1.35 'Manrope',system-ui,sans-serif;letter-spacing:.01em}
 .d-like{flex:0 0 auto;height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:800 16px 'Manrope',sans-serif;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:background .15s,border-color .15s,color .15s,transform .15s}
 .d-like svg{width:18px;height:18px}
 .d-like.is-on{background:rgba(224,69,123,.14);border-color:rgba(224,69,123,.45);color:#E0457B}
@@ -132,14 +126,25 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .tags{display:flex;flex-wrap:wrap;gap:6px}
 .tag{height:28px;padding:0 10px;border-radius:999px;background:var(--card);display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--muted)}
 .tag.model{background:var(--violet-bg);color:var(--violet-ink)}
-.d-gen{margin-top:14px;margin-bottom:6px;height:48px;padding:0 18px;border-radius:14px;border:1px solid rgba(80,60,160,.08);background:#F7F5FD;color:var(--violet-ink);font:800 15px 'Manrope',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;box-sizing:border-box;cursor:pointer;box-shadow:none;transition:background .15s,color .15s,border-color .15s,transform .15s}
-.d-gen:hover{background:#EFEAFB;color:var(--violet)}
+.d-gen{margin-top:14px;margin-bottom:6px;height:48px;padding:0 18px;border-radius:14px;border:none;background:linear-gradient(135deg,#7A55FF,#5B35E0);color:#fff;font:800 15px 'Manrope',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;box-sizing:border-box;cursor:pointer;box-shadow:0 14px 30px -14px rgba(91,53,224,.65);transition:background .15s,filter .15s,transform .15s}
+.d-gen:hover{background:linear-gradient(135deg,#8763FF,#6340EA);color:#fff;filter:brightness(1.04)}
 .d-gen:active{transform:scale(.98)}
 .d-prompt-box{margin:14px 0 4px;border:1px solid var(--line);border-radius:16px;background:var(--card);overflow:hidden}
 .d-prompt-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px 8px;border-bottom:1px solid var(--line)}
 .d-prompt-lbl{font-size:12.5px;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
 .d-prompt{margin:0;padding:12px 14px 14px;font:500 13.5px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--ink);white-space:pre-wrap;word-break:break-word;max-height:220px;overflow:auto;user-select:text;-webkit-user-select:text}
 .d-prompt-box .copy{margin-left:0;flex:0 0 auto}
+.d-refs{margin:12px 0 4px;border:1px solid var(--line);border-radius:16px;background:var(--card);overflow:hidden}
+.d-refs-head{padding:10px 12px 8px;border-bottom:1px solid var(--line)}
+.d-refs-lbl{font-size:12.5px;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.d-refs-list{display:flex;flex-direction:column;gap:8px;padding:10px 12px 12px}
+.d-ref-file{display:flex;align-items:center;gap:10px;min-width:0;padding:6px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:inherit;text-decoration:none;transition:border-color .15s,background .15s}
+.d-ref-file:hover,.d-ref-file:focus-visible{border-color:var(--violet-brd,rgba(91,53,224,.35));background:var(--soft,rgba(0,0,0,.03))}
+.d-ref-thumb{flex:0 0 auto;width:44px;height:44px;border-radius:10px;overflow:hidden;background:rgba(0,0,0,.04)}
+.d-ref-thumb img{display:block;width:100%;height:100%;object-fit:cover}
+.d-ref-meta{display:flex;flex-direction:column;min-width:0;gap:2px}
+.d-ref-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.d-ref-sub{font-size:12px;font-weight:600;color:var(--muted2)}
 .creator{margin-top:14px;border:1px solid var(--line);border-radius:20px;background:var(--bg);overflow:hidden}
 .c-head{display:flex;align-items:center;gap:12px;padding:14px 16px 12px}
 .c-main{flex:1 1 auto;min-width:0}
@@ -150,6 +155,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .c-about{padding:0 16px 14px;font-size:14px;color:var(--muted);line-height:1.5}
 .creator .c-act{padding:4px 16px 14px;display:flex;flex-direction:column;gap:8px}
 .creator .c-act .btn{width:100%;border-radius:14px;height:48px;font-size:15px;text-decoration:none;box-sizing:border-box}
+.creator .c-act .btn-p,:root[data-theme=light] .creator .c-act .btn-p{background:rgba(91,53,224,.1);border:1.5px solid rgba(91,53,224,.22);box-shadow:none;color:var(--violet-ink,#4A2CC0)}
+.creator .c-act .btn-p:hover,:root[data-theme=light] .creator .c-act .btn-p:hover{background:rgba(91,53,224,.16);border-color:rgba(91,53,224,.32);color:var(--violet,#5B35E0)}
+:root:not([data-theme=light]) .creator .c-act .btn-p{background:rgba(155,123,255,.16);border-color:rgba(155,123,255,.28);color:var(--violet-ink,#CDBFFF)}
+:root:not([data-theme=light]) .creator .c-act .btn-p:hover{background:rgba(155,123,255,.24);border-color:rgba(155,123,255,.4);color:#EDE8FF}
 .c-more{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:0;border-top:1px solid var(--line)}
 .c-more button{padding:0;border:none;border-radius:0;overflow:hidden;aspect-ratio:1;cursor:pointer;background:var(--card);max-height:none}
 .c-more button:first-child{border-radius:0 0 0 18px}
@@ -209,12 +218,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 :root[data-theme=light] .search input:focus,:root[data-theme=light] .tools.search-on .search input{background:#fff;border-color:rgba(91,53,224,.35)}
 :root[data-theme=light] .tools:not(.search-on) .search input{background:rgba(255,255,255,.42);border-color:rgba(255,255,255,.9);box-shadow:0 10px 30px -24px rgba(75,43,184,.5)}
 :root[data-theme=light] .search svg{color:var(--violet-ink)}
-:root[data-theme=light] .chip,:root[data-theme=light] .sort{background:rgba(255,255,255,.55);border-color:rgba(255,255,255,.95);color:var(--muted)}
-:root[data-theme=light] .chip:hover,:root[data-theme=light] .sort:hover{background:rgba(255,255,255,.9);color:var(--ink)}
+:root[data-theme=light] .chip{background:rgba(255,255,255,.55);border-color:rgba(255,255,255,.95);color:var(--muted)}
+:root[data-theme=light] .chip:hover{background:rgba(255,255,255,.9);color:var(--ink)}
 :root[data-theme=light] .chip[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff;box-shadow:0 8px 18px -10px rgba(30,18,56,.6)}
-:root[data-theme=light] .card{background:#fff;color:#F3F0FF;box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 16px 36px -24px rgba(75,43,184,.55);transition:transform .3s cubic-bezier(.3,.7,.3,1),box-shadow .3s}
-:root[data-theme=light] .card:hover{transform:translateY(-2px);box-shadow:0 22px 44px -24px rgba(75,43,184,.6)}
-:root[data-theme=light] .card.active{box-shadow:0 0 0 3px #fff,0 0 0 5px var(--violet),0 22px 44px -24px rgba(75,43,184,.6)}
+:root[data-theme=light] .card{background:transparent;color:#F3F0FF;box-shadow:none;transition:transform .3s cubic-bezier(.3,.7,.3,1),box-shadow .3s}
+:root[data-theme=light] .card:hover{transform:translateY(-2px);box-shadow:0 18px 40px -24px rgba(75,43,184,.45)}
+:root[data-theme=light] .card.active{box-shadow:0 0 0 3px #fff,0 0 0 5px var(--violet)}
 :root[data-theme=light] .card .shade{background:linear-gradient(180deg,rgba(30,18,56,0) 45%,rgba(30,18,56,.82))}
 :root[data-theme=light] .card .who,:root[data-theme=light] .badge,:root[data-theme=light] .likes,:root[data-theme=light] .wm-badge{color:#F3F0FF}
 :root[data-theme=light] .badge,:root[data-theme=light] .likes,:root[data-theme=light] .wm-badge{background:rgba(30,18,56,.5)}
@@ -226,8 +235,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 :root[data-theme=light] .btn-p:hover{background:linear-gradient(135deg,#8763FF,#6340EA)}
 :root[data-theme=light] .btn-s{background:rgba(255,255,255,.75);border-color:rgba(80,60,160,.14)}
 :root[data-theme=light] .btn-s:hover{background:#fff}
-:root[data-theme=light] .d-gen{background:#F7F5FD;border:1px solid rgba(80,60,160,.08);color:var(--violet-ink);box-shadow:none}
-:root[data-theme=light] .d-gen:hover{background:#EFEAFB;color:var(--violet)}
+:root[data-theme=light] .d-gen{background:linear-gradient(135deg,#7A55FF,#5B35E0);border:none;color:#fff;box-shadow:0 14px 30px -14px rgba(91,53,224,.65)}
+:root[data-theme=light] .d-gen:hover{background:linear-gradient(135deg,#8763FF,#6340EA);color:#fff}
 :root[data-theme=light] .login{background:rgba(91,53,224,.08);border-color:rgba(91,53,224,.22);color:var(--violet-ink)}
 :root[data-theme=light] .login:hover{background:rgba(91,53,224,.14)}
 :root[data-theme=light] .mode-bar{background:rgba(255,255,255,.42);border-bottom-color:rgba(255,255,255,.85);backdrop-filter:blur(14px)}
@@ -246,18 +255,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 @media (prefers-reduced-motion:reduce){.h-orb{animation:none!important}}
 @keyframes hOrb{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-6px) rotate(5deg)}}
 :root[data-theme=light] .filters{padding:5px;gap:4px;border-radius:999px;background:rgba(255,255,255,.42);border:1px solid rgba(255,255,255,.9);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px -24px rgba(75,43,184,.5)}
-:root[data-theme=light] .filters .chip,:root[data-theme=light] .filters .sort{background:transparent;border-color:transparent;height:38px}
-:root[data-theme=light] .filters .chip:hover,:root[data-theme=light] .filters .sort:hover{background:rgba(255,255,255,.85)}
+:root[data-theme=light] .filters .chip{background:transparent;border-color:transparent;height:38px}
+:root[data-theme=light] .filters .chip:hover{background:rgba(255,255,255,.85)}
 :root[data-theme=light] .filters .chip[aria-pressed=true]{background:var(--ink);color:#fff}
-:root[data-theme=light] .more-menu{background:rgba(255,255,255,.96);border-color:rgba(255,255,255,.95);backdrop-filter:blur(18px);box-shadow:0 20px 44px -22px rgba(75,43,184,.5)}
-:root[data-theme=light] .more-btn[aria-expanded=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
-:root[data-theme=light] .card{padding:5px;border-radius:22px}
-:root[data-theme=light] .card img,:root[data-theme=light] .card video{border-radius:17px}
+:root[data-theme=light] .card{padding:0;border-radius:18px;background:transparent}
+:root[data-theme=light] .card img,:root[data-theme=light] .card video{border-radius:18px}
 :root[data-theme=light] .card:hover img,:root[data-theme=light] .card:hover video{transform:none}
-:root[data-theme=light] .card .shade,:root[data-theme=light] .card .wm,:root[data-theme=light] .card .hid-mark{inset:5px;border-radius:17px}
-:root[data-theme=light] .card .meta{left:17px;right:17px;bottom:17px}
-:root[data-theme=light] .card .badge{left:15px;top:15px}:root[data-theme=light] .card .likes{right:15px;top:15px}:root[data-theme=light] .card .wm-badge{right:15px;bottom:15px}
-:root[data-theme=light] .card .pub{left:15px;bottom:15px}
+:root[data-theme=light] .card .shade,:root[data-theme=light] .card .wm,:root[data-theme=light] .card .hid-mark{inset:0;border-radius:18px}
 :root[data-theme=light] .card.is-hidden img,:root[data-theme=light] .card.is-hidden video{filter:grayscale(.75) brightness(1.08) opacity(.42)}
 :root[data-theme=light] .card.is-hidden .hid-mark{color:#5B4D93}
 :root[data-theme=light] .media{background:#F3F0FC;border-radius:22px}
@@ -280,25 +284,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 :root:not([data-theme=light]) .search input:focus,:root:not([data-theme=light]) .tools.search-on .search input{background:rgba(255,255,255,.09);border-color:rgba(155,123,255,.45)}
 :root:not([data-theme=light]) .tools:not(.search-on) .search input{background:linear-gradient(180deg,rgba(66,56,108,.78),rgba(48,40,82,.78));border-color:rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 10px 30px -24px rgba(0,0,0,.7)}
 :root:not([data-theme=light]) .search svg{color:var(--violet-ink)}
-:root:not([data-theme=light]) .card{padding:5px;border-radius:22px;background:rgba(48,40,78,.78);color:#F3F0FF;box-shadow:0 1px 0 rgba(255,255,255,.07) inset,0 18px 40px -26px rgba(0,0,0,.8);transition:transform .3s cubic-bezier(.3,.7,.3,1),box-shadow .3s}
-:root:not([data-theme=light]) .card:hover{transform:translateY(-2px);box-shadow:0 1px 0 rgba(255,255,255,.09) inset,0 24px 48px -24px rgba(0,0,0,.85)}
-:root:not([data-theme=light]) .card.active{box-shadow:0 0 0 3px #1A1630,0 0 0 5px var(--violet2),0 24px 48px -24px rgba(0,0,0,.85)}
-:root:not([data-theme=light]) .card img,:root:not([data-theme=light]) .card video{border-radius:17px}
+:root:not([data-theme=light]) .card{padding:0;border-radius:18px;background:transparent;color:#F3F0FF;box-shadow:none;transition:transform .3s cubic-bezier(.3,.7,.3,1),box-shadow .3s}
+:root:not([data-theme=light]) .card:hover{transform:translateY(-2px);box-shadow:0 18px 40px -24px rgba(0,0,0,.55)}
+:root:not([data-theme=light]) .card.active{box-shadow:0 0 0 3px #1A1630,0 0 0 5px var(--violet2)}
+:root:not([data-theme=light]) .card img,:root:not([data-theme=light]) .card video{border-radius:18px}
 :root:not([data-theme=light]) .card:hover img,:root:not([data-theme=light]) .card:hover video{transform:none}
-:root:not([data-theme=light]) .card .shade,:root:not([data-theme=light]) .card .wm,:root:not([data-theme=light]) .card .hid-mark{inset:5px;border-radius:17px}
+:root:not([data-theme=light]) .card .shade,:root:not([data-theme=light]) .card .wm,:root:not([data-theme=light]) .card .hid-mark{inset:0;border-radius:18px}
 :root:not([data-theme=light]) .card .shade{background:linear-gradient(180deg,rgba(20,16,38,0) 45%,rgba(20,16,38,.85))}
-:root:not([data-theme=light]) .card .meta{left:17px;right:17px;bottom:17px}
-:root:not([data-theme=light]) .card .badge{left:15px;top:15px}:root:not([data-theme=light]) .card .likes{right:15px;top:15px}:root:not([data-theme=light]) .card .wm-badge{right:15px;bottom:15px}
-:root:not([data-theme=light]) .card .pub{left:15px;bottom:15px}
 :root:not([data-theme=light]) .badge,:root:not([data-theme=light]) .likes,:root:not([data-theme=light]) .wm-badge{background:rgba(20,16,38,.55)}
 :root:not([data-theme=light]) .card.is-hidden img,:root:not([data-theme=light]) .card.is-hidden video{filter:grayscale(.7) brightness(.62) opacity(.8)}
 :root:not([data-theme=light]) .filters{padding:5px;gap:4px;border-radius:999px;background:linear-gradient(180deg,rgba(66,56,108,.78),rgba(48,40,82,.78));border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 16px 36px -18px rgba(0,0,0,.85)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px -24px rgba(0,0,0,.7)}
-:root:not([data-theme=light]) .filters .chip,:root:not([data-theme=light]) .filters .sort{background:transparent;border-color:transparent;height:38px}
-:root:not([data-theme=light]) .filters .chip:hover,:root:not([data-theme=light]) .filters .sort:hover{background:rgba(255,255,255,.12);color:var(--ink)}
+:root:not([data-theme=light]) .filters .chip{background:transparent;border-color:transparent;height:38px}
+:root:not([data-theme=light]) .filters .chip:hover{background:rgba(255,255,255,.12);color:var(--ink)}
 :root:not([data-theme=light]) .chip[aria-pressed=true],:root:not([data-theme=light]) .filters .chip[aria-pressed=true]{background:#F3F0FF;border-color:#F3F0FF;color:#1E1238;box-shadow:0 8px 18px -10px rgba(0,0,0,.6)}
-:root:not([data-theme=light]) .more-menu{background:#232033;border-color:rgba(255,255,255,.12);box-shadow:0 20px 44px -18px rgba(0,0,0,.75)}
-:root:not([data-theme=light]) .more-btn[aria-expanded=true]{background:#F3F0FF;color:#1E1238;border-color:#F3F0FF}
-:root:not([data-theme=light]) .sort option{background:#211C38;color:#F3F0FF}
 :root:not([data-theme=light]) .head h1,:root:not([data-theme=light]) .prof h1{background:linear-gradient(100deg,#FFFFFF 0%,#E2D8FF 50%,#A88BFF 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
 :root:not([data-theme=light]) .h-orb{display:inline-block;width:.92em;height:.92em;margin-left:.16em;vertical-align:-.06em;filter:drop-shadow(0 10px 18px rgba(255,140,60,.4));animation:hOrb 4.2s ease-in-out infinite}
 :root:not([data-theme=light]) .drawer{background:rgba(33,28,56,.96);backdrop-filter:blur(28px) saturate(1.3);-webkit-backdrop-filter:blur(28px) saturate(1.3);border-left:1px solid rgba(255,255,255,.08)}
@@ -309,8 +307,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 :root:not([data-theme=light]) .btn-p:hover{background:linear-gradient(135deg,#9474FF,#6743F0)}
 :root:not([data-theme=light]) .btn-s{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)}
 :root:not([data-theme=light]) .btn-s:hover{background:rgba(255,255,255,.09)}
-:root:not([data-theme=light]) .d-gen{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--violet-ink);box-shadow:none}
-:root:not([data-theme=light]) .d-gen:hover{background:rgba(255,255,255,.1);color:#EDE8FF}
+:root:not([data-theme=light]) .d-gen{background:linear-gradient(135deg,#8763FF,#5B35E0);border:none;color:#fff;box-shadow:0 14px 30px -14px rgba(122,85,255,.7)}
+:root:not([data-theme=light]) .d-gen:hover{background:linear-gradient(135deg,#9474FF,#6743F0);color:#fff}
 :root:not([data-theme=light]) .login{background:rgba(155,123,255,.14);border-color:rgba(155,123,255,.32);color:var(--violet-ink)}
 :root:not([data-theme=light]) .login:hover{background:rgba(155,123,255,.22)}
 :root:not([data-theme=light]) .pc{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.09)}
@@ -339,13 +337,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 :root:not([data-theme=light]) .media{background:rgba(0,0,0,.22)}
 :root:not([data-theme=light]) .tag{background:rgba(255,255,255,.08)}
 :root:not([data-theme=light]) .req textarea,:root:not([data-theme=light]) .req select,:root:not([data-theme=light]) .req input,:root:not([data-theme=light]) .inp{background:rgba(20,16,38,.55);border-color:rgba(255,255,255,.14)}
-:root:not([data-theme=light]) .card{background:linear-gradient(180deg,rgba(78,66,124,.9),rgba(56,47,92,.9));box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 18px 40px -22px rgba(0,0,0,.9)}
-:root:not([data-theme=light]) .card:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 26px 50px -22px rgba(0,0,0,.95)}
-:root:not([data-theme=light]) .card.active{box-shadow:0 0 0 3px #1A1630,0 0 0 5px #9C80FF,0 26px 50px -22px rgba(0,0,0,.95)}
+:root:not([data-theme=light]) .card{background:transparent;box-shadow:none}
+:root:not([data-theme=light]) .card:hover{box-shadow:0 18px 40px -24px rgba(0,0,0,.55)}
+:root:not([data-theme=light]) .card.active{box-shadow:0 0 0 3px #1A1630,0 0 0 5px #9C80FF}
 :root:not([data-theme=light]) .prof{background:linear-gradient(180deg,rgba(62,52,102,.72),rgba(44,37,74,.72));border-color:rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 30px 70px -40px rgba(0,0,0,.9)}
 :root:not([data-theme=light]) .ask{background:linear-gradient(180deg,#342C55,#2A2346);border-color:rgba(255,255,255,.14)}
 :root:not([data-theme=light]) .pc{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12)}
-@media (max-width:640px){.filters{max-width:100%;overflow:visible}.filters .chip,.filters .sort{flex:0 0 auto}.head>div,.filters,.tools{min-width:0}.head{flex-direction:column;align-items:stretch}.drawer{z-index:40!important}.more-menu{left:0;right:auto;min-width:min(220px,calc(100vw - 32px))}}
+@media (max-width:640px){.filters{max-width:100%;overflow:visible}.filters .chip{flex:0 0 auto}.head>div,.filters,.tools{min-width:0}.head{flex-direction:column;align-items:stretch}.drawer{z-index:40!important}}
 html{transition:background-color .3s}
 .theme-tg{margin-left:auto;flex:0 0 auto;width:42px;height:42px;border-radius:999px;border:1px solid var(--line2);background:var(--card);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
 .theme-tg:hover{border-color:var(--violet);color:var(--violet-ink)}
@@ -394,31 +392,10 @@ html{transition:background-color .3s}
         <button class="chip" data-f="all" aria-pressed="true" data-i18n="explore.filter.all">Все</button>
         <button class="chip" data-f="video" aria-pressed="false" data-i18n="explore.filter.video">Видео</button>
         <button class="chip" data-f="image" aria-pressed="false" data-i18n="explore.filter.image">Картинки</button>
+        <button class="chip" data-f="prompt" aria-pressed="false" data-i18n="explore.filter.prompt">С промптом</button>
+        <button class="chip" data-f="no_prompt" aria-pressed="false" data-i18n="explore.filter.noPrompt">Без промпта</button>
         <button class="chip" data-f="Camera" aria-pressed="false">Camera</button>
-        <button class="chip" data-f="Wan" aria-pressed="false">Wan</button>
-        <button class="chip" data-f="Grok" aria-pressed="false">Grok</button>
-        <button class="chip" data-f="Seedance" aria-pressed="false">Seedance</button>
-        <button class="chip" data-f="Veo" aria-pressed="false">Veo</button>
-        <button class="chip" data-f="Kling" aria-pressed="false">Kling</button>
-        <button class="chip" data-f="PixVerse" aria-pressed="false">PixVerse</button>
-        <button class="chip" data-f="P-Video" aria-pressed="false">P-Video</button>
-        <button class="chip" data-f="Gen-4" aria-pressed="false">Gen-4</button>
-        <button class="chip" data-f="Hailuo" aria-pressed="false">Hailuo</button>
-        <button class="chip" data-f="MiniMax" aria-pressed="false">MiniMax</button>
-        <button class="chip" data-f="Gemini Omni" aria-pressed="false">Gemini Omni</button>
-        <button class="chip" data-f="Seedream" aria-pressed="false">Seedream</button>
-        <button class="chip" data-f="GPT" aria-pressed="false">GPT</button>
-        <button class="chip" data-f="Nano Banana" aria-pressed="false">Nano Banana</button>
-        <button class="chip" data-f="Ideogram" aria-pressed="false">Ideogram</button>
-        <button class="chip" data-f="ACE" aria-pressed="false">ACE</button>
-        <button class="chip" data-f="ElevenLabs" aria-pressed="false">ElevenLabs</button>
-        <button class="chip" data-f="Stable Audio" aria-pressed="false">Stable Audio</button>
       </div>
-      <div class="filters-more" id="filtersMore" hidden>
-        <button type="button" class="chip more-btn" id="moreBtn" aria-expanded="false" aria-haspopup="true" aria-controls="moreMenu"><span class="more-label" data-i18n="explore.filter.more">Ещё</span> <span aria-hidden="true">▾</span></button>
-        <div class="more-menu" id="moreMenu" role="menu" hidden></div>
-      </div>
-      <label><span class="sr" data-i18n="explore.sort.label">Сортировка</span><select class="sort" id="sort"><option value="new" data-i18n="explore.sort.new">Новые</option><option value="top" data-i18n="explore.sort.top">Популярные</option></select></label>
     </div>
   </div>
   <div class="cam-groups" id="camGroups" role="group" aria-label="Типы движений камеры" hidden></div>
@@ -441,6 +418,7 @@ html{transition:background-color .3s}
 
 <script src="/vitrina-data.js?v=3"></script>
 <script src="/vitrina-camera-moves.js?v=3"></script>
+<script src="/vitrina-aishnitsa.js?v=14"></script>
 <script>
 (function () {
   const tr = (k, p) => AISH_I18N.t(k, p);
@@ -451,30 +429,6 @@ html{transition:background-color .3s}
   const { creators, networks } = window.VITRINA;
   let works = window.VITRINA.works.filter((w) => w.published !== false);   // на витрине — только опубликованные
   if (window.AISH_LIKES) window.AISH_LIKES.hydrate(works);
-  // Dynamic model-family chips from works (Wan and future nets)
-  (function ensureModelChips() {
-    const main = document.getElementById('filtersMain');
-    if (!main) return;
-    const known = new Set(Array.from(main.querySelectorAll('.chip[data-f]')).map((c) => c.dataset.f));
-    const families = [];
-    works.forEach((w) => {
-      const token = String(w.model || '').trim().split(/\s+/)[0];
-      if (!token || token.length < 3) return;
-      if (['Wan', 'Grok', 'Seedance', 'Seedream', 'GPT'].includes(token) || !known.has(token)) {
-        if (!families.includes(token) && !['Все', 'Видео', 'Картинки'].includes(token)) families.push(token);
-      }
-    });
-    families.forEach((f) => {
-      if (known.has(f)) return;
-      const b = document.createElement('button');
-      b.className = 'chip';
-      b.dataset.f = f;
-      b.setAttribute('aria-pressed', 'false');
-      b.textContent = f;
-      main.appendChild(b);
-      known.add(f);
-    });
-  })();
   const NET = Object.fromEntries(networks.map((n) => [n.id, n]));
   const href = (c) => { const n = NET[c.net]; if (!n || !n.url) return ''; const u = String(c.login).replace(/^@/, '').trim(); return n.url.replace('{u}', encodeURIComponent(u).replace(/%2F/g, '/').replace(/%40/g, '@')).replace('{d}', u.replace(/\D/g, '')); };
   const C = Object.fromEntries(creators.map((c) => [c.id, c]));
@@ -508,6 +462,25 @@ html{transition:background-color .3s}
   let filter = 'all', query = '', sort = 'new', list = works.slice(), openIdx = -1, openId = null, mode = 'view', lastSent = null;
   let modelSlugFilter = '';
   let camGroup = '';
+  const CAM_ASPECT_KEY = 'aish-cam-aspect';
+  let camAspect = '16:9';
+  try {
+    const saved = localStorage.getItem(CAM_ASPECT_KEY);
+    if (saved === '9:16' || saved === '16:9') camAspect = saved;
+  } catch (e) {}
+  function isCameraWork(w) {
+    return !!(w && (String(w.id || '').indexOf('cam-') === 0 || String(w.model || '').indexOf('Camera') === 0));
+  }
+  function setCamAspect(v) {
+    camAspect = (v === '9:16') ? '9:16' : '16:9';
+    try { localStorage.setItem(CAM_ASPECT_KEY, camAspect); } catch (e) {}
+  }
+  function camDisplaySize(w) {
+    if (isCameraWork(w)) {
+      return camAspect === '9:16' ? { aw: 9, ah: 16 } : { aw: 16, ah: 9 };
+    }
+    return { aw: Number(w.w) || 400, ah: Number(w.h) || 400 };
+  }
   const CAM_GROUP_LABELS = {
     'Pan/Tilt': { ru: 'Пан / наклон', en: 'Pan / Tilt' },
     'Zoom/Lens': { ru: 'Зум / объектив', en: 'Zoom / Lens' },
@@ -551,6 +524,24 @@ html{transition:background-color .3s}
       b.textContent = camLabel(gid);
       box.appendChild(b);
     });
+    const aspect = document.createElement('div');
+    aspect.className = 'cam-aspect';
+    aspect.setAttribute('role', 'group');
+    aspect.setAttribute('aria-label', tr('explore.cam.aspect.aria'));
+    const lbl = document.createElement('span');
+    lbl.className = 'cam-aspect__lbl';
+    lbl.textContent = tr('explore.cam.aspect');
+    aspect.appendChild(lbl);
+    [['9:16', 'explore.cam.aspect.916'], ['16:9', 'explore.cam.aspect.169']].forEach(function (pair) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.dataset.aspect = pair[0];
+      b.setAttribute('aria-pressed', camAspect === pair[0] ? 'true' : 'false');
+      b.textContent = tr(pair[1]);
+      aspect.appendChild(b);
+    });
+    box.appendChild(aspect);
   }
   (function applyUrlFilters() {
     const sp = new URLSearchParams(location.search);
@@ -565,15 +556,12 @@ html{transition:background-color .3s}
     }
     if (f0) filter = f0;
     if (cam0) { camGroup = cam0; if (!f0) filter = 'Camera'; }
-    if (m0) {
-      modelSlugFilter = m0;
-      const hit = works.find((w) => w.model_slug === m0);
-      if (hit) {
-        const token = String(hit.model || '').trim().split(/\s+/)[0];
-        if (token) filter = token;
-      }
-    }
+    if (m0) modelSlugFilter = m0;
   })();
+
+  function hasOpenPrompt(w) {
+    return !!(w && w.prompt_open && String(w.prompt || '').trim());
+  }
 
   function apply() {
     const q = query.trim().toLowerCase();
@@ -582,7 +570,15 @@ html{transition:background-color .3s}
       if (modelSlugFilter && String(w.model_slug || '') !== modelSlugFilter) return false;
       if (filter === 'video' && w.type !== 'video') return false;
       if (filter === 'image' && w.type !== 'image') return false;
-      if (filter !== 'all' && filter !== 'video' && filter !== 'image' && String(w.model || '').indexOf(filter) !== 0) return false;
+      if (filter === 'prompt' && !hasOpenPrompt(w)) return false;
+      if (filter === 'no_prompt' && hasOpenPrompt(w)) return false;
+      if (filter === 'Camera' || String(filter || '').indexOf('Camera') === 0) {
+        if (!isCameraWork(w)) return false;
+      } else if (filter !== 'all' && filter !== 'video' && filter !== 'image'
+          && filter !== 'prompt' && filter !== 'no_prompt'
+          && String(w.model || '').indexOf(filter) !== 0) {
+        return false;
+      }
       if (camGroup && isCameraFilter() && String(w.category || '') !== camGroup) return false;
       const hay = [w.title, wTitle(w), w.model, w.prompt, w.category, (w.tags || []).join(' '), c.name, cName(c), c.nick].join(' ').toLowerCase();
       return !q || hay.includes(q);
@@ -594,10 +590,15 @@ html{transition:background-color .3s}
     syncCamGroups();
     $('grid').innerHTML = list.map((w, i) => {
       const c = C[w.creator] || { name: tr('vitrina.creator.fallback'), nick: '', grad: '#FF8A2B,#F2668B' };
+      const sz = camDisplaySize(w);
+      const camCls = isCameraWork(w) ? ' is-cam' : '';
+      const mediaStyle = isCameraWork(w)
+        ? ' style="aspect-ratio:' + sz.aw + ' / ' + sz.ah + ';object-fit:cover;width:100%;height:auto"'
+        : '';
       const media = w.video
-        ? '<video src="' + esc(w.video) + '" poster="' + esc(w.src) + '" muted loop playsinline preload="none" width="' + (w.w || 400) + '" height="' + (w.h || 400) + '"></video>'
-        : '<img src="' + esc(w.src) + '" alt="' + esc(wTitle(w)) + '" loading="lazy" width="' + (w.w || 400) + '" height="' + (w.h || 400) + '">';
-      return '<button class="card' + (openId === w.id ? ' active' : '') + '" data-i="' + i + '" aria-label="' + esc(wTitle(w) + ' — ' + cName(c)) + '">' + media
+        ? '<video src="' + esc(w.video) + '" poster="' + esc(w.src) + '" muted loop playsinline preload="none" width="' + sz.aw + '" height="' + sz.ah + '"' + mediaStyle + '></video>'
+        : '<img src="' + esc(w.src) + '" alt="' + esc(wTitle(w)) + '" loading="lazy" width="' + sz.aw + '" height="' + sz.ah + '"' + mediaStyle + '>';
+      return '<button class="card' + camCls + (openId === w.id ? ' active' : '') + '" data-i="' + i + '" aria-label="' + esc(wTitle(w) + ' — ' + cName(c)) + '">' + media
         + '<span class="shade"></span>'
         + (w.type === 'video' ? '<span class="wm" aria-hidden="true"></span><span class="wm-badge" aria-hidden="true"><b>{AI}</b>' + BR_SFX + '</span><span class="badge">' + ICON.play + esc(w.dur || '') + '</span>' : '')
         + '<span class="likes' + (w.liked ? ' is-on' : '') + '" data-like="' + esc(w.id) + '" role="button" tabindex="0" aria-pressed="' + (w.liked ? 'true' : 'false') + '" aria-label="' + esc(tr('common.like')) + '">' + ICON.heart + '<span>' + (w.likes || 0) + '</span></span>'
@@ -605,14 +606,50 @@ html{transition:background-color .3s}
     }).join('');
   }
   function plural(n, f) { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? f[0] : a >= 2 && a <= 4 && (b < 10 || b >= 20) ? f[1] : f[2]; }
+  function resTier(vw, vh) {
+    const w = Math.round(Number(vw) || 0), h = Math.round(Number(vh) || 0);
+    if (!w || !h) return '';
+    const long = Math.max(w, h), short = Math.min(w, h);
+    if (long >= 1800 || short >= 1000) return '1080p';
+    if (long >= 1100 || short >= 680) return '720p';
+    if (long >= 640 || short >= 360) return '480p';
+    return '';
+  }
+  function durSeconds(work) {
+    const raw = String(work.dur || '').trim();
+    if (!raw) return 0;
+    if (/^\d+$/.test(raw)) return parseInt(raw, 10) || 0;
+    const m = raw.match(/^(\d+)\s*:\s*(\d+)$/);
+    if (m) return (parseInt(m[1], 10) || 0) * 60 + (parseInt(m[2], 10) || 0);
+    const sec = raw.match(/(\d+)\s*с/i);
+    if (sec) return parseInt(sec[1], 10) || 0;
+    return 0;
+  }
+  function videoMetaHtml(work) {
+    if (!(work && (work.video || work.type === 'video'))) return '';
+    const w = Math.round(Number(work.w) || 0), h = Math.round(Number(work.h) || 0);
+    const parts = [];
+    if (w && h) {
+      const size = w + '\u00d7' + h, tier = resTier(w, h);
+      parts.push(tier ? tr('studio.vit.meta.resTier', { tier: tier, size: size }) : tr('studio.vit.meta.res', { size: size }));
+    }
+    const n = durSeconds(work);
+    if (n > 0) parts.push(tr('studio.vit.meta.dur', { n: n }));
+    const meta = parts.length ? '<p class="d-res">' + esc(parts.join(' \u00b7 ')) + '</p>' : '';
+    return meta + '<p class="d-compress">' + esc(tr('studio.vit.meta.compressed')) + '</p>';
+  }
 
   function drawer() {
     const w = list[openIdx]; if (!w) return;
     const c = C[w.creator];
     $('dCount').textContent = tr('vitrina.nav.counter', { n: openIdx + 1, total: list.length });
+    const sz = camDisplaySize(w);
+    const mediaStyle = isCameraWork(w)
+      ? ' style="aspect-ratio:' + sz.aw + ' / ' + sz.ah + ';object-fit:cover;width:100%;max-height:58vh"'
+      : '';
     const media = w.video
-      ? '<video src="' + esc(w.video) + '" poster="' + esc(w.src) + '" autoplay muted loop playsinline controls></video>'
-      : '<img src="' + esc(w.src) + '" alt="' + esc(wTitle(w)) + '">';
+      ? '<video src="' + esc(w.video) + '" poster="' + esc(w.src) + '" autoplay muted loop playsinline controls' + mediaStyle + '></video>'
+      : '<img src="' + esc(w.src) + '" alt="' + esc(wTitle(w)) + '"' + mediaStyle + '>';
     const more = works.filter((x) => x.creator === w.creator && x.id !== w.id).slice(0, 3);
     const cSafe = c || { id: w.creator, name: tr('vitrina.creator.fallback'), nick: '', about: '', contacts: [], works: 0, grad: '#FF8A2B,#F2668B' };
     const cHref = cSafe.handle ? '/creator/' + encodeURIComponent(cSafe.handle) : '/creator?c=' + encodeURIComponent(cSafe.id);
@@ -651,6 +688,23 @@ html{transition:background-color .3s}
     const promptBox = (w.prompt_open && w.prompt)
       ? '<div class="d-prompt-box"><div class="d-prompt-head"><span class="d-prompt-lbl">' + esc(tr('vitrina.prompt.label')) + '</span><button type="button" class="copy" data-act="copy-prompt">' + esc(tr('common.copy')) + '</button></div><pre class="d-prompt" id="dOpenPrompt">' + esc(w.prompt) + '</pre></div>'
       : '';
+    const refItems = Array.isArray(w.refs) ? w.refs.filter((r) => r && r.src) : (w.ref ? [{ src: w.ref, label: 'storyboard' }] : []);
+    const refFileName = (src) => {
+      try { return decodeURIComponent(String(src || '').split('?')[0].split('/').pop() || ''); } catch (_) { return String(src || '').split('/').pop() || ''; }
+    };
+    const refFileExt = (name) => {
+      const m = String(name || '').match(/\.([a-z0-9]+)$/i);
+      return m ? m[1].toUpperCase() : 'IMG';
+    };
+    const refsBox = refItems.length
+      ? '<div class="d-refs"><div class="d-refs-head"><span class="d-refs-lbl">' + esc(tr('vitrina.refs.label')) + '</span></div><div class="d-refs-list">'
+        + refItems.map((r) => {
+          const name = refFileName(r.src) || (r.label || tr('vitrina.refs.label'));
+          const sub = refFileExt(name);
+          return '<a class="d-ref-file" href="' + esc(r.src) + '" target="_blank" rel="noopener" download="' + esc(name) + '"><span class="d-ref-thumb"><img src="' + esc(r.src) + '" alt=""></span><span class="d-ref-meta"><span class="d-ref-name">' + esc(name) + '</span><span class="d-ref-sub">' + esc(sub) + '</span></span></a>';
+        }).join('')
+        + '</div></div>'
+      : '';
     const modelSlug = (w) => {
       if (w.model_slug) return w.model_slug;
       const m = String(w.model || '');
@@ -685,8 +739,10 @@ html{transition:background-color .3s}
       : '';
     $('dBody').innerHTML = '<div class="media">' + media + (w.type === 'video' ? '<span class="wm" aria-hidden="true"></span><span class="wm-badge" aria-hidden="true"><b>{AI}</b>' + BR_SFX + '</span>' : '') + '</div>'
       + '<div class="d-title-row"><h2 class="d-title" id="dTitle">' + esc(wTitle(w)) + '</h2>' + likeBtn + '</div>'
-      + genBtn
+      + videoMetaHtml(w)
       + promptBox
+      + refsBox
+      + genBtn
       + creatorCard
       + lower;
     const f = $('reqForm');
@@ -795,6 +851,32 @@ html{transition:background-color .3s}
   $('grid').addEventListener('mouseover', (e) => { const b = e.target.closest('.card'); const v = b && b.querySelector('video'); if (v) v.play().catch(() => {}); });
   $('grid').addEventListener('mouseout', (e) => { const b = e.target.closest('.card'); const v = b && b.querySelector('video'); if (v && !b.contains(e.relatedTarget)) v.pause(); });
   $('dBody').addEventListener('click', (e) => {
+    const gen = e.target.closest('a.d-gen');
+    if (gen) {
+      const w = list[openIdx];
+      if (w && w.prompt_open && w.prompt) {
+        const refs = Array.isArray(w.refs) ? w.refs.filter((r) => r && r.src) : (w.ref ? [{ src: w.ref }] : []);
+        if (refs.length) {
+          e.preventDefault();
+          const slug = (gen.href && (() => { try { return new URL(gen.href, location.origin).searchParams.get('model') || ''; } catch (_) { return ''; } })()) || w.model_slug || '';
+          const seed = {
+            model: slug,
+            prompt: String(w.prompt),
+            title: w.title || '',
+            refs: refs.map((r) => {
+              let src = String(r.src || '');
+              if (src && src.charAt(0) !== '/' && !/^https?:/i.test(src)) src = '/' + src;
+              let name = '';
+              try { name = decodeURIComponent(src.split('?')[0].split('/').pop() || ''); } catch (_) { name = src.split('/').pop() || ''; }
+              return { src: src, name: name || 'storyboard.jpg' };
+            })
+          };
+          try { sessionStorage.setItem('aish-vitrina-seed', JSON.stringify(seed)); } catch (_) {}
+          location.href = '/app' + (slug ? '?model=' + encodeURIComponent(slug) : '');
+          return;
+        }
+      }
+    }
     const a = e.target.closest('[data-act]');
     if (a) {
       const m = a.dataset.act;
@@ -827,145 +909,43 @@ html{transition:background-color .3s}
     if (e.key === 'ArrowRight') step(1); if (e.key === 'ArrowLeft') step(-1);
   });
   const filtersEl = $('filters');
-  const filtersMain = $('filtersMain');
-  const filtersMore = $('filtersMore');
-  const moreBtn = $('moreBtn');
-  const moreMenu = $('moreMenu');
-  const chipOrder = Array.from(filtersMain.querySelectorAll('.chip[data-f]'));
-  function closeMore() {
-    moreMenu.classList.remove('open');
-    moreMenu.hidden = true;
-    moreBtn.setAttribute('aria-expanded', 'false');
-  }
-  function openMore() {
-    moreMenu.hidden = false;
-    moreMenu.classList.add('open');
-    moreBtn.setAttribute('aria-expanded', 'true');
-  }
-  function layoutFilters() {
-    if ($('tools').classList.contains('search-on')) { closeMore(); return; }
-    const sortLab = filtersEl.querySelector('label');
-    closeMore();
-    // вернуть все чипы в основной ряд в исходном порядке
-    chipOrder.forEach((c) => filtersMain.appendChild(c));
-    filtersMore.hidden = true;
-    moreMenu.innerHTML = '';
-
-    const gap = 4;
-    const safety = 4;
-    const cs = getComputedStyle(filtersEl);
-    const padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
-    const sortW = sortLab ? sortLab.offsetWidth : 0;
-    const widths = chipOrder.map((c) => c.offsetWidth);
-
-    function chipsWidth(n) {
-      let w = 0;
-      for (let i = 0; i < n; i++) w += widths[i] + (i ? gap : 0);
-      return w;
-    }
-    function room(withMore) {
-      let w = filtersEl.clientWidth - padX - safety;
-      if (sortW) w -= sortW + gap;
-      if (withMore) {
-        filtersMore.hidden = false;
-        w -= moreBtn.offsetWidth + gap;
-      }
-      return w;
-    }
-
-    let cut = chipOrder.length;
-    if (chipsWidth(cut) > room(false)) {
-      // нужен «Ещё» — пересчитываем с учётом кнопки
-      let avail = room(true);
-      cut = 0;
-      for (let i = 0; i < chipOrder.length; i++) {
-        const next = chipsWidth(i + 1);
-        if (next > avail) break;
-        cut = i + 1;
-      }
-      // хотя бы один чип оставляем в ряду, если место есть
-      if (cut < 1 && widths[0] <= avail) cut = 1;
-      // активный фильтр не прячем — меняем местами с последним видимым
-      const activeIdx = chipOrder.findIndex((c) => c.dataset.f === filter);
-      if (activeIdx >= cut && cut > 0) {
-        const swapWith = cut - 1;
-        const a = chipOrder[activeIdx], b = chipOrder[swapWith];
-        chipOrder[swapWith] = a; chipOrder[activeIdx] = b;
-        const wa = widths[activeIdx], wb = widths[swapWith];
-        widths[swapWith] = wa; widths[activeIdx] = wb;
-        chipOrder.forEach((c) => filtersMain.appendChild(c));
-        // после свапа снова проверить, что активный влезает целиком
-        if (chipsWidth(cut) > avail) {
-          // вернуть свап и спрятать активный в меню
-          const a2 = chipOrder[activeIdx], b2 = chipOrder[swapWith];
-          chipOrder[swapWith] = a2; chipOrder[activeIdx] = b2;
-          const wa2 = widths[activeIdx], wb2 = widths[swapWith];
-          widths[swapWith] = wa2; widths[activeIdx] = wb2;
-          chipOrder.forEach((c) => filtersMain.appendChild(c));
-        }
-      }
-      for (let i = cut; i < chipOrder.length; i++) moreMenu.appendChild(chipOrder[i]);
-      const hiddenActive = chipOrder.slice(cut).some((c) => c.dataset.f === filter);
-      moreBtn.classList.toggle('is-active', hiddenActive);
-      moreBtn.setAttribute('aria-pressed', hiddenActive ? 'true' : 'false');
-      // если «Ещё» не влезает с подписью — оставить только стрелку
-      const label = moreBtn.querySelector('.more-label');
-      if (label) {
-        label.hidden = false;
-        const tight = chipsWidth(cut) + gap + moreBtn.offsetWidth + (sortW ? gap + sortW : 0) > filtersEl.clientWidth - padX - safety;
-        if (tight) label.hidden = true;
-      }
-    } else {
-      filtersMore.hidden = true;
-      moreBtn.classList.remove('is-active');
-      moreBtn.setAttribute('aria-pressed', 'false');
-      const label = moreBtn.querySelector('.more-label');
-      if (label) label.hidden = false;
-    }
-  }
   function syncChips() {
     document.querySelectorAll('.chip[data-f]').forEach((c) => c.setAttribute('aria-pressed', c.dataset.f === filter));
-    layoutFilters();
   }
   function syncSearch() {
     const on = !!($('q').value || '').trim() || document.activeElement === $('q');
     $('tools').classList.toggle('search-on', on);
-    if (!on) requestAnimationFrame(layoutFilters);
   }
   filtersEl.addEventListener('click', (e) => {
     const chip = e.target.closest('.chip[data-f]');
-    if (chip) {
-      filter = chip.dataset.f;
-      if (filter === 'all' || filter === 'video' || filter === 'image') modelSlugFilter = '';
-      if (!isCameraFilter()) camGroup = '';
-      closeMore();
-      syncChips();
-      apply();
-      return;
-    }
-    if (e.target.closest('#moreBtn')) {
-      if (moreMenu.classList.contains('open')) closeMore(); else openMore();
-    }
+    if (!chip) return;
+    filter = chip.dataset.f;
+    if (filter === 'all' || filter === 'video' || filter === 'image'
+        || filter === 'prompt' || filter === 'no_prompt') modelSlugFilter = '';
+    if (!isCameraFilter()) camGroup = '';
+    syncChips();
+    apply();
   });
   const camGroupsEl = $('camGroups');
   if (camGroupsEl) {
     camGroupsEl.addEventListener('click', (e) => {
+      const aspectChip = e.target.closest('.chip[data-aspect]');
+      if (aspectChip) {
+        setCamAspect(aspectChip.dataset.aspect);
+        apply();
+        return;
+      }
       const chip = e.target.closest('.chip[data-cam]');
       if (!chip) return;
       camGroup = chip.dataset.cam || '';
       apply();
     });
   }
-  document.addEventListener('click', (e) => { if (!filtersMore.contains(e.target)) closeMore(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMore(); });
-  addEventListener('resize', () => { layoutFilters(); });
   $('q').addEventListener('input', (e) => { query = e.target.value; syncSearch(); apply(); });
   $('q').addEventListener('focus', syncSearch);
   $('q').addEventListener('blur', () => { setTimeout(syncSearch, 0); });
-  $('sort').addEventListener('change', (e) => { sort = e.target.value; apply(); });
   syncSearch();
   syncChips();
-  requestAnimationFrame(layoutFilters);
 
   apply();
   // подмешиваем все опубликованные генерации с API (видео, картинки, аудио, текст)

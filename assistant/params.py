@@ -224,8 +224,9 @@ def groups(card: Card, params: dict[str, Any], lang: str, has_image: bool = Fals
     """Блок параметров для UI: группы кнопок, выбранное значение отмечено."""
     out = []
     for name in sorted(card.params, key=lambda n: PARAM_ORDER.index(n) if n in PARAM_ORDER else 99):
-        if name == "aspect_ratio" and has_image and card.kind in {"video", "edit"}:
-            continue  # с фото формат берётся из фото (builder убирает aspect_ratio)
+        # edit: формат из фото; video: оставляем 9:16 / 16:9 / 1:1 — даже с первым кадром
+        if name == "aspect_ratio" and has_image and card.kind == "edit":
+            continue
         out.append({
             "name": name,
             "label": name_label(name, lang),

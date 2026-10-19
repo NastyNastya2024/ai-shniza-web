@@ -17,21 +17,33 @@ def test_price_targets_at_90(monkeypatch):
     import pricing
 
     monkeypatch.setattr(pricing, "get_usd_rub_rate", lambda force=False: (90.0, False))
-    # Wan 0.025 → 30 ₽ / 5s
-    wan = pricing.price_rub_media(0.025, 2.0, "per_second")
-    assert wan * 5 == 30
-    # Seedance 2.0 0.10 → 120
-    s20 = pricing.price_rub_media(0.10, 2.0, "per_second")
-    assert s20 * 5 == 120
-    # Seedance 2.5 0.1028 → 125
-    s25 = pricing.price_rub_media(0.1028, 2.0, "per_second")
-    assert s25 * 5 == 125
-    # Kling 0.084 → 100
-    kling = pricing.price_rub_media(0.084, 2.0, "per_second")
-    assert kling * 5 == 100
-    # SDXL approx
+    # формула: usd × 90 × 1.30 × markup
+    # Wan 0.025 ×1.5 → 5 ₽/с · 25 ₽ / 5s
+    wan = pricing.price_rub_media(0.025, 1.5, "per_second")
+    assert wan == 5 and wan * 5 == 25
+    # Seedance 2.0 0.10 ×1.5 → 18 ₽/с · 90 / 5s
+    s20 = pricing.price_rub_media(0.10, 1.5, "per_second")
+    assert s20 * 5 == 90
+    # Seedance 2.5 0.1028 ×1.5 → 19 ₽/с · 95 / 5s
+    s25 = pricing.price_rub_media(0.1028, 1.5, "per_second")
+    assert s25 * 5 == 95
+    # Kling R 0.07 ×1.5 → 13 ₽/с · 65 / 5s
+    kling = pricing.price_rub_media(0.07, 1.5, "per_second")
+    assert kling == 13 and kling * 5 == 65
+    # Kling 3.0 HF 0.042 ×1.5 → 8 ₽/с
+    k3 = pricing.price_rub_media(0.042, 1.5, "per_second")
+    assert k3 == 8
+    # SDXL approx (markup 3.0)
     sdxl = pricing.price_rub_media(0.0014, 3.0, "per_run_approx")
     assert sdxl == 1
+
+
+def test_default_markup_is_1_5():
+    import pricing
+
+    assert pricing.DEFAULT_MARKUP == 1.5
+    keys = {r.model_key for r in pricing.PRICING_SEED}
+    assert "kling-v2-5-turbo-pro" in keys and "kling-v3-0-hf" in keys
 
 
 def test_markup_min():

@@ -79,8 +79,13 @@ def test_defaults_and_groups(cards):
         assert set(full) == set(card.params), card.id
         for g in P.groups(card, full, "ru"):
             assert sum(o["selected"] for o in g["options"]) == 1, (card.id, g["name"])
+    # video + фото: формат кадра остаётся (9:16 / 16:9 / …)
     g = P.groups(c["kling-v2-5-turbo-pro"], {}, "ru", has_image=True)
-    assert "aspect_ratio" not in {x["name"] for x in g}  # с фото формат берётся из фото
+    assert "aspect_ratio" in {x["name"] for x in g}
+    # edit + фото: формат из исходника, кнопки не показываем
+    edit = next((card for card in c.values() if card.kind == "edit" and "aspect_ratio" in card.params), None)
+    if edit:
+        assert "aspect_ratio" not in {x["name"] for x in P.groups(edit, {}, "ru", has_image=True)}
 
 
 def test_validate_rejects_type_tricks(cards):
@@ -134,17 +139,49 @@ def test_recommend_health_filter(cards, price_fn):
 
 def test_recommend_image_modes(cards, price_fn):
     c, nb = cards
-    no_img = recommend(c, "video", ["оживить фото"], False, None, price_fn, nb, n=10, with_cheap=False)
-    assert not {"gen4-turbo", "grok-imagine-video-1-5"} & {x.id for x in no_img.cards}
-    with_img = recommend(c, "video", ["оживить фото"], True, None, price_fn, nb)
-    assert all("i2v" in x.modes for x in with_img.cards)
+    # Без фото тоже показываем все видео-модели, включая i2v-only (Grok, Gen-4).
+    no_img = recommend(c, "video", ["оживить фото"], False, None, price_fn, nb, with_cheap=False)
+    assert {"gen4-turbo", "grok-imagine-video-1-5"} <= {x.id for x in no_img.cards}
+    with_img = recommend(c, "video", ["оживить фото"], True, None, price_fn, nb, with_cheap=False)
+    assert "grok-imagine-video-1-5" in {x.id for x in with_img.cards}
+    # С фото i2v поднимаются в ранге — Grok среди лидеров по score
+    top = recommend(c, "video", ["оживить фото"], True, None, price_fn, nb, n=5, with_cheap=False)
+    assert any("i2v" in x.modes for x in top.cards)
 
 
 def test_recommend_adds_cheap_third(cards, price_fn):
     c, nb = cards
-    # среди трёх — самый дешёвый платный (p-video) третьим, если его ещё нет
+    # Seedance pinned → первым; полный каталог видео включает и самый дешёвый (p-video)
     pick = recommend(c, "video", ["кино"], False, None, price_fn, nb)
-    assert len(pick.cards) == 3 and pick.cards[2].id == "p-video"
+    assert pick.cards[0].id == "seedance-2-5"
+    assert "p-video" in {x.id for x in pick.cards}
+    assert "grok-imagine-video-1-5" in {x.id for x in pick.cards}
+
+
+def test_recommend_video_seedance_first_then_cheap(cards, price_fn):
+    c, nb = cards
+    pick = recommend(c, "video", [], False, None, price_fn, nb, with_cheap=False)
+    ids = [x.id for x in pick.cards]
+    assert ids[0] == "seedance-2-5"
+    assert "grok-imagine-video-1-5" in ids
+    # хвост — по возрастанию цены (из тестового прайса); без цены — в конце
+    from assistant.recommend import price_value
+    tail = ids[1:]
+    vals = [price_value(price_fn(i)) for i in tail]
+    known = [v for v in vals if v is not None]
+    assert known == sorted(known)
+    # модели без цены — после тех, у кого цена есть
+    if known and any(v is None for v in vals):
+        last_known = max(i for i, v in enumerate(vals) if v is not None)
+        first_none = min(i for i, v in enumerate(vals) if v is None)
+        assert first_none > last_known
+
+
+def test_recommend_all_video_models(cards, price_fn):
+    c, nb = cards
+    all_video = {mid for mid, card in c.items() if card.kind == "video"}
+    pick = recommend(c, "video", [], False, None, price_fn, nb, with_cheap=False)
+    assert {x.id for x in pick.cards} == all_video
 
 
 def test_recommend_health_fn_crash_does_not_hide_catalog(cards, price_fn):
@@ -207,7 +244,8 @@ def test_ui_help_all_topics_short():
 
 def test_recommend_family_diversity(cards, price_fn):
     c, nb = cards
-    pick = recommend(c, "video", ["кино", "речь"], False, None, price_fn, nb, with_cheap=False)
+    # При ограниченном n — не две Veo подряд, если есть альтернативы
+    pick = recommend(c, "video", ["кино", "речь"], False, None, price_fn, nb, n=3, with_cheap=False)
     assert "veo-free-seedance" not in {x.id for x in pick.cards}
     assert {x.title.split()[0] for x in pick.cards} != {"Veo"}
     assert "veo-3-1" in {x.id for x in pick.cards}

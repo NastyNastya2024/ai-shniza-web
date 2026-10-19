@@ -405,6 +405,8 @@ window.AISH_DICT_EN = {
   'studio.eggy.modelFree': '{model} {does} — free. Describe your idea and let’s start',
   'studio.eggy.modelPrice': '{model} {does} — {price}. Describe your idea and let’s start',
   'studio.eggy.sameModel': "Taking {model}, as in this work. Describe your idea — I'll make something similar",
+  'studio.eggy.vitSeed': 'Using the prompt and storyboard from “{title}” — generating with {model}',
+  'studio.eggy.vitSeedAttach': 'Attaching the storyboard…',
   'studio.eggy.priceEst': '≈ {price}',
 
   /* chat */
@@ -544,6 +546,7 @@ window.AISH_DICT_EN = {
   'studio.vit.meta.res': 'resolution {size}',
   'studio.vit.meta.resTier': '{tier} quality (resolution {size})',
   'studio.vit.meta.dur': '{n} s',
+  'studio.vit.meta.compressed': 'All showcase videos are shown in compressed quality',
   'studio.hint.go': 'View →',
   'studio.hint.dismiss': 'Dismiss hint',
   'studio.hint.count': {
@@ -569,7 +572,13 @@ window.AISH_DICT_EN = {
   'explore.filter.all': 'All',
   'explore.filter.video': 'Video',
   'explore.filter.image': 'Images',
+  'explore.filter.prompt': 'With prompt',
+  'explore.filter.noPrompt': 'No prompt',
   'explore.filter.more': 'More',
+  'explore.cam.aspect': 'Frame',
+  'explore.cam.aspect.aria': 'Camera-move preview aspect ratio',
+  'explore.cam.aspect.916': '9:16',
+  'explore.cam.aspect.169': '16:9',
   'explore.sort.label': 'Sort',
   'explore.sort.new': 'Newest',
   'explore.sort.top': 'Popular',
@@ -589,6 +598,7 @@ window.AISH_DICT_EN = {
     other: '{n} works'
   },
   'vitrina.prompt.label': 'Prompt',
+  'vitrina.refs.label': 'Storyboard',
   'vitrina.req.promptOrVideo': 'Request prompt or video',
   'vitrina.req.promptOrOriginal': 'Request prompt or original',
   'vitrina.req.title': 'Request to {name}',
@@ -836,6 +846,7 @@ window.AISH_DICT_EN = {
 
   'creators.acm.name': 'AI Camera Movements',
   'creators.acm.about': 'Camera move library · aicameramovements.com',
+  'creators.aish.about': 'Official {AI}-шница works · open prompts',
   /* ================= creators (vitrina-data.js) ================= */
   'creators.c1.name': 'Mira Svet',
   'creators.c1.about': 'Neon, night cities, cinematic light',
