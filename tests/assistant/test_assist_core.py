@@ -216,6 +216,8 @@ def test_response_dedupes_and_caps_chips():
     ({"last_http_status": 401}, "auth_required"), ({"last_http_status": 429}, "rate_limited"),
     ({"last_error": "channel_unavailable"}, "channel_unavailable"), ({"last_error": "not_configured"}, "channel_unavailable"),
     ({"last_error": "timeout"}, "timeout"), ({"last_error": "moderation"}, "moderation"),
+    ({"last_error": "moderated"}, "moderation"), ({"last_error": "nsfw"}, "moderation"),
+    ({"last_error": "failed", "last_detail": "NSFW content detected"}, "moderation"),
     ({"last_error": "free_limit"}, "free_limit"), ({"last_error": "free_queue_full"}, "queued_free"),
     ({"job_status": "queued"}, "queued"), ({"job_status": "requeued"}, "failover"),
     ({"last_http_status": 502}, "upstream"), ({"last_error": "weird_thing"}, "unknown"), ({}, "unknown"),

@@ -24,6 +24,14 @@ T: dict[str, dict[str, str]] = {
                        "en": "Do you already have a prompt to improve?\nIf not — I’ll recommend models for this type right away."},
     "ask_has_prompt_model": {"ru": "Собрать или улучшить промпт под {title}?\nЕсли нет — перейдём к настройкам и запуску с вашей идеей.",
                              "en": "Build or improve a prompt for {title}?\nIf not — we’ll go to settings and run with your idea."},
+    "ask_add_to_prompt": {
+        "ru": "Промпт уже подробный. Хотите что-то добавить к нему перед запуском?",
+        "en": "The prompt is already detailed. Want to add anything before we run?",
+    },
+    "ask_add_to_prompt_write": {
+        "ru": "Напишите, что добавить к промпту — допишу и перейдём к настройкам.",
+        "en": "Write what to add to the prompt — I’ll append it and go to settings.",
+    },
     "more": {"ru": "Ещё варианты:", "en": "More options:"},
     "no_more": {"ru": "Других подходящих моделей сейчас нет.", "en": "No other suitable models right now."},
     "none_available": {
@@ -45,6 +53,11 @@ T: dict[str, dict[str, str]] = {
     "confirm_generate": {"ru": "Проверьте и нажмите «Сгенерировать».", "en": "Check and press “Generate”."},
     "unknown_model": {"ru": "Не нашла такую модель. Вот что могу предложить:", "en": "Couldn't find that model. Here's what I can offer:"},
     "alternatives": {"ru": "Похожие модели:", "en": "Similar models:"},
+    "moderation_try_other": {
+        "ru": "{title} не приняла этот запрос (фильтр контента). Деньги не списаны — попробуйте другую нейросеть:",
+        "en": "{title} rejected this request (content filter). You were not charged — try another model:",
+    },
+    "moderation_models": {"ru": "Сгенерировать в другой модели:", "en": "Generate with another model:"},
     "model_down": {"ru": "{title} сейчас недоступна.", "en": "{title} is unavailable right now."},
     "cheapest_head": {"ru": "Самые доступные сейчас:", "en": "Most affordable right now:"},
     "ask_type_idea": {"ru": "По идее «{topic}» — что будем генерировать?", "en": "For “{topic}” — what should we generate?"},
@@ -207,6 +220,8 @@ B: dict[str, dict[str, str]] = {
     "has_prompt_yes": {"ru": "Да, улучшить промпт", "en": "Yes, improve prompt"},
     "has_prompt_no": {"ru": "Нет, сразу к моделям", "en": "No, show models"},
     "has_prompt_no_run": {"ru": "Нет, к настройкам", "en": "No, go to settings"},
+    "add_prompt_yes": {"ru": "Да, добавить", "en": "Yes, add something"},
+    "add_prompt_no": {"ru": "Нет, к настройкам", "en": "No, go to settings"},
     "ex_video": {"ru": "Видео: яичница танцует", "en": "Video: dancing fried egg"},
     "ex_image": {"ru": "Логотип кофейни", "en": "Coffee shop logo"},
     "ex_music": {"ru": "Трек для рилса", "en": "Track for a reel"},

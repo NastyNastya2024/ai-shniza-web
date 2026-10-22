@@ -13,7 +13,7 @@
 
 Кнопка (chip) = {"label", "action", "value"?}. На сервер (как {"action":{type,value}}) уходят:
   pick_model · more · choose_type · use_mine · param · pick_camera · refine · improve · skip_polish · send ·
-  similar · cheaper · faster · no_photo_model · rephrase · back · back_brief · restart · has_prompt · variants · …
+  similar · cheaper · faster · no_photo_model · rephrase · back · back_brief · restart · has_prompt · add_prompt · variants · …
 Фронт сам: generate · edit_prompt · open_models · open_topup · open_vitrina · login · attach · retry · wait · support
 """
 from __future__ import annotations

@@ -67,6 +67,22 @@ def detail_level(text: str) -> int:
     return len(content_words(text))
 
 
+def is_rich_prompt(text: str) -> bool:
+    """Уже развёрнутый промпт (как с витрины / после сборки) — спросить, добавить ли что-то, а не гонять бриф заново."""
+    s = (text or "").strip()
+    if not s:
+        return False
+    words = s.split()
+    if len(words) >= 40 or detail_level(s) >= 28:
+        return True
+    # типичные маркеры готового EN-промпта под генерацию
+    low = s.lower()
+    markers = ("camera", "lighting", "cinematic", "orbit", "dolly", "zoom", "shallow depth",
+               "movement:", "framing:", "end:", "bpm", "close-up", "wide shot")
+    hits = sum(1 for m in markers if m in low)
+    return hits >= 2 and len(words) >= 20
+
+
 # ---------------------------------------------------------------- вопросы без LLM
 # slot: (label ru, label en, [(value, ru, en, prompt_ru, prompt_en, detect_regex)])
 SLOTS: dict[str, list[tuple[str, dict, list[tuple]]]] = {

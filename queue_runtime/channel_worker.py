@@ -176,10 +176,13 @@ def _format_success(job: dict[str, Any], prediction: dict[str, Any], provider: s
 
 
 def _fail_from_result(job: dict[str, Any], channel: str, result: dict[str, Any]) -> dict[str, Any]:
-    write_health(channel, False, str(result.get("detail") or result.get("error") or "upstream"))
+    err = str(result.get("error") or "upstream")
+    # фильтр контента — отказ модели, не авария канала; health не роняем
+    if err not in {"moderated", "moderation", "nsfw", "sensitive", "content_policy"}:
+        write_health(channel, False, str(result.get("detail") or err))
     out = {
         "ok": False,
-        "error": result.get("error") or "upstream",
+        "error": err,
         "detail": result.get("detail"),
         "status": int(result.get("status") or 502),
         "model": job.get("model_id"),

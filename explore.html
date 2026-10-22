@@ -685,8 +685,9 @@ html{transition:background-color .3s}
       + moreRow
       + '</section>';
     const likeBtn = '<button type="button" class="d-like' + (w.liked ? ' is-on' : '') + '" data-act="like" aria-pressed="' + (w.liked ? 'true' : 'false') + '" aria-label="' + esc(tr(w.liked ? 'common.like.remove' : 'common.like.add')) + '">' + ICON.heart + '<span>' + (w.likes || 0) + '</span></button>';
+    const promptLbl = isCameraWork(w) ? tr('vitrina.prompt.camera') : tr('vitrina.prompt.label');
     const promptBox = (w.prompt_open && w.prompt)
-      ? '<div class="d-prompt-box"><div class="d-prompt-head"><span class="d-prompt-lbl">' + esc(tr('vitrina.prompt.label')) + '</span><button type="button" class="copy" data-act="copy-prompt">' + esc(tr('common.copy')) + '</button></div><pre class="d-prompt" id="dOpenPrompt">' + esc(w.prompt) + '</pre></div>'
+      ? '<div class="d-prompt-box"><div class="d-prompt-head"><span class="d-prompt-lbl">' + esc(promptLbl) + '</span><button type="button" class="copy" data-act="copy-prompt">' + esc(tr('common.copy')) + '</button></div><pre class="d-prompt" id="dOpenPrompt">' + esc(w.prompt) + '</pre></div>'
       : '';
     const refItems = Array.isArray(w.refs) ? w.refs.filter((r) => r && r.src) : (w.ref ? [{ src: w.ref, label: 'storyboard' }] : []);
     const refFileName = (src) => {
@@ -734,8 +735,11 @@ html{transition:background-color .3s}
       return '';
     };
     const slug = modelSlug(w);
+    const genModelName = slug
+      ? ((window.app && app.MODELS && app.MODELS.find((m) => m.slug === slug || m.model_key === slug)) || {}).name || w.model
+      : w.model;
     const genBtn = w.model
-      ? '<a class="d-gen" href="/app' + (slug ? '?model=' + encodeURIComponent(slug) : '') + '">' + esc(tr('studio.vit.generateIn', { model: w.model })) + '</a>'
+      ? '<a class="d-gen" href="/app' + (slug ? '?model=' + encodeURIComponent(slug) : '') + '">' + esc(tr('studio.vit.generateIn', { model: genModelName || w.model })) + '</a>'
       : '';
     $('dBody').innerHTML = '<div class="media">' + media + (w.type === 'video' ? '<span class="wm" aria-hidden="true"></span><span class="wm-badge" aria-hidden="true"><b>{AI}</b>' + BR_SFX + '</span>' : '') + '</div>'
       + '<div class="d-title-row"><h2 class="d-title" id="dTitle">' + esc(wTitle(w)) + '</h2>' + likeBtn + '</div>'
@@ -856,13 +860,15 @@ html{transition:background-color .3s}
       const w = list[openIdx];
       if (w && w.prompt_open && w.prompt) {
         const refs = Array.isArray(w.refs) ? w.refs.filter((r) => r && r.src) : (w.ref ? [{ src: w.ref }] : []);
-        if (refs.length) {
+        const isCam = isCameraWork(w);
+        if (refs.length || isCam) {
           e.preventDefault();
           const slug = (gen.href && (() => { try { return new URL(gen.href, location.origin).searchParams.get('model') || ''; } catch (_) { return ''; } })()) || w.model_slug || '';
           const seed = {
             model: slug,
             prompt: String(w.prompt),
             title: w.title || '',
+            kind: isCam ? 'camera_move' : 'work',
             refs: refs.map((r) => {
               let src = String(r.src || '');
               if (src && src.charAt(0) !== '/' && !/^https?:/i.test(src)) src = '/' + src;

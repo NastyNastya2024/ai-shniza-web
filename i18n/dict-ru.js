@@ -406,6 +406,9 @@ window.AISH_DICT_RU = {
   'studio.eggy.sameModel': 'Беру {model}, как в этой работе. Опишите свою идею — сделаю похожее',
   'studio.eggy.vitSeed': 'Беру промпт и раскадровку из «{title}» — генерирую в {model}',
   'studio.eggy.vitSeedAttach': 'Подкладываю раскадровку…',
+  'studio.eggy.vitSeedCamera': 'Это промпт про поворот камеры «{title}» — для {model}.',
+  'studio.eggy.vitSeedCameraAsk': 'Что в нём поправить? Напишите изменение — или нажмите «Генерировать как есть».',
+  'studio.eggy.vitSeedCameraRun': 'Генерировать как есть',
   'studio.eggy.priceEst': '≈ {price}',
 
   /* чат */
@@ -495,7 +498,7 @@ window.AISH_DICT_RU = {
   'studio.rp.models': 'Нейросети',
   'studio.rp.close': 'Закрыть панель',
   'studio.chat.modelDown': 'Эта нейросеть сейчас недоступна — деньги не списаны. Выберите другую модель в панели',
-  'studio.chat.moderation': 'Запрос не прошёл проверку правил — деньги не списаны. Опишите идею иначе',
+  'studio.chat.moderation': 'Эта нейросеть отказала из‑за фильтра контента — деньги не списаны. Попробуйте другую модель или опишите идею иначе',
   'studio.chat.timeout': 'Нейросеть не успела за отведённое время — деньги не списаны. Попробуйте ещё раз или модель быстрее',
   'studio.chat.thinking': 'Думаю над ответом…',
   'studio.text.placeholder': 'Напишите сообщение модели…',
@@ -605,6 +608,7 @@ window.AISH_DICT_RU = {
     other: '{n} работ'
   },
   'vitrina.prompt.label': 'Промпт',
+  'vitrina.prompt.camera': 'Поворот камеры',
   'vitrina.refs.label': 'Раскадровка',
   'vitrina.req.promptOrVideo': 'Запросить промпт или видео',
   'vitrina.req.promptOrOriginal': 'Запросить промпт или оригинал',

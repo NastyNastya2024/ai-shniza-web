@@ -534,7 +534,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 <script src="/vitrina-data.js"></script>
 <script src="/vitrina-camera-moves.js?v=3"></script>
 <script src="/vitrina-aishnitsa.js?v=14"></script>
-<script src="/assistant-ui.js?v=16"></script>
+<script src="/assistant-ui.js?v=18"></script>
 <script src="/attach.js"></script>
 <script src="/chat-history.js?v=6"></script>
 <script>
@@ -568,14 +568,20 @@ function absMediaUrl(src) {
   if (/^https?:\/\//i.test(s) || s.charAt(0) === '/') return s;
   return '/' + s.replace(/^\.\//, '');
 }
+function isCameraWorkSeed(w) {
+  return !!(w && (String(w.id || '').indexOf('cam-') === 0 || String(w.model || '').indexOf('Camera') === 0));
+}
 function vitrinaSeedFromWork(w, slug) {
   if (!w || !w.prompt_open || !String(w.prompt || '').trim()) return null;
   const refs = Array.isArray(w.refs) ? w.refs.filter((r) => r && r.src) : (w.ref ? [{ src: w.ref, label: 'storyboard' }] : []);
-  if (!refs.length) return null;
+  const camera = isCameraWorkSeed(w);
+  // обычные работы — только с раскадровкой; повороты камеры — промпт без refs
+  if (!refs.length && !camera) return null;
   return {
     model: slug || w.model_slug || '',
     prompt: String(w.prompt),
     title: w.title || w.name || '',
+    kind: camera ? 'camera_move' : 'work',
     refs: refs.map((r) => {
       const src = absMediaUrl(r.src);
       let name = '';
@@ -600,12 +606,24 @@ async function applyVitrinaSeed(seed) {
   const slug = String(seed.model || '').trim();
   const m = slug ? app.MODELS.find((x) => x.slug === slug || x.model_key === slug) : null;
   if (!m) return false;
+  const isCam = seed.kind === 'camera_move';
   app.pendingPrompt = String(seed.prompt);
   app.pendingSel = m.slug;
   app.setState({ sel: m.slug, chat: true, text: '', assist: true });
   if (!app.state.authed) {
     saveVitrinaSeed(seed);
     app.login();
+    return true;
+  }
+  // поворот камеры: в чат с Яишницей + «что поправить?», без мгновенного запуска
+  if (isCam) {
+    app.push({ role: 'user', text: seed.prompt });
+    app.speak(tr('studio.eggy.vitSeedCamera', { title: seed.title || m.name, model: m.name }));
+    app._cameraSeedPending = true;
+    app.botSay({
+      text: tr('studio.eggy.vitSeedCameraAsk'),
+      chips: [{ label: tr('studio.eggy.vitSeedCameraRun'), action: 'camera_seed_run', primary: true }]
+    }, 280);
     return true;
   }
   app.speak(tr('studio.eggy.vitSeed', { title: seed.title || m.name, model: m.name }));
@@ -630,6 +648,16 @@ async function applyVitrinaSeed(seed) {
   if (window.AishAttach && AishAttach.park) AishAttach.park();
   app.cook();
   return true;
+}
+function finishCameraSeed(editText) {
+  app._cameraSeedPending = false;
+  const add = String(editText || '').trim();
+  let prompt = String(app.pendingPrompt || '').trim();
+  if (add && !/^(нет|ничего|ок|ok|без изменений|как есть|генерир|запуск|run|generate)/i.test(add)) {
+    prompt = (prompt.replace(/\s+$/, '') + (/\.$/.test(prompt) ? ' ' : '. ') + add).trim();
+    app.pendingPrompt = prompt;
+  }
+  app.cook();
 }
 const mq = (q) => typeof matchMedia === 'function' && matchMedia(q).matches;
 const IS_MOBILE = mq('(max-width:760px)');
@@ -981,6 +1009,7 @@ class Component extends DCLogic {
         const st = data && data.status;
         this.lastJobCtx = {
           last_error: (data && (data.error || data.detail)) || '',
+          last_detail: (data && data.detail) || '',
           last_http_status: (data && data.http_status) || res.status || 0,
           job_status: st || '',
           job_age_sec: (Date.now() - jobStarted) / 1000,
@@ -1026,15 +1055,20 @@ class Component extends DCLogic {
         ({ res, data } = await this.pollGenerate(data.job_id, data.poll_url));
       }
       if (!res.ok) {
+        const errRaw = (data && data.error) || '';
+        const detailRaw = String((data && data.detail) || '');
+        const sensitive = /^(moderated|moderation|nsfw|sensitive|content_policy)$/i.test(errRaw)
+          || /nsfw|sensitiv|moderat|content.?polic|safety.?checker|flagged|inappropriate/i.test(detailRaw);
         this.lastJobCtx = {
-          last_error: (data && (data.error || data.detail)) || '',
+          last_error: sensitive ? 'moderation' : (errRaw || detailRaw || ''),
+          last_detail: detailRaw,
           last_http_status: res.status || 0,
           job_status: 'failed',
           job_age_sec: 0
         };
         // Технические подробности (Redis, провайдер) — только в консоль, человеку — понятный текст
         if (data && (data.detail || data.error)) console.warn('[generate]', res.status, data.error, data.detail || '');
-        const err = (data && data.error) || '';
+        const err = sensitive ? 'moderation' : errRaw;
         const started = !!jobIdStarted;   // задание успело уйти в очередь?
         if (res.status === 401 || res.status === 403 || err === 'auth_required') {
           this.botSay({ text: tr('studio.chat.needLogin'), loginCta: true }, 200);
@@ -1046,7 +1080,7 @@ class Component extends DCLogic {
           return;
         }
         // Файлы: модели нужно фото/аудио/видео, файл устарел или слишком большой
-        const detail = String((data && data.detail) || '');
+        const detail = detailRaw;
         if (err === 'bad_model' && /image required|prompt or image/.test(detail)) { this.botSay({ text: tr('studio.attach.needImage'), chips: [{ label: tr('studio.attach.add'), action: 'attach' }] }, 200); return; }
         if (err === 'bad_model' && /audio required|reference song/.test(detail)) { this.botSay({ text: tr('studio.attach.needAudio'), chips: [{ label: tr('studio.attach.add'), action: 'attach' }] }, 200); return; }
         if (err === 'bad_model' && /video required/.test(detail)) { this.botSay({ text: tr('studio.attach.needVideo'), chips: [{ label: tr('studio.attach.add'), action: 'attach' }] }, 200); return; }
@@ -1055,7 +1089,15 @@ class Component extends DCLogic {
         if (err === 'media_not_reachable') { this.botSay({ text: tr('studio.chat.serviceDown') }, 200); return; }
         if (err === 'queue_unavailable' || err === 'not_configured') { this.botSay({ text: tr('studio.chat.serviceDown') }, 200); return; }
         if (err === 'channel_unavailable') { this.botSay({ text: tr('studio.chat.modelDown') }, 200); return; }
-        if (err === 'moderation') { this.botSay({ text: tr('studio.chat.moderation') }, 200); return; }
+        // фильтр контента: помощник предложит другие нейросети того же типа
+        if (err === 'moderation') {
+          if (this.eggy && this.eggy.explainJob) {
+            try { await this.eggy.explainJob(); return; }
+            catch (_) {}
+          }
+          this.botSay({ text: tr('studio.chat.moderation') }, 200);
+          return;
+        }
         if (err === 'timeout') { this.botSay({ text: tr('studio.chat.timeout') }, 200); return; }
         this.botSay({ text: started ? tr('studio.chat.failedRetry') : tr('studio.chat.notStarted') }, 200);
         return;
@@ -1184,6 +1226,7 @@ class Component extends DCLogic {
       this.pendingPrompt = ''; this.pendingSel = ''; this.pendingParams = {};
       this.textHistory = [];
       this.textDirect = false;
+      this._cameraSeedPending = false;
       this._shownFiles = {};
       if (window.AishAttach && AishAttach.consume) AishAttach.consume();
       lastMsgs = -1;
@@ -1204,6 +1247,13 @@ class Component extends DCLogic {
       const cur = this.MODELS.find((x) => x.slug === this.state.sel);
       // Прямой чат с LLM: textDirect (после «Доработать» / выбора текста) или помощник выключен
       if (cur && cur.type === 'text' && (this.textDirect || !this.state.assist)) { this.textChat(cur, text); return; }
+      // после «поворот камеры» с витрины: правка промпта → запуск
+      if (this._cameraSeedPending) {
+        this.setState({ chat: true, text: '' });
+        this.push({ role: 'user', text: text });
+        finishCameraSeed(text);
+        return;
+      }
       this.pendingPrompt = text;
       this.pendingSel = (cur && cur.type !== 'text') ? cur.slug : '';
       this.setState({ chat: true, text: '' });
@@ -1487,6 +1537,8 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
     const uiLang = String((window.AISH_I18N && AISH_I18N.LANG) || document.documentElement.lang || 'ru').toLowerCase().slice(0, 2);
     return Object.assign({
       selected_model_id: m.model_key || m.slug || '',
+      selected_model_kind: m.type || '',
+      selected_model_title: m.name || '',
       has_image: !!((window.AishAttach && AishAttach.has('image')) || app.attachedImage || app.state.hasImage),
       // скрепка: тип и имя готовых файлов — ассистент называет их по имени в ответах и сводке
       attachments: window.AishAttach ? AishAttach.ready().map((f) => ({ kind: f.kind, name: f.name })) : [],
@@ -1896,6 +1948,10 @@ document.addEventListener('click', async (e) => {
     const chips = wrap && wrap._assistChips;
     const idx = +chipBtn.getAttribute('data-assist-chip');
     const chip = chips && chips[idx];
+    if (chip && chip.action === 'camera_seed_run') {
+      finishCameraSeed('');
+      return;
+    }
     if (chip && app.eggy && app.eggy.chip) {
       await app.eggy.chip(chip);
     }
@@ -2591,8 +2647,9 @@ loadIntegrations();
         : '<a class="btn-gen" href="/app?model=' + encodeURIComponent(String(w.model || '').toLowerCase().replace(/\s+/g, '-')) + '">' + esc2(tr('studio.vit.generateIn', { model: modelLabel })) + '</a>')
         + '</div>'
       : '';
+    const promptLbl = isCameraWork(w) ? tr('vitrina.prompt.camera') : tr('vitrina.prompt.label');
     const promptBox = (w.prompt_open && w.prompt)
-      ? '<div class="d-prompt-box" style="margin:12px 0;border:1px solid var(--panel-brd);border-radius:14px;background:var(--field);overflow:hidden"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--panel-brd)"><span style="font:800 11px/1 Onest,system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)">' + esc2(tr('vitrina.prompt.label')) + '</span><button type="button" class="copy" data-copy-prompt style="height:30px;padding:0 10px;border-radius:10px;border:1px solid var(--panel-brd);background:transparent;color:var(--muted);font:700 12px Onest,system-ui,sans-serif;cursor:pointer">' + esc2(tr('common.copy')) + '</button></div><pre id="vitOpenPrompt" style="margin:0;padding:12px;font:500 13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto">' + esc2(w.prompt) + '</pre></div>'
+      ? '<div class="d-prompt-box" style="margin:12px 0;border:1px solid var(--panel-brd);border-radius:14px;background:var(--field);overflow:hidden"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--panel-brd)"><span style="font:800 11px/1 Onest,system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)">' + esc2(promptLbl) + '</span><button type="button" class="copy" data-copy-prompt style="height:30px;padding:0 10px;border-radius:10px;border:1px solid var(--panel-brd);background:transparent;color:var(--muted);font:700 12px Onest,system-ui,sans-serif;cursor:pointer">' + esc2(tr('common.copy')) + '</button></div><pre id="vitOpenPrompt" style="margin:0;padding:12px;font:500 13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto">' + esc2(w.prompt) + '</pre></div>'
       : '';
     const refItems = Array.isArray(w.refs) ? w.refs.filter((r) => r && r.src) : (w.ref ? [{ src: w.ref, label: 'storyboard' }] : []);
     const refFileName = (src) => {

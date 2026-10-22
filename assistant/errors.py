@@ -11,10 +11,19 @@
 """
 from __future__ import annotations
 
+import re
 from typing import Any
 
 # обычное время генерации по типу, секунд (для «это нормально / уже долго»)
 TYPICAL_SEC = {"image": 40, "edit": 40, "video": 240, "music": 90, "sfx": 40, "text": 20}
+
+# провайдер отказал из‑за фильтра контента (Seedance NSFW, Replicate/Fal safety, …)
+_SENSITIVE = re.compile(
+    r"nsfw|sensitiv|moderat|content.?polic|safety.?system|safety.?checker|"
+    r"flagged|blocked.?by.?safety|violat|inappropriate|not.?allowed|"
+    r"цензур|запрещ[её]н|небезопасн",
+    re.I,
+)
 
 E: dict[str, dict[str, Any]] = {
     "queued": {
@@ -78,9 +87,11 @@ E: dict[str, dict[str, Any]] = {
         "chips": [("attach", "attach"), ("no_photo_model", "no_photo_model")],
     },
     "moderation": {
-        "ru": ["Запрос не прошёл проверку правил.", "Попробуйте описать идею иначе — помогу переформулировать."],
-        "en": ["The request didn't pass the content rules.", "Try describing it differently — I can help rephrase."],
-        "chips": [("rephrase", "rephrase")],
+        "ru": ["Эта нейросеть отказала: фильтр контента.",
+               "Деньги не списаны. Можно сгенерировать в другой модели или переформулировать идею."],
+        "en": ["This model refused: content filter.",
+               "You were not charged. Try another model or rephrase the idea."],
+        "chips": [("similar", "similar"), ("rephrase", "rephrase")],
     },
     "rate_limited": {
         "ru": ["Слишком много запросов подряд.", "Подождите минуту и повторите."],
@@ -107,11 +118,24 @@ ALIASES = {
     "worker_error": "upstream", "failed": "upstream", "send_failed": "upstream", "free_queue_full": "queued_free",
     "unauthorized": "auth_required", "login_required": "auth_required", "no_image": "image_required",
     "image_required": "image_required", "too_many_requests": "rate_limited",
+    "moderated": "moderation", "nsfw": "moderation", "content_policy": "moderation", "sensitive": "moderation",
 }
+
+
+def is_sensitive_error(error: str | None = None, detail: Any = None) -> bool:
+    """True, если провайдер отклонил запрос фильтром контента (не сбой канала)."""
+    err = (error or "").strip().lower()
+    if ALIASES.get(err, err) == "moderation" or err in {"moderated", "moderation", "nsfw", "sensitive", "content_policy"}:
+        return True
+    blob = detail if isinstance(detail, str) else str(detail or "")
+    return bool(blob and _SENSITIVE.search(blob))
 
 
 def classify(ctx: dict[str, Any]) -> str:
     err = (ctx.get("last_error") or "").strip().lower()
+    detail = ctx.get("last_detail") if ctx.get("last_detail") is not None else ctx.get("detail")
+    if is_sensitive_error(err, detail):
+        return "moderation"
     if err:
         err = ALIASES.get(err, err)
         if err in E:

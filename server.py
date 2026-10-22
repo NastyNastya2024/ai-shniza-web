@@ -3562,6 +3562,24 @@ def _build_provider_input(
     return _build_replicate_input(spec, prompt, image_data_url, audio_data_url, video_data_url)
 
 
+_SENSITIVE_FAIL = re.compile(
+    r"nsfw|sensitiv|moderat|content.?polic|safety.?system|safety.?checker|"
+    r"flagged|blocked.?by.?safety|violat|inappropriate|not.?allowed",
+    re.I,
+)
+
+
+def _sensitive_upstream_error(error: str | None, detail) -> str | None:
+    """Если провайдер отклонил контент фильтром — единый код `moderated` (не сбой канала)."""
+    err = (error or "").strip().lower()
+    if err in {"moderated", "moderation", "nsfw", "sensitive", "content_policy"}:
+        return "moderated"
+    blob = detail if isinstance(detail, str) else str(detail or "")
+    if blob and _SENSITIVE_FAIL.search(blob):
+        return "moderated"
+    return None
+
+
 def _replicate_submit(replicate_model: str, input_payload: dict) -> dict:
     """POST prediction without long Prefer:wait. Returns prediction_id + get_url."""
     token = _replicate_token()
@@ -3670,11 +3688,13 @@ def _replicate_wait(get_url: str, deadline: float) -> dict:
         if st == "succeeded":
             return {"ok": True, "prediction": pdata, "phase": "run"}
         if st in {"failed", "canceled"}:
+            detail = pdata.get("error") or st
+            sens = _sensitive_upstream_error("failed", detail)
             return {
                 "ok": False,
-                "error": "failed",
-                "detail": pdata.get("error") or st,
-                "status": 502,
+                "error": sens or "failed",
+                "detail": "content moderated" if sens else detail,
+                "status": 422 if sens else 502,
                 "prediction": pdata,
                 "phase": "run",
             }
@@ -3847,11 +3867,13 @@ def _fal_wait(status_url: str, response_url: str, deadline: float) -> dict:
                 rbody.setdefault("request_id", request_id)
             return {"ok": True, "prediction": rbody, "phase": "run"}
         if status in {"FAILED", "CANCELLED", "CANCELED"}:
+            detail = pdata.get("error") or status
+            sens = _sensitive_upstream_error("failed", detail)
             return {
                 "ok": False,
-                "error": "failed",
-                "detail": pdata.get("error") or status,
-                "status": 502,
+                "error": sens or "failed",
+                "detail": "content moderated" if sens else detail,
+                "status": 422 if sens else 502,
                 "prediction": pdata,
                 "phase": "run",
             }

@@ -182,6 +182,40 @@ def test_error_help_channel_unavailable_suggests_models(make_assistant):
     assert "не списаны" in r["reply"]
 
 
+def test_error_help_moderation_suggests_other_models(make_assistant):
+    """Seedance (и др.) отказала фильтром — предложить Kling и остальные видео-модели."""
+    a = make_assistant()
+    for err in ("moderated", "moderation", "nsfw"):
+        r = a.handle("", {"last_error": err, "selected_model_id": "seedance-2-5"}, SID)
+        assert r["intent"] == "error_help" and r["error_code"] == "moderation", err
+        ids = {m["id"] for m in (r.get("models") or [])}
+        assert "seedance-2-5" not in ids and len(ids) >= 1, err
+        assert any("kling" in i for i in ids) or len(ids) >= 1, err
+        assert "фильтр" in r["reply"].lower() or "content filter" in r["reply"].lower()
+    # failed + detail nsfw тоже → moderation
+    r = a.handle("", {"last_error": "failed", "last_detail": "NSFW content detected",
+                      "selected_model_id": "seedance-2-5"}, SID)
+    assert r["error_code"] == "moderation" and r.get("models")
+
+
+def test_error_help_moderation_suggests_other_image_models(make_assistant):
+    """Картинка отказала фильтром — другие image-модели (не видео). Nano Banana на UI = image."""
+    a = make_assistant()
+    r = a.handle("", {"last_error": "moderated", "selected_model_id": "seedream-5-pro",
+                      "selected_model_kind": "image"}, SID)
+    assert r["error_code"] == "moderation"
+    ids = {m["id"] for m in (r.get("models") or [])}
+    assert "seedream-5-pro" not in ids and len(ids) >= 1
+    assert all("veo" not in i and "kling" not in i and "seedance" not in i for i in ids)
+    # Nano Banana в карточках kind=edit, но с панели type=image → image-альтернативы
+    r2 = a.handle("", {"last_error": "nsfw", "selected_model_id": "nano-banana-2",
+                       "selected_model_kind": "image", "selected_model_title": "Nano Banana 2"}, "img2")
+    ids2 = {m["id"] for m in (r2.get("models") or [])}
+    assert r2["error_code"] == "moderation" and "nano-banana-2" not in ids2 and len(ids2) >= 1
+    assert "seedream-5-pro" in ids2 or "gpt-image-2" in ids2 or "ideogram-v3-turbo" in ids2
+    assert "Nano Banana" in r2["reply"] or "фильтр" in r2["reply"].lower()
+
+
 def test_error_help_funds(make_assistant):
     a = make_assistant()
     r = a.handle("почему ошибка?", {"last_http_status": 402}, SID)

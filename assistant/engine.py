@@ -244,6 +244,16 @@ class Assistant:
                 return self._action("has_prompt", "yes", ctx, ses, lang)
             if low in ("нет", "no", "модели", "сразу", "без промпта"):
                 return self._action("has_prompt", "no", ctx, ses, lang)
+        # 2а) развёрнутый промпт: добавить что-то? да → ждём текст; нет → настройки; любой текст = дополнение
+        if ses.get("await") == "add_prompt" and msg:
+            low = squeeze(msg).lower()
+            card = self.d.cards.get(ses.get("picked") or "") or self._current_card(ses, ctx)
+            if low in ("нет", "no", "настройк", "запуск", "генерир", "сразу"):
+                return self._action("add_prompt", "no", ctx, ses, lang)
+            if low in ("да", "yes", "добавить", "дополнить", "хочу"):
+                return self._action("add_prompt", "yes", ctx, ses, lang)
+            if card and len(msg.strip()) >= 2:
+                return self._action("add_prompt", {"text": msg.strip()}, ctx, ses, lang)
         # 2б) ждём ответ «какой тип» / тип для промпта — коротко и с опечатками
         if ses.get("await") in ("type", "gen_type") and len(msg.split()) <= 3:
             k = detect_kind(msg, bool(ctx.get("has_image"))) or _kind_by_number(msg, ses.get("await") == "gen_type")
@@ -573,6 +583,25 @@ class Assistant:
         ], lang)
         return response([t("ask_has_prompt", lang)], chips, lang=lang, intent=intent)
 
+    def _ask_add_to_prompt(self, card: Card, ses: dict, lang: str, intent: str = "add_prompt") -> dict:
+        """Развёрнутый промпт уже есть — уточнить, добавить ли что-то, прежде чем к настройкам."""
+        ses["await"] = "add_prompt"
+        ses["add_prompt_asked"] = True
+        ses["picked"] = card.id
+        ses["kind"] = card.kind
+        chips = self._with_back([
+            chip(b("add_prompt_yes", lang), "add_prompt", "yes", primary=True),
+            chip(b("add_prompt_no", lang), "add_prompt", "no"),
+        ], lang)
+        return response([t("ask_add_to_prompt", lang)], chips, lang=lang, intent=intent, generate_model=card.id)
+
+    def _maybe_ask_add_then_setup(self, card: Card, ctx: dict, ses: dict, lang: str, intent: str) -> dict:
+        """К настройкам; если промпт уже подробный и ещё не спрашивали — сначала «добавить что-то?»."""
+        idea = (ses.get("idea") or ses.get("prompt") or ctx.get("draft") or "").strip()
+        if idea and BR.is_rich_prompt(idea) and not ses.get("add_prompt_asked"):
+            return self._ask_add_to_prompt(card, ses, lang, "add_prompt")
+        return self._setup_from_idea(card, ctx, ses, lang, intent)
+
     def _go_back(self, ctx: dict, ses: dict, lang: str) -> dict:
         """Шаг назад по меню: тип ← модели ← «нужен промпт?» ← бриф ← варианты ← polish."""
         aw = ses.get("await")
@@ -598,6 +627,14 @@ class Assistant:
             ses["picked"] = None
             mode = "prompt" if ses.get("assist_mode") == "prompt" else "direct"
             return self._offer_models_for_kind(ctx, ses, lang, "back", mode=mode)
+        if aw == "add_prompt":
+            ses["add_prompt_asked"] = False
+            mid = ses.get("picked")
+            ses["picked"] = None
+            mode = "prompt" if ses.get("assist_mode") == "prompt" else "direct"
+            if mid and ses.get("kind"):
+                return self._offer_models_for_kind(ctx, ses, lang, "back", mode=mode)
+            return self._ask_type(ses, ctx, lang)
         if aw == "brief":
             mid = ses.get("brief_for_model") or ses.get("brief_guide")
             ses.update(brief=None, brief_done=False, brief_for_model=None, brief_guide=None)
@@ -842,8 +879,12 @@ class Assistant:
         if not idea and not ses.get("prompt") and not self.d.brief:
             ses["await"] = "idea"
             return response([t("describe_idea", lang)], [], intent=intent, generate_model=card.id)
-        # промпт уже собран в брифе — накладываем параметры модели и показываем запуск
+        # промпт уже собран в брифе — если развёрнутый, спросить «добавить?», иначе сразу настройки
         if self.d.brief and ses.get("prompt"):
+            if BR.is_rich_prompt(ses["prompt"]) and not ses.get("add_prompt_asked"):
+                if not ses.get("idea"):
+                    ses["idea"] = ses["prompt"]
+                return self._ask_add_to_prompt(card, ses, lang, intent)
             raw_params, adj = P.fit(P.extract(idea or ses["prompt"]), card)
             params = P.with_defaults(card, {**P.validate(card, ses.get("params")), **raw_params})
             ses["params"] = params
@@ -851,9 +892,9 @@ class Assistant:
             return self._setup_reply(card, ses, ctx, lang, intent, head, "", False, adj)
         if self.d.brief:
             mode = ses.get("assist_mode")
-            # видео: сразу к настройкам с идеей, без «собрать/улучшить промпт?»
+            # видео: без «улучшить промпт?»; если промпт уже развёрнутый — спросить, добавить ли что-то
             if card.kind == "video" and mode != "prompt":
-                return self._setup_from_idea(card, ctx, ses, lang, intent)
+                return self._maybe_ask_add_then_setup(card, ctx, ses, lang, intent)
             # картинка/музыка/… → сначала «нужен промпт?», потом clarify под модель
             # (не спрашиваем «опишите идею» до этого — иначе двойной опрос)
             if mode != "prompt" and ses.get("await") != "has_prompt":
@@ -1194,16 +1235,46 @@ class Assistant:
         rows = cheapest(self.d.cards, kind, self._price, self.d.health_fn, limit=4 if kind else 3)
         return self._show_models(Pick([c for c, _ in rows], True), ses, lang, "price", head=t("cheapest_head", lang))
 
+    def _alt_kind(self, card, ctx: dict, ses: dict) -> str | None:
+        """Тип для подбора замены: панель UI (картинка/видео) важнее kind карточки (edit у Nano Banana)."""
+        ui = str(ctx.get("selected_model_kind") or "").strip().lower()
+        if ui in KINDS:
+            return ui
+        if card and card.kind in KINDS:
+            # правки фото на панели = картинки → при отказе предлагаем image-модели
+            return "image" if card.kind == "edit" else card.kind
+        k = ses.get("kind")
+        return k if k in KINDS else None
+
     def _i_error_help(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
-        card = self.d.cards.get(ctx.get("selected_model_id") or ses.get("picked") or "")
-        kind = card.kind if card else ses.get("kind")
+        mid = str(ctx.get("selected_model_id") or ses.get("picked") or "")
+        card = self.d.cards.get(mid) if mid else None
+        kind = self._alt_kind(card, ctx, ses)
         code, lines, chip_keys = err_mod.explain(ctx, lang, kind)
         chips = [std_chip(key, action, lang) for key, action in chip_keys]
-        if code == "channel_unavailable" and card:
-            pick = self._recommend(card.kind, ses.get("needs") or [], bool(ctx.get("has_image")), exclude=[card.id],
+        # канал недоступен или фильтр контента — сразу другие нейросети того же типа
+        # (Seedance → Kling, Seedream/Nano Banana → другие картинки)
+        if code in {"channel_unavailable", "moderation"} and kind:
+            title = (card.title if card else None) or str(ctx.get("selected_model_title") or mid or "").strip() or kind
+            if code == "moderation":
+                lines = [t("moderation_try_other", lang, title=title)]
+            exclude = [mid] if mid else []
+            if card and card.id not in exclude:
+                exclude.append(card.id)
+            # Nano Banana = edit в карточках, но на UI картинка — не предлагать «себя» из edit
+            if kind == "image":
+                for bid in ("nano-banana-2", "nano-banana-pro"):
+                    if bid not in exclude and (mid.startswith("nano-banana") or (card and card.id.startswith("nano-banana"))):
+                        exclude.append(bid)
+            pick = self._recommend(kind, ses.get("needs") or [], bool(ctx.get("has_image")), exclude=exclude,
                                    with_cheap=False)
-            out = self._show_models(pick, ses, lang, "error_help", head=t("alternatives", lang), extra_top=lines)
+            head = t("alternatives", lang) if code == "channel_unavailable" else t("moderation_models", lang)
+            out = self._show_models(pick, ses, lang, "error_help", head=head, extra_top=lines)
             out["error_code"] = code
+            if code == "moderation":
+                out_chips = list(out.get("chips") or [])
+                out_chips.append(std_chip("rephrase", "rephrase", lang))
+                out["chips"] = out_chips
             return out
         return response(lines, chips, intent="error_help", error_code=code)
 
@@ -1294,9 +1365,34 @@ class Assistant:
                 return self._start_prompt_assist(ctx, ses, lang, "has_prompt")
             if ans in ("no", "n", "нет", "0"):
                 if card:
-                    return self._setup_from_idea(card, ctx, ses, lang, "has_prompt")
+                    return self._maybe_ask_add_then_setup(card, ctx, ses, lang, "has_prompt")
                 return self._start_direct_models(ctx, ses, lang, "has_prompt")
             return self._ask_has_prompt(ses, lang, "has_prompt")
+        if kind == "add_prompt":
+            card = self.d.cards.get(ses.get("picked") or "") or self._current_card(ses, ctx)
+            if not card:
+                return self._ask_type(ses, ctx, lang)
+            ans = value
+            if isinstance(ans, dict):
+                add = str(ans.get("text") or "").strip()
+                if add:
+                    base = (ses.get("idea") or ses.get("prompt") or "").strip()
+                    merged = (base.rstrip(". ") + ". " + add).strip() if base else add
+                    ses["idea"] = merged[:4000]
+                    if ses.get("prompt"):
+                        ses["prompt_base"] = merged[:4000]
+                        ses["prompt"] = ""
+                ses["add_prompt_asked"] = True
+                return self._setup_from_idea(card, ctx, ses, lang, "add_prompt")
+            low = str(ans or "").lower().strip()
+            if low in ("no", "n", "нет", "0"):
+                ses["add_prompt_asked"] = True
+                return self._setup_from_idea(card, ctx, ses, lang, "add_prompt")
+            if low in ("yes", "y", "да", "1"):
+                ses["await"] = "add_prompt"
+                return response([t("ask_add_to_prompt_write", lang)], [self._back_chip(lang)],
+                                lang=lang, intent="add_prompt", generate_model=card.id)
+            return self._ask_add_to_prompt(card, ses, lang, "add_prompt")
         if kind in {"more", "similar", "cheaper", "faster", "no_photo_model"}:
             cur = self._current_card(ses, ctx)
             k = ses.get("kind") or (cur.kind if cur else None)

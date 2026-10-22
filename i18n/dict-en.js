@@ -407,6 +407,9 @@ window.AISH_DICT_EN = {
   'studio.eggy.sameModel': "Taking {model}, as in this work. Describe your idea — I'll make something similar",
   'studio.eggy.vitSeed': 'Using the prompt and storyboard from “{title}” — generating with {model}',
   'studio.eggy.vitSeedAttach': 'Attaching the storyboard…',
+  'studio.eggy.vitSeedCamera': 'This is a camera-move prompt “{title}” — for {model}.',
+  'studio.eggy.vitSeedCameraAsk': 'What should we change in it? Type an edit — or tap “Generate as is”.',
+  'studio.eggy.vitSeedCameraRun': 'Generate as is',
   'studio.eggy.priceEst': '≈ {price}',
 
   /* chat */
@@ -496,7 +499,7 @@ window.AISH_DICT_EN = {
   'studio.rp.models': 'Models',
   'studio.rp.close': 'Close panel',
   'studio.chat.modelDown': 'This AI model is unavailable right now — you were not charged. Pick another model in the panel',
-  'studio.chat.moderation': 'The request didn’t pass the content rules — you were not charged. Try describing it differently',
+  'studio.chat.moderation': 'This model refused due to a content filter — you were not charged. Try another model or describe the idea differently',
   'studio.chat.timeout': 'The AI ran out of time — you were not charged. Retry or pick a faster model',
   'studio.chat.thinking': 'Thinking…',
   'studio.text.placeholder': 'Write a message to the model…',
@@ -598,6 +601,7 @@ window.AISH_DICT_EN = {
     other: '{n} works'
   },
   'vitrina.prompt.label': 'Prompt',
+  'vitrina.prompt.camera': 'Camera move',
   'vitrina.refs.label': 'Storyboard',
   'vitrina.req.promptOrVideo': 'Request prompt or video',
   'vitrina.req.promptOrOriginal': 'Request prompt or original',

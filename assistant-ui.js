@@ -19,7 +19,7 @@
  */
 (function (root) {
   'use strict';
-  var SERVER = { pick_model: 1, more: 1, choose_type: 1, has_prompt: 1, use_mine: 1, param: 1, pick_camera: 1, refine: 1, improve: 1, send: 1,
+  var SERVER = { pick_model: 1, more: 1, choose_type: 1, has_prompt: 1, add_prompt: 1, use_mine: 1, param: 1, pick_camera: 1, refine: 1, improve: 1, send: 1,
     similar: 1, cheaper: 1, faster: 1, no_photo_model: 1, rephrase: 1, resume: 1,
     brief: 1, variants: 1, more_variants: 1, back_brief: 1, back: 1, use_variant: 1, skip_polish: 1, restart: 1,
     reel_start: 1, reel_answer: 1, reel_next: 1, reel_back: 1, reel_edit: 1, reel_frame: 1, reel_rebuild: 1,
@@ -676,6 +676,12 @@
         if (!text || busy) return Promise.resolve(null);
         opts.onUser && opts.onUser(text);
         lastBody = { message: text };
+        return post(lastBody);
+      },
+      /** Ошибка джобы уже в getContext().last_error — помощник предложит другие модели / что делать. */
+      explainJob: function () {
+        if (busy) return Promise.resolve(null);
+        lastBody = { message: '' };
         return post(lastBody);
       },
       chip: onChip,

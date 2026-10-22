@@ -772,8 +772,9 @@ html[lang=en] .pc.off::after{content:'hidden'}
       if (parts.length) metaBlock += '<p class="d-res">' + esc(parts.join(' \u00b7 ')) + '</p>';
       metaBlock += '<p class="d-compress">' + esc(tr('studio.vit.meta.compressed')) + '</p>';
     }
+    const isCam = !!(String(w.id || '').indexOf('cam-') === 0 || String(w.model || '').indexOf('Camera') === 0);
     const promptBox = (w.prompt_open && w.prompt)
-      ? '<div class="d-prompt-box"><div class="d-prompt-head"><span class="d-prompt-lbl">' + esc(tr('vitrina.prompt.label')) + '</span><button type="button" class="copy" data-act="copy-prompt">' + esc(tr('common.copy')) + '</button></div><pre class="d-prompt" id="dOpenPrompt">' + esc(w.prompt) + '</pre></div>'
+      ? '<div class="d-prompt-box"><div class="d-prompt-head"><span class="d-prompt-lbl">' + esc(tr(isCam ? 'vitrina.prompt.camera' : 'vitrina.prompt.label')) + '</span><button type="button" class="copy" data-act="copy-prompt">' + esc(tr('common.copy')) + '</button></div><pre class="d-prompt" id="dOpenPrompt">' + esc(w.prompt) + '</pre></div>'
       : '';
     const refItems = Array.isArray(w.refs) ? w.refs.filter((r) => r && r.src) : (w.ref ? [{ src: w.ref, label: 'storyboard' }] : []);
     const refFileName = (src) => { try { return decodeURIComponent(String(src || '').split('?')[0].split('/').pop() || ''); } catch (_) { return String(src || '').split('/').pop() || ''; } };
