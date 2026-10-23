@@ -18,18 +18,16 @@
   --ys-line: rgba(255,255,255,.08); --ys-line-strong: rgba(255,255,255,.18);
   --ys-ink: #F3F4F6; --ys-ink-2: #A8ABB2; --ys-ink-3: #8E9199;
   --ys-sel: #F3F4F6; --ys-on-sel: #0F1016;
-  --ys-cta-hi: #F2F88A; --ys-cta: #DCEB4A; --ys-cta-lo: #B9CC2C; --ys-on-cta: #11130A; --ys-glow: rgba(220,235,74,.30);
+  --ys-cta-hi: #EEF784; --ys-cta: #DCEB4A; --ys-cta-lo: #FF9F45; --ys-on-cta: #11130A; --ys-glow: rgba(220,235,74,.30);
   --ys-shadow-sm: inset 0 1px 0 rgba(255,255,255,.05), 0 2px 8px -2px rgba(0,0,0,.6);
   --ys-shadow-md: inset 0 1px 0 rgba(255,255,255,.06), 0 18px 40px -18px rgba(0,0,0,.9);
   --ys-shadow-lg: inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(255,255,255,.04), 0 32px 80px -24px #000;
-  --ys-shadow-glow: 0 0 0 1px rgba(220,235,74,.2), 0 12px 32px -10px rgba(220,235,74,.4);
+  --ys-shadow-glow: 0 0 0 1px rgba(220,235,74,.2), 0 12px 32px -10px rgba(246,168,64,.42);
 }
-/* Шар в Чёрной: чуть лайма (как кнопка Generate), без смены ассета */
-:root[data-style="black"] img[src*="assets/orb"]{filter:hue-rotate(14deg) saturate(1.06) brightness(1.02)}
 /* ── Кружки тем ────────────────────────────────────────────────── */
 .aish-style__dot { width: 20px; height: 20px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 1px rgba(127,127,140,.35); }
 .aish-style__dot--white { background: radial-gradient(circle at 35% 30%, #fff 0 28%, #f0f1f6 55%, #d8dbe8 100%); box-shadow: inset 0 0 0 1.5px rgba(18,20,32,.28), 0 0 0 1px rgba(18,20,32,.06), 0 1px 3px rgba(18,20,32,.18); }
-.aish-style__dot--black { background: radial-gradient(circle at 35% 30%, #3a3d36 0 15%, #131415 65%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.22), inset -3px -3px 6px rgba(220,235,74,.3); }
+.aish-style__dot--black { background: radial-gradient(circle at 35% 30%, #3a3d36 0 15%, #131415 65%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.22), inset -3px -3px 6px rgba(220,235,74,.3), inset 3px 3px 6px rgba(255,159,69,.22); }
 .aish-style__dot--violet { background: radial-gradient(circle at 35% 30%, #7a55ff 0 20%, #2e264e 70%, #15122a 100%); }
 .aish-style__dot--light { background: radial-gradient(circle at 35% 30%, #ffffff 0 22%, #e4dcfa 55%, #c9bdf0 100%); box-shadow: inset 0 0 0 1.5px rgba(75,43,184,.28), 0 0 0 1px rgba(75,43,184,.08), 0 1px 3px rgba(75,43,184,.18); }
 
@@ -55,6 +53,18 @@
 .aish-fab.is-docked.is-compact { width: 40px; height: 40px; border-radius: 12px; }
 .aish-fab.is-docked .aish-fab__dot { width: 22px; height: 22px; }
 .aish-fab.is-docked.is-compact .aish-fab__dot { width: 20px; height: 20px; }
+/* на главной у «Войти»: снаружи квадрат цвета темы, внутри шарик */
+.aish-fab.is-header { position: relative; left: auto !important; top: auto !important; z-index: 6; flex: 0 0 auto; width: 40px; height: 40px; margin-left: 10px; border-radius: 14px; cursor: pointer; touch-action: manipulation; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.aish-fab.is-header:hover { transform: none; }
+.aish-fab.is-header > .aish-fab__dot { width: 22px; height: 22px; border-radius: 50%; box-shadow: none; }
+:root[data-style="white"] .aish-fab.is-header { background: #FFFFFF; box-shadow: inset 0 0 0 1.5px rgba(18,20,32,.16), 0 2px 8px rgba(18,20,32,.1); }
+:root[data-style="white"] .aish-fab.is-header > .aish-fab__dot { background: #0F1016; }
+:root[data-style="black"] .aish-fab.is-header { background: #131415; box-shadow: inset 0 0 0 1.5px rgba(220,235,74,.5), 0 0 0 1px rgba(255,255,255,.08); }
+:root[data-style="black"] .aish-fab.is-header > .aish-fab__dot { background: #FFFFFF; }
+:root[data-style="light"] .aish-fab.is-header { background: #E6DEF8; box-shadow: inset 0 0 0 1.5px rgba(75,43,184,.28); }
+:root[data-style="light"] .aish-fab.is-header > .aish-fab__dot { background: #FFFFFF; }
+:root[data-style="violet"] .aish-fab.is-header { background: #15122A; box-shadow: inset 0 0 0 1.5px rgba(255,143,126,.5); }
+:root[data-style="violet"] .aish-fab.is-header > .aish-fab__dot { background: #FFFFFF; }
 .aish-fab__menu { position: fixed; z-index: 2147483001; min-width: 220px; padding: 6px; border-radius: 18px; display: flex; flex-direction: column; gap: 2px; font: 500 14px/1 'Onest', system-ui, sans-serif;
   color: var(--ys-ink, #F6F3FF); background: var(--ys-raised, rgba(46,38,78,.96)); box-shadow: inset 0 0 0 1px var(--ys-line, rgba(255,255,255,.14)), var(--ys-shadow-lg, 0 30px 70px -24px rgba(0,0,0,.75)); }
 .aish-fab__menu[hidden] { display: none; }

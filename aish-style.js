@@ -21,7 +21,7 @@
     en: { white: 'White', black: 'Black', light: 'Light', violet: 'Violet', aria: 'Color theme', hint: 'Theme · drag to move' }
   };
   var GROUND = { white: '#ECECF3', black: '#131415', light: '#EEEAF8', violet: '#15122A' };
-  var ORB_SUFFIX = {};   // шар одинаковый во всех темах (раньше black → -cold)
+  var ORB_SUFFIX = { black: '-lime' };   // Чёрный: оранжевый желток с салатовым бликом
   var KEY = 'aish-style', POS = 'aish-style-pos';
   var root = document.documentElement;
   var subs = [];
@@ -62,8 +62,8 @@
     swapOrbs(document);
   }
 
-  /* Шар-маскот в цвет темы: в Чёрной — холодно-жёлтый. Форма, глаза и блики те же. */
-  var ORB_RX = /(^|\/)assets\/(orb(?:-no-eyes|-sm)?)(-cold)?\.png(\?.*)?$/;
+  /* Шар-маскот: в Чёрной — оранжевый желток с салатовым бликом (orb-*-lime). */
+  var ORB_RX = /(^|\/)assets\/(orb(?:-no-eyes|-sm)?)(-cold|-lime)?\.png(\?.*)?$/;
   function swapImg(img) {
     var src = img.getAttribute('src') || '';
     var m = ORB_RX.exec(src);
@@ -256,9 +256,23 @@
     el.style.display = 'none';
     el.setAttribute('aria-hidden', 'true');
     el.tabIndex = -1;
+    if (opts.header) {
+      docked = true;
+      fab.classList.add('is-header');
+      fab.classList.remove('is-docked', 'is-compact');
+      fab.style.left = '';
+      fab.style.top = '';
+      fab.style.touchAction = 'manipulation';
+      fab.style.cursor = 'pointer';
+      if (el.parentNode) el.parentNode.insertBefore(fab, el);
+      if (menu.parentNode !== document.body) document.body.appendChild(menu);
+      paint();
+      return fab;
+    }
     if (opts.replace !== false) {
       docked = true;
       fab.classList.add('is-docked');
+      fab.classList.remove('is-header');
       fab.classList.toggle('is-compact', !!opts.compact);
       fab.style.left = '';
       fab.style.top = '';

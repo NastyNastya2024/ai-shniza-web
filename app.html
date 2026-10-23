@@ -12,8 +12,8 @@
 <link rel="stylesheet" href="/chat-history.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/aish-style.css?v=8">
-<script src="/aish-style.js?v=8"></script>
+<link rel="stylesheet" href="/aish-style.css?v=9">
+<script src="/aish-style.js?v=9"></script>
 <style>
 .brand-logo{height:28px;width:auto;display:block}
 .brand-logo-sm{height:24px}
@@ -416,7 +416,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
   --user-bg:#F3F4F6;--user-ink:#0F1016;--purple:#F3F4F6;--purple2:#FFFFFF;--purple-soft:rgba(255,255,255,.07);--purple-soft-h:rgba(255,255,255,.12);--purple-brd:rgba(255,255,255,.16);--purple-ink:#F3F4F6;--ov:rgba(0,0,0,.7);--modal-bg:rgba(24,25,28,.95)}
 /* фон: перламутр */
 :root[data-style="white"] .bg-light{background-image:url(assets/bg-white.jpg)}
-:root[data-style="black"] .bg-dark{background-image:url(assets/bg-black.jpg)}
+:root[data-style="black"] .bg-dark{background-image:url(assets/bg-black.jpg?v=3)}
 /* панели: плотные, тень вместо рамки */
 :root[data-style="white"] .t-light #left.panel{background:#FFFFFF;border-color:rgba(18,20,32,.08);box-shadow:0 1px 2px rgba(18,20,32,.06),0 12px 32px -14px rgba(18,20,32,.18)}
 :root[data-style="white"] .t-light .glass{box-shadow:0 1px 2px rgba(18,20,32,.05),0 18px 44px -22px rgba(18,20,32,.22)}
@@ -439,21 +439,20 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 }
 /* выбранная модель: кольцо кита (желток на Белом, лайм на Чёрном) */
 :root[data-style="white"] .model-on,:root[data-style="white"] .t-light :is(#left.panel,#vit) .model-on{background:linear-gradient(#fff,#fff) padding-box,linear-gradient(110deg,#FFC24A 0%,#FF8A2B 45%,#FFD3E6 78%,#F2668B 100%) border-box}
-:root[data-style="black"] .model-on,:root[data-style="black"] .t-dark :is(#left.panel,#vit) .model-on{background:linear-gradient(#1D1E22,#1D1E22) padding-box,linear-gradient(110deg,#F2F88A 0%,#DCEB4A 45%,#9DB2D6 78%,#B9CC2C 100%) border-box;box-shadow:0 0 0 1px rgba(220,235,74,.14),0 8px 18px -14px rgba(220,235,74,.4)}
+:root[data-style="black"] .model-on,:root[data-style="black"] .t-dark :is(#left.panel,#vit) .model-on{background:linear-gradient(#1D1E22,#1D1E22) padding-box,linear-gradient(110deg,#F2F88A 0%,#DCEB4A 40%,#F4C548 72%,#FF9F45 100%) border-box;box-shadow:0 0 0 1px rgba(220,235,74,.14),0 8px 18px -14px rgba(220,235,74,.4)}
 /* главная кнопка генерации: градиент кита */
 :root[data-style="white"] #form .composer button[type=submit],:root[data-style="white"] #form .composer .btn-submit{background:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B)!important;color:#FFFFFF!important;text-shadow:none!important;font-family:'Days One','Onest',sans-serif!important;font-weight:400!important;box-shadow:0 10px 28px -10px rgba(255,138,43,.55)!important}
-:root[data-style="black"] #form .composer button[type=submit],:root[data-style="black"] #form .composer .btn-submit{background:linear-gradient(100deg,#F2F88A,#DCEB4A 55%,#B9CC2C)!important;color:#11130A!important;text-shadow:none!important;font-family:'Days One','Onest',sans-serif!important;font-weight:400!important;box-shadow:0 0 0 1px rgba(220,235,74,.2),0 12px 32px -10px rgba(220,235,74,.4)!important}
+:root[data-style="black"] #form .composer button[type=submit],:root[data-style="black"] #form .composer .btn-submit{background:linear-gradient(100deg,#EEF784 0%,#DCEB4A 40%,#F4C548 74%,#FF9F45 100%)!important;color:#11130A!important;text-shadow:none!important;font-family:'Days One','Onest',sans-serif!important;font-weight:400!important;box-shadow:0 0 0 1px rgba(220,235,74,.2),0 12px 32px -10px rgba(246,168,64,.42)!important}
 #form .composer .btn-submit__ico{stroke:#FFFFFF;color:#FFFFFF;display:block;flex:none}
 :root[data-style="black"] #form .composer .btn-submit__ico{stroke:#11130A;color:#11130A}
 :root[data-style="white"] #form .composer .btn-submit__ico{stroke:#FFFFFF;color:#FFFFFF}
 :root[data-style] .btn-gen{font-family:'Days One','Onest',sans-serif;font-weight:400}
 :root[data-style="white"] .btn-gen,:root[data-style="white"] .t-dark .vit-pv .btn-gen{background:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B);color:#17110A;box-shadow:0 10px 28px -10px rgba(255,138,43,.55)}
-:root[data-style="black"] .btn-gen,:root[data-style="black"] .t-dark .vit-pv .btn-gen,:root[data-style="black"] .t-dark .vit-pv .acts .btn-purple{background:linear-gradient(100deg,#F2F88A,#DCEB4A 55%,#B9CC2C);color:#11130A;box-shadow:0 12px 32px -10px rgba(220,235,74,.4)}
+:root[data-style="black"] .btn-gen,:root[data-style="black"] .t-dark .vit-pv .btn-gen,:root[data-style="black"] .t-dark .vit-pv .acts .btn-purple{background:linear-gradient(100deg,#EEF784 0%,#DCEB4A 40%,#F4C548 74%,#FF9F45 100%);color:#11130A;box-shadow:0 12px 32px -10px rgba(246,168,64,.42)}
 :root:is([data-style="white"],[data-style="black"]) .btn-gen:hover{filter:brightness(1.05)}
 /* шар в Чёрной: чуть лайма + слабее ореол */
 :root[data-style="black"] #halo{inset:-22%!important;opacity:.55}
-:root[data-style="black"] .orb-float > img,:root[data-style="black"] .hero .orb-float img{filter:hue-rotate(14deg) saturate(1.06) brightness(1.02)}
-:root[data-style="black"] .orb-float{filter:drop-shadow(0 4px 12px rgba(220,235,74,.12))}
+:root[data-style="black"] .orb-float{filter:drop-shadow(0 4px 12px rgba(246,168,64,.28))}
 /* кнопки с белым текстом на акценте: на Чёрном акцент светлый — текст тёмный */
 :root[data-style="black"] :is(.btn-primary,.vh-go,.vit-btn .cnt){color:#0F1016}
 :root[data-style="black"] .t-dark .vit-pv .req .btn-primary{background:#F3F4F6;color:#0F1016}
