@@ -330,7 +330,7 @@ window.AISH_DICT_EN = {
   'index.faq.models.q': 'Which AI models are available?',
   'index.faq.models.a': 'Video: Veo 3.1, Kling, Seedance 2.5, Wan 3.0, Hailuo 02, MiniMax H3, PixVerse V6, Runway Gen-4 Turbo, Grok Imagine. Images: GPT Image 2, Nano Banana Pro, Seedream 5 Pro, Ideogram V3, Soul Cinema. Music: ElevenLabs Music, Stable Audio 2.5, ACE-Step. Text and prompts: Claude, GPT-5.4, Gemini, DeepSeek. New models are added regularly.',
   'index.faq.vpn.q': 'Do I need a VPN or a foreign card?',
-  'index.faq.vpn.a': 'No. The site works without a VPN, and generations are paid in rubles from your balance, which you can top up from 1 ruble.',
+  'index.faq.vpn.a': 'No. The site works without a VPN, and generations are paid in rubles from your balance, which you can top up from 1 ₽.',
   'index.faq.price.q': 'How much does a generation cost?',
   'index.faq.price.a': 'You pay only for the generation itself, and the price is shown on the model card before you run it. Images start from about a ruble, video depends on the model and duration. The amount is reserved while the job runs and returned to your balance if it fails.',
   'index.faq.prompt.q': 'I can’t write prompts. What should I do?',
