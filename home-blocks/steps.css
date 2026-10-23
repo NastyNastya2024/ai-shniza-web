@@ -17,7 +17,7 @@
   --st-ink:#0F1016; --st-muted:#4B4D59; --st-frame:#FFFFFF; --st-line:rgba(18,20,32,.08);
   --st-shadow:0 2px 6px rgba(18,20,32,.06),0 60px 120px -50px rgba(18,20,32,.45);
   --st-glow-a:rgba(255,211,230,.9); --st-glow-b:rgba(211,227,255,.9); --st-glow-c:rgba(255,230,194,.9);
-  --st-cta-bg:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B); --st-cta-ink:#FFFFFF; --st-cta-shadow:0 14px 34px -12px rgba(255,138,43,.6);
+  --st-cta-bg:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B); --st-cta-ink:#17110A; --st-cta-shadow:0 14px 34px -12px rgba(255,138,43,.6);
   --st-pill-bg:#0F1016; --st-pill-ink:#fff; --st-eye:#646673; --st-eye-n:#0F1016; --st-eye-n-ink:#fff;
   --st-glass-hi:rgba(255,255,255,.88); --st-glass-mid:rgba(255,255,255,.32); --st-glass-lo:rgba(220,224,240,.28);
   --st-glass-stroke:rgba(255,255,255,.7); --st-glass-edge:rgba(18,20,32,.16); --st-glass-shadow:rgba(18,20,32,.2);
@@ -27,8 +27,8 @@
 :root[data-style="black"] .st{
   --st-ink:#F3F4F6; --st-muted:#A8ABB2; --st-frame:#18191C; --st-line:rgba(255,255,255,.08);
   --st-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 0 1px rgba(255,255,255,.04),0 70px 140px -40px #000;
-  --st-glow-a:rgba(220,235,74,.30); --st-glow-b:rgba(157,178,214,.28); --st-glow-c:rgba(255,159,69,.18);
-  --st-cta-bg:linear-gradient(100deg,#EEF784 0%,#DCEB4A 40%,#F4C548 74%,#FF9F45 100%); --st-cta-ink:#11130A; --st-cta-shadow:0 0 0 1px rgba(220,235,74,.2),0 16px 40px -12px rgba(246,168,64,.42);
+  --st-glow-a:rgba(220,235,74,.30); --st-glow-b:rgba(157,178,214,.28); --st-glow-c:rgba(220,235,74,.14);
+  --st-cta-bg:linear-gradient(100deg,#F2F88A,#DCEB4A 55%,#B9CC2C); --st-cta-ink:#11130A; --st-cta-shadow:0 0 0 1px rgba(220,235,74,.2),0 16px 40px -12px rgba(220,235,74,.45);
   --st-pill-bg:#F3F4F6; --st-pill-ink:#0F1016; --st-eye:#8E9199; --st-eye-n:#F3F4F6; --st-eye-n-ink:#0F1016;
   --st-glass-hi:rgba(255,255,255,.42); --st-glass-mid:rgba(255,255,255,.12); --st-glass-lo:rgba(220,235,74,.10);
   --st-glass-stroke:rgba(255,255,255,.28); --st-glass-edge:rgba(255,255,255,.18); --st-glass-shadow:rgba(0,0,0,.55);
@@ -106,7 +106,7 @@
 
 /* выноска-деталь поверх экрана */
 .st-call{position:absolute;z-index:2;display:flex;flex-direction:column;gap:10px;align-items:flex-start;max-width:calc(100% + 2%);transition:transform .9s cubic-bezier(.2,.7,.2,1)}
-.st-call--1{left:-6%;bottom:-14%;width:38%;transform:rotate(-4deg)}
+.st-call--1{left:-6%;bottom:-12%;width:34%;transform:rotate(-4deg)}
 .st-call--2{left:-2%;bottom:-14%;width:24%;transform:rotate(3deg)}
 .st-call--3{align-items:flex-end;right:-1%;bottom:-13%;width:30%;transform:rotate(3deg)}
 .st-media:hover .st-call{transform:none}

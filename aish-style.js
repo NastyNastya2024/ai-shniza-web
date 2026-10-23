@@ -1,4 +1,4 @@
-/* Темы {AI}-шница UI: Белый / Чёрный (новые) + Сиреневый / Фиолетовый (нынешние) — общие для всех страниц.
+/* Темы {AI}-шница UI: Белый / Чёрный (новые) + Светлый / Фиолетовый (нынешние) — общие для всех страниц.
  *
  * Подключается в <head> БЕЗ defer, до стилей страницы: сразу ставит <html data-style="…">, чтобы не было вспышки.
  *
@@ -9,8 +9,7 @@
  * ?style=white|black|light|violet в адресе перекрывает выбор; старый ?theme=dark|light тоже понимается.
  *
  * Переключатель — ОДИН плавающий кружок поверх страницы: нажатие открывает меню тем, кружок можно перетащить
- * мышкой или пальцем, место запоминается (localStorage['aish-style-pos-v2']). Создаётся сам на каждой странице.
- * По умолчанию — вверху справа. Цвет самого шарика: белая тема → чёрный, остальные → белый.
+ * мышкой или пальцем, место запоминается (localStorage['aish-style-pos']). Создаётся сам на каждой странице.
  *
  * API: AishStyle.get() · mode() · isDark() · ground() · set(style) · onChange(fn) · mount(el) — прячет старую кнопку темы
  */
@@ -18,14 +17,12 @@
   'use strict';
   var STYLES = ['white', 'black', 'light', 'violet'];
   var LABEL = {
-    ru: { white: 'Белый', black: 'Чёрный', light: 'Сиреневый', violet: 'Фиолетовый', aria: 'Тема оформления', hint: 'Тема · можно перетащить' },
-    en: { white: 'White', black: 'Black', light: 'Lilac', violet: 'Violet', aria: 'Color theme', hint: 'Theme · drag to move' }
+    ru: { white: 'Белый', black: 'Чёрный', light: 'Светлый', violet: 'Фиолетовый', aria: 'Тема оформления', hint: 'Тема · можно перетащить' },
+    en: { white: 'White', black: 'Black', light: 'Light', violet: 'Violet', aria: 'Color theme', hint: 'Theme · drag to move' }
   };
   var GROUND = { white: '#ECECF3', black: '#131415', light: '#EEEAF8', violet: '#15122A' };
-  var ORB_SUFFIX = { black: '-lime' };   // Чёрный: оранжевый желток с салатовым бликом
-  var KEY = 'aish-style', POS = 'aish-style-pos-v2';
-  /* цвет самого шарика переключателя, не пункта меню */
-  var FAB_FACE = { white: 'black', black: 'white', light: 'white', violet: 'white' };
+  var ORB_SUFFIX = {};   // шар одинаковый во всех темах (раньше black → -cold)
+  var KEY = 'aish-style', POS = 'aish-style-pos';
   var root = document.documentElement;
   var subs = [];
 
@@ -65,8 +62,8 @@
     swapOrbs(document);
   }
 
-  /* Шар-маскот: в Чёрной — оранжевый желток с салатовым бликом. Форма и глаза те же. */
-  var ORB_RX = /(^|\/)assets\/(orb(?:-no-eyes|-sm)?)(-cold|-lime)?\.png(\?.*)?$/;
+  /* Шар-маскот в цвет темы: в Чёрной — холодно-жёлтый. Форма, глаза и блики те же. */
+  var ORB_RX = /(^|\/)assets\/(orb(?:-no-eyes|-sm)?)(-cold)?\.png(\?.*)?$/;
   function swapImg(img) {
     var src = img.getAttribute('src') || '';
     var m = ORB_RX.exec(src);
@@ -96,10 +93,7 @@
   function paint() {
     if (!fab) return;
     var L = LABEL[lang()];
-    var face = FAB_FACE[cur] || 'white';
-    fab.classList.toggle('is-face-black', face === 'black');
-    fab.classList.toggle('is-face-white', face === 'white');
-    fab.querySelector('.aish-fab__dot').className = 'aish-fab__dot aish-style__dot--' + face;
+    fab.querySelector('.aish-fab__dot').className = 'aish-fab__dot aish-style__dot--' + cur;
     fab.setAttribute('aria-label', L.aria + ': ' + L[cur]);
     fab.title = docked ? (L.aria + ': ' + L[cur]) : L.hint;
     Array.prototype.forEach.call(menu.querySelectorAll('[data-style-opt]'), function (b) {
@@ -121,12 +115,7 @@
     fab.style.top = (y - r) + 'px';
     return { x: x / w, y: y / h };
   }
-  function defaultPos() {
-    var w = window.innerWidth, h = window.innerHeight, narrow = w <= 760;
-    var cx = w - (narrow ? 38 : 42);
-    var cy = narrow ? 36 : 42;
-    return { x: cx / w, y: cy / h };
-  }
+  function defaultPos() { return window.innerWidth <= 760 ? { x: 0.92, y: 0.62 } : { x: 0.985, y: 0.5 }; }
 
   function openMenu() {
     menu.hidden = false;

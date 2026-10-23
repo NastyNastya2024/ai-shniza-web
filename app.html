@@ -12,8 +12,8 @@
 <link rel="stylesheet" href="/chat-history.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/aish-style.css?v=15">
-<script src="/aish-style.js?v=11"></script>
+<link rel="stylesheet" href="/aish-style.css?v=8">
+<script src="/aish-style.js?v=8"></script>
 <style>
 .brand-logo{height:28px;width:auto;display:block}
 .brand-logo-sm{height:24px}
@@ -145,10 +145,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .icon-on{color:var(--ink);background:var(--nav-on)}
 .icon-ghost{width:36px;height:36px;border-radius:10px;border:none;background:transparent;backdrop-filter:none;color:var(--muted)}
 .icon-ghost:hover{background:var(--soft)}
-.icon-btn.lang{font-family:'Onest',sans-serif;font-weight:700;font-size:12px;letter-spacing:.04em;flex:0 0 auto}
-/* свёрнутая шапка: кружок темы той же ширины, что панель и язык */
-#leftReopen .aish-fab.is-docked{width:44px;height:44px;border-radius:14px}
-#leftReopen .aish-fab.is-docked .aish-fab__dot{width:26px;height:26px}
+.icon-btn.lang{font-family:'Onest',sans-serif;font-weight:700;font-size:12px;letter-spacing:.04em}
 .eye-p{position:absolute;width:8.5%;height:27%;top:34.5%;transition:transform .28s cubic-bezier(.3,.7,.4,1)}
 .eye-p.l{left:34.25%}.eye-p.r{left:57.25%}
 .hero{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px 24px;text-align:center;overflow:hidden;transition:flex-grow .55s cubic-bezier(.4,.1,.2,1),opacity .4s ease,transform .55s cubic-bezier(.4,.1,.2,1),padding .55s ease,max-height .55s ease;max-height:900px}
@@ -419,7 +416,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
   --user-bg:#F3F4F6;--user-ink:#0F1016;--purple:#F3F4F6;--purple2:#FFFFFF;--purple-soft:rgba(255,255,255,.07);--purple-soft-h:rgba(255,255,255,.12);--purple-brd:rgba(255,255,255,.16);--purple-ink:#F3F4F6;--ov:rgba(0,0,0,.7);--modal-bg:rgba(24,25,28,.95)}
 /* фон: перламутр */
 :root[data-style="white"] .bg-light{background-image:url(assets/bg-white.jpg)}
-:root[data-style="black"] .bg-dark{background-image:url(assets/bg-black.jpg?v=3)}
+:root[data-style="black"] .bg-dark{background-image:url(assets/bg-black.jpg)}
 /* панели: плотные, тень вместо рамки */
 :root[data-style="white"] .t-light #left.panel{background:#FFFFFF;border-color:rgba(18,20,32,.08);box-shadow:0 1px 2px rgba(18,20,32,.06),0 12px 32px -14px rgba(18,20,32,.18)}
 :root[data-style="white"] .t-light .glass{box-shadow:0 1px 2px rgba(18,20,32,.05),0 18px 44px -22px rgba(18,20,32,.22)}
@@ -442,18 +439,21 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 }
 /* выбранная модель: кольцо кита (желток на Белом, лайм на Чёрном) */
 :root[data-style="white"] .model-on,:root[data-style="white"] .t-light :is(#left.panel,#vit) .model-on{background:linear-gradient(#fff,#fff) padding-box,linear-gradient(110deg,#FFC24A 0%,#FF8A2B 45%,#FFD3E6 78%,#F2668B 100%) border-box}
-:root[data-style="black"] .model-on,:root[data-style="black"] .t-dark :is(#left.panel,#vit) .model-on{background:linear-gradient(#1D1E22,#1D1E22) padding-box,linear-gradient(110deg,#F2F88A 0%,#DCEB4A 40%,#F4C548 72%,#FF9F45 100%) border-box;box-shadow:0 0 0 1px rgba(220,235,74,.14),0 8px 18px -14px rgba(220,235,74,.4)}
+:root[data-style="black"] .model-on,:root[data-style="black"] .t-dark :is(#left.panel,#vit) .model-on{background:linear-gradient(#1D1E22,#1D1E22) padding-box,linear-gradient(110deg,#F2F88A 0%,#DCEB4A 45%,#9DB2D6 78%,#B9CC2C 100%) border-box;box-shadow:0 0 0 1px rgba(220,235,74,.14),0 8px 18px -14px rgba(220,235,74,.4)}
 /* главная кнопка генерации: градиент кита */
 :root[data-style="white"] #form .composer button[type=submit],:root[data-style="white"] #form .composer .btn-submit{background:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B)!important;color:#FFFFFF!important;text-shadow:none!important;font-family:'Days One','Onest',sans-serif!important;font-weight:400!important;box-shadow:0 10px 28px -10px rgba(255,138,43,.55)!important}
-:root[data-style="black"] #form .composer button[type=submit],:root[data-style="black"] #form .composer .btn-submit{background:linear-gradient(100deg,#EEF784 0%,#DCEB4A 40%,#F4C548 74%,#FF9F45 100%)!important;color:#11130A!important;text-shadow:none!important;font-family:'Days One','Onest',sans-serif!important;font-weight:400!important;box-shadow:0 0 0 1px rgba(220,235,74,.2),0 12px 32px -10px rgba(246,168,64,.42)!important}
+:root[data-style="black"] #form .composer button[type=submit],:root[data-style="black"] #form .composer .btn-submit{background:linear-gradient(100deg,#F2F88A,#DCEB4A 55%,#B9CC2C)!important;color:#11130A!important;text-shadow:none!important;font-family:'Days One','Onest',sans-serif!important;font-weight:400!important;box-shadow:0 0 0 1px rgba(220,235,74,.2),0 12px 32px -10px rgba(220,235,74,.4)!important}
 #form .composer .btn-submit__ico{stroke:#FFFFFF;color:#FFFFFF;display:block;flex:none}
 :root[data-style="black"] #form .composer .btn-submit__ico{stroke:#11130A;color:#11130A}
 :root[data-style="white"] #form .composer .btn-submit__ico{stroke:#FFFFFF;color:#FFFFFF}
 :root[data-style] .btn-gen{font-family:'Days One','Onest',sans-serif;font-weight:400}
-:root[data-style="white"] .btn-gen,:root[data-style="white"] .t-dark .vit-pv .btn-gen{background:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B);color:#FFFFFF;box-shadow:0 10px 28px -10px rgba(255,138,43,.55)}
-:root[data-style="black"] .btn-gen,:root[data-style="black"] .t-dark .vit-pv .btn-gen,:root[data-style="black"] .t-dark .vit-pv .acts .btn-purple{background:linear-gradient(100deg,#EEF784 0%,#DCEB4A 40%,#F4C548 74%,#FF9F45 100%);color:#11130A;box-shadow:0 12px 32px -10px rgba(246,168,64,.42)}
+:root[data-style="white"] .btn-gen,:root[data-style="white"] .t-dark .vit-pv .btn-gen{background:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B);color:#17110A;box-shadow:0 10px 28px -10px rgba(255,138,43,.55)}
+:root[data-style="black"] .btn-gen,:root[data-style="black"] .t-dark .vit-pv .btn-gen,:root[data-style="black"] .t-dark .vit-pv .acts .btn-purple{background:linear-gradient(100deg,#F2F88A,#DCEB4A 55%,#B9CC2C);color:#11130A;box-shadow:0 12px 32px -10px rgba(220,235,74,.4)}
 :root:is([data-style="white"],[data-style="black"]) .btn-gen:hover{filter:brightness(1.05)}
-/* шар в Чёрной берётся из ассета -lime, без дополнительного сдвига цвета */
+/* шар в Чёрной: чуть лайма + слабее ореол */
+:root[data-style="black"] #halo{inset:-22%!important;opacity:.55}
+:root[data-style="black"] .orb-float > img,:root[data-style="black"] .hero .orb-float img{filter:hue-rotate(14deg) saturate(1.06) brightness(1.02)}
+:root[data-style="black"] .orb-float{filter:drop-shadow(0 4px 12px rgba(220,235,74,.12))}
 /* кнопки с белым текстом на акценте: на Чёрном акцент светлый — текст тёмный */
 :root[data-style="black"] :is(.btn-primary,.vh-go,.vit-btn .cnt){color:#0F1016}
 :root[data-style="black"] .t-dark .vit-pv .req .btn-primary{background:#F3F4F6;color:#0F1016}
@@ -473,9 +473,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 <script>(function(){try{var S=window.AishStyle;var t=S?S.mode():(localStorage.getItem('aish-vitrina-theme')||localStorage.getItem('theme')||new URLSearchParams(location.search).get('theme')||'light');var d=t==='dark';var r=document.getElementById('root');if(!r)return;r.classList.toggle('t-dark',d);r.classList.toggle('bg-dark',d);r.classList.toggle('t-light',!d);r.classList.toggle('bg-light',!d);document.body.style.background=S?S.ground():(d?'#15122A':'#EEEAF8');}catch(e){}})();</script>
 
   <aside id="left" class="panel" style="flex:0 1 300px;max-width:320px;min-width:220px;box-sizing:border-box;border-radius:28px;padding:18px 12px 14px;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 32px);overflow:hidden">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-left:6px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding-left:6px">
       <a href="/" aria-label="{AI}-шница — на главную" data-i18n-attr="aria-label:common.home.aria" style="display:flex;align-items:center;text-decoration:none;flex:0 0 auto"><img class="brand-mark brand-mark-light" src="/assets/brand/svg/icon-light.svg" alt="{AI}-шница" data-i18n-attr="alt:common.brand.alt"><img class="brand-mark brand-mark-dark" src="/assets/brand/svg/icon-dark.svg" alt="{AI}-шница" data-i18n-attr="alt:common.brand.alt"></a>
-      <span style="display:flex;align-items:center;gap:6px;margin-left:auto;flex:0 0 auto"><a href="#" class="icon-btn icon-ghost" aria-label="Помощь" title="Помощь" data-i18n-attr="aria-label:common.help;title:common.help"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01"></path></svg></a><button type="button" class="icon-btn icon-ghost lang" data-lang-toggle aria-label="Язык: русский" title="Язык">RU</button><button type="button" id="themeBtn" class="icon-btn icon-ghost" aria-label="Тёмная тема" title="Тёмная тема"></button><button type="button" class="icon-btn icon-ghost" aria-label="Скрыть панель" data-i18n-attr="aria-label:studio.panel.hide" data-toggle-left><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"></rect><path d="M9 4v16"></path></svg></button></span>
+      <span style="display:flex;align-items:center;gap:2px;margin-left:auto"><a href="#" class="icon-btn icon-ghost" aria-label="Помощь" title="Помощь" data-i18n-attr="aria-label:common.help;title:common.help"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01"></path></svg></a><button type="button" class="icon-btn icon-ghost lang" data-lang-toggle aria-label="Язык: русский" title="Язык">RU</button><button type="button" id="themeBtn" class="icon-btn icon-ghost" aria-label="Тёмная тема" title="Тёмная тема"></button><button type="button" class="icon-btn icon-ghost" aria-label="Скрыть панель" data-i18n-attr="aria-label:studio.panel.hide" data-toggle-left><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"></rect><path d="M9 4v16"></path></svg></button></span>
     </div>
     <!-- слева — только чаты; каталог нейросетей переехал в правую панель (вкладка «Нейросети») -->
     <section id="chatsBox" class="chats chats-side" aria-label="Чаты" data-i18n-attr="aria-label:studio.history.title"></section>
@@ -1599,8 +1599,8 @@ class Component extends DCLogic {
     }));
     return {
       themeClass: dark ? 't-dark' : 't-light', bgClass: dark ? 'bg-dark' : 'bg-light',
-      // Чёрная — тёплый янтарь; Фиолетовая — оранж; остальное — тёплый розовый
-      halo: (window.AishStyle && AishStyle.get() === 'black') ? 'rgba(255,176,96,0.42)'
+      // Чёрная — лёгкий лайм; Фиолетовая — оранж; остальное — тёплый розовый
+      halo: (window.AishStyle && AishStyle.get() === 'black') ? 'rgba(220,235,74,0.18)'
         : ((window.AishStyle && AishStyle.get() === 'violet') || (!window.AishStyle && dark) ? 'rgba(255,150,70,0.35)' : 'rgba(255,236,236,0.85)'),
       say: st.say || ' ', shown: st.say.slice(0, st.shown), blinkClass: st.blink ? 'eye-blink' : '',
       ey: st.text ? 6 : 0,
