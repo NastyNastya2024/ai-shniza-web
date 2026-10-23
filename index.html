@@ -3,8 +3,98 @@
 <head>
 <meta charset="utf-8">
 <script>document.documentElement.setAttribute("data-theme","lilac");</script>
+<script src="/aish-style.js?v=11"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{AI}-шница — генеративные модели</title>
+<meta name="description" content="Нейросети для видео, картинок и музыки на русском: Veo 3.1, Kling, Seedance, GPT Image 2, Nano Banana Pro и другие в одном окне. ИИ-помощник напишет промпт и подберёт модель, оплата в рублях без VPN.">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  {
+   "@type": "Question",
+   "name": "Что такое {AI}-шница?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Это маркетплейс генеративных нейросетей на русском языке. В одном окне можно создать видео, картинку или музыку, выбрав любую из десятков моделей, а на витрине — посмотреть работы креаторов, взять их промпт или заказать оригинал."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Какие нейросети доступны?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Видео: Veo 3.1, Kling, Seedance 2.5, Wan 3.0, Hailuo 02, MiniMax H3, PixVerse V6, Runway Gen-4 Turbo, Grok Imagine. Картинки: GPT Image 2, Nano Banana Pro, Seedream 5 Pro, Ideogram V3, Soul Cinema. Музыка: ElevenLabs Music, Stable Audio 2.5, ACE-Step. Тексты и промпты: Claude, GPT-5.4, Gemini, DeepSeek. Список пополняется."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Нужны ли VPN и зарубежная карта?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Нет. Сайт работает из России без VPN, а генерации оплачиваются в рублях с баланса: пополнить его можно российской картой от 100 ₽."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Сколько стоит генерация?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Вы платите только за саму генерацию — цена видна до запуска на карточке модели. Картинки стоят от рубля, видео — в зависимости от модели и длительности. Пока генерация идёт, сумма резервируется, а если результат не получился, деньги возвращаются на баланс."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Я не умею писать промпты. Что делать?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Опишите идею своими словами по-русски. ИИ-помощник бесплатно допишет подробный промпт на английском — со светом, камерой и настроением, — подберёт подходящую нейросеть по задаче и цене и сразу подготовит запуск."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Можно ли оживить фото или сделать видео из картинки?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Да. Прикрепите фото скрепкой и опишите движение — модели вроде Kling, Veo 3.1, Seedance и Hailuo превратят его в видео. Фото можно и отредактировать: заменить фон, одежду или стиль."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Можно ли создать музыку нейросетью?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Да: ElevenLabs Music, Stable Audio 2.5 и ACE-Step пишут треки по текстовому описанию — жанр, настроение, темп и инструменты. Готовый трек можно скачать или подложить под видео."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Кому принадлежат сгенерированные работы?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Права на свои промпты и результаты остаются у вас — в рамках условий выбранной модели. Перед коммерческим использованием проверьте лицензию модели; подробности — в пользовательском соглашении."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Где хранятся мои генерации?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Все результаты попадают в «Мои работы». Неопубликованные генерации хранятся 24 часа — скачайте их или опубликуйте на витрине, чтобы они остались в профиле. Чаты с помощником хранятся 30 дней."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Как заработать на витрине?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Публикуйте лучшие работы на витрине. Клиенты смотрят их, запрашивают промпт или оригинал и пишут о заказе — запросы с контактами приходят в кабинет креатора."
+   }
+  }
+ ]
+}
+</script>
 <script src="/i18n/dict-ru.js"></script>
 <script src="/i18n/dict-en.js"></script>
 <script src="/i18n/runtime.js"></script>
@@ -15,7 +105,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/works-block/works-block.css?v=3">
 <link rel="stylesheet" href="/home-blocks/features.css?v=3">
-<link rel="stylesheet" href="/home-blocks/footer.css?v=2">
+<link rel="stylesheet" href="/home-blocks/footer.css?v=3">
+<link rel="stylesheet" href="/home-blocks/steps.css?v=5">
+<link rel="stylesheet" href="/home-blocks/faq.css?v=1">
+<link rel="stylesheet" href="/aish-style.css?v=15">
 <style>
 
 body{margin:0;background:var(--page-bg,#C9C3F3);color:var(--ink-ui,#2E186A)}
@@ -69,6 +162,7 @@ a{color:var(--ink-ui)}a:hover{opacity:.82}
 #models + .ws{margin-top:-30px;z-index:3}
 /* overlap works → features (styles in /home-blocks/) */
 .ws + #features{margin-top:-44px}
+.ws + #features.st{margin-top:-44px}
 
 
 /* Liquid glass — mid white for panels, dark chips for actions */
@@ -337,6 +431,49 @@ a{color:var(--ink-ui)}a:hover{opacity:.82}
 #loginBtn{background:var(--login-bg)!important;color:var(--login-fg)!important}
 .fb{background-color:var(--features-bg)!important}
 </style>
+<style id="aish-style-index">
+/* Темы {AI}-шница UI на главной. Светлый — нынешняя сиреневая главная; Фиолетовый — её тёмная версия в гамме фиолетовой студии; Белый и Чёрный — новые. */
+:root[data-style="violet"]{--ink-ui:#F6F3FF;--page-bg:#15122A;--page-surface:#15122A;--glass-a:rgba(46,38,78,.86);--glass-b:rgba(36,30,62,.78);--glass-border:rgba(255,255,255,.14);--glass-shadow:rgba(0,0,0,.7);--chip-ink:#F6F3FF;--hdr-btn:#F6F3FF;--login-bg:#F3EFFF;--login-fg:#1E1238;--models-bg:#15122A;--models-ink:#F6F3FF;--mm-card:rgba(255,255,255,.07);--mm-border:rgba(255,255,255,.12);--mm-muted:#C9C0EE;--reply-ink:#F6F3FF;--features-bg:#15122A}
+:root[data-style="violet"] body{background:#15122A}
+:root[data-style="violet"] .page-bg{background-image:url(assets/bg-dark.jpg)}
+:root[data-style="violet"] .glass,:root[data-style="violet"] .prompt-box.glass{box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 30px 70px -30px rgba(0,0,0,.85)}
+:root[data-style="violet"] .mm-card:hover{background:rgba(255,255,255,.12)}
+:root[data-style="violet"] .mm-foot b{color:#F6F3FF}
+:root[data-style="violet"] #glow{background:radial-gradient(closest-side,rgba(255,150,70,.35),rgba(21,18,42,0))!important}
+:root[data-style="white"]{--ink-ui:#0F1016;--page-bg:#ECECF3;--page-surface:#ECECF3;--glass-a:rgba(255,255,255,.88);--glass-b:rgba(255,255,255,.72);--glass-border:rgba(18,20,32,.07);--glass-shadow:rgba(18,20,32,.22);--chip-ink:#0F1016;--hdr-btn:#0F1016;--login-bg:#0F1016;--login-fg:#FFFFFF;--models-bg:#ECECF3;--models-ink:#0F1016;--mm-card:rgba(255,255,255,.9);--mm-border:rgba(18,20,32,.07);--mm-muted:#4B4D59;--reply-ink:#0F1016;--features-bg:#ECECF3}
+:root[data-style="black"]{--ink-ui:#F3F4F6;--page-bg:#131415;--page-surface:#131415;--glass-a:rgba(32,33,37,.9);--glass-b:rgba(24,25,28,.82);--glass-border:rgba(255,255,255,.09);--glass-shadow:rgba(0,0,0,.8);--chip-ink:#F3F4F6;--hdr-btn:#F3F4F6;--login-bg:#F3F4F6;--login-fg:#0F1016;--models-bg:#131415;--models-ink:#F3F4F6;--mm-card:rgba(255,255,255,.05);--mm-border:rgba(255,255,255,.08);--mm-muted:#A8ABB2;--reply-ink:#F3F4F6;--features-bg:#131415}
+:root[data-style="white"] body{background:#ECECF3}
+:root[data-style="black"] body{background:#131415}
+:root[data-style="white"] .page-bg{background-image:url(assets/bg-white.jpg)}
+:root[data-style="black"] .page-bg{background-image:url(assets/bg-black.jpg?v=3)}
+:root[data-style="white"] .glass,:root[data-style="white"] .prompt-box.glass{box-shadow:0 1px 2px rgba(18,20,32,.05),0 24px 56px -28px rgba(18,20,32,.3)}
+:root[data-style="black"] .glass,:root[data-style="black"] .prompt-box.glass{box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 30px 70px -30px #000}
+:root[data-style="black"] .mm-card:hover{background:rgba(255,255,255,.09)}
+:root[data-style="black"] .mm-foot b{color:#F3F4F6}
+:root[data-style="white"] .mm-card:hover{background:#fff}
+:root[data-style="black"] #glow{background:radial-gradient(closest-side,rgba(255,176,96,.2),rgba(220,235,74,.06) 60%,rgba(19,20,21,0))!important}
+:root[data-style="white"] #glow{background:radial-gradient(closest-side,rgba(255,211,230,.7),rgba(236,236,243,0))!important}
+:root[data-style="black"] .gen-btn{background:linear-gradient(100deg,#EEF784 0%,#DCEB4A 40%,#F4C548 74%,#FF9F45 100%)!important;color:#11130A!important;text-shadow:none!important;box-shadow:0 0 0 1px rgba(220,235,74,.2),0 12px 32px -10px rgba(246,168,64,.42)!important}
+:root[data-style="white"] .gen-btn{background:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B)!important;color:#FFFFFF!important;text-shadow:none!important}
+:root:is([data-style="white"],[data-style="black"]) .gen-btn{font-family:'Days One','Onest',sans-serif!important;font-weight:400!important}
+/* без сиреневых акцентов текста — в тон теме */
+:root[data-style="white"] .prompt-spark{color:#4B4D59}
+:root[data-style="black"] .prompt-spark{color:#A8ABB2}
+:root[data-style="white"] .prompt-input::placeholder{color:#8A8C96!important}
+:root[data-style="black"] .prompt-input::placeholder{color:#8E9199!important}
+:root:is([data-style="white"],[data-style="black"]) .ws-title span{color:#EEEEF0;opacity:.78}
+:root:is([data-style="white"],[data-style="black"]) .reply{box-shadow:inset 0 1px 0 rgba(255,255,255,.72),inset 0 -2px 0 rgba(0,0,0,.12),inset 0 -5px 12px rgba(0,0,0,.05)}
+:root[data-style="black"] .tool-btn{border:1px solid var(--glass-border);color:var(--reply-ink);background:linear-gradient(165deg,var(--glass-a),var(--glass-b));backdrop-filter:blur(22px) saturate(1.35);-webkit-backdrop-filter:blur(22px) saturate(1.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.72),inset 0 -2px 0 rgba(0,0,0,.12),inset 0 -5px 12px rgba(0,0,0,.05)}
+:root[data-style="black"] .tool-btn:hover{background:rgba(255,255,255,.09)!important}
+:root[data-style="white"] .orb-btn:focus-visible{outline-color:#0F1016}
+:root[data-style="black"] .orb-btn:focus-visible{outline-color:#DCEB4A}
+#root > header .aish-fab.is-docked{width:44px;height:44px;border-radius:50%}
+#root > header .aish-fab.is-docked .aish-fab__dot{width:28px;height:28px}
+#root > header .aish-fab.is-docked.is-face-black,
+#root > header .aish-fab.is-docked.is-face-black:hover{background:#16171A;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 0 1.5px rgba(255,255,255,.22),0 8px 22px -8px rgba(0,0,0,.55)}
+#root > header .aish-fab.is-docked.is-face-white,
+#root > header .aish-fab.is-docked.is-face-white:hover{background:#FFFFFF;box-shadow:inset 0 0 0 1.5px rgba(18,20,32,.16),0 2px 8px rgba(18,20,32,.12),0 16px 36px -10px rgba(18,20,32,.45)}
+</style>
 </head>
 <body data-title-key="index.title">
 <div id="root" class="page-bg ws-hero" style="min-height: 100vh; box-sizing: border-box; position: relative; font-family: 'Onest', system-ui, sans-serif; color: var(--ink-ui); background-color: var(--page-bg); display: flex; flex-direction: column">
@@ -346,10 +483,12 @@ a{color:var(--ink-ui)}a:hover{opacity:.82}
       <img class="hdr-logo-lockup" src="/assets/brand/svg/lockup-light.svg" alt="{AI}-шница — маркетплейс генеративных моделей" data-i18n-attr="alt:common.logo.alt" height="44" style="height: 44px; width: auto">
       <img class="hdr-logo-icon" src="/assets/brand/svg/icon-light.svg" alt="{AI}-шница" data-i18n-attr="alt:common.brand.alt" width="40" height="40" style="height: 40px; width: 40px">
     </a>
-    <nav style="margin-left: auto; display: flex; align-items: center; gap: 6px">
+    <nav style="margin-left: auto; display: flex; align-items: center; gap: 8px">
+      <button type="button" id="loginBtn" style="height: 40px; padding: 0 20px; border-radius: 14px; border: none; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer">Войти</button>
+      <span id="themeSlot" hidden></span>
       <button type="button" class="hdr-btn lang" data-lang-toggle aria-label="Язык: русский" style="height: 44px; padding: 0 14px; border-radius: 999px; border: none; background: transparent; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer">RU</button>
-      <button type="button" id="loginBtn" style="height: 40px; margin-left: 6px; padding: 0 20px; border-radius: 14px; border: none; font-family: 'Onest', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer">Войти</button>
     </nav>
+    <script>if (window.AishStyle) AishStyle.mount(document.getElementById('themeSlot'), { replace: true });</script>
   </header>
 
   <main style="position: relative; z-index: 1; flex: 1 1 auto; width: 100%; max-width: 1100px; margin: 0 auto; box-sizing: border-box; padding: 16px 20px 80px; display: flex; flex-direction: column; align-items: center; justify-content: center">
@@ -423,45 +562,160 @@ a{color:var(--ink-ui)}a:hover{opacity:.82}
   </div>
 </section>
 
-<section id="features" class="fb page-bg" aria-label="Как это работает" data-i18n-attr="aria-label:index.features.aria">
-  <div class="w">
-    <div class="fb-head"><h2 class="reveal" data-i18n="index.features.title">От идеи до заказа — три шага</h2><p class="reveal" data-i18n="index.features.lead">ИИ-помощник подберёт промпт и модель, вы покажете лучшие работы на витрине и можете получить заказы</p></div>
-    <div class="fb-grid">
-      <article class="fb-card reveal">
-        <div class="fb-ill g1" aria-hidden="true"><div class="i1">
-          <div class="i1-raw" data-i18n="index.features.s1.raw">котик жарит яичницу</div>
-          <div class="i1-say"><span class="i1-orb"><i></i><i></i></span><div class="i1-bub" data-i18n="index.features.s1.say">Рекомендую так:</div></div>
-          <div class="i1-out">
-            <p data-i18n="index.features.s1.out">Котик-повар жарит яичницу на рассвете, тёплый кинематографичный свет</p>
-            <div class="i1-model"><span class="i1-star" data-i18n="index.features.s1.best">★ Лучшая модель</span><div><b>Seedance 2.5</b><span data-i18n="index.features.s1.meta">видео · со звуком</span></div><span class="i1-ic">▶</span></div>
+<section id="features" class="st page-bg" aria-label="Как это работает" data-i18n-attr="aria-label:index.features.aria">
+  <div class="st-w">
+    <header class="st-head reveal">
+      <h2 data-i18n="index.features.title">От идеи до заказа — три шага</h2>
+      <p data-i18n="index.features.lead">ИИ-помощник подберёт промпт и модель, вы покажете лучшие работы на витрине и можете получить заказы</p>
+    </header>
+
+    <article class="st-step" data-step="1">
+      <div class="st-txt reveal">
+        <span class="st-n" aria-hidden="true">01</span>
+        <span class="st-eye"><i>1</i><span data-i18n="index.features.s1.num">Идея и помощник</span></span>
+        <h3 data-i18n="index.features.s1.title">ИИ-помощник подберёт промпт и модель</h3>
+        <p data-i18n="index.features.s1.text">Опишите идею своими словами — помощник допишет промпт и подскажет лучшую модель по задаче и цене.</p>
+        <a class="st-cta" href="/app" data-i18n="index.features.s1.cta">Открыть студию</a>
+      </div>
+      <figure class="st-media reveal">
+        <div class="st-glow" aria-hidden="true"></div>
+        <div class="st-win">
+          <div class="st-bar" aria-hidden="true"><i></i><i></i><i></i><span>aishnitsa.ru/app</span></div>
+          <div class="st-shot">
+            <img class="st-v st-v--light" src="/home-blocks/img/steps/step1-light.webp?v=3" alt="Студия: помощник дописал промпт, подобрал нейросеть и выдал готовую картинку" data-i18n-attr="alt:index.features.s1.alt" loading="lazy" width="1800" height="1125">
+            <img class="st-v st-v--white" src="/home-blocks/img/steps/step1-white.webp?v=3" alt="" loading="lazy" width="1800" height="1125">
+            <img class="st-v st-v--black" src="/home-blocks/img/steps/step1-black.webp?v=3" alt="" loading="lazy" width="1800" height="1125">
+            <img class="st-v st-v--violet" src="/home-blocks/img/steps/step1-violet.webp?v=3" alt="" loading="lazy" width="1800" height="1125">
           </div>
-        </div></div>
-        <div class="fb-txt"><span class="fb-num"><i>1</i><span data-i18n="index.features.s1.num">Идея и помощник</span></span><h3 data-i18n="index.features.s1.title">ИИ-помощник подберёт промпт и модель</h3><p data-i18n="index.features.s1.text">Опишите идею своими словами — помощник допишет промпт и подскажет лучшую модель по задаче и цене.</p></div>
-      </article>
-      <article class="fb-card reveal">
-        <div class="fb-ill g2" aria-hidden="true"><div class="i2">
-          <div class="i2-back b1"><img src="/home-blocks/img/work-1.webp" alt=""></div>
-          <div class="i2-back b2"><img src="/home-blocks/img/work-2.webp" alt=""></div>
-          <div class="i2-main"><img src="/home-blocks/img/work-3.webp" alt="">
-            <div class="i2-bar"><span data-i18n="index.features.s2.bar">На витрине</span><span class="i2-sw"><i></i></span></div>
+        </div>
+        <div class="st-call st-call--1">
+          <span class="st-pill" data-i18n="index.features.s1.callout">Промпт и модель — за секунды</span>
+          <div class="st-card">
+            <img class="st-v st-v--light" src="/home-blocks/img/steps/step1-card-light.webp?v=3" alt="" loading="lazy" width="700" height="468">
+            <img class="st-v st-v--white" src="/home-blocks/img/steps/step1-card-white.webp?v=3" alt="" loading="lazy" width="700" height="468">
+            <img class="st-v st-v--black" src="/home-blocks/img/steps/step1-card-black.webp?v=3" alt="" loading="lazy" width="700" height="468">
+            <img class="st-v st-v--violet" src="/home-blocks/img/steps/step1-card-violet.webp?v=3" alt="" loading="lazy" width="700" height="468">
           </div>
-        </div></div>
-        <div class="fb-txt"><span class="fb-num"><i>2</i><span data-i18n="index.features.s2.num">Витрина</span></span><h3 data-i18n="index.features.s2.title">Покажите лучшее на витрине</h3><p data-i18n="index.features.s2.text">После генерации решите: опубликовать или оставить себе. В профиле — ваши работы и контакты, которые вы выбрали.</p></div>
-      </article>
-      <article class="fb-card reveal">
-        <div class="fb-ill g3" aria-hidden="true"><div class="i3">
-          <div class="i3-card"><div class="i3-h"><span data-i18n="index.features.s3.card">Новый заказ</span><em>3</em></div>
-            <div class="i3-top"><span class="i3-av" data-i18n="index.features.s3.avatar">А</span><div><b data-i18n="index.features.s3.name">Анна К.</b><span data-i18n="index.features.s3.what">оригинал «Галактики» в 4K</span></div></div>
-            <span class="i3-btn" data-i18n="index.features.s3.reply">Ответить на заказ →</span></div>
-        </div></div>
-        <div class="fb-txt"><span class="fb-num"><i>3</i><span data-i18n="index.features.s3.num">Заказы</span></span><h3 data-i18n="index.features.s3.title">Получайте заказы в кабинет</h3><p data-i18n="index.features.s3.text">Запросы промпта, оригинала или новой работы приходят с контактами клиента. Дальше — напрямую, без посредников.</p></div>
-      </article>
-      <span class="fb-arrow" style="left:calc(33.333% - 7px)" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-      <span class="fb-arrow" style="left:calc(66.666% + 7px)" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-    </div>
+        </div>
+      </figure>
+    </article>
+
+    <article class="st-step st-step--flip" data-step="2">
+      <div class="st-txt reveal">
+        <span class="st-n" aria-hidden="true">02</span>
+        <span class="st-eye"><i>2</i><span data-i18n="index.features.s2.num">Витрина</span></span>
+        <h3 data-i18n="index.features.s2.title">Покажите лучшее на витрине</h3>
+        <p data-i18n="index.features.s2.text">После генерации решите: опубликовать или оставить себе. В профиле — ваши работы и контакты, которые вы выбрали.</p>
+        <a class="st-cta" href="/explore" data-i18n="index.features.s2.cta">Смотреть витрину</a>
+      </div>
+      <figure class="st-media reveal">
+        <div class="st-glow" aria-hidden="true"></div>
+        <div class="st-win">
+          <div class="st-bar" aria-hidden="true"><i></i><i></i><i></i><span>aishnitsa.ru/explore</span></div>
+          <div class="st-shot">
+            <img class="st-v st-v--light" src="/home-blocks/img/steps/step2-light.webp" alt="Витрина: сетка работ креаторов" data-i18n-attr="alt:index.features.s2.alt" loading="lazy" width="1800" height="1125">
+            <img class="st-v st-v--white" src="/home-blocks/img/steps/step2-white.webp" alt="" loading="lazy" width="1800" height="1125">
+            <img class="st-v st-v--black" src="/home-blocks/img/steps/step2-black.webp" alt="" loading="lazy" width="1800" height="1125">
+            <img class="st-v st-v--violet" src="/home-blocks/img/steps/step2-violet.webp" alt="" loading="lazy" width="1800" height="1125">
+          </div>
+        </div>
+        <div class="st-call st-call--2">
+          <span class="st-pill" data-i18n="index.features.s2.callout">Одна кнопка — и работа на витрине</span>
+          <div class="st-card st-card--tall">
+            <img class="st-v st-v--light" src="/home-blocks/img/steps/step2-card-light.webp" alt="" loading="lazy" width="820" height="1086">
+            <img class="st-v st-v--white" src="/home-blocks/img/steps/step2-card-white.webp" alt="" loading="lazy" width="820" height="1086">
+            <img class="st-v st-v--black" src="/home-blocks/img/steps/step2-card-black.webp" alt="" loading="lazy" width="820" height="1086">
+            <img class="st-v st-v--violet" src="/home-blocks/img/steps/step2-card-violet.webp" alt="" loading="lazy" width="820" height="1086">
+          </div>
+        </div>
+      </figure>
+    </article>
+
+    <article class="st-step" data-step="3">
+      <div class="st-txt reveal">
+        <span class="st-n" aria-hidden="true">03</span>
+        <span class="st-eye"><i>3</i><span data-i18n="index.features.s3.num">Заказы</span></span>
+        <h3 data-i18n="index.features.s3.title">Получайте заказы в кабинет</h3>
+        <p data-i18n="index.features.s3.text">Запросы промпта, оригинала или новой работы приходят с контактами клиента. Дальше — напрямую, без посредников.</p>
+        <a class="st-cta" href="/account" data-i18n="index.features.s3.cta">Открыть кабинет</a>
+      </div>
+      <figure class="st-media reveal">
+        <div class="st-glow" aria-hidden="true"></div>
+        <div class="st-win">
+          <div class="st-bar" aria-hidden="true"><i></i><i></i><i></i><span>aishnitsa.ru/account</span></div>
+          <div class="st-shot">
+            <img class="st-v st-v--light" src="/home-blocks/img/steps/step3-light.webp" alt="Кабинет: переписка с клиентом о заказе оригинала" data-i18n-attr="alt:index.features.s3.alt" loading="lazy" width="1800" height="1125">
+            <img class="st-v st-v--white" src="/home-blocks/img/steps/step3-white.webp" alt="" loading="lazy" width="1800" height="1125">
+            <img class="st-v st-v--black" src="/home-blocks/img/steps/step3-black.webp" alt="" loading="lazy" width="1800" height="1125">
+            <img class="st-v st-v--violet" src="/home-blocks/img/steps/step3-violet.webp" alt="" loading="lazy" width="1800" height="1125">
+          </div>
+        </div>
+        <div class="st-call st-call--3">
+          <span class="st-pill" data-i18n="index.features.s3.callout">Запросы приходят с контактами клиента</span>
+          <div class="st-card">
+            <img class="st-v st-v--light" src="/home-blocks/img/steps/step3-card-light.webp" alt="" loading="lazy" width="660" height="650">
+            <img class="st-v st-v--white" src="/home-blocks/img/steps/step3-card-white.webp" alt="" loading="lazy" width="660" height="650">
+            <img class="st-v st-v--black" src="/home-blocks/img/steps/step3-card-black.webp" alt="" loading="lazy" width="660" height="650">
+            <img class="st-v st-v--violet" src="/home-blocks/img/steps/step3-card-violet.webp" alt="" loading="lazy" width="660" height="650">
+          </div>
+        </div>
+      </figure>
+    </article>
   </div>
 </section>
 
+<section id="faq" class="st fq" aria-label="Вопросы и ответы" data-i18n-attr="aria-label:index.faq.title">
+  <div class="st-w fq-w">
+    <header class="fq-head reveal">
+      <span class="st-eye"><i>?</i><span data-i18n="index.faq.eye">FAQ</span></span>
+      <h2 data-i18n="index.faq.title">Вопросы и ответы</h2>
+      <p data-i18n="index.faq.lead">Частые вопросы о нейросетях в {AI}-шнице: что можно сгенерировать, сколько стоит, как платить из России и кому принадлежат результаты.</p>
+    </header>
+    <div class="fq-list">
+      <details class="fq-item reveal" open>
+        <summary><span data-i18n="index.faq.what.q">Что такое {AI}-шница?</span><i aria-hidden="true"></i></summary>
+        <p data-i18n="index.faq.what.a">Это маркетплейс генеративных нейросетей на русском языке. В одном окне можно создать видео, картинку или музыку, выбрав любую из десятков моделей, а на витрине — посмотреть работы креаторов, взять их промпт или заказать оригинал.</p>
+      </details>
+      <details class="fq-item reveal">
+        <summary><span data-i18n="index.faq.models.q">Какие нейросети доступны?</span><i aria-hidden="true"></i></summary>
+        <p data-i18n="index.faq.models.a">Видео: Veo 3.1, Kling, Seedance 2.5, Wan 3.0, Hailuo 02, MiniMax H3, PixVerse V6, Runway Gen-4 Turbo, Grok Imagine. Картинки: GPT Image 2, Nano Banana Pro, Seedream 5 Pro, Ideogram V3, Soul Cinema. Музыка: ElevenLabs Music, Stable Audio 2.5, ACE-Step. Тексты и промпты: Claude, GPT-5.4, Gemini, DeepSeek. Список пополняется.</p>
+      </details>
+      <details class="fq-item reveal">
+        <summary><span data-i18n="index.faq.vpn.q">Нужны ли VPN и зарубежная карта?</span><i aria-hidden="true"></i></summary>
+        <p data-i18n="index.faq.vpn.a">Нет. Сайт работает из России без VPN, а генерации оплачиваются в рублях с баланса: пополнить его можно российской картой от 100 ₽.</p>
+      </details>
+      <details class="fq-item reveal">
+        <summary><span data-i18n="index.faq.price.q">Сколько стоит генерация?</span><i aria-hidden="true"></i></summary>
+        <p data-i18n="index.faq.price.a">Вы платите только за саму генерацию — цена видна до запуска на карточке модели. Картинки стоят от рубля, видео — в зависимости от модели и длительности. Пока генерация идёт, сумма резервируется, а если результат не получился, деньги возвращаются на баланс.</p>
+      </details>
+      <details class="fq-item reveal">
+        <summary><span data-i18n="index.faq.prompt.q">Я не умею писать промпты. Что делать?</span><i aria-hidden="true"></i></summary>
+        <p data-i18n="index.faq.prompt.a">Опишите идею своими словами по-русски. ИИ-помощник бесплатно допишет подробный промпт на английском — со светом, камерой и настроением, — подберёт подходящую нейросеть по задаче и цене и сразу подготовит запуск.</p>
+      </details>
+      <details class="fq-item reveal">
+        <summary><span data-i18n="index.faq.photo.q">Можно ли оживить фото или сделать видео из картинки?</span><i aria-hidden="true"></i></summary>
+        <p data-i18n="index.faq.photo.a">Да. Прикрепите фото скрепкой и опишите движение — модели вроде Kling, Veo 3.1, Seedance и Hailuo превратят его в видео. Фото можно и отредактировать: заменить фон, одежду или стиль.</p>
+      </details>
+      <details class="fq-item reveal">
+        <summary><span data-i18n="index.faq.music.q">Можно ли создать музыку нейросетью?</span><i aria-hidden="true"></i></summary>
+        <p data-i18n="index.faq.music.a">Да: ElevenLabs Music, Stable Audio 2.5 и ACE-Step пишут треки по текстовому описанию — жанр, настроение, темп и инструменты. Готовый трек можно скачать или подложить под видео.</p>
+      </details>
+      <details class="fq-item reveal">
+        <summary><span data-i18n="index.faq.rights.q">Кому принадлежат сгенерированные работы?</span><i aria-hidden="true"></i></summary>
+        <p data-i18n="index.faq.rights.a">Права на свои промпты и результаты остаются у вас — в рамках условий выбранной модели. Перед коммерческим использованием проверьте лицензию модели; подробности — в пользовательском соглашении.</p>
+      </details>
+      <details class="fq-item reveal">
+        <summary><span data-i18n="index.faq.storage.q">Где хранятся мои генерации?</span><i aria-hidden="true"></i></summary>
+        <p data-i18n="index.faq.storage.a">Все результаты попадают в «Мои работы». Неопубликованные генерации хранятся 24 часа — скачайте их или опубликуйте на витрине, чтобы они остались в профиле. Чаты с помощником хранятся 30 дней.</p>
+      </details>
+      <details class="fq-item reveal">
+        <summary><span data-i18n="index.faq.earn.q">Как заработать на витрине?</span><i aria-hidden="true"></i></summary>
+        <p data-i18n="index.faq.earn.a">Публикуйте лучшие работы на витрине. Клиенты смотрят их, запрашивают промпт или оригинал и пишут о заказе — запросы с контактами приходят в кабинет креатора.</p>
+      </details>
+    </div>
+    <div class="fq-more reveal"><span data-i18n="index.faq.more">Остались вопросы? Спросите помощника в студии — он ответит и поможет с первой генерацией.</span><a class="st-cta" href="/app" data-i18n="index.faq.cta">Спросить в студии</a></div>
+  </div>
+</section>
 
 <footer class="ft" aria-label="Подвал сайта" data-i18n-attr="aria-label:index.footer.aria">
   <div class="w">
@@ -471,11 +725,10 @@ a{color:var(--ink-ui)}a:hover{opacity:.82}
         <a class="ft-mail" href="mailto:anastkomarova@yandex.ru">anastkomarova@yandex.ru</a></div>
       <div><h4 data-i18n="index.footer.col.product">Сервис</h4><ul>
         <li><a href="/app" data-i18n="nav.studio">Студия</a></li><li><a href="/explore" data-i18n="nav.showcase">Витрина</a></li><li><a href="#models" data-i18n="nav.models">Модели</a></li>
-        <li><a href="/creator?me=1" data-i18n="nav.creatorCabinet">Кабинет креатора</a></li><li><a href="#features" data-i18n="nav.howItWorks">Как это работает</a></li></ul></div>
+        <li><a href="/creator?me=1" data-i18n="nav.creatorCabinet">Кабинет креатора</a></li><li><a href="#features" data-i18n="nav.howItWorks">Как это работает</a></li><li><a href="#faq" data-i18n="nav.faq">Вопросы и ответы</a></li></ul></div>
       <div><h4 data-i18n="index.footer.col.legal">Документы</h4><ul><li><a href="/legal/terms.html" data-i18n="index.footer.doc.legal">Правовая информация</a></li><li><a href="/legal/enterprise-terms.html" data-i18n="index.footer.doc.offer">Публичная оферта</a></li><li><a href="/legal/terms.html" data-i18n="index.footer.doc.terms">Пользовательское соглашение</a></li><li><a href="/legal/rules.html" data-i18n="index.footer.doc.rules">Правила витрины и публикации работ</a></li><li><a href="/legal/privacy.html" data-i18n="index.footer.doc.privacy">Политика обработки персональных данных</a></li><li><a href="/legal/cookies.html" data-i18n="index.footer.doc.cookies">Политика использования cookie</a></li></ul></div>
       <div><h4 data-i18n="index.footer.col.consents">Согласия</h4><ul><li><a href="/legal/privacy.html" data-i18n="index.footer.consent.personal">Согласие на обработку персональных данных</a></li><li><a href="/legal/nosell.html" data-i18n="index.footer.consent.thirdParty">Согласие на передачу персональных данных третьим лицам</a></li><li><a href="/legal/privacy.html" data-i18n="index.footer.consent.marketing">Согласие на рекламную рассылку</a></li><li><a href="/legal/terms.html" data-i18n="index.footer.consent.recurring">Согласие на рекуррентные платежи (автосписания)</a></li></ul></div>
     </div>
-    <div class="ft-cta"><div><b data-i18n="index.footer.cta.title">Загляните на витрину</b><span data-i18n="index.footer.cta.text">Сотни работ креаторов — смотрите, вдохновляйтесь, запрашивайте промпты и оригиналы.</span></div><a href="/explore"><span data-i18n="index.footer.cta.button" style="display:inline;margin:0;font:inherit;color:inherit">Открыть витрину</span> <span aria-hidden="true">→</span></a></div>
     <div class="ft-bot"><span data-i18n="index.footer.owner">© 2026 ИП Комарова А.А.</span><span class="rq"><span data-i18n="index.footer.tin">ИНН 504231947047</span><span data-i18n="index.footer.ogrnip">ОГРНИП 322508100272216</span><span data-i18n="index.footer.place">Москва / remote</span></span><a href="#" data-lang-toggle data-footer-lang-label>EN</a></div>
   </div>
 </footer>
@@ -881,5 +1134,22 @@ if (location.search.includes('login=1')) goAuth();
 <script src="/works-block/works-lens.js?v=4"></script>
 <script src="/works-block/works.config.js?v=6"></script>
 <script src="/works-block/works-block.js?v=4"></script>
+<script>
+/* Логотип в шапке — по теме: на Чёрном и Фиолетовом светлая надпись (lockup-dark) */
+(function () {
+  if (!window.AishStyle) return;
+  function sync() {
+    document.querySelectorAll('img.hdr-logo-lockup').forEach(function (img) {
+      var want = AishStyle.isDark() ? 'lockup-dark' : 'lockup-light';
+      var src = img.getAttribute('src') || '';
+      if (src.indexOf(want) < 0) img.setAttribute('src', src.replace(/lockup-(light|dark)/, want));
+    });
+  }
+  sync();
+  AishStyle.onChange(sync);
+  document.addEventListener('aish:i18n', sync);
+  setTimeout(sync, 300);   // после того как i18n подставил логотип своего языка
+})();
+</script>
 </body>
 </html>

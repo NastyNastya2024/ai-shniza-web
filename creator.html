@@ -298,7 +298,8 @@ select.inp option{color:#121113}
 .tab.has-new small{background:#FF8A2B;color:#fff;border-radius:999px;padding:1px 7px}
 @media (max-width:640px){.ib{flex-direction:column}.ib>img{width:100%;height:150px}.ib-time{margin-left:0}}
 </style>
-<script>(function(){try{var t=localStorage.getItem('aish-vitrina-theme')||localStorage.getItem('theme');document.documentElement.dataset.theme=(t==='dark'?'dark':'light');}catch(e){}})();</script>
+<script src="/aish-style.js?v=11"></script>
+<script>(function(){try{if(window.AishStyle){document.documentElement.dataset.theme=AishStyle.mode();return;}var t=localStorage.getItem('aish-vitrina-theme')||localStorage.getItem('theme');document.documentElement.dataset.theme=(t==='dark'?'dark':'light');}catch(e){}})();</script>
 <style>
 /* ---- светлая тема: лавандовый градиент бренда, стекло, белые карточки (как светлая студия) ---- */
 :root[data-theme=light]{--bg:#F5F2FD;--panel:#FFFFFF;--card:#F1EDFB;--card2:#FFFFFF;--line:rgba(80,60,160,.10);--line2:rgba(80,60,160,.17);--ink:#1E1238;--muted:#5B4D93;--muted2:#8A80B5;--violet:#5B35E0;--violet2:#6C47F0;--violet-ink:#4A2CC0;--violet-bg:rgba(91,53,224,.08);--orange:#E8691C;--ok:#16794C;color-scheme:light}
@@ -357,7 +358,9 @@ select.inp option{color:#121113}
 :root[data-theme=light] .seg2 button[aria-pressed=true]{color:#fff}
 :root[data-theme=light] .mode-bar{background:rgba(255,255,255,.42);border-bottom-color:rgba(255,255,255,.85);backdrop-filter:blur(14px)}
 :root[data-theme=light] .tab[aria-selected=true]{background:#fff;box-shadow:0 6px 16px -10px rgba(75,43,184,.35)}
-:root[data-theme=light] .prof{margin:24px clamp(16px,3vw,40px) 6px;padding:30px 32px;border-radius:32px;background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.95);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 24px 60px -40px rgba(75,43,184,.55);transition:margin-right .42s cubic-bezier(.3,.7,.2,1)}
+:root[data-theme=light] .prof{position:relative;isolation:isolate;overflow:hidden;align-items:center;margin:24px clamp(16px,3vw,40px) 6px;padding:30px 32px;border-radius:32px;background:linear-gradient(165deg,rgba(255,255,255,.46) 0%,rgba(255,255,255,.12) 42%,rgba(255,255,255,.22) 100%);border:1px solid rgba(255,255,255,.92);backdrop-filter:blur(32px) saturate(1.85);-webkit-backdrop-filter:blur(32px) saturate(1.85);box-shadow:inset 0 1.5px 0 rgba(255,255,255,1),inset 0 -16px 28px rgba(255,255,255,.18),inset 0 0 0 1px rgba(255,255,255,.4),0 18px 40px -22px rgba(75,43,184,.32);transition:margin-right .42s cubic-bezier(.3,.7,.2,1)}
+:root[data-theme=light] .prof::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(118deg,rgba(255,255,255,.9) 0%,rgba(255,255,255,.22) 16%,transparent 38%),linear-gradient(180deg,transparent 58%,rgba(170,205,255,.16) 82%,rgba(255,170,190,.14) 100%)}
+:root[data-theme=light] .prof > *{position:relative;z-index:1}
 :root[data-theme=light] .split .prof{padding-right:32px;margin-right:calc(var(--panel-w) + clamp(16px,2vw,28px))}
 :root[data-theme=light] .prof .ava{box-shadow:0 0 0 5px #fff,0 18px 34px -14px rgba(232,105,28,.55)}
 @media (min-width:641px){
@@ -425,7 +428,9 @@ select.inp option{color:#121113}
 :root:not([data-theme=light]) .card{background:transparent;box-shadow:none}
 :root:not([data-theme=light]) .card:hover{box-shadow:0 18px 40px -24px rgba(0,0,0,.55)}
 :root:not([data-theme=light]) .card.active{box-shadow:0 0 0 3px #1A1630,0 0 0 5px #9C80FF}
-:root:not([data-theme=light]) .prof{background:linear-gradient(180deg,rgba(62,52,102,.72),rgba(44,37,74,.72));border-color:rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 30px 70px -40px rgba(0,0,0,.9)}
+:root:not([data-theme=light]) .prof{position:relative;isolation:isolate;overflow:hidden;align-items:center;background:linear-gradient(180deg,rgba(255,255,255,.14) 0%,rgba(62,52,102,.42) 42%,rgba(44,37,74,.55) 100%);border-color:rgba(255,255,255,.2);backdrop-filter:blur(28px) saturate(1.45);-webkit-backdrop-filter:blur(28px) saturate(1.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 30px 70px -40px rgba(0,0,0,.9)}
+:root:not([data-theme=light]) .prof::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.2) 0%,transparent 38%),radial-gradient(70% 110% at 100% 120%,rgba(168,130,255,.2),transparent 58%)}
+:root:not([data-theme=light]) .prof > *{position:relative;z-index:1}
 :root:not([data-theme=light]) .ask{background:linear-gradient(180deg,#342C55,#2A2346);border-color:rgba(255,255,255,.14)}
 :root:not([data-theme=light]) .pc{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12)}
 @media (max-width:640px){.filters{flex-wrap:nowrap!important;overflow-x:auto;max-width:100%;scrollbar-width:none;-webkit-overflow-scrolling:touch}.filters::-webkit-scrollbar{display:none}.filters .chip,.filters .sort{flex:0 0 auto}.head>div,.filters{min-width:0}.head{flex-direction:column;align-items:stretch}.drawer{z-index:40!important}}
@@ -460,6 +465,8 @@ html{transition:background-color .3s}
 }
 html[lang=en] .pc.off::after{content:'hidden'}
 </style>
+<link rel="stylesheet" href="/aish-style.css?v=15">
+<link rel="stylesheet" href="/aish-style-vitrina.css?v=5">
 </head>
 <body>
 <header class="top">
@@ -1113,6 +1120,6 @@ html[lang=en] .pc.off::after{content:'hidden'}
   btn.addEventListener('click', goAuth);
 })();
 </script>
-<script>(function(){var b=document.getElementById('themeTg');if(!b)return;function sync(){var l=document.documentElement.dataset.theme==='light';var t=window.AISH_I18N?window.AISH_I18N.t(l?'common.theme.dark':'common.theme.light'):(l?'Тёмная тема':'Светлая тема');b.setAttribute('aria-label',t);b.title=t;}sync();b.addEventListener('click',function(){var n=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=n;try{localStorage.setItem('aish-vitrina-theme',n);localStorage.setItem('theme',n);}catch(e){}sync();});})();</script>
+<script>(function(){var b=document.getElementById('themeTg');if(!b)return;if(window.AishStyle){AishStyle.mount(b,{compact:true,replace:true});return;}function sync(){var l=document.documentElement.dataset.theme==='light';var t=window.AISH_I18N?window.AISH_I18N.t(l?'common.theme.dark':'common.theme.light'):(l?'Тёмная тема':'Светлая тема');b.setAttribute('aria-label',t);b.title=t;}sync();b.addEventListener('click',function(){var n=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=n;try{localStorage.setItem('aish-vitrina-theme',n);localStorage.setItem('theme',n);}catch(e){}sync();});})();</script>
 </body>
 </html>

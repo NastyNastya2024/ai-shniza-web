@@ -1,0 +1,144 @@
+/* «От идеи до заказа — три шага»: три большие главы с настоящими экранами приложения.
+   Картинки — по теме: .st-v--light (Светлый — нынешняя сиреневая главная), --violet, --white, --black. */
+
+.st{
+  --st-ink:#1E1238; --st-muted:#5B4D93; --st-frame:rgba(255,255,255,.72); --st-line:rgba(255,255,255,.95);
+  --st-shadow:0 2px 6px rgba(75,43,184,.08),0 60px 120px -50px rgba(75,43,184,.6);
+  --st-glow-a:rgba(255,179,107,.75); --st-glow-b:rgba(155,123,255,.65); --st-glow-c:rgba(246,170,207,.6);
+  --st-cta-bg:#1E1238; --st-cta-ink:#fff; --st-cta-shadow:0 18px 40px -18px rgba(30,18,56,.7);
+  --st-pill-bg:#1E1238; --st-pill-ink:#fff; --st-eye:#6E62A3; --st-eye-n:#1E1238; --st-eye-n-ink:#fff;
+  --st-glass-hi:rgba(255,255,255,.78); --st-glass-mid:rgba(255,255,255,.28); --st-glass-lo:rgba(230,222,255,.22);
+  --st-glass-stroke:rgba(255,255,255,.55); --st-glass-edge:rgba(75,43,184,.14); --st-glass-shadow:rgba(75,43,184,.22);
+  --st-bar:rgba(255,255,255,.6); --st-dot:rgba(30,18,56,.18); --st-url:rgba(30,18,56,.06); --st-url-ink:#6E62A3;
+  position:relative;z-index:2;margin-top:-44px;padding:200px 0 220px;color:var(--st-ink);background-color:var(--features-bg,#C9C3F3);
+  font-family:'Onest',system-ui,sans-serif;overflow:hidden
+}
+:root[data-style="white"] .st{
+  --st-ink:#0F1016; --st-muted:#4B4D59; --st-frame:#FFFFFF; --st-line:rgba(18,20,32,.08);
+  --st-shadow:0 2px 6px rgba(18,20,32,.06),0 60px 120px -50px rgba(18,20,32,.45);
+  --st-glow-a:rgba(255,211,230,.9); --st-glow-b:rgba(211,227,255,.9); --st-glow-c:rgba(255,230,194,.9);
+  --st-cta-bg:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B); --st-cta-ink:#FFFFFF; --st-cta-shadow:0 14px 34px -12px rgba(255,138,43,.6);
+  --st-pill-bg:#0F1016; --st-pill-ink:#fff; --st-eye:#646673; --st-eye-n:#0F1016; --st-eye-n-ink:#fff;
+  --st-glass-hi:rgba(255,255,255,.88); --st-glass-mid:rgba(255,255,255,.32); --st-glass-lo:rgba(220,224,240,.28);
+  --st-glass-stroke:rgba(255,255,255,.7); --st-glass-edge:rgba(18,20,32,.16); --st-glass-shadow:rgba(18,20,32,.2);
+  --st-bar:#F6F6F9; --st-dot:rgba(15,16,22,.16); --st-url:rgba(15,16,22,.05); --st-url-ink:#646673;
+  background-color:#ECECF3
+}
+:root[data-style="black"] .st{
+  --st-ink:#F3F4F6; --st-muted:#A8ABB2; --st-frame:#18191C; --st-line:rgba(255,255,255,.08);
+  --st-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 0 1px rgba(255,255,255,.04),0 70px 140px -40px #000;
+  --st-glow-a:rgba(220,235,74,.30); --st-glow-b:rgba(157,178,214,.28); --st-glow-c:rgba(255,159,69,.18);
+  --st-cta-bg:linear-gradient(100deg,#EEF784 0%,#DCEB4A 40%,#F4C548 74%,#FF9F45 100%); --st-cta-ink:#11130A; --st-cta-shadow:0 0 0 1px rgba(220,235,74,.2),0 16px 40px -12px rgba(246,168,64,.42);
+  --st-pill-bg:#F3F4F6; --st-pill-ink:#0F1016; --st-eye:#8E9199; --st-eye-n:#F3F4F6; --st-eye-n-ink:#0F1016;
+  --st-glass-hi:rgba(255,255,255,.42); --st-glass-mid:rgba(255,255,255,.12); --st-glass-lo:rgba(220,235,74,.10);
+  --st-glass-stroke:rgba(255,255,255,.28); --st-glass-edge:rgba(255,255,255,.18); --st-glass-shadow:rgba(0,0,0,.55);
+  --st-bar:#141518; --st-dot:rgba(255,255,255,.18); --st-url:rgba(255,255,255,.06); --st-url-ink:#8E9199;
+  background-color:#131415
+}
+:root[data-style="violet"] .st{
+  --st-ink:#F6F3FF; --st-muted:#C9C0EE; --st-frame:#221C3E; --st-line:rgba(255,255,255,.12);
+  --st-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 70px 140px -40px rgba(0,0,0,.9);
+  --st-glow-a:rgba(255,150,70,.32); --st-glow-b:rgba(122,85,255,.45); --st-glow-c:rgba(246,170,207,.25);
+  --st-cta-bg:linear-gradient(110deg,#FFA235,#FF7B2C 42%,#FF8F7E 74%,#F6AACF); --st-cta-ink:#fff; --st-cta-shadow:0 14px 34px -12px rgba(240,110,130,.65);
+  --st-pill-bg:#F3EFFF; --st-pill-ink:#1E1238; --st-eye:#A79DD6; --st-eye-n:#F3EFFF; --st-eye-n-ink:#1E1238;
+  --st-glass-hi:rgba(255,255,255,.48); --st-glass-mid:rgba(212,200,255,.18); --st-glass-lo:rgba(122,85,255,.14);
+  --st-glass-stroke:rgba(255,255,255,.32); --st-glass-edge:rgba(212,200,255,.22); --st-glass-shadow:rgba(0,0,0,.5);
+  --st-bar:#1A1630; --st-dot:rgba(255,255,255,.2); --st-url:rgba(255,255,255,.07); --st-url-ink:#A79DD6;
+  background-color:#15122A
+}
+.st-w{max-width:1360px;margin:0 auto;padding:0 max(24px,env(safe-area-inset-left,0px));box-sizing:border-box}
+
+/* заголовок блока */
+.st-head{display:flex;flex-direction:column;align-items:center;text-align:center;gap:22px;margin-bottom:150px}
+.st-head h2{margin:0;max-width:1100px;font-family:'Days One','Onest',system-ui,sans-serif;font-weight:400;font-size:clamp(40px,6.4vw,96px);line-height:.98;letter-spacing:-.025em;text-wrap:balance}
+.st-head p{margin:0;max-width:680px;font-size:clamp(16px,1.5vw,20px);line-height:1.6;font-weight:500;color:var(--st-muted);text-wrap:balance}
+
+/* глава */
+.st-step{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(40px,6vw,96px);align-items:center}
+.st-step + .st-step{margin-top:clamp(140px,16vw,240px)}
+.st-step--flip{grid-template-columns:minmax(0,7fr) minmax(0,5fr)}
+.st-step--flip .st-txt{order:2}
+.st-step--flip .st-media{order:1}
+.st-txt{position:relative;display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+/* номер шага — liquid glass: полупрозрачное стекло, блик, мягкая тень */
+.st-n{
+  display:block;position:relative;isolation:isolate;
+  font-family:'Days One','Onest',system-ui,sans-serif;
+  font-size:clamp(110px,13vw,200px);line-height:.8;letter-spacing:-.04em;
+  margin:0 0 18px -6px;user-select:none;
+  color:transparent;
+  background:
+    linear-gradient(125deg, var(--st-glass-hi) 0%, var(--st-glass-mid) 38%, transparent 52%),
+    linear-gradient(200deg, var(--st-glass-lo) 0%, var(--st-glass-mid) 55%, var(--st-glass-hi) 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  -webkit-text-stroke:1.25px var(--st-glass-stroke);
+  filter:
+    drop-shadow(0 1px 0 var(--st-glass-edge))
+    drop-shadow(0 14px 28px var(--st-glass-shadow))
+    drop-shadow(0 2px 6px rgba(255,255,255,.35));
+}
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){
+  .st-n{color:var(--st-glass-mid);-webkit-text-fill-color:unset;background:none;-webkit-text-stroke:1.5px var(--st-glass-stroke)}
+}
+.st-eye{display:inline-flex;align-items:center;gap:10px;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--st-eye)}
+.st-eye i{font-style:normal;width:30px;height:30px;border-radius:10px;background:var(--st-eye-n);color:var(--st-eye-n-ink);display:inline-flex;align-items:center;justify-content:center;font-size:14px;letter-spacing:0}
+.st-txt h3{margin:20px 0 0;font-family:'Days One','Onest',system-ui,sans-serif;font-weight:400;font-size:clamp(32px,3.7vw,56px);line-height:1.02;letter-spacing:-.02em;text-wrap:balance}
+.st-txt p{margin:22px 0 0;max-width:470px;font-size:clamp(16px,1.3vw,18.5px);line-height:1.6;font-weight:500;color:var(--st-muted)}
+.st-cta{margin-top:34px;display:inline-flex;align-items:center;gap:10px;height:54px;padding:0 28px;border-radius:999px;background:var(--st-cta-bg);color:var(--st-cta-ink)!important;font-family:'Days One','Onest',system-ui,sans-serif;font-size:15px;letter-spacing:.01em;text-decoration:none;box-shadow:var(--st-cta-shadow);transition:transform .2s ease,filter .2s ease}
+.st-cta:after{content:'→';font-family:'Onest',system-ui,sans-serif;font-weight:700;transition:transform .2s ease}
+.st-cta:hover{opacity:1!important;transform:translateY(-2px);filter:brightness(1.06)}
+.st-cta:hover:after{transform:translateX(3px)}
+.st-cta:focus-visible{outline:2px solid var(--st-ink);outline-offset:3px}
+
+/* экран приложения */
+.st-media{position:relative;margin:0;min-width:0;perspective:2000px}
+.st-glow{position:absolute;inset:-14% -10%;z-index:0;pointer-events:none;filter:blur(60px);opacity:.9;
+  background:radial-gradient(40% 45% at 30% 40%,var(--st-glow-a),transparent 70%),radial-gradient(45% 50% at 75% 60%,var(--st-glow-b),transparent 70%),radial-gradient(30% 35% at 55% 15%,var(--st-glow-c),transparent 70%)}
+.st-win{position:relative;z-index:1;border-radius:26px;overflow:hidden;background:var(--st-frame);box-shadow:inset 0 0 0 1px var(--st-line),var(--st-shadow);transform:rotateY(-7deg) rotateX(3deg);transform-origin:60% 50%;transition:transform .9s cubic-bezier(.2,.7,.2,1)}
+.st-step--flip .st-win{transform:rotateY(7deg) rotateX(3deg);transform-origin:40% 50%}
+.st-media:hover .st-win{transform:none}
+.st-bar{display:flex;align-items:center;gap:7px;height:40px;padding:0 16px;background:var(--st-bar);border-bottom:1px solid var(--st-line)}
+.st-bar i{width:11px;height:11px;border-radius:50%;background:var(--st-dot)}
+.st-bar span{margin:0 auto;transform:translateX(-27px);height:24px;padding:0 14px;border-radius:999px;background:var(--st-url);color:var(--st-url-ink);font:600 12px/24px 'Onest',system-ui,sans-serif;letter-spacing:.01em}
+.st-shot{aspect-ratio:16/10;max-width:100%;overflow:hidden}
+.st-shot img{width:100%;height:100%;object-fit:cover;object-position:top center;display:none}
+
+/* выноска-деталь поверх экрана */
+.st-call{position:absolute;z-index:2;display:flex;flex-direction:column;gap:10px;align-items:flex-start;max-width:calc(100% + 2%);transition:transform .9s cubic-bezier(.2,.7,.2,1)}
+.st-call--1{left:-6%;bottom:-14%;width:38%;transform:rotate(-4deg)}
+.st-call--2{left:-2%;bottom:-14%;width:24%;transform:rotate(3deg)}
+.st-call--3{align-items:flex-end;right:-1%;bottom:-13%;width:30%;transform:rotate(3deg)}
+.st-media:hover .st-call{transform:none}
+.st-pill{display:inline-flex;align-items:center;height:30px;padding:0 14px;border-radius:999px;background:var(--st-pill-bg);color:var(--st-pill-ink);font:400 12.5px/1 'Days One','Onest',system-ui,sans-serif;letter-spacing:.01em;white-space:nowrap;box-shadow:0 10px 24px -12px rgba(0,0,0,.5)}
+.st-card{width:100%;border-radius:18px;overflow:hidden;background:var(--st-frame);box-shadow:inset 0 0 0 1px var(--st-line),0 30px 70px -24px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.08)}
+.st-card img{width:100%;height:auto;display:none}
+
+/* какая картинка видна */
+.st-v--light{display:block!important}
+:root:is([data-style="white"],[data-style="black"],[data-style="violet"]) .st-v--light{display:none!important}
+:root[data-style="white"] .st-v--white{display:block!important}
+:root[data-style="black"] .st-v--black{display:block!important}
+:root[data-style="violet"] .st-v--violet{display:block!important}
+
+@media (max-width:980px){
+  .st{padding:140px 0 160px}
+  .st-head{margin-bottom:90px}
+  .st-step,.st-step--flip{grid-template-columns:minmax(0,1fr);gap:44px}
+  .st-step--flip .st-txt{order:1}
+  .st-step--flip .st-media{order:2}
+  .st-step + .st-step{margin-top:130px}
+  .st-win,.st-step--flip .st-win{transform:none}
+  .st-call--1,.st-call--3{left:auto;right:3%;bottom:-16%;width:46%;transform:rotate(-2deg)}
+  .st-call--2{left:auto;right:3%;bottom:-16%;width:32%;transform:rotate(2deg)}
+  .st-media{margin-bottom:12%}
+  .st-call{align-items:flex-end}
+  .st-pill{white-space:normal;text-align:right;height:auto;min-height:26px;padding:6px 12px;line-height:1.25;max-width:min(260px,62vw)}
+}
+@media (max-width:560px){
+  .st-n{font-size:96px;margin-bottom:10px}
+  .st-pill{font-size:11px;padding:5px 10px}
+  .st-bar{height:30px}.st-bar i{width:8px;height:8px}.st-bar span{display:none}
+  .st-win{border-radius:18px}
+}
+@media (prefers-reduced-motion:reduce){.st-win,.st-call,.st-cta{transition:none}}

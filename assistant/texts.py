@@ -211,6 +211,7 @@ B: dict[str, dict[str, str]] = {
     "mine": {"ru": "Мой текст", "en": "My text"},
     "type_prompt": {"ru": "Промпт", "en": "Prompt"},
     "type_reel": {"ru": "🔥 Рилс", "en": "🔥 Reels"},
+    "type_sb": {"ru": "🎞 Раскадровка", "en": "🎞 Storyboard"},
     "type_video": {"ru": "Видео", "en": "Video"},
     "type_image": {"ru": "Картинка", "en": "Image"},
     "type_edit": {"ru": "Правка фото", "en": "Photo edit"},

@@ -7,7 +7,8 @@
 <title>Личный кабинет — {AI}-шница</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script>(function(){try{var q=new URLSearchParams(location.search).get('theme');var t=q||localStorage.getItem('aish-vitrina-theme')||localStorage.getItem('aish-theme')||localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t;}catch(e){}})();</script>
+<script src="/aish-style.js?v=11"></script>
+<script>(function(){try{if(window.AishStyle)return;var q=new URLSearchParams(location.search).get('theme');var t=q||localStorage.getItem('aish-vitrina-theme')||localStorage.getItem('aish-theme')||localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t;}catch(e){}})();</script>
 <style>
 /* ================= токены ================= */
 :root{--bg:#EEEAF8;--panel:rgba(255,255,255,.78);--panel-solid:#fff;--brd:rgba(255,255,255,.95);--line:rgba(80,60,160,.12);--line2:rgba(80,60,160,.2);
@@ -331,6 +332,20 @@ body.is-chat .msgs{position:static;flex:1 1 0;min-height:0!important;height:auto
   .msgs{border-radius:20px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<link rel="stylesheet" href="/aish-style.css?v=15">
+<style id="aish-style-account">
+/* Темы {AI}-шница UI для кабинета. Фиолетовый = нынешняя тёмная. */
+:root[data-style="white"][data-theme]{--bg:#ECECF3;--panel:rgba(255,255,255,.9);--panel-solid:#fff;--brd:rgba(18,20,32,.08);--line:rgba(18,20,32,.09);--line2:rgba(18,20,32,.16);--ink:#0F1016;--muted:#4B4D59;--muted2:#646673;--card:#F2F2F6;--card2:#E9E9F0;--field:#fff;--violet:#0F1016;--violet2:#2A2B33;--violet-ink:#0F1016;--violet-bg:rgba(18,20,32,.06);--orange:#E8691C;--shadow:rgba(18,20,32,.22);--bubble-me:#0F1016;--bubble-me-ink:#fff;--bubble:#fff;--page:url(/assets/bg-white.jpg)}
+:root[data-style="black"][data-theme]{--bg:#131415;--panel:rgba(24,25,28,.92);--panel-solid:#18191C;--brd:rgba(255,255,255,.08);--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.15);--ink:#F3F4F6;--muted:#A8ABB2;--muted2:#8E9199;--card:rgba(255,255,255,.05);--card2:rgba(255,255,255,.09);--field:rgba(255,255,255,.05);--violet:#F3F4F6;--violet2:#FFFFFF;--violet-ink:#E7EDB0;--violet-bg:rgba(220,235,74,.1);--orange:#DCEB4A;--ok:#62D69C;--shadow:rgba(0,0,0,.7);--bubble-me:#F3F4F6;--bubble-me-ink:#0F1016;--bubble:#202125;--page:url(/assets/bg-black.jpg?v=3)}
+:root[data-style="black"][data-theme] body{box-shadow:none}
+:root[data-style="white"][data-theme] .glass{box-shadow:0 1px 2px rgba(18,20,32,.05),0 18px 44px -24px rgba(18,20,32,.25)}
+:root[data-style="black"][data-theme] .glass{box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 24px 60px -30px #000}
+:root[data-style="black"][data-theme] .btn-p{color:#0F1016;box-shadow:0 12px 26px -14px rgba(255,255,255,.25)}
+:root[data-style="white"][data-theme] .btn-gen{background:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B);color:#FFFFFF}
+:root[data-style="black"][data-theme] .btn-gen{background:linear-gradient(100deg,#EEF784 0%,#DCEB4A 40%,#F4C548 74%,#FF9F45 100%);color:#11130A}
+:root[data-style="black"][data-theme] :is(.chip[aria-pressed=true],.seg2 button[aria-pressed=true],.wk-filters .tab[aria-selected=true],.tabs button[aria-selected=true],.tab[aria-selected=true]){color:#0F1016}
+:root[data-style="black"][data-theme] .badge{background:#DCEB4A;color:#11130A}
 </style>
 </head>
 <body>
@@ -914,6 +929,10 @@ $('mPublic').addEventListener('click', () => {
   }
   location.href = '/@' + encodeURIComponent(nick);
 });
+if (window.AishStyle) {   // Белый / Чёрный / Фиолетовый вместо «луна / солнце»
+  AishStyle.mount($('themeBtn'), { compact: true, replace: true });
+  AishStyle.onChange((st, mode) => { $('logo').src = '/assets/brand/svg/lockup-' + mode + '.svg'; });
+}
 $('themeBtn').addEventListener('click', () => { const n = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = n; try { localStorage.setItem('aish-vitrina-theme', n);localStorage.setItem('aish-theme', n);localStorage.setItem('theme', n); } catch (e) {} $('logo').src = '/assets/brand/svg/lockup-' + n + '.svg'; });
 if (document.documentElement.dataset.theme === 'dark') $('logo').src = '/assets/brand/svg/lockup-dark.svg';
 

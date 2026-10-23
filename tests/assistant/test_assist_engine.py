@@ -306,7 +306,7 @@ def test_off_topic_asks_format_not_examples(make_assistant):
     r = a.handle("какая погода в Москве", {}, SID)
     assert r["intent"] == "off_topic"
     assert r["chips"][0]["action"] == "choose_type"
-    assert {c["action"] for c in r["chips"]} == {"choose_type"}
+    assert {c["action"] for c in r["chips"]} == {"choose_type", "sb_start"}   # форматы + «Раскадровка», без примеров
     assert "reel_start" not in {c["action"] for c in r["chips"]}
     assert "формат" in r["text"].lower() and "генерир" in r["text"].lower()
     assert not any(c["action"] == "send" for c in r["chips"])

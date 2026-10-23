@@ -26,6 +26,7 @@ from . import camera as CAM
 from . import errors as err_mod
 from . import files as F
 from . import params as P
+from . import storyboard as SB
 from .cards import Card, load_cards
 from .lang import detect_lang
 from .llm import LLMChain, LLMUnavailable
@@ -172,6 +173,15 @@ class Assistant:
             ses["reel"] = None
             if ses.get("await") == "reel":
                 ses["await"] = "type"
+        # 1а) режим «Раскадровка»: свободный текст — сценарий, идея или правка кадров (кроме опасного / кризиса)
+        sb_on = SB.active(ses)
+        if msg and (sb_on or SB.SB_RX.search(msg)) and not self._is_guest(ctx):
+            it_sb = route(msg, ctx, ses, self.titles)
+            if it_sb.name in ("crisis", "safety", "safety_person", "injection"):
+                return getattr(self, "_i_" + it_sb.name)(it_sb, msg, ctx, ses, lang)
+            if sb_on:
+                return SB.message(self, ses, ctx, lang, msg)
+            return SB.start(self, ses, ctx, lang, text=msg)
         # 1б) мусор вроде «ооло» никуда не пишем — переспрашиваем по месту
         if msg and not re.fullmatch(r"\s*\d{1,2}\s*[.)]?\s*", msg) and BR.is_junk(msg):
             n = ses["junk_count"] = int(ses.get("junk_count") or 0) + 1
@@ -533,7 +543,7 @@ class Assistant:
             kinds = ["prompt", "video", "edit", "image", "music"]
         else:
             kinds = ["prompt", "video", "image", "music"]
-        return [chip(b("type_" + k, lang), "choose_type", k) for k in kinds]
+        return [chip(b("type_" + k, lang), "choose_type", k) for k in kinds] + [chip(b("type_sb", lang), "sb_start")]
 
     def _gen_type_chips(self, ctx: dict, lang: str) -> list[dict]:
         """Типы генерации после выбора «Промпт» (без пункта Промпт). Видео раньше картинки — готовые кинопромпты чаще."""
@@ -1311,6 +1321,10 @@ class Assistant:
     # ============================================================== actions
     def _action(self, kind: str, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
         has_image = bool(ctx.get("has_image"))
+        if kind.startswith("sb_"):
+            return self._sb_action(kind, value, ctx, ses, lang)
+        if ses.get("assist_mode") == "sb" and kind not in ("send", "resume"):
+            ses["assist_mode"] = None          # любая обычная кнопка — выход из раскадровки (кадры сохраняются)
         if kind == "pick_model":
             return self._pick(str(value or ""), ctx, ses, lang)
         if kind == "choose_type":
@@ -1556,6 +1570,8 @@ class Assistant:
         if kind == "resume":  # вернулись после входа / пополнения — показать то же место с новой проверкой
             if self._is_guest(ctx):
                 return self._ask_login(ses, lang, "resume")
+            if SB.active(ses):
+                return SB.show(self, ses, ctx, lang, t("resumed", lang))
             card = self._current_card(ses, ctx) if ses.get("picked") else None
             if card and (ses.get("prompt") or ses.get("idea")):
                 if not ses.get("prompt"):
@@ -1587,6 +1603,31 @@ class Assistant:
         if kind == "send" and isinstance(value, str):
             return self._message(value, ctx, ses, lang)
         return response([], [], intent="noop")
+
+    def _sb_action(self, kind: str, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
+        """Режим «Раскадровка» (storyboard.py): кнопки и правки на месте."""
+        if self._is_guest(ctx):
+            return self._ask_login(ses, lang, kind)
+        if kind == "sb_start":
+            return SB.start(self, ses, ctx, lang, value)
+        if not isinstance(ses.get("sb"), dict):
+            return SB.start(self, ses, ctx, lang)
+        ses["assist_mode"] = "sb"
+        if kind == "sb_noscript":
+            return SB.show_idea(self, ses, ctx, lang)
+        if kind == "sb_answer":
+            return SB.answer(self, ses, ctx, lang, value)
+        if kind == "sb_edit":
+            return SB.edit(self, ses, ctx, lang, value)
+        if kind == "sb_frame":
+            return SB.redo_frame(self, ses, ctx, lang, value)
+        if kind == "sb_rebuild":
+            return SB.rebuild(self, ses, ctx, lang)
+        if kind == "sb_back":
+            return SB.back(self, ses, ctx, lang)
+        if kind == "sb_exit":
+            return SB.exit_mode(self, ses, ctx, lang)
+        return SB.show(self, ses, ctx, lang)
 
 def _kind_by_number(msg: str, gen_types_only: bool = False) -> str | None:
     """Номер кнопки: верхний ряд 1=Промпт…; после «Промпт» — 1=картинка…"""

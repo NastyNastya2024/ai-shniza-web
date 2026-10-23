@@ -64,6 +64,7 @@ def empty_session() -> dict[str, Any]:
         "polish_model": None,
         "prompt_gate": False,  # показывали ли «нужен промпт?» — для кнопки «Назад» с брифа
         "from_polish": False,  # список моделей после «Использовать этот промпт» (если модель ещё не была выбрана)
+        "sb": None,          # режим «Раскадровка»: {step, source, script, idea, frames, format, aspect, style, model}
         "reel": None,        # режим «Рилс»: {step, idea, style, refs, characters, script, frames, model, final}
     }
 

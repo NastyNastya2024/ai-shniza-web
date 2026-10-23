@@ -205,7 +205,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 @media (max-width:640px){.drawer{top:auto;height:90vh;height:90dvh;box-shadow:0 -24px 48px -20px rgba(0,0,0,.7);width:100vw;border-left:none;border-top:1px solid var(--line);border-radius:24px 24px 0 0;transform:translateY(102%)}.drawer.open{transform:none}}
 @media (prefers-reduced-motion:reduce){.drawer,.ov,.card img,.card video{transition:none}.ok .check{animation:none}}
 </style>
-<script>(function(){try{var t=localStorage.getItem('aish-vitrina-theme')||localStorage.getItem('theme');document.documentElement.dataset.theme=(t==='dark'?'dark':'light');}catch(e){}})();</script>
+<script src="/aish-style.js?v=11"></script>
+<script>(function(){try{if(window.AishStyle){document.documentElement.dataset.theme=AishStyle.mode();return;}var t=localStorage.getItem('aish-vitrina-theme')||localStorage.getItem('theme');document.documentElement.dataset.theme=(t==='dark'?'dark':'light');}catch(e){}})();</script>
 <style>
 /* ---- светлая тема: лавандовый градиент бренда, стекло, белые карточки (как светлая студия) ---- */
 :root[data-theme=light]{--bg:#F5F2FD;--panel:#FFFFFF;--card:#F1EDFB;--card2:#FFFFFF;--line:rgba(80,60,160,.10);--line2:rgba(80,60,160,.17);--ink:#1E1238;--muted:#5B4D93;--muted2:#8A80B5;--violet:#5B35E0;--violet2:#6C47F0;--violet-ink:#4A2CC0;--violet-bg:rgba(91,53,224,.08);--orange:#E8691C;--ok:#16794C;color-scheme:light}
@@ -372,6 +373,8 @@ html{transition:background-color .3s}
   .dbody{padding:14px 16px 24px!important}
 }
 </style>
+<link rel="stylesheet" href="/aish-style.css?v=15">
+<link rel="stylesheet" href="/aish-style-vitrina.css?v=5">
 </head>
 <body data-title-key="explore.title">
 <header class="top">
@@ -1024,6 +1027,6 @@ html{transition:background-color .3s}
   })();
 })();
 </script>
-<script>(function(){var b=document.getElementById('themeTg');if(!b)return;function sync(){var l=document.documentElement.dataset.theme==='light';var t=window.AISH_I18N?window.AISH_I18N.t(l?'common.theme.dark':'common.theme.light'):(l?'Тёмная тема':'Светлая тема');b.setAttribute('aria-label',t);b.title=t;}sync();b.addEventListener('click',function(){var n=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=n;try{localStorage.setItem('aish-vitrina-theme',n);localStorage.setItem('theme',n);}catch(e){}sync();});})();</script>
+<script>(function(){var b=document.getElementById('themeTg');if(!b)return;if(window.AishStyle){AishStyle.mount(b,{compact:true,replace:true});return;}function sync(){var l=document.documentElement.dataset.theme==='light';var t=window.AISH_I18N?window.AISH_I18N.t(l?'common.theme.dark':'common.theme.light'):(l?'Тёмная тема':'Светлая тема');b.setAttribute('aria-label',t);b.title=t;}sync();b.addEventListener('click',function(){var n=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=n;try{localStorage.setItem('aish-vitrina-theme',n);localStorage.setItem('theme',n);}catch(e){}sync();});})();</script>
 </body>
 </html>

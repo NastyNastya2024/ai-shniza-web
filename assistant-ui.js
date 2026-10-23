@@ -23,7 +23,8 @@
     similar: 1, cheaper: 1, faster: 1, no_photo_model: 1, rephrase: 1, resume: 1,
     brief: 1, variants: 1, more_variants: 1, back_brief: 1, back: 1, use_variant: 1, skip_polish: 1, restart: 1,
     reel_start: 1, reel_answer: 1, reel_next: 1, reel_back: 1, reel_edit: 1, reel_frame: 1, reel_rebuild: 1,
-    reel_sheet: 1, reel_exit: 1 };
+    reel_sheet: 1, reel_exit: 1,
+    sb_start: 1, sb_noscript: 1, sb_answer: 1, sb_edit: 1, sb_frame: 1, sb_rebuild: 1, sb_back: 1, sb_exit: 1 };
   var KIND_ICON = { prompt: '✍️', image: '🖼', video: '🎬', music: '🎵', text: '✍️', sfx: '🔊', edit: '✏️' };
 
   function el(tag, cls, text) {
@@ -47,7 +48,7 @@
     function L(ru, en) { return lang === 'en' ? en : ru; }
 
     function chipBtn(c) {
-      var btn = el('button', 'aich-chip' + (c.primary ? ' aich-chip--primary' : '') + (c.action === 'reel_start' ? ' aich-chip--reel' : ''), c.label);
+      var btn = el('button', 'aich-chip' + (c.primary ? ' aich-chip--primary' : '') + (c.action === 'reel_start' ? ' aich-chip--reel' : '') + (c.action === 'sb_start' ? ' aich-chip--sb' : ''), c.label);
       btn.type = 'button';
       if (c.action === 'choose_type' && KIND_ICON[c.value]) btn.textContent = KIND_ICON[c.value] + ' ' + c.label;
       btn.addEventListener('click', function () { onChip(c); });
@@ -60,7 +61,7 @@
       (list || []).forEach(function (c) {
         // устаревшие кнопки воронки «создать ролик» / этапы проекта — больше не показываем
         if (!c || !c.action || /^project_/.test(c.action)) return;
-        if (c.action === 'choose_type' || (c.action === 'reel_start' && c.value !== 'new')) types.push(c);
+        if (c.action === 'choose_type' || (c.action === 'reel_start' && c.value !== 'new') || (c.action === 'sb_start' && c.value !== 'new')) types.push(c);
         else if (c.example || (c.action === 'send' && c.value && String(c.value).length > 12)) examples.push(c);
         else rest.push(c);
       });
@@ -343,7 +344,7 @@
     function reelEdit(path, value) { post({ action: { type: 'reel_edit', value: { path: path, value: value } } }, true); }
 
     /** Поле, которое правят прямо в карточке: сохраняем на сервере, когда человек ушёл из поля. */
-    function editable(tag, cls, text, path) {
+    function editable(tag, cls, text, path, save) {
       var n = el(tag, cls, text || '');
       n.contentEditable = 'true';
       n.spellcheck = false;
@@ -351,7 +352,7 @@
       n.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && tag !== 'div') { e.preventDefault(); n.blur(); } });
       n.addEventListener('blur', function () {
         var now = n.textContent.trim();
-        if (now !== was.trim()) { was = now; reelEdit(path, now); }
+        if (now !== was.trim()) { was = now; (save || reelEdit)(path, now); }
       });
       return n;
     }
@@ -429,7 +430,7 @@
         var value = { q: bl.id, option: text ? '' : picked, text: text };
         if (bl.extra) value.style = style;
         opts.onUser && opts.onUser(text || (opt ? opt.label : ''));
-        lastBody = { action: { type: 'reel_answer', value: value } };
+        lastBody = { action: { type: bl.action || 'reel_answer', value: value } };
         post(lastBody);
       });
       card.appendChild(go);
@@ -565,6 +566,117 @@
       return box;
     }
 
+    /* ------------------------------------------- режим «Раскадровка» (storyboard.py) */
+    function sbEdit(path, value) { post({ action: { type: 'sb_edit', value: { path: path, value: value } } }, true); }
+
+    function sbPills(group, pick) {
+      var row = el('div', 'aich-param');
+      row.appendChild(el('div', 'aich-param__label', group.label));
+      var box = el('div', 'aich-param__opts');
+      group.options.forEach(function (o) {
+        var p = el('button', 'aich-opt' + (String(o.id) === String(group.selected) ? ' is-on' : ''), o.label);
+        p.type = 'button';
+        p.addEventListener('click', function () {
+          if (String(o.id) === String(group.selected)) return;
+          if (pick) pick(o.id); else sbEdit('set.' + group.key, o.id);
+        });
+        box.appendChild(p);
+      });
+      row.appendChild(box);
+      return row;
+    }
+
+    /** Как ляжет лист: сетка колонки × ряды с номерами кадров. */
+    function sbSheetMap(sheet, n) {
+      var box = el('div', 'sb-map');
+      var g = el('div', 'sb-map__grid');
+      g.style.gridTemplateColumns = 'repeat(' + sheet.cols + ', 1fr)';
+      for (var i = 0; i < sheet.cols * sheet.rows; i++) g.appendChild(el('i', i < n ? '' : 'is-empty', i < n ? String(i + 1) : ''));
+      box.appendChild(g);
+      box.appendChild(el('span', 'sb-map__cap', L('Лист ', 'Sheet ') + sheet.cols + ' × ' + sheet.rows + (sheet.aspect ? ' · ' + sheet.aspect : '')));
+      return box;
+    }
+
+    /** Список кадров: номер, время, подпись, описание, план, камера. Всё правится на месте. */
+    function renderSbFrames(bl) {
+      var lab = bl.labels;
+      var wrap = el('div', 'sb');
+      var list = el('ol', 'sb-list');
+      bl.frames.forEach(function (f) {
+        var i = f.n - 1;
+        var li = el('li', 'sb-frame');
+        var top = el('div', 'sb-frame__top');
+        top.appendChild(el('span', 'sb-num', (f.n < 10 ? '0' : '') + f.n));
+        top.appendChild(el('span', 'sb-time', f.time));
+        if (bl.can_del) {
+          var del = el('button', 'sb-del', '×');
+          del.type = 'button';
+          del.title = lab.del;
+          del.setAttribute('aria-label', lab.del + ' ' + f.n);
+          del.addEventListener('click', function () { sbEdit('frames.del.' + i); });
+          top.appendChild(del);
+        }
+        li.appendChild(top);
+        li.appendChild(editable('span', 'reel-edit sb-frame__title', f.title, 'frames.' + i + '.title', sbEdit));
+        li.appendChild(editable('div', 'reel-edit sb-frame__text', f.text, 'frames.' + i + '.text', sbEdit));
+        var meta = el('div', 'sb-frame__meta');
+        var shot = el('label', 'sb-meta');
+        shot.appendChild(el('span', null, lab.shot));
+        shot.appendChild(editable('span', 'reel-edit', f.shot || '—', 'frames.' + i + '.shot', sbEdit));
+        meta.appendChild(shot);
+        var cam = el('label', 'sb-meta sb-meta--cam');
+        cam.appendChild(el('span', null, lab.camera));
+        var sel = el('select', 'reel-cam');
+        var none = el('option', null, lab.none); none.value = ''; sel.appendChild(none);
+        var groups = {};
+        (bl.cameras || []).forEach(function (m) {
+          if (!groups[m.group]) { groups[m.group] = el('optgroup'); groups[m.group].label = m.group; sel.appendChild(groups[m.group]); }
+          var o = el('option', null, m.title); o.value = m.id; groups[m.group].appendChild(o);
+        });
+        sel.value = f.camera || '';
+        sel.addEventListener('change', function () { sbEdit('frames.' + i + '.camera', sel.value); });
+        cam.appendChild(sel);
+        meta.appendChild(cam);
+        li.appendChild(meta);
+        var det = el('details', 'sb-redo');
+        det.appendChild(el('summary', null, '✎ ' + lab.redo));
+        var redo = el('div', 'reel-frame__redo');
+        var inp = el('input', 'reel-frame__input');
+        inp.placeholder = lab.redo_ph;
+        var go = el('button', 'aich-opt', lab.redo);
+        go.type = 'button';
+        function send() { if (inp.value.trim()) post({ action: { type: 'sb_frame', value: { n: f.n, text: inp.value.trim() } } }, true); }
+        go.addEventListener('click', send);
+        inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); send(); } });
+        redo.appendChild(inp);
+        redo.appendChild(go);
+        det.appendChild(redo);
+        li.appendChild(det);
+        list.appendChild(li);
+      });
+      wrap.appendChild(list);
+      if (bl.can_add) {
+        var add = el('button', 'sb-add', lab.add);
+        add.type = 'button';
+        add.addEventListener('click', function () { sbEdit('frames.add.' + bl.frames.length); });
+        wrap.appendChild(add);
+      }
+      var set = el('div', 'sb-settings');
+      (bl.settings || []).forEach(function (g) { set.appendChild(sbPills(g)); });
+      if (bl.models && bl.models.length) {
+        set.appendChild(sbPills({ key: 'model', label: lab.model, selected: bl.model,
+          options: bl.models.map(function (m) { return { id: m.id, label: m.title + (m.price ? ' · ' + m.price : '') }; }) },
+          function (id) { sbEdit('model', id); }));
+      }
+      var foot = el('div', 'sb-foot');
+      if (bl.sheet) foot.appendChild(sbSheetMap(bl.sheet, bl.frames.length));
+      if (bl.cost) foot.appendChild(el('div', 'sb-cost', bl.cost));
+      if (bl.files && bl.files.length) foot.appendChild(el('div', 'aich-summary__files', lab.files + ': ' + bl.files.join(' · ')));
+      if (foot.childNodes.length) set.appendChild(foot);
+      wrap.appendChild(set);
+      return wrap;
+    }
+
     function fill(row, data) {
       if (data.lang) lang = data.lang;
       row.textContent = '';
@@ -587,11 +699,12 @@
         else if (bl.type === 'reel_script') col.appendChild(renderScript(bl));
         else if (bl.type === 'reel_storyboard') col.appendChild(renderStoryboard(bl));
         else if (bl.type === 'reel_final') col.appendChild(renderFinal(bl));
+        else if (bl.type === 'sb_frames') col.appendChild(renderSbFrames(bl));
       });
       if (data.chips && data.chips.length) col.appendChild(renderChips(data.chips));
       row.appendChild(col);
       var setup = (data.blocks || []).some(function (b) {
-        return b.type === 'params' || b.type === 'prompt' || b.type === 'brief' || b.type === 'camera' || (REEL_BLOCKS[b.type] && b.type !== 'reel_steps');
+        return b.type === 'params' || b.type === 'prompt' || b.type === 'brief' || b.type === 'camera' || (REEL_BLOCKS[b.type] && b.type !== 'reel_steps') || b.type === 'sb_frames';
       });
       if (setup) setupNode = row;
       return row;
@@ -626,7 +739,7 @@
           else opts.onBot(data);
           if (data.generate_model || data.generate_prompt) {
             form = { model: data.generate_model, prompt: data.generate_prompt || '', params: data.generate_params || {},
-                     files: data.generate_files || [] };
+                     files: data.generate_files || [], series: data.generate_series || null };
             opts.onFillForm && opts.onFillForm({ model: form.model, prompt: form.prompt, params: form.params, ready: !!data.ready, files: form.files });
           }
           return data;
@@ -645,6 +758,13 @@
       if (c.action === 'generate') {
         opts.onUser && opts.onUser(c.label);
         opts.onGenerate && opts.onGenerate({ model: form.model || c.value, prompt: form.prompt, params: form.params, files: form.files || [] });
+        return;
+      }
+      // «Раскадровка» по кадрам: серия картинок — приложение запускает их подряд, по одной
+      if (c.action === 'generate_series') {
+        if (!form.series || !form.series.length) return;
+        opts.onUser && opts.onUser(c.label);
+        if (opts.onGenerateSeries) opts.onGenerateSeries({ model: form.model || c.value, params: form.params, files: form.files || [], items: form.series });
         return;
       }
       if (c.action === 'retry' && lastBody) { post(lastBody); return; }
