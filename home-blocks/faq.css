@@ -8,11 +8,18 @@
 .fq-head p{margin:0;max-width:640px;font-size:clamp(16px,1.4vw,19px);line-height:1.6;font-weight:500;color:var(--st-muted);text-wrap:balance}
 
 .fq-list{display:flex;flex-direction:column;gap:14px}
-.fq-item{border-radius:24px;background:var(--st-frame);border:1px solid var(--st-line);box-shadow:0 2px 6px rgba(20,14,40,.05);
-  transition:box-shadow .25s ease,transform .25s ease}
-.fq-item[open]{box-shadow:var(--st-shadow)}
+.fq-item{position:relative;isolation:isolate;border-radius:28px;overflow:hidden;
+  transition:box-shadow .25s ease,background .25s ease}
+.fq-item::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.42),transparent 42%)}
+:root[data-style="black"] .fq-item::before,
+:root[data-style="violet"] .fq-item::before{background:linear-gradient(180deg,rgba(255,255,255,.14),transparent 46%)}
+.fq-item[open]{box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(80,50,140,.06),0 22px 48px -22px var(--glass-shadow)}
+:root[data-style="black"] .fq-item[open],
+:root[data-style="violet"] .fq-item[open]{box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 24px 50px -24px rgba(0,0,0,.75)}
+.fq-item summary,.fq-item p{position:relative;z-index:1}
 .fq-item summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:20px;
-  padding:24px 28px;font-family:'Days One','Onest',system-ui,sans-serif;font-size:clamp(17px,1.6vw,21px);line-height:1.3;letter-spacing:-.005em;border-radius:24px}
+  padding:24px 28px;font-family:'Days One','Onest',system-ui,sans-serif;font-size:clamp(17px,1.6vw,21px);line-height:1.3;letter-spacing:-.005em;border-radius:28px}
 .fq-item summary::-webkit-details-marker{display:none}
 .fq-item summary:focus-visible{outline:2px solid currentColor;outline-offset:3px}
 .fq-item summary i{flex:none;position:relative;width:40px;height:40px;border-radius:50%;background:var(--st-eye-n);transition:transform .3s ease,background .3s ease}
@@ -23,8 +30,13 @@
 .fq-item[open] summary i::after{transform:rotate(0)}
 .fq-item p{margin:0;padding:0 92px 26px 28px;font-size:clamp(15px,1.2vw,17px);line-height:1.65;font-weight:500;color:var(--st-muted)}
 
-.fq-more{margin-top:48px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;
-  padding:26px 28px;border-radius:28px;border:1px dashed var(--st-line);font-size:17px;font-weight:600;line-height:1.5}
+.fq-more{position:relative;isolation:isolate;margin-top:48px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;
+  padding:26px 28px;border-radius:28px;overflow:hidden;font-size:17px;font-weight:600;line-height:1.5}
+.fq-more::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.42),transparent 48%)}
+:root[data-style="black"] .fq-more::before,
+:root[data-style="violet"] .fq-more::before{background:linear-gradient(180deg,rgba(255,255,255,.14),transparent 50%)}
+.fq-more > *{position:relative;z-index:1}
 .fq-more .st-cta{margin-top:0}
 
 @media (max-width:640px){
