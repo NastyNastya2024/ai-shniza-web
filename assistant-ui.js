@@ -28,6 +28,10 @@
     pipe_result: 1 };
   var KIND_ICON = { prompt: '✍️', image: '🖼', video: '🎬', music: '🎵', text: '✍️', sfx: '🔊', edit: '✏️' };
 
+  /* метрики сайта (aish-metrics.js): что ответил помощник и какие кнопки жмут */
+  function M(n, p) { try { if (root.AishM) root.AishM.track(n, p); } catch (e) {} }
+  function short(v) { return v == null ? '' : (typeof v === 'object' ? '' : String(v).slice(0, 40)); }
+
   function el(tag, cls, text) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -788,6 +792,11 @@
               chips: [{ label: L('Повторить', 'Retry'), action: 'retry' }] });
             return null;
           }
+          var nModels = (data.models && data.models.length) || 0;
+          (data.blocks || []).forEach(function (b) { if (b && b.type === 'models' && b.items) nModels = Math.max(nModels, b.items.length); });
+          M('assist_reply', { intent: data.intent || 'unknown', degraded: !!data.degraded, gate: data.gate || '', models: nModels });
+          if (nModels) M('models_shown', { n: nModels, kind: data.kind || '' });
+          if (data.gate === 'login' || data.gate === 'topup') M('gate', { type: data.gate, src: 'assistant' });
           if (inPlace && setupNode && setupNode.parentNode) fill(setupNode, data);   // параметры — на месте
           else opts.onBot(data);
           if (data.generate_model || data.generate_prompt) {
@@ -832,6 +841,8 @@
         return;
       }
       if (SERVER[c.action]) {
+        M('assist_action', { action: c.action, value: short(c.value) });
+        if (c.action === 'pick_model') M('model_pick', { model: short(c.value), src: 'assistant' });
         opts.onUser && opts.onUser(c.label);
         lastBody = { action: { type: c.action, value: c.value } };
         post(lastBody);

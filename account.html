@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="/aish-style.js?v=9"></script>
+<script src="/aish-metrics.js?v=1"></script>
 <script>(function(){try{if(window.AishStyle)return;var q=new URLSearchParams(location.search).get('theme');var t=q||localStorage.getItem('aish-vitrina-theme')||localStorage.getItem('aish-theme')||localStorage.getItem('theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t;}catch(e){}})();</script>
 <style>
 /* ================= токены ================= */
@@ -873,6 +874,7 @@ document.addEventListener('click', (e) => {
     if (k === 'decline') { $('cIn').value = 'Спасибо за интерес! К сожалению, сейчас не могу поделиться — надеюсь на понимание.'; return $('cIn').focus(); } }
   const am = e.target.closest('[data-amt]'); if (am) { pickAmt = +am.dataset.amt; return vBalance(); }
   if (e.target.id === 'pay') { const v = +$('amt').value.replace(/\D/g, ''); if (!v || v < 100) { $('amtErr').hidden = false; return $('amt').focus(); }
+    try { if (window.AishM) AishM.track('topup_start', { amount: v }); } catch (_) {}
     const b = e.target; b.disabled = true; b.innerHTML = '<span class="typing" style="padding:0;border:none;background:none"><i></i><i></i><i></i></span>Переходим к оплате…';
     (async () => {
       if (LIVE) {

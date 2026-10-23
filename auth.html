@@ -13,6 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/aish-style.js?v=9"></script>
+<script src="/aish-metrics.js?v=1"></script>
 <script>(function(){try{if(window.AishStyle)return;var q=new URLSearchParams(location.search).get('theme');var t=q||localStorage.getItem('aish-vitrina-theme')||localStorage.getItem('theme')||localStorage.getItem('aish-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t;}catch(e){}})();</script>
 <style>
 /* ---------- токены ---------- */
@@ -248,11 +249,11 @@ const authApi = {
   },
   checkCode: async (email, code) => {
     const { res, data } = await api('/api/auth/email-code/verify', { method: 'POST', body: JSON.stringify({ email: email.trim(), code }) });
-    if (!res.ok) { const err = new Error(data.error || 'code'); err.code = data.error; throw err; }
+    if (!res.ok) { try { if (window.AishM) AishM.track('auth_fail', { method: 'code', code: data.error || String(res.status) }); } catch (_) {} const err = new Error(data.error || 'code'); err.code = data.error; throw err; }
   },
   passwordLogin: async (email, pw) => {
     const { res, data } = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email: email.trim(), password: pw }) });
-    if (!res.ok) { const err = new Error(data.error || 'invalid'); err.code = data.error; throw err; }
+    if (!res.ok) { try { if (window.AishM) AishM.track('auth_fail', { method: 'password', code: data.error || String(res.status) }); } catch (_) {} const err = new Error(data.error || 'invalid'); err.code = data.error; throw err; }
   }
 };
 const tr = (k, p) => AISH_I18N.t(k, p);
@@ -396,9 +397,11 @@ function google() {
   const q = new URLSearchParams({ next: NEXT, consent: '1' });
   if (validEmail(S.email)) q.set('hint', S.email.trim());
   // короткая пауза — яишенка успевает сказать «Стучусь в Google…»
+  try { if (window.AishM) AishM.track('auth_ok', { method: 'google_start' }); } catch (_) {}
   setTimeout(() => { location.href = '/api/auth/google?' + q; }, 350);
 }
 function success() {
+  try { if (window.AishM) AishM.track('auth_ok', { method: S.step === 'code' ? 'code' : (S.step === 'pw' ? 'password' : String(S.step || '')) }); } catch (_) {}
   Object.assign(S, { busy: false, google: false, step: 'done', err: '' });
   render();
   speak('done', 'happy', 'jump');

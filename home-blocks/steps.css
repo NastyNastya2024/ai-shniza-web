@@ -19,10 +19,19 @@
   --st-glow-a:rgba(255,211,230,.9); --st-glow-b:rgba(211,227,255,.9); --st-glow-c:rgba(255,230,194,.9);
   --st-cta-bg:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B); --st-cta-ink:#FFFFFF; --st-cta-shadow:0 14px 34px -12px rgba(255,138,43,.6);
   --st-pill-bg:#0F1016; --st-pill-ink:#fff; --st-eye:#646673; --st-eye-n:#0F1016; --st-eye-n-ink:#fff;
-  --st-glass-hi:rgba(255,255,255,.88); --st-glass-mid:rgba(255,255,255,.32); --st-glass-lo:rgba(220,224,240,.28);
-  --st-glass-stroke:rgba(255,255,255,.7); --st-glass-edge:rgba(18,20,32,.16); --st-glass-shadow:rgba(18,20,32,.2);
+  --st-glass-hi:rgba(255,255,255,.96); --st-glass-mid:rgba(255,255,255,.5); --st-glass-lo:rgba(255,214,186,.4);
+  --st-glass-stroke:rgba(255,255,255,.96); --st-glass-edge:rgba(255,138,43,.7); --st-glass-shadow:rgba(242,102,139,.42);
   --st-bar:#F6F6F9; --st-dot:rgba(15,16,22,.16); --st-url:rgba(15,16,22,.05); --st-url-ink:#646673;
   background-color:#ECECF3
+}
+:root[data-style="white"] .st-n{
+  background:
+    linear-gradient(186deg, rgba(255,255,255,.92) 0%, rgba(255,255,255,.2) 9%, transparent 18%, transparent 40%, rgba(255,255,255,.62) 46%, transparent 52%, transparent 100%),
+    linear-gradient(128deg, transparent 0%, transparent 62%, rgba(255,255,255,.45) 70%, transparent 78%, transparent 100%),
+    linear-gradient(118deg, rgba(255,255,255,.98) 0%, rgba(255,255,255,.9) 34%, rgba(255,255,255,.72) 44%, rgba(255,194,74,.9) 49%, rgba(255,138,43,.72) 53%, rgba(242,102,139,.78) 58%, rgba(255,255,255,.92) 66%, rgba(255,255,255,.58) 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  -webkit-text-stroke:1.6px rgba(255,255,255,.98);
+  filter:drop-shadow(0 0 1px rgba(255,255,255,.95)) drop-shadow(0 0 2px rgba(255,154,61,.95)) drop-shadow(0 0 16px rgba(255,138,43,.31)) drop-shadow(0 12px 28px rgba(242,102,139,.1));
 }
 :root[data-style="black"] .st{
   --st-ink:#F3F4F6; --st-muted:#A8ABB2; --st-frame:#18191C; --st-line:rgba(255,255,255,.08);
@@ -128,6 +137,9 @@
   .st-step--flip .st-txt{order:1}
   .st-step--flip .st-media{order:2}
   .st-step + .st-step{margin-top:130px}
+  .st-txt{align-items:center;text-align:center}
+  .st-n{width:100%;margin-left:0;margin-right:0;text-align:center}
+  .st-txt h3,.st-txt p{width:100%}
   .st-win,.st-step--flip .st-win{transform:none}
   .st-call--1,.st-call--3{left:auto;right:3%;bottom:-16%;width:46%;transform:rotate(-2deg)}
   .st-call--2{left:auto;right:3%;bottom:-16%;width:32%;transform:rotate(2deg)}

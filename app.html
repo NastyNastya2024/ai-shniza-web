@@ -14,6 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/aish-style.css?v=12">
 <script src="/aish-style.js?v=9"></script>
+<script src="/aish-metrics.js?v=1"></script>
 <style>
 .brand-logo{height:28px;width:auto;display:block}
 .brand-logo-sm{height:24px}
@@ -599,8 +600,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 <script src="/vitrina-data.js"></script>
 <script src="/vitrina-camera-moves.js?v=3"></script>
 <script src="/vitrina-aishnitsa.js?v=14"></script>
-<script src="/assistant-ui.js?v=22"></script>
-<script src="/attach.js"></script>
+<script src="/assistant-ui.js?v=23"></script>
+<script src="/attach.js?v=2"></script>
 <script src="/chat-history.js?v=7"></script>
 <script>
 /* Тема общая со витриной/профилем: localStorage aish-vitrina-theme (+ theme). ?theme= перекрывает. */
@@ -989,6 +990,7 @@ class Component extends DCLogic {
         this.botSay({ text: tr('studio.eggy.needModel') }, 200);
         return;
       }
+      M('generate_click', { model: m.model_key || m.slug, kind: m.type || '', src: this.eggy && this.eggy.form && this.eggy.form().model ? 'assistant' : 'composer' });
       this.botSay({ text: tr('studio.chat.cooking'), job: true }, 700);
       this.later('cook', 900, () => this.runJob(m, prompt, this.pendingParams || {}));
     };
@@ -999,13 +1001,17 @@ class Component extends DCLogic {
       }
       const params = m.type === 'video' ? { duration_sec: 5 } : {};
       const est = await api('/api/jobs/estimate', { method: 'POST', body: JSON.stringify({ model_key: m.model_key, params }) });
+      const jInfo = { model: m.model_key || m.slug, kind: m.type || '' };
       if (!est.res.ok) {
         if (m && m.integrated) { await this.runGenerate(m, prompt, genParams); return; }
+        M('gen_fail', Object.assign({ code: 'estimate_failed', http: est.res.status || 0, started: false }, jInfo));
         this.botSay({ text: tr('studio.chat.estimateFailed') }, 200);
         return;
       }
       const priceKop = est.data.price_kop || 0;
       if (est.data.enough === false && priceKop > 0) {
+        M('gen_fail', Object.assign({ code: 'insufficient_funds', http: 402, started: false }, jInfo));
+        M('gate', { type: 'topup', src: 'generate' });
         const need = priceKop - (est.data.available_kop || 0);
         this.botSay({ text: tr('studio.chat.needMoney', { price: moneyText(Math.ceil(need / 100)) }), topup: true }, 200);
         return;
@@ -1020,6 +1026,12 @@ class Component extends DCLogic {
       });
       if (!start.res.ok) {
         const err = start.data.error || 'error';
+        if (!(m && m.integrated) || /^(insufficient_funds|free_limit|free_hour_exhausted|free_queue_full|auth_required)$/.test(err)) {
+          const code = err === 'auth_required' ? 'auth' : err === 'free_hour_exhausted' ? 'free_limit' : /^(insufficient_funds|free_limit|free_queue_full)$/.test(err) ? err : 'not_started';
+          M('gen_fail', Object.assign({ code: code, http: start.res.status || 0, started: false }, jInfo));
+          if (code === 'auth') M('gate', { type: 'login', src: 'generate' });
+          if (code === 'insufficient_funds') M('gate', { type: 'topup', src: 'generate' });
+        }
         if (err === 'insufficient_funds') this.botSay({ text: tr('studio.chat.insufficient'), topup: true }, 200);
         else if (err === 'free_limit') this.botSay({ text: tr('studio.chat.freeLimit') }, 200);
         else if (err === 'free_hour_exhausted') this.botSay({ text: tr('studio.chat.freeHourExhausted') }, 200);
@@ -1032,6 +1044,10 @@ class Component extends DCLogic {
       }
       const jobId = start.data.job_id;
       const workId = start.data.work_id;
+      M('gen_start', Object.assign({ queue: true }, jInfo));
+      MP(1);
+      this._jobT0 = this._jobT0 || {};
+      this._jobT0[jobId] = { t: Date.now(), info: jInfo };
       this.patchLastBot({ text: start.data.status === 'queued_free' ? tr('studio.chat.queuedFree') : tr('studio.chat.queued'), jobId: jobId });
       await refreshUser();
       if (start.data.status === 'succeeded') { await this.finishJob(jobId, workId); return; }
@@ -1113,10 +1129,14 @@ class Component extends DCLogic {
         // в сообщении о запуске — какие именно файлы ушли в генерацию
         if (att.files.length) this.patchLastBot({ text: tr('studio.attach.cookingWith', { files: AishAttach.describe(att.files) }), job: true, files: att.files });
       }
+      const mt0 = Date.now();
+      const mInfo = { model: m.model_key || m.slug, kind: m.type || '' };
+      MP(1);
       let { res, data } = await api('/api/generate', {
         method: 'POST',
         body: JSON.stringify(body)
       });
+      if (res && (res.ok || res.status === 202)) M('gen_start', Object.assign({ queue: res.status === 202 }, mInfo));
       let jobIdStarted = '';
       if (window.AishAttach && !opts.att && (res.ok || res.status === 202)) AishAttach.consume();
       if (res.status === 202 && data && data.job_id) {
@@ -1141,6 +1161,25 @@ class Component extends DCLogic {
         if (data && (data.detail || data.error)) console.warn('[generate]', res.status, data.error, data.detail || '');
         const err = sensitive ? 'moderation' : errRaw;
         const started = !!jobIdStarted;   // задание успело уйти в очередь?
+        {
+          const d = detailRaw;
+          const code = (res.status === 401 || res.status === 403 || err === 'auth_required') ? 'auth'
+            : (res.status === 402 || err === 'insufficient_funds') ? 'insufficient_funds'
+            : err === 'moderation' ? 'moderation'
+            : (err === 'bad_model' && /image required|prompt or image/.test(d)) ? 'need_image'
+            : (err === 'bad_model' && /audio required|reference song/.test(d)) ? 'need_audio'
+            : (err === 'bad_model' && /video required/.test(d)) ? 'need_video'
+            : /^(upload_expired|upload_not_found|upload_wrong_kind|bad_media_ref)$/.test(err) ? 'upload_expired'
+            : err === 'file_too_large' ? 'file_too_large'
+            : /^(media_not_reachable|queue_unavailable|not_configured)$/.test(err) ? 'service_down'
+            : err === 'channel_unavailable' ? 'model_down'
+            : err === 'timeout' ? 'timeout'
+            : started ? 'failed' : 'not_started';
+          MP(-1);
+          M('gen_fail', Object.assign({ code: code, http: res.status || 0, started: started, ms: Date.now() - mt0 }, mInfo));
+          if (code === 'auth') M('gate', { type: 'login', src: 'generate' });
+          if (code === 'insufficient_funds') M('gate', { type: 'topup', src: 'generate' });
+        }
         if (res.status === 401 || res.status === 403 || err === 'auth_required') {
           this.botSay({ text: tr('studio.chat.needLogin'), loginCta: true }, 200);
           return;
@@ -1175,6 +1214,8 @@ class Component extends DCLogic {
       }
       if (data && data.kind === 'text') {
         const reply = String(data.reply || '').trim() || tr('studio.chat.failedRetry');
+        MP(-1);
+        M('gen_done', Object.assign({ ms: Date.now() - mt0 }, mInfo));
         const quiet = !!this.pendingQuiet;
         this.pendingQuiet = false;
         this.patchLastBot({ text: quiet ? tr('studio.sb.writerDone') : reply, job: false });
@@ -1185,6 +1226,9 @@ class Component extends DCLogic {
       }
       const url = (data && data.urls && data.urls[0]) || '';
       const kind = (data && data.kind) || m.type || 'image';
+      MP(-1);
+      if (url) M('gen_done', Object.assign({ ms: Date.now() - mt0 }, mInfo));
+      else M('gen_fail', Object.assign({ code: 'failed', http: res.status || 0, started: true, ms: Date.now() - mt0 }, mInfo));
       const replyText = String((data && data.reply) || tr('studio.chat.queued')).trim() || tr('studio.chat.queued');
       this.patchLastBot({
         text: opts.label ? opts.label + '\n' + replyText : replyText,
@@ -1204,10 +1248,11 @@ class Component extends DCLogic {
       if (this._seriesBusy) { this.botSay({ text: tr('studio.sb.busy') }, 200); return; }
       const m = this.MODELS.find((x) => x.model_key === model || x.slug === model);
       if (!m) { this.openPanel(); this.botSay({ text: tr('studio.eggy.needModel') }, 200); return; }
-      if (!this.state.authed) { this.botSay({ text: tr('studio.chat.needLogin'), loginCta: true }, 200); return; }
+      if (!this.state.authed) { M('gate', { type: 'login', src: 'series' }); this.botSay({ text: tr('studio.chat.needLogin'), loginCta: true }, 200); return; }
       const list = (items || []).filter((it) => it && it.prompt);
       if (!list.length) return;
       this._seriesBusy = true;
+      M('generate_click', { model: m.model_key || m.slug, kind: m.type || '', src: 'series' });
       this.pendingSel = m.slug;
       this.setState({ sel: m.slug });
       let att = null;
@@ -1242,6 +1287,9 @@ class Component extends DCLogic {
         if (done) return; done = true;
         const st = payload && payload.job && payload.job.status;
         if (st === 'failed' || st === 'error') {
+          const j0 = (this._jobT0 || {})[jobId];
+          MP(-1);
+          M('gen_fail', Object.assign({ code: 'failed', http: 0, started: true, ms: j0 ? Date.now() - j0.t : 0 }, j0 ? j0.info : {}));
           this.patchLastBot({ text: tr('studio.chat.failed'), result: false });
           this.botSay({ text: tr('studio.chat.again') }, 400);
           await refreshUser();
@@ -1278,6 +1326,11 @@ class Component extends DCLogic {
       if (!work) { const { data } = await api('/api/jobs/' + jobId); work = data.work; }
       const url = (work && (work.media_url || work.thumb_url)) || (payload && payload.job && payload.job.output) || '';
       const kind = (work && work.kind) || 'image';
+      {
+        const j0 = (this._jobT0 || {})[jobId];
+        MP(-1);
+        M('gen_done', Object.assign({ ms: j0 ? Date.now() - j0.t : 0 }, j0 ? j0.info : { kind: kind }));
+      }
       this.patchLastBot({
         text: tr('studio.chat.done'),
         result: true,
@@ -1302,11 +1355,13 @@ class Component extends DCLogic {
       this.textDirect = true;
       this.setState({ chat: true, text: '' });
       if (!opts.resume) this.push({ role: 'user', text: text });
+      if (!opts.resume) M('prompt_sent', { len: String(text || '').length, files: 0, assist: false });
       this.pendingPrompt = text;
       this.pendingSel = m.slug;
       this.pendingParams = {};
       // как у видео: сначала вход, потом баланс (баланс проверит /api/generate → 402)
       if (!this.state.authed) {
+        M('gate', { type: 'login', src: 'text' });
         this.botSay({ text: tr('studio.chat.needLogin'), loginCta: true }, 200);
         return;
       }
@@ -1337,6 +1392,7 @@ class Component extends DCLogic {
     };
     /** Сохранить текущий чат и начать с нуля: помощник снова спрашивает тип генерации. */
     this.newGeneration = async () => {
+      M('new_chat', {});
       if (window.AishHistory) await AishHistory.detach();
       clearTimeout(this.timers.bot); clearTimeout(this.timers.cook); clearTimeout(this.timers.lead); clearTimeout(this.timers.ck); clearTimeout(this.timers.intro);
       this.pendingPrompt = ''; this.pendingSel = ''; this.pendingParams = {};
@@ -1383,6 +1439,7 @@ class Component extends DCLogic {
         this.botSay({ text: tr('studio.chat.failedRetry') }, 200);
         return;
       }
+      M('prompt_sent', { len: text.length, files: window.AishAttach ? AishAttach.ready().length : 0, assist: true });
       try {
         await this.eggy.send(text);
         if (window.AishAttach && AishAttach.park) AishAttach.park();   // плашки из композера — уже в пузыре
@@ -1589,6 +1646,7 @@ class Component extends DCLogic {
         const next = m.slug === st.sel ? '' : m.slug;
         this.setState({ sel: next });
         if (!next) return;
+        M('model_pick', { model: m.slug, kind: m.type || '', src: 'panel' });
         if (SHUTTERS_COVER() && window.vitClose) window.vitClose();
         this.speak(m.cost === 0 ? tr('studio.eggy.modelFree', { model: m.name, does: this.doesText(m) }) : tr('studio.eggy.modelPrice', { model: m.name, does: this.doesText(m), price: this.priceText(m.slug) }));
       },
@@ -1748,6 +1806,7 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
   onUiAction: (action, value) => {
     if (action === 'open_models') { app.openPanel(); return; }
     if (action === 'open_topup') {
+      M('topup_click', { src: 'studio' });
       try {
         sessionStorage.setItem('aish-assist-resume', '1');
         localStorage.setItem('aish-assist-resume', String(Date.now()));
@@ -1766,7 +1825,7 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
       else location.href = raw || '/explore';
       return;
     }
-    if (action === 'login') { app.login(); return; }
+    if (action === 'login') { M('login_click', { src: 'studio' }); app.login(); return; }
     if (action === 'attach') {
       if (window.AishAttach) { AishAttach.open(); return; }
       const btn = document.querySelector('[data-attach]');
@@ -1780,6 +1839,9 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
   }
 }) : null;
 const $ = (id) => document.getElementById(id);
+/* Метрики сайта (aish-metrics.js → /admin/metrics): шаги генерации и где человек споткнулся */
+const M = (n, p) => { try { if (window.AishM) AishM.track(n, p); } catch (_) {} };
+const MP = (d) => { try { if (window.AishM) AishM.pending(d); } catch (_) {} };
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmtBot = (t) => esc(t)
   .replace(/^###\s+(.+)$/gm, '<strong>$1</strong>')
@@ -2032,7 +2094,7 @@ function msgEl(m) {
     + pubBlock
     + (likeChip ? '<div style="display:flex;flex-wrap:wrap;gap:8px">' + likeChip + '</div>' : '')
     + (m.loginCta ? '<button type="button" class="btn-login" data-cta data-login style="height:40px;padding:0 18px;border-radius:12px;font-size:14px">' + esc(tr('studio.chat.loginRun')) + '</button>' : '')
-    + (m.topup ? '<a href="/account#balance" class="btn-purple" style="height:40px;padding:0 18px;border-radius:12px;font-size:14px;display:inline-flex;align-items:center;text-decoration:none">' + esc(tr('studio.chat.toBalance')) + '</a>' : '')
+    + (m.topup ? '<a href="/account#balance" data-m-topup class="btn-purple" style="height:40px;padding:0 18px;border-radius:12px;font-size:14px;display:inline-flex;align-items:center;text-decoration:none">' + esc(tr('studio.chat.toBalance')) + '</a>' : '')
     + (Array.isArray(m.chips) && m.chips.length
       ? '<div class="assist-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px">'
         + m.chips.slice(0, 5).map((c, i) => '<button type="button" class="field" data-assist-chip="' + i + '" style="height:34px;padding:0 12px;border-radius:999px;font:700 12px Onest,system-ui,sans-serif;cursor:pointer">' + esc(c.label || c.action || '') + '</button>').join('')
@@ -2061,12 +2123,14 @@ async function publishFromChat(btn) {
     const title = msg && msg.prompt ? String(msg.prompt).slice(0, 80) : '';
     const { res, data } = await api('/api/works/' + encodeURIComponent(id) + '/publish', { method: 'POST', body: JSON.stringify({ agree_rules: true, title: title }) });
     if (res.ok) {
+      M('publish', { work: String(id) });
       if (msg) { msg.published = true; msg.likes = 0; }
       if (box) box.outerHTML = '<div class="pub-done">' + esc(tr('studio.publish.done')) + ' <a href="/w/' + esc(id) + '" target="_blank" rel="noopener">' + esc(tr('studio.publish.see')) + '</a></div>';
       if (window.AishHistory) AishHistory.flush();
       return;
     }
     const err = (data && data.error) || '';
+    M('publish_fail', { code: err || String(res.status) });
     if (err === 'handle_required') say(esc(tr('studio.publish.needHandle')) + ' <a href="/account#settings">' + esc(tr('studio.publish.toProfile')) + '</a>');
     else if (err === 'moderation') say(esc(tr('studio.publish.moderation')));
     else if (res.status === 401) say(esc(tr('studio.publish.needLogin')));
@@ -2133,6 +2197,7 @@ document.addEventListener('click', async (e) => {
     } finally { likeBtn.disabled = false; }
     return;
   }
+  if (e.target.closest('[data-m-topup]')) M('topup_click', { src: 'chat' });
   const t = e.target.closest('[data-home],[data-login],[data-logout],[data-toggle-left],[data-toggle-right],[data-toggle-right-open],[data-works]');
   if (!t) return;
   if (t.hasAttribute('data-home')) {
@@ -2140,7 +2205,7 @@ document.addEventListener('click', async (e) => {
     e.preventDefault();
     Promise.resolve(window.AishHistory ? AishHistory.detach() : null).finally(() => app.goHome());
   }
-  else if (t.hasAttribute('data-login')) app.login();
+  else if (t.hasAttribute('data-login')) { M('login_click', { src: t.hasAttribute('data-cta') ? 'chat' : 'sidebar' }); app.login(); }
   else if (t.hasAttribute('data-logout')) app.logout();
   else if (t.hasAttribute('data-toggle-left')) app.toggleLeft();
   else if (t.hasAttribute('data-toggle-right')) app.toggleRight();

@@ -206,6 +206,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 @media (prefers-reduced-motion:reduce){.drawer,.ov,.card img,.card video{transition:none}.ok .check{animation:none}}
 </style>
 <script src="/aish-style.js?v=9"></script>
+<script src="/aish-metrics.js?v=1"></script>
 <script>(function(){try{if(window.AishStyle){document.documentElement.dataset.theme=AishStyle.mode();return;}var t=localStorage.getItem('aish-vitrina-theme')||localStorage.getItem('theme');document.documentElement.dataset.theme=(t==='dark'?'dark':'light');}catch(e){}})();</script>
 <style>
 /* ---- светлая тема: лавандовый градиент бренда, стекло, белые карточки (как светлая студия) ---- */
@@ -850,10 +851,11 @@ html{transition:background-color .3s}
       e.preventDefault(); e.stopPropagation();
       const w = works.find((x) => String(x.id) === String(like.dataset.like));
       if (!w) return;
+      try { if (window.AishM) AishM.track('vit_like', { work: String(w.id) }); } catch (_) {}
       toggleLike(w).then(() => { apply(); if (openId === w.id) drawer(); }).catch(() => {});
       return;
     }
-    const b = e.target.closest('.card'); if (b) open(+b.dataset.i);
+    const b = e.target.closest('.card'); if (b) { const w0 = list[+b.dataset.i]; try { if (window.AishM) AishM.track('vit_open', { work: w0 ? String(w0.id) : '', kind: w0 ? (w0.kind || '') : '' }); } catch (_) {} open(+b.dataset.i); }
   });
   $('grid').addEventListener('mouseover', (e) => { const b = e.target.closest('.card'); const v = b && b.querySelector('video'); if (v) v.play().catch(() => {}); });
   $('grid').addEventListener('mouseout', (e) => { const b = e.target.closest('.card'); const v = b && b.querySelector('video'); if (v && !b.contains(e.relatedTarget)) v.pause(); });
@@ -861,6 +863,7 @@ html{transition:background-color .3s}
     const gen = e.target.closest('a.d-gen');
     if (gen) {
       const w = list[openIdx];
+      try { if (window.AishM) AishM.track('vit_use', { work: w ? String(w.id) : '', model: w ? (w.model_slug || '') : '' }); } catch (_) {}
       if (w && w.prompt_open && w.prompt) {
         const refs = Array.isArray(w.refs) ? w.refs.filter((r) => r && r.src) : (w.ref ? [{ src: w.ref }] : []);
         const isCam = isCameraWork(w);
