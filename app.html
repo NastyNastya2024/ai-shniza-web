@@ -7,12 +7,12 @@
 <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/assets/brand/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/assets/brand/png/apple-touch-icon-180.png">
-<link rel="stylesheet" href="/assistant-ui.css?v=18">
+<link rel="stylesheet" href="/assistant-ui.css?v=21">
 <link rel="stylesheet" href="/attach.css">
 <link rel="stylesheet" href="/chat-history.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/aish-style.css?v=9">
+<link rel="stylesheet" href="/aish-style.css?v=12">
 <script src="/aish-style.js?v=9"></script>
 <style>
 .brand-logo{height:28px;width:auto;display:block}
@@ -447,7 +447,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 :root[data-style="black"] #form .composer .btn-submit__ico{stroke:#11130A;color:#11130A}
 :root[data-style="white"] #form .composer .btn-submit__ico{stroke:#FFFFFF;color:#FFFFFF}
 :root[data-style] .btn-gen{font-family:'Days One','Onest',sans-serif;font-weight:400}
-:root[data-style="white"] .btn-gen,:root[data-style="white"] .t-dark .vit-pv .btn-gen{background:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B);color:#17110A;box-shadow:0 10px 28px -10px rgba(255,138,43,.55)}
+:root[data-style="white"] .btn-gen,:root[data-style="white"] .t-dark .vit-pv .btn-gen{background:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B);color:#FFFFFF;box-shadow:0 10px 28px -10px rgba(255,138,43,.55)}
+:root[data-style="white"] .btn-gen svg{stroke:#FFFFFF}
 :root[data-style="black"] .btn-gen,:root[data-style="black"] .t-dark .vit-pv .btn-gen,:root[data-style="black"] .t-dark .vit-pv .acts .btn-purple{background:linear-gradient(100deg,#EEF784 0%,#DCEB4A 40%,#F4C548 74%,#FF9F45 100%);color:#11130A;box-shadow:0 12px 32px -10px rgba(246,168,64,.42)}
 :root:is([data-style="white"],[data-style="black"]) .btn-gen:hover{filter:brightness(1.05)}
 /* шар в Чёрной: чуть лайма + слабее ореол */
@@ -598,7 +599,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 <script src="/vitrina-data.js"></script>
 <script src="/vitrina-camera-moves.js?v=3"></script>
 <script src="/vitrina-aishnitsa.js?v=14"></script>
-<script src="/assistant-ui.js?v=19"></script>
+<script src="/assistant-ui.js?v=22"></script>
 <script src="/attach.js"></script>
 <script src="/chat-history.js?v=7"></script>
 <script>
@@ -1124,6 +1125,7 @@ class Component extends DCLogic {
         ({ res, data } = await this.pollGenerate(data.job_id, data.poll_url));
       }
       if (!res.ok) {
+        this.pendingQuiet = false;
         const errRaw = (data && data.error) || '';
         const detailRaw = String((data && data.detail) || '');
         const sensitive = /^(moderated|moderation|nsfw|sensitive|content_policy)$/i.test(errRaw)
@@ -1173,7 +1175,12 @@ class Component extends DCLogic {
       }
       if (data && data.kind === 'text') {
         const reply = String(data.reply || '').trim() || tr('studio.chat.failedRetry');
-        this.patchLastBot({ text: reply, job: false });
+        const quiet = !!this.pendingQuiet;
+        this.pendingQuiet = false;
+        this.patchLastBot({ text: quiet ? tr('studio.sb.writerDone') : reply, job: false });
+        if (quiet && this.eggy && this.eggy.chip) {
+          this.eggy.chip({ action: 'pipe_result', value: { kind: 'text', reply: reply, model: (m && (m.model_key || m.slug)) || '' } });
+        }
         return data;
       }
       const url = (data && data.urls && data.urls[0]) || '';
@@ -1704,7 +1711,11 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
     }
   },
   onTyping: (on) => app.setState({ typing: on }),
-  onFillForm: ({ model, prompt, params }) => {
+  onFillForm: ({ model, prompt, params, quiet, attach_urls }) => {
+    app.pendingQuiet = !!quiet;
+    if (attach_urls && attach_urls.length && window.AishAttach && AishAttach.addFromUrl) {
+      attach_urls.forEach((r) => { if (r && r.src) AishAttach.addFromUrl(r.src, r.name).catch(function () {}); });
+    }
     if (model) {
       let byKey = app.MODELS.find((x) => x.model_key === model || x.slug === model);
       // текст: generate_model может прийти раньше /api/integrations — заглушка, чтобы сразу шёл textChat
@@ -1718,7 +1729,8 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
       }
       app.pendingSel = byKey.slug;
       app.setState({ sel: byKey.slug });
-      if (byKey.type === 'text') app.textDirect = true;
+      if (byKey.type === 'text' && !quiet) app.textDirect = true;
+      if (quiet) app.textDirect = false;
     }
     if (prompt) app.pendingPrompt = String(prompt);
     app.pendingParams = params && typeof params === 'object' ? params : {};
@@ -1826,7 +1838,17 @@ function render() {
     if (v.msgs.length < lastMsgs || lastMsgs < 0) box.innerHTML = '';
     for (let i = box.children.length; i < v.msgs.length; i++) box.appendChild(msgEl(app.state.msgs[i]));
     lastMsgs = v.msgs.length;
-    requestAnimationFrame(() => { $('chat').scrollTop = $('chat').scrollHeight; });
+    requestAnimationFrame(() => {
+      const chat = $('chat');
+      const box = $('msgs');
+      const last = box && box.lastElementChild;
+      const tall = last && last.offsetHeight > chat.clientHeight * 0.72
+        && last.querySelector('.sb-list, .reel-choice, .sb-summary, .aich-col');
+      if (tall) {
+        const top = last.getBoundingClientRect().top - chat.getBoundingClientRect().top + chat.scrollTop - 8;
+        chat.scrollTop = Math.max(0, top);
+      } else chat.scrollTop = chat.scrollHeight;
+    });
   }
   document.querySelectorAll('[data-cta]').forEach((b) => b.classList.toggle('hidden', v.authed));
   const bots = document.querySelectorAll('#msgs .bot-eye');
@@ -2798,7 +2820,7 @@ loadIntegrations();
         + refItems.map((r) => {
           const name = refFileName(r.src) || (r.label || tr('vitrina.refs.label'));
           const sub = refFileExt(name);
-          return '<a href="' + esc2(r.src) + '" target="_blank" rel="noopener" download="' + esc2(name) + '" style="display:flex;align-items:center;gap:10px;min-width:0;padding:6px;border-radius:12px;border:1px solid var(--panel-brd);background:var(--panel,#fff);color:inherit;text-decoration:none"><span style="flex:0 0 auto;width:44px;height:44px;border-radius:10px;overflow:hidden;background:rgba(0,0,0,.04)"><img src="' + esc2(r.src) + '" alt="" style="display:block;width:100%;height:100%;object-fit:cover"></span><span style="display:flex;flex-direction:column;min-width:0;gap:2px"><span style="font:600 13px/1.2 Onest,system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)">' + esc2(name) + '</span><span style="font:600 12px/1.2 Onest,system-ui,sans-serif;color:var(--muted)">' + esc2(sub) + '</span></span></a>';
+          return '<a href="' + esc2(r.src) + '" target="_blank" rel="noopener" download="' + esc2(name) + '" style="display:flex;align-items:center;gap:10px;min-width:0;padding:6px;border-radius:12px;border:1px solid var(--panel-brd);background:var(--panel-surface,#18191C);color:inherit;text-decoration:none"><span style="flex:0 0 auto;width:44px;height:44px;border-radius:10px;overflow:hidden;background:rgba(0,0,0,.04)"><img src="' + esc2(r.src) + '" alt="" style="display:block;width:100%;height:100%;object-fit:cover"></span><span style="display:flex;flex-direction:column;min-width:0;gap:2px"><span style="font:600 13px/1.2 Onest,system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)">' + esc2(name) + '</span><span style="font:600 12px/1.2 Onest,system-ui,sans-serif;color:var(--muted)">' + esc2(sub) + '</span></span></a>';
         }).join('')
         + '</div></div>'
       : '';

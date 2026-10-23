@@ -153,6 +153,9 @@ def configure_security(app: Flask) -> None:
             # Payment provider webhooks cannot send CSRF cookies from our domain.
             if path in {"/api/payments/robokassa/result", "/api/payments/yookassa/result"}:
                 return None
+            # Метрики сайта (sendBeacon не умеет заголовки): только запись анонимных событий, с лимитом частоты.
+            if path == "/api/m":
+                return None
             if not _csrf_ok():
                 # Bootstrap: allow first POST to /api/csrf bootstrap via GET only;
                 # clients must call GET /api/csrf first.

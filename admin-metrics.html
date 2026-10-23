@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Метрики сайта — {AI}-шница</title>
+<link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+<script src="/aish-style.js?v=3"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/aish-style.css?v=3">
+<style>
+/* Метрики сайта на {AI}-шница UI: те же 4 темы и кружок-переключатель, что на сайте (aish-style.js).
+   Поверхности, текст, рамки, тени, скругления и шрифты — токены кита. Цвета данных — отдельная проверенная палитра
+   (синий для величин, красный только для ошибок со словом), шаги подобраны под светлые и тёмные поверхности. */
+:root{
+  --font-display:'Days One','Onest',system-ui,sans-serif; --font-sans:'Onest',system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r-pill:999px; --r-xl:28px; --r-lg:22px; --r-md:16px; --r-sm:12px; --r-xs:8px;
+  /* Белый — по умолчанию */
+  --ground:#ECECF3; --pearl:url(/assets/bg-white.jpg); --surface:#FFFFFF; --raised:#FFFFFF; --sunken:#F2F2F6; --hover:#E9E9F0;
+  --line:rgba(18,20,32,.10); --line-strong:rgba(18,20,32,.20); --ink:#0F1016; --ink2:#4B4D59; --ink3:#646673;
+  --sel:#0F1016; --on-sel:#FFFFFF;
+  --cta:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B); --on-cta:#17110A; --glow:0 10px 28px -10px rgba(255,138,43,.55);
+  --sh-sm:0 1px 2px rgba(18,20,32,.06),0 2px 8px -2px rgba(18,20,32,.08);
+  --sh-md:0 1px 2px rgba(18,20,32,.06),0 12px 32px -14px rgba(18,20,32,.18);
+  --sh-lg:0 2px 6px rgba(18,20,32,.05),0 28px 64px -24px rgba(18,20,32,.28);
+  --focus:0 0 0 3px rgba(255,138,43,.35);
+  --note-bg:#FFF1E0; --note-ink:#7A3E00;
+  /* данные (светлые поверхности) */
+  --s1:#2a78d6; --crit:#d03b3b; --grid:#e6e6ec; --axis:#c9c9d2; --wash:rgba(42,120,214,.10);
+  --o1:#86b6ef; --o2:#5598e7; --o3:#2a78d6; --o4:#1c5cab; --o5:#104281;
+}
+:root[data-style="light"]{
+  --ground:#EEEAF8; --pearl:url(/assets/bg-light.jpg); --surface:#FFFFFF; --raised:#FFFFFF; --sunken:#F4F1FC; --hover:#EDE8FA;
+  --line:rgba(80,60,160,.12); --line-strong:rgba(80,60,160,.22); --ink:#1E1238; --ink2:#5B4D93; --ink3:#6E62A3;
+  --sel:#1E1238; --on-sel:#FFFFFF;
+  --cta:linear-gradient(110deg,#FFA235,#FF7B2C 42%,#FF8F7E 74%,#F6AACF); --on-cta:#FFFFFF; --glow:0 14px 34px -12px rgba(240,110,130,.55);
+  --sh-sm:0 1px 2px rgba(75,43,184,.06),0 2px 8px -2px rgba(75,43,184,.10);
+  --sh-md:0 1px 2px rgba(75,43,184,.06),0 14px 34px -16px rgba(75,43,184,.28);
+  --sh-lg:0 2px 6px rgba(75,43,184,.06),0 30px 70px -24px rgba(75,43,184,.38);
+  --focus:0 0 0 3px rgba(91,53,224,.28);
+  --note-bg:#FFF0E4; --note-ink:#7A3410;
+  --grid:#ECE8F6; --axis:#D3CCEA;
+}
+:root[data-style="black"]{
+  --ground:#131415; --pearl:url(/assets/bg-black.jpg?v=3); --surface:#18191C; --raised:#202125; --sunken:#0F1012; --hover:#27282D;
+  --line:rgba(255,255,255,.08); --line-strong:rgba(255,255,255,.18); --ink:#F3F4F6; --ink2:#A8ABB2; --ink3:#8E9199;
+  --sel:#F3F4F6; --on-sel:#0F1016;
+  --cta:linear-gradient(100deg,#EEF784 0%,#DCEB4A 40%,#F4C548 74%,#FF9F45 100%); --on-cta:#11130A;
+  --glow:0 0 0 1px rgba(220,235,74,.2),0 12px 32px -10px rgba(246,168,64,.42);
+  --sh-sm:inset 0 1px 0 rgba(255,255,255,.05),0 2px 8px -2px rgba(0,0,0,.6);
+  --sh-md:inset 0 1px 0 rgba(255,255,255,.06),0 18px 40px -18px rgba(0,0,0,.9);
+  --sh-lg:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1px rgba(255,255,255,.04),0 32px 80px -24px #000;
+  --focus:0 0 0 3px rgba(220,235,74,.30);
+  --note-bg:rgba(244,197,72,.12); --note-ink:#F4D98A;
+}
+:root[data-style="violet"]{
+  --ground:#15122A; --pearl:url(/assets/bg-dark.jpg); --surface:#221C3E; --raised:#2E264E; --sunken:#1A1533; --hover:#3A3160;
+  --line:rgba(255,255,255,.14); --line-strong:rgba(255,255,255,.25); --ink:#F6F3FF; --ink2:#C9C0EE; --ink3:#A79DD6;
+  --sel:#F3EFFF; --on-sel:#1E1238;
+  --cta:linear-gradient(110deg,#FFA235,#FF7B2C 42%,#FF8F7E 74%,#F6AACF); --on-cta:#FFFFFF; --glow:0 14px 34px -12px rgba(240,110,130,.65);
+  --sh-sm:inset 0 1px 0 rgba(255,255,255,.08),0 2px 8px -2px rgba(0,0,0,.5);
+  --sh-md:inset 0 1px 0 rgba(255,255,255,.1),0 18px 40px -18px rgba(0,0,0,.85);
+  --sh-lg:inset 0 1px 0 rgba(255,255,255,.1),0 70px 140px -40px rgba(0,0,0,.9);
+  --focus:0 0 0 3px rgba(255,150,70,.35);
+  --note-bg:rgba(255,162,53,.14); --note-ink:#FFD3A1;
+}
+/* данные на тёмных поверхностях (Чёрный, Фиолетовый) */
+:root:is([data-style="black"],[data-style="violet"]){
+  --s1:#3987e5; --crit:#e66767; --grid:rgba(255,255,255,.07); --axis:rgba(255,255,255,.16); --wash:rgba(57,135,229,.16);
+  --o1:#1c5cab; --o2:#3987e5; --o3:#6da7ec; --o4:#9ec5f4; --o5:#cde2fb;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{background:var(--ground)}
+body{margin:0;min-height:100vh;color:var(--ink);font:15px/1.5 var(--font-sans);background:var(--ground) var(--pearl) center top/cover fixed no-repeat}
+a{color:inherit}
+:focus-visible{outline:none;box-shadow:var(--focus)}
+.wrap{max-width:1320px;margin:0 auto;padding:24px 16px 96px}
+header.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px}
+.logo{display:block;height:34px}
+header.top h1{margin:0;font:400 32px/1.1 var(--font-display);letter-spacing:-.01em;flex:1 1 auto}
+.sub{color:var(--ink2);margin:0 0 18px;max-width:900px}
+/* панель управления — как строка ввода: парит над фоном */
+.bar{position:sticky;top:12px;z-index:5;display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:10px;margin:0 0 26px;
+  background:var(--raised);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-lg)}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:var(--r-pill);background:var(--sunken);border:1px solid var(--line)}
+.seg button{all:unset;cursor:pointer;height:32px;padding:0 14px;display:inline-flex;align-items:center;border-radius:var(--r-pill);font:600 13px/1 var(--font-sans);color:var(--ink2)}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--raised);color:var(--ink);box-shadow:var(--sh-sm)}
+.btn{all:unset;cursor:pointer;height:40px;padding:0 16px;display:inline-flex;align-items:center;gap:8px;border-radius:var(--r-pill);
+  border:1px solid var(--line-strong);background:var(--surface);font:600 14px/1 var(--font-sans);color:var(--ink);box-shadow:var(--sh-sm);transition:transform .1s}
+.btn:hover{background:var(--hover)}
+.btn:active{transform:scale(.98)}
+.btn--sel{background:var(--sel);color:var(--on-sel);border-color:var(--sel)}
+.btn--sel:hover{background:var(--sel);filter:brightness(1.1)}
+.btn--ghost{border-color:transparent;background:transparent;box-shadow:none}
+nav.toc{display:flex;gap:2px;flex-wrap:wrap;margin-left:auto}
+nav.toc a{text-decoration:none;color:var(--ink2);height:32px;padding:0 11px;display:inline-flex;align-items:center;border-radius:var(--r-pill);font:600 13px/1 var(--font-sans)}
+nav.toc a:hover{background:var(--hover);color:var(--ink)}
+section{margin:0 0 40px;scroll-margin-top:96px}
+section>h2{margin:0 0 6px;font:400 24px/1.15 var(--font-display)}
+section>p.hint{margin:0 0 16px;color:var(--ink2);max-width:880px}
+.grid{display:grid;gap:12px}
+.g4{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px;min-width:0;box-shadow:var(--sh-md)}
+.card h3{margin:0 0 12px;font:400 17px/1.25 var(--font-display)}
+.card h3 small{font:500 12px/1 var(--font-sans);color:var(--ink3);margin-left:8px}
+.tile{border-radius:var(--r-md);padding:16px 18px}
+.tile .l{color:var(--ink2);font-size:13px;font-weight:500}
+.tile .v{font:650 28px/1.15 var(--font-sans);margin-top:4px;letter-spacing:-.01em}
+.tile .d{color:var(--ink3);font-size:12px;margin-top:4px}
+.tile.hero{background:var(--sel);color:var(--on-sel);border-color:var(--sel)}
+.tile.hero .l,.tile.hero .d{color:inherit;opacity:.72}
+.tile.hero .v{font-size:48px;line-height:1.05}
+.callout{background:var(--note-bg);color:var(--note-ink);border-radius:var(--r-md);padding:12px 16px;margin:0 0 14px;font-weight:500;border:1px solid var(--line)}
+.callout b{font-weight:700}
+/* горизонтальные полосы */
+.hb{display:flex;flex-direction:column;gap:6px}
+.hb .row{display:grid;grid-template-columns:minmax(120px,38%) 1fr auto;gap:12px;align-items:center;padding:4px 8px;margin:0 -8px;border-radius:var(--r-xs)}
+.hb .row:hover,.hb .row:focus-within{background:var(--hover)}
+.hb .lab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.hb .lab small{color:var(--ink3);margin-left:6px}
+.hb .track{height:14px;position:relative}
+.hb .fill{position:absolute;left:0;top:0;bottom:0;border-radius:0 4px 4px 0;background:var(--s1);min-width:2px}
+.hb .fill.crit{background:var(--crit)}
+.hb .num{font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;font-weight:600}
+.hb .num small{color:var(--ink3);margin-left:6px;font-weight:500}
+/* воронка */
+.fn{display:flex;flex-direction:column;gap:4px}
+.fn .st{display:grid;grid-template-columns:minmax(170px,30%) 1fr 150px;gap:12px;align-items:center;padding:6px 8px;margin:0 -8px;border-radius:var(--r-xs)}
+.fn .st:hover{background:var(--hover)}
+.fn .bar2{height:22px;position:relative}
+.fn .bar2 i{position:absolute;left:0;top:0;bottom:0;border-radius:0 4px 4px 0}
+.fn .meta{font-variant-numeric:tabular-nums;text-align:right}
+.fn .meta b{font-size:16px}
+.fn .meta small{display:block;color:var(--ink3);font-size:12px}
+.fn .drop{grid-column:2/4;color:var(--crit);font-size:12px;font-weight:500;margin:-2px 0 2px}
+/* таблицы */
+.tw{overflow-x:auto;margin:0 -6px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:14px}
+th,td{padding:9px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+td.l,th.l{text-align:left;white-space:normal}
+th{color:var(--ink3);font:600 11px/1.2 var(--font-sans);text-transform:uppercase;letter-spacing:.08em}
+tbody tr:hover{background:var(--hover)}
+td .bad{color:var(--crit);font-weight:650}
+.dist{display:flex;height:12px;width:150px;gap:2px}
+.dist i{display:block;height:100%;border-radius:2px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--ink2);font-size:12px;margin:10px 0 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+/* линия */
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible;font-family:var(--font-sans)}
+.tip{position:absolute;pointer-events:none;background:var(--raised);color:var(--ink);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 12px;font-size:12px;box-shadow:var(--sh-lg);white-space:nowrap;z-index:30;display:none}
+.tip b{display:block;margin-bottom:3px}
+.tip .k{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
+.empty{color:var(--ink3);padding:6px 0}
+.vlink{all:unset;cursor:pointer;font:600 12px/1.3 ui-monospace,Menlo,monospace;color:var(--ink);text-decoration:underline;text-decoration-color:var(--line-strong);text-underline-offset:3px}
+.vlink:hover{text-decoration-color:currentColor}
+/* путь посетителя — окно */
+dialog{border:1px solid var(--line);border-radius:var(--r-xl);padding:0;max-width:min(880px,calc(100vw - 32px));width:100%;background:var(--raised);color:var(--ink);box-shadow:var(--sh-lg)}
+dialog::backdrop{background:rgba(10,8,20,.5);backdrop-filter:blur(4px)}
+.dlg-h{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--raised)}
+.dlg-h h3{margin:0;flex:1;font:400 17px/1.25 var(--font-display)}
+.dlg-b{padding:14px 20px 22px;max-height:72vh;overflow:auto}
+.visit{border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;margin:0 0 10px;background:var(--surface);box-shadow:var(--sh-sm)}
+.visit .vh{display:flex;gap:10px;flex-wrap:wrap;align-items:baseline;margin-bottom:4px}
+.visit .vh b{font:400 14px/1.3 var(--font-display)}
+.visit .vh span{color:var(--ink2);font-size:12px}
+.ev{display:grid;grid-template-columns:66px 130px 1fr;gap:8px;font-size:12px;padding:4px 0;border-top:1px solid var(--line)}
+.ev .t{color:var(--ink3);font-variant-numeric:tabular-nums}
+.ev.err .n{color:var(--crit);font-weight:650}
+.ev .p{color:var(--ink2);overflow-wrap:anywhere}
+.loading{opacity:.55;transition:opacity .2s}
+@media (max-width:640px){
+  .bar{position:static}
+  header.top h1{font-size:26px}
+  .hb .row{grid-template-columns:1fr auto}.hb .track{grid-column:1/3;order:3}
+  .fn .st{grid-template-columns:1fr 110px}.fn .bar2{grid-column:1/3;order:3}.fn .drop{grid-column:1/3}
+  .tile.hero .v{font-size:40px}
+  .card{padding:16px}
+}
+@media (prefers-reduced-motion:reduce){.btn{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a href="/" aria-label="{AI}-шница — на главную"><img class="logo" id="logo" src="/assets/brand/svg/lockup-light.svg" alt="{AI}-шница"></a>
+    <h1>Метрики сайта</h1>
+    <a class="btn btn--ghost" href="/admin">← Админка</a>
+  </header>
+  <p class="sub">Анонимные события из браузера: какие страницы открывают, как идут по шагам генерации, где спотыкаются и уходят, когда и с какого места возвращаются. Посетитель — один браузер, визит — заход, который заканчивается после 30 минут тишины.</p>
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Период" id="period">
+      <button type="button" data-d="1">Сутки</button><button type="button" data-d="7">7 дней</button><button type="button" data-d="30" aria-pressed="true">30 дней</button><button type="button" data-d="90">90 дней</button>
+    </div>
+    <button class="btn btn--sel" type="button" id="reload">Обновить</button>
+    <a class="btn" id="csv" href="/api/admin/metrics/events.csv?days=30">События, CSV</a>
+    <button class="btn" type="button" id="self" title="Ваш браузер перестанет попадать в метрики"></button>
+    <nav class="toc" aria-label="Разделы">
+      <a href="#overview">Обзор</a><a href="#funnel">Воронка</a><a href="#problems">Трудности</a><a href="#exits">Где уходят</a><a href="#returns">Возвраты</a><a href="#pages">Страницы</a><a href="#sources">Источники</a><a href="#visitors">Посетители</a>
+    </nav>
+  </div>
+  <main id="root"><p class="empty">Загружаю…</p></main>
+</div>
+<dialog id="dlg" aria-labelledby="dlgT"><div class="dlg-h"><h3 id="dlgT">Путь посетителя</h3><button class="btn" type="button" id="dlgX">Закрыть</button></div><div class="dlg-b" id="dlgB"></div></dialog>
+<div class="tip" id="tip" role="status" aria-live="polite"></div>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var nf = new Intl.NumberFormat('ru-RU');
+  function n(x) { return x == null ? '—' : nf.format(x); }
+  function pct(x) { return x == null ? '—' : (Math.round(x * 10) / 10).toString().replace('.', ',') + '%'; }
+  function dur(sec) {
+    if (sec == null) return '—';
+    sec = Math.round(sec);
+    if (sec < 60) return sec + ' с';
+    if (sec < 3600) return Math.floor(sec / 60) + ' мин ' + (sec % 60 ? (sec % 60) + ' с' : '');
+    if (sec < 86400) return Math.floor(sec / 3600) + ' ч ' + Math.round((sec % 3600) / 60) + ' мин';
+    return Math.round(sec / 86400) + ' дн';
+  }
+  function compact(x) { return x >= 1e6 ? (x / 1e6).toFixed(1).replace('.', ',') + 'M' : x >= 1000 ? (x / 1000).toFixed(x >= 1e4 ? 0 : 1).replace('.', ',') + 'K' : String(x); }
+  function when(iso) { try { return new Date(iso).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); } catch (e) { return iso; } }
+
+  var days = 30, data = null;
+  try { var sd = +localStorage.getItem('aish-admin-metrics-days'); if ([1, 7, 30, 90].indexOf(sd) >= 0) days = sd; } catch (e) {}
+
+  /* ── свой браузер не считать */
+  function selfLabel() { var off = false; try { off = localStorage.getItem('aish-no-metrics') === '1'; } catch (e) {} $('self').textContent = off ? 'Мой браузер не считается ✓' : 'Не считать мой браузер'; }
+  $('self').addEventListener('click', function () { try { if (localStorage.getItem('aish-no-metrics') === '1') localStorage.removeItem('aish-no-metrics'); else localStorage.setItem('aish-no-metrics', '1'); } catch (e) {} selfLabel(); });
+  selfLabel();
+
+  /* ── подсказка у полос и точек */
+  var tip = $('tip');
+  function showTip(html, x, y) { tip.innerHTML = html; tip.style.display = 'block'; var w = tip.offsetWidth, h = tip.offsetHeight; tip.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, x + 12)) + window.scrollX + 'px'; tip.style.top = (y - h - 12 < 8 ? y + 16 : y - h - 12) + window.scrollY + 'px'; }
+  function hideTip() { tip.style.display = 'none'; }
+  document.addEventListener('mousemove', function (e) { var t = e.target.closest && e.target.closest('[data-tip]'); if (t) showTip(t.getAttribute('data-tip'), e.clientX, e.clientY); else if (!e.target.closest('.chart')) hideTip(); });
+  document.addEventListener('focusin', function (e) { var t = e.target.closest && e.target.closest('[data-tip]'); if (t) { var r = t.getBoundingClientRect(); showTip(t.getAttribute('data-tip'), r.left + r.width / 2, r.top); } });
+  document.addEventListener('focusout', hideTip);
+
+  /* ── кирпичики */
+  function tile(label, value, note, hero) { return '<div class="card tile' + (hero ? ' hero' : '') + '"><div class="l">' + esc(label) + '</div><div class="v">' + value + '</div>' + (note ? '<div class="d">' + note + '</div>' : '') + '</div>'; }
+  function card(title, body, small) { return '<div class="card"><h3>' + esc(title) + (small ? '<small>' + esc(small) + '</small>' : '') + '</h3>' + body + '</div>'; }
+  function hbars(items, opt) {
+    opt = opt || {};
+    if (!items || !items.length) return '<p class="empty">' + esc(opt.empty || 'Пока нет данных') + '</p>';
+    var max = Math.max.apply(null, items.map(function (i) { return i.v; })) || 1;
+    return '<div class="hb">' + items.map(function (i) {
+      var w = Math.max(0.6, 100 * i.v / max);
+      var t = '<b>' + esc(i.label) + '</b>' + n(i.v) + (i.note ? ' · ' + esc(i.note) : '');
+      return '<div class="row" tabindex="0" data-tip="' + esc(t) + '"><span class="lab" title="' + esc(i.label) + '">' + esc(i.label) + (i.sub ? '<small>' + esc(i.sub) + '</small>' : '') + '</span>'
+        + '<span class="track"><span class="fill' + (opt.crit ? ' crit' : '') + '" style="width:' + w + '%"></span></span>'
+        + '<span class="num">' + n(i.v) + (i.note ? '<small>' + esc(i.note) + '</small>' : '') + '</span></div>';
+    }).join('') + '</div>';
+  }
+  function table(cols, rows, empty) {
+    if (!rows || !rows.length) return '<p class="empty">' + esc(empty || 'Пока нет данных') + '</p>';
+    return '<div class="tw"><table><thead><tr>' + cols.map(function (c) { return '<th class="' + (c.l ? 'l' : '') + '" scope="col">' + esc(c.t) + '</th>'; }).join('') + '</tr></thead><tbody>'
+      + rows.map(function (r) { return '<tr>' + cols.map(function (c) { var v = c.f ? c.f(r) : esc(r[c.k]); return '<td class="' + (c.l ? 'l' : '') + '">' + v + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+  }
+  var ORD = ['var(--o1)', 'var(--o2)', 'var(--o3)', 'var(--o4)', 'var(--o5)'];
+  var BUCKETS = ['1', '2', '3–5', '6–10', '11+'];
+  function dist(d, what) {
+    var tot = BUCKETS.reduce(function (a, b) { return a + (d[b] || 0); }, 0) || 1;
+    return '<span class="dist" tabindex="0" data-tip="' + esc('<b>' + what + '</b>' + BUCKETS.map(function (b) { return b + ': ' + n(d[b] || 0); }).join(' · ')) + '">'
+      + BUCKETS.map(function (b, i) { var w = 100 * (d[b] || 0) / tot; return w ? '<i style="width:' + w + '%;background:' + ORD[i] + '"></i>' : ''; }).join('') + '</span>';
+  }
+  function distLegend(word) { return '<div class="legend">' + BUCKETS.map(function (b, i) { return '<span><i style="background:' + ORD[i] + '"></i>' + b + ' ' + word + '</span>'; }).join('') + '</div>'; }
+
+  /* ── линия по дням (одна ось, до двух серий) */
+  function lineChart(id, daily, series) {
+    var W = 640, H = 220, L = 40, R = 12, T = 12, B = 26;
+    var xs = daily.map(function (d) { return d.day; });
+    var max = 1;
+    series.forEach(function (s) { daily.forEach(function (d) { max = Math.max(max, d[s.k] || 0); }); });
+    var raw = max / 4, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    var tstep = [1, 2, 2.5, 5, 10].map(function (k) { return k * mag; }).filter(function (v) { return v >= raw; })[0] || mag * 10;
+    if (tstep < 1) tstep = 1;
+    var nice = tstep * 4;
+    var X = function (i) { return L + (xs.length <= 1 ? (W - L - R) / 2 : i * (W - L - R) / (xs.length - 1)); };
+    var Y = function (v) { return T + (H - T - B) * (1 - v / nice); };
+    var g = '';
+    for (var k = 0; k <= 4; k++) { var v = nice * k / 4, y = Y(v); g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" stroke="var(--grid)" stroke-width="1"/><text x="' + (L - 6) + '" y="' + (y + 4) + '" text-anchor="end" font-size="11" fill="var(--ink3)">' + compact(Math.round(v)) + '</text>'; }
+    var every = Math.max(1, Math.ceil(xs.length / 8));
+    xs.forEach(function (d, i) { var lastI = xs.length - 1; if ((i % every === 0 && (i === lastI || lastI - i >= every * 0.75)) || i === lastI) g += '<text x="' + X(i) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="11" fill="var(--ink3)">' + d.slice(8, 10) + '.' + d.slice(5, 7) + '</text>'; });
+    var paths = series.map(function (s, si) {
+      var pts = daily.map(function (d, i) { return X(i) + ',' + Y(d[s.k] || 0); }).join(' ');
+      var area = si === 0 && series.length === 1 ? '<polygon points="' + L + ',' + Y(0) + ' ' + pts + ' ' + X(xs.length - 1) + ',' + Y(0) + '" fill="var(--wash)"/>' : '';
+      var lastI = daily.length - 1;
+      return area + '<polyline points="' + pts + '" fill="none" stroke="' + s.c + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'
+        + '<circle cx="' + X(lastI) + '" cy="' + Y(daily[lastI][s.k] || 0) + '" r="4" fill="' + s.c + '" stroke="var(--surface)" stroke-width="2"/>';
+    }).join('');
+    var html = '<div class="chart" id="' + id + '"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(series.map(function (s) { return s.t; }).join(', ')) + ' по дням">' + g
+      + '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="var(--axis)"/>' + paths
+      + '<line class="xh" x1="0" x2="0" y1="' + T + '" y2="' + Y(0) + '" stroke="var(--axis)" visibility="hidden"/><rect class="hit" x="' + L + '" y="0" width="' + (W - L - R) + '" height="' + H + '" fill="transparent"/></svg></div>'
+      + (series.length > 1 ? '<div class="legend">' + series.map(function (s) { return '<span><i style="background:' + s.c + '"></i>' + esc(s.t) + '</span>'; }).join('') + '</div>' : '');
+    setTimeout(function () {
+      var box = $(id); if (!box) return;
+      var svg = box.querySelector('svg'), xh = svg.querySelector('.xh');
+      function at(e) {
+        var r = svg.getBoundingClientRect(), x = (e.clientX - r.left) * W / r.width;
+        var i = Math.max(0, Math.min(xs.length - 1, Math.round((x - L) / ((W - L - R) / Math.max(1, xs.length - 1)))));
+        xh.setAttribute('x1', X(i)); xh.setAttribute('x2', X(i)); xh.setAttribute('visibility', 'visible');
+        showTip('<b>' + esc(xs[i].slice(8, 10) + '.' + xs[i].slice(5, 7) + '.' + xs[i].slice(0, 4)) + '</b>' + series.map(function (s) { return '<span class="k" style="background:' + s.c + '"></span>' + esc(s.t) + ': ' + n(daily[i][s.k] || 0); }).join('<br>'), e.clientX, e.clientY);
+      }
+      svg.addEventListener('mousemove', at);
+      svg.addEventListener('mouseleave', function () { xh.setAttribute('visibility', 'hidden'); hideTip(); });
+    }, 0);
+    return html;
+  }
+
+  /* ── разделы */
+  function vOverview(d) {
+    var s = d.summary;
+    var calls = [];
+    var f = d.funnel.sessions, studio = f[1].count, done = f[7].count;
+    if (studio) calls.push('Из визитов в студию результат получили <b>' + pct(100 * done / studio) + '</b>.');
+    var topExit = (d.exits.reasons || []).filter(function (r) { return r.reason !== 'success' && r.reason !== 'bounce' && r.reason !== 'browse'; })[0];
+    if (topExit) calls.push('Чаще всего в студии уходят так: <b>' + esc(topExit.label.toLowerCase()) + '</b> — ' + n(topExit.sessions) + ' визитов.');
+    var topErr = (d.problems.fail_codes || [])[0];
+    if (topErr) calls.push('Главная ошибка генерации — <b>' + esc(topErr.label.toLowerCase()) + '</b> (' + pct(topErr.share) + ' ошибок).');
+    return '<section id="overview"><h2>Обзор</h2><p class="hint">За ' + (d.days === 1 ? 'сутки' : d.days + ' дней') + ' · ' + n(d.events) + ' событий.</p>'
+      + (calls.length ? '<div class="callout">' + calls.join(' ') + '</div>' : '')
+      + '<div class="grid g4">'
+      + tile('Посетители', n(s.visitors), 'впервые: ' + n(s.new_visitors) + ' · бывали до периода: ' + n(s.returning_visitors), true)
+      + tile('Визиты', n(s.sessions), n(s.sessions_per_visitor).replace('.', ',') + ' на посетителя')
+      + tile('Просмотры страниц', n(s.pageviews), String(s.pages_per_session).replace('.', ',') + ' за визит')
+      + tile('Длительность визита', dur(s.median_session_sec), 'медиана')
+      + tile('Отказы', pct(s.bounce_rate), 'одна страница и ушли')
+      + tile('Вошли в аккаунт', pct(s.logged_in_share), 'визитов · с телефона ' + pct(s.mobile_share))
+      + tile('Дошли до студии', n(s.studio_visitors), 'посетителей')
+      + tile('Нажали «Сгенерировать»', n(s.gen_click), 'запущено ' + n(s.gen_start))
+      + tile('Готовых результатов', n(s.gen_done), 'у ' + n(s.visitors_with_result) + ' посетителей')
+      + tile('Ошибок генерации', n(s.gen_fail), 'успешно ' + pct(s.gen_success_rate))
+      + tile('До первого результата', dur(s.first_result_median_sec), 'медиана от входа в студию')
+      + '</div><div class="grid g2" style="margin-top:12px">'
+      + card('Посетители и визиты по дням', lineChart('ch1', d.daily, [{ k: 'visitors', t: 'Посетители', c: 'var(--s1)' }, { k: 'sessions', t: 'Визиты', c: 'var(--o5)' }]))
+      + card('Генерации по дням', lineChart('ch2', d.daily, [{ k: 'gen_done', t: 'Результат', c: 'var(--s1)' }, { k: 'gen_fail', t: 'Ошибка', c: 'var(--crit)' }]))
+      + '</div></section>';
+  }
+  var funnelMode = 'sessions';
+  function vFunnel(d) {
+    var f = d.funnel[funnelMode];
+    var max = f[0].count || 1;
+    var rows = f.map(function (st, i) {
+      var c = ORD[Math.min(4, Math.floor(i * 5 / f.length))];
+      var dropHtml = i > 0 && st.drop > 0 ? '<div class="drop">−' + n(st.drop) + ' ' + (funnelMode === 'sessions' ? 'визитов' : 'человек') + ' не пошли дальше (' + pct(100 - st.conv_prev) + ')</div>' : '';
+      return dropHtml + '<div class="st" tabindex="0" data-tip="' + esc('<b>' + st.label + '</b>' + n(st.count) + ' · ' + pct(st.conv_first) + ' от первого шага · ' + pct(st.conv_prev) + ' от предыдущего') + '">'
+        + '<span>' + esc(st.label) + '</span><span class="bar2"><i style="width:' + Math.max(0.6, 100 * st.count / max) + '%;background:' + c + '"></i></span>'
+        + '<span class="meta"><b>' + n(st.count) + '</b><small>' + pct(st.conv_first) + (i ? ' · шаг ' + pct(st.conv_prev) : '') + '</small></span></div>';
+    }).join('');
+    var times = table([{ t: 'Шаг', l: 1, f: function (r) { return esc(r.from) + ' → ' + esc(r.to); } }, { t: 'Медиана', f: function (r) { return dur(r.median_sec); } }, { t: 'Визитов', k: 'n' }],
+      d.funnel.step_times.filter(function (r) { return r.n; }));
+    return '<section id="funnel"><h2>Воронка генерации</h2><p class="hint">Сколько визитов (или людей) дошли до каждого шага. Красным — сколько отвалилось перед шагом. Шаги считаются в рамках одного визита.</p>'
+      + '<div class="seg" role="group" aria-label="Считать по" style="margin-bottom:12px"><button type="button" data-fm="sessions" aria-pressed="' + (funnelMode === 'sessions') + '">По визитам</button><button type="button" data-fm="visitors" aria-pressed="' + (funnelMode === 'visitors') + '">По людям</button></div>'
+      + '<div class="grid g2"><div class="card"><div class="fn">' + rows + '</div></div>' + card('Сколько времени уходит на шаг', times, 'медиана внутри визита') + '</div></section>';
+  }
+  function vProblems(d) {
+    var p = d.problems;
+    var codes = hbars(p.fail_codes.map(function (c) { return { label: c.label, v: c.count, note: pct(c.share) + ' · ' + n(c.visitors) + ' чел.' }; }), { crit: true, empty: 'Ошибок генерации не было' });
+    var models = table([
+      { t: 'Нейросеть', l: 1, k: 'model' }, { t: 'Нажали', k: 'clicks' }, { t: 'Запущено', k: 'starts' }, { t: 'Готово', k: 'done' },
+      { t: 'Ошибки', f: function (r) { return r.fail ? '<span class="bad">' + n(r.fail) + '</span>' : '0'; } },
+      { t: 'Доля ошибок', f: function (r) { return r.fail_rate >= 20 ? '<span class="bad">' + pct(r.fail_rate) + '</span>' : pct(r.fail_rate); } },
+      { t: 'Время', f: function (r) { return dur(r.median_sec); } }], p.models);
+    var g = p.gates;
+    var gates = hbars([
+      { label: 'Попросили войти', v: g.login }, { label: 'Нажали «Войти»', v: g.login_click }, { label: 'Вошли', v: g.auth_ok, note: g.auth_fail ? 'ошибок входа ' + g.auth_fail : '' },
+      { label: 'Попросили пополнить', v: g.topup }, { label: 'Нажали «Пополнить»', v: g.topup_click }, { label: 'Перешли к оплате', v: g.topup_start }]);
+    var assist = hbars(p.assistant.map(function (a) { return { label: a.label, v: a.count }; }), { empty: 'Помощник со всем справился' });
+    var att = hbars(p.attach.codes.map(function (a) { return { label: a.label, v: a.count }; }), { crit: true, empty: 'Ошибок загрузки не было' });
+    var js = table([{ t: 'Ошибка в браузере', l: 1, k: 'msg' }, { t: 'Раз', k: 'count' }], p.js_errors, 'Ошибок JS не было');
+    return '<section id="problems"><h2>Трудности при генерации</h2><p class="hint">Что мешает получить результат: ошибки нейросетей, просьбы войти и пополнить, непонятые сообщения, файлы, которые не загрузились.</p>'
+      + '<div class="grid g4" style="margin-bottom:12px">'
+      + tile('Ни разу не получили результат', n(p.visitors_never_succeeded), 'посетителей с ошибками и без результата')
+      + tile('Ушли, не дождавшись', n(p.left_waiting), 'визитов закрыли вкладку во время генерации')
+      + tile('Долгие генерации', n(p.long_generations), 'дольше 3 минут')
+      + tile('Помощник без нейросети-сценариста', n(p.assistant_degraded), 'ответов из ' + n(p.assistant_replies) + ' — шаблон вместо LLM')
+      + tile('Загрузка файлов', n(p.attach.failed), 'ошибок из ' + n(p.attach.added + p.attach.failed) + ' попыток')
+      + tile('Не опубликовали', n(p.publish_fail), 'ошибок публикации на витрине')
+      + '</div><div class="grid g2">'
+      + card('Ошибки генерации', codes, 'по причинам') + card('Вход и оплата', gates, 'сколько дошли до каждого шага')
+      + card('Нейросети', models, 'сначала — с ошибками') + card('Помощник не понял или не помог', assist)
+      + card('Файлы в скрепке', att) + card('Ошибки JavaScript', js)
+      + '</div></section>';
+  }
+  function vExits(d) {
+    var r = hbars(d.exits.reasons.map(function (x) { return { label: x.label, v: x.sessions, note: pct(x.share) }; }));
+    var pg = hbars(d.exits.pages.map(function (x) { return { label: x.label, v: x.sessions, note: pct(x.share) }; }));
+    return '<section id="exits"><h2>Где уходят с сайта</h2><p class="hint">Чем закончился каждый визит: на каком шаге человек остановился и на какой странице закрыл сайт.</p>'
+      + '<div class="grid g2">' + card('На каком шаге закончился визит', r) + card('Последняя страница визита', pg) + '</div></section>';
+  }
+  function vReturns(d) {
+    var r = d.returns;
+    var visits = hbars(BUCKETS.map(function (b) { return { label: b + ' ' + (b === '1' ? 'визит' : b === '2' ? 'визита' : 'визитов'), v: r.visits_per_visitor[b] || 0 }; }));
+    var gap = hbars(r.gap.map(function (g) { return { label: g.label, v: g.count }; }), { empty: 'Возвратов пока нет' });
+    var byExit = table([{ t: 'Чем закончился визит', l: 1, k: 'label' }, { t: 'Визитов', k: 'sessions' }, { t: 'Вернулись', k: 'returned' },
+      { t: 'Доля возврата', f: function (x) { return '<span style="display:inline-flex;align-items:center;gap:8px"><span style="width:70px;height:10px;display:inline-block;position:relative"><span style="position:absolute;inset:0 auto 0 0;width:' + Math.max(1, x.rate) + '%;background:var(--s1);border-radius:0 3px 3px 0"></span></span>' + pct(x.rate) + '</span>'; } }], r.by_exit_reason);
+    var byStage = table([{ t: 'Самый дальний шаг визита', l: 1, k: 'label' }, { t: 'Визитов', k: 'sessions' }, { t: 'Вернулись', k: 'returned' }, { t: 'Доля', f: function (x) { return pct(x.rate); } }], r.by_stage);
+    var land = hbars(r.return_landing.map(function (x) { return { label: x.label, v: x.count }; }), { empty: 'Возвратов пока нет' });
+    var reached = hbars(r.return_reached.map(function (x) { return { label: x.label, v: x.count }; }), { empty: 'Возвратов пока нет' });
+    var matrix = table([{ t: 'В прошлый раз', l: 1, k: 'from' }, { t: 'После возвращения дошли до', l: 1, k: 'to' }, { t: 'Раз', k: 'count' }], (r.matrix || []).slice(0, 12), 'Возвратов пока нет');
+    return '<section id="returns"><h2>Возвраты</h2><p class="hint">Сколько раз приходит один и тот же человек, через сколько возвращается, на каком этапе он остановился в прошлый раз и куда дошёл, когда вернулся.</p>'
+      + '<div class="grid g4" style="margin-bottom:12px">'
+      + tile('Возвращаются', pct(r.returning_share), 'посетителей пришли больше одного раза')
+      + tile('Возвратов', n(r.returns), 'повторных визитов')
+      + tile('Продолжили с того же места', pct(r.continued_share), 'дошли в новом визите не меньше, чем в прошлом')
+      + tile('Продвинулись дальше', pct(r.progressed_share), 'прошли шаг, до которого раньше не доходили')
+      + '</div><div class="grid g2">'
+      + card('Сколько раз приходит один человек', visits, 'посетителей') + card('Через сколько возвращаются', gap)
+      + card('Возвращаются ли после…', byExit, 'по тому, чем закончился визит') + card('Возвращаются ли с этапа', byStage)
+      + card('С какой страницы начинают возвращение', land) + card('Куда доходят после возвращения', reached)
+      + card('Прошлый визит → возвращение', matrix, 'топ переходов')
+      + '</div></section>';
+  }
+  function vPages(d) {
+    var t = table([
+      { t: 'Страница', l: 1, f: function (r) { return '<b>' + esc(r.label) + '</b> <span style="color:var(--ink3)">' + esc(r.page) + '</span>'; } },
+      { t: 'Просмотры', k: 'views' }, { t: 'Людей', k: 'visitors' },
+      { t: 'На человека', f: function (r) { return String(r.views_per_visitor).replace('.', ','); } },
+      { t: 'Макс. у одного', k: 'max_views_one_visitor' },
+      { t: 'Сколько раз открывают', f: function (r) { return dist(r.repeat_dist, r.label + ': людей по числу открытий'); } },
+      { t: 'Перезагружали', f: function (r) { return n(r.reload_sessions) + ' виз.'; } },
+      { t: 'Входы', k: 'landing_sessions' }, { t: 'Выходы', k: 'exit_sessions' },
+      { t: 'Доля выходов', f: function (r) { return r.exit_rate >= 60 ? '<span class="bad">' + pct(r.exit_rate) + '</span>' : pct(r.exit_rate); } },
+      { t: 'Время', f: function (r) { return dur(r.median_sec); } }], d.pages);
+    return '<section id="pages"><h2>Страницы</h2><p class="hint">Сколько раз один и тот же человек открывает каждую страницу. «Перезагружали» — визиты, где страницу открыли два раза и больше. «Доля выходов» — сколько визитов на этой странице закончились.</p>'
+      + '<div class="card">' + t + distLegend('раз') + '</div></section>';
+  }
+  function vSources(d) {
+    var s = d.sources;
+    var dev = hbars(Object.keys(s.devices).map(function (k) { return { label: k === 'mobile' ? 'Телефон' : 'Компьютер', v: s.devices[k] }; }));
+    var langs = hbars(Object.keys(s.langs).map(function (k) { return { label: k.toUpperCase(), v: s.langs[k] }; }));
+    return '<section id="sources"><h2>Откуда приходят</h2><p class="hint">Сайт, с которого перешли, метки utm и страница, с которой начался визит.</p><div class="grid g2">'
+      + card('Источники', hbars(s.referrers.map(function (x) { return { label: x.ref, v: x.sessions }; })), 'визитов')
+      + card('Метки utm_source', hbars(s.utm.map(function (x) { return { label: x.source, v: x.sessions }; }), { empty: 'Переходов с utm-метками не было' }))
+      + card('Страница входа', hbars(s.landing.map(function (x) { return { label: x.label, v: x.sessions }; })))
+      + card('Устройства и язык', dev + '<div style="height:12px"></div>' + langs)
+      + '</div></section>';
+  }
+  function vVisitors(d) {
+    var t = table([
+      { t: 'Посетитель', l: 1, f: function (r) { return '<button type="button" class="vlink" data-vid="' + esc(r.vid) + '">' + esc(r.vid.slice(0, 14)) + '…</button>' + (r.uid ? ' <span style="color:var(--ink3)">id ' + esc(r.uid) + '</span>' : ''); } },
+      { t: 'Визитов', k: 'visits' }, { t: 'Просмотров', k: 'pageviews' }, { t: 'Студия', k: 'studio_opens' },
+      { t: 'Дальше всего дошёл', l: 1, k: 'furthest' },
+      { t: 'Готово', k: 'gen_done' }, { t: 'Ошибки', f: function (r) { return r.gen_fail ? '<span class="bad">' + n(r.gen_fail) + '</span>' : '0'; } },
+      { t: 'Последний визит закончился', l: 1, k: 'last_reason' },
+      { t: 'Первый раз', f: function (r) { return when(r.first_seen); } }, { t: 'Последний раз', f: function (r) { return when(r.last_seen); } },
+      { t: '', f: function (r) { return r.device === 'mobile' ? '📱' : '🖥'; } }], d.visitors);
+    return '<section id="visitors"><h2>Посетители</h2><p class="hint">Последние 60 посетителей. Нажмите на id — откроется весь путь человека: визиты и события по порядку.</p><div class="card">' + t + '</div></section>';
+  }
+
+  function render() {
+    var d = data;
+    $('root').innerHTML = vOverview(d) + vFunnel(d) + vProblems(d) + vExits(d) + vReturns(d) + vPages(d) + vSources(d) + vVisitors(d);
+  }
+  document.addEventListener('click', function (e) {
+    var fm = e.target.closest('[data-fm]');
+    if (fm) { funnelMode = fm.getAttribute('data-fm'); var sec = $('funnel'); sec.outerHTML = vFunnel(data); return; }
+    var v = e.target.closest('[data-vid]');
+    if (v) openVisitor(v.getAttribute('data-vid'));
+  });
+
+  var EV_LABEL = { page_view: 'Открыл', page_leave: 'Ушёл со страницы', prompt_sent: 'Написал идею', assist_reply: 'Ответ помощника', assist_action: 'Кнопка помощника',
+    models_shown: 'Показаны модели', model_pick: 'Выбрал модель', generate_click: '«Сгенерировать»', gen_start: 'Запуск', gen_done: 'Результат', gen_fail: 'Ошибка',
+    gate: 'Просьба', login_click: '«Войти»', topup_click: '«Пополнить»', topup_start: 'К оплате', attach_add: 'Файл', attach_fail: 'Файл не загрузился',
+    publish: 'Опубликовал', publish_fail: 'Не опубликовал', new_chat: 'Новый чат', vit_open: 'Открыл работу', vit_use: 'Повторить работу', vit_like: 'Лайк',
+    auth_ok: 'Вошёл', auth_fail: 'Ошибка входа', js_error: 'Ошибка JS' };
+  function openVisitor(vid) {
+    $('dlgT').textContent = 'Путь посетителя ' + vid.slice(0, 10) + '…';
+    $('dlgB').innerHTML = '<p class="empty">Загружаю…</p>';
+    if ($('dlg').showModal) $('dlg').showModal(); else $('dlg').setAttribute('open', '');
+    fetch('/api/admin/metrics/visitor/' + encodeURIComponent(vid), { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
+      var t0 = null;
+      $('dlgB').innerHTML = (j.email ? '<p class="hint">Аккаунт: <b>' + esc(j.email) + '</b></p>' : '<p class="hint">Не входил в аккаунт</p>') + (j.visits || []).map(function (v, i) {
+        return '<div class="visit"><div class="vh"><b>Визит ' + (i + 1) + ' · ' + esc(when(v.start)) + '</b><span>' + dur(v.sec) + '</span><span>дошёл: ' + esc(v.furthest) + '</span><span>итог: ' + esc(v.reason) + '</span></div>'
+          + v.events.filter(function (e) { return e.n !== 'page_leave'; }).map(function (e) {
+            var dt = new Date(e.t), s = dt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            var p = Object.keys(e.p || {}).map(function (k) { return k + ': ' + e.p[k]; }).join(' · ');
+            return '<div class="ev' + (/fail|error/.test(e.n) ? ' err' : '') + '"><span class="t">' + s + '</span><span class="n">' + esc(EV_LABEL[e.n] || e.n) + '</span><span class="p">' + esc(e.page) + (p ? ' — ' + esc(p) : '') + '</span></div>';
+          }).join('') + '</div>';
+      }).join('');
+    }).catch(function () { $('dlgB').innerHTML = '<p class="empty">Не удалось загрузить</p>'; });
+  }
+  $('dlgX').addEventListener('click', function () { $('dlg').close ? $('dlg').close() : $('dlg').removeAttribute('open'); });
+
+  function load() {
+    $('root').classList.add('loading');
+    $('csv').href = '/api/admin/metrics/events.csv?days=' + days;
+    [].forEach.call(document.querySelectorAll('#period button'), function (b) { b.setAttribute('aria-pressed', String(+b.getAttribute('data-d') === days)); });
+    fetch('/api/admin/metrics?days=' + days, { credentials: 'same-origin' }).then(function (r) {
+      if (r.status === 403) throw new Error('forbidden');
+      return r.json();
+    }).then(function (j) { data = j; render(); $('root').classList.remove('loading'); })
+      .catch(function (e) { $('root').classList.remove('loading'); $('root').innerHTML = '<div class="card">' + (e.message === 'forbidden' ? 'Нет доступа. Войдите аккаунтом из ADMIN_EMAILS.' : 'Не удалось загрузить метрики.') + '</div>'; });
+  }
+  $('period').addEventListener('click', function (e) { var b = e.target.closest('[data-d]'); if (!b) return; days = +b.getAttribute('data-d'); try { localStorage.setItem('aish-admin-metrics-days', String(days)); } catch (x) {} load(); });
+  $('reload').addEventListener('click', load);
+  function syncLogo() {
+    var dark = window.AishStyle ? AishStyle.mode() === 'dark' : false;
+    $('logo').src = '/assets/brand/svg/' + (dark ? 'lockup-dark' : 'lockup-light') + '.svg';
+  }
+  syncLogo();
+  document.addEventListener('aish:style', function () { syncLogo(); if (data) render(); });
+  load();
+})();
+</script>
+</body>
+</html>

@@ -1321,6 +1321,8 @@ class Assistant:
     # ============================================================== actions
     def _action(self, kind: str, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
         has_image = bool(ctx.get("has_image"))
+        if kind == "pipe_result":
+            return SB.apply_writer_reply(self, ses, ctx, lang, value)
         if kind.startswith("sb_"):
             return self._sb_action(kind, value, ctx, ses, lang)
         if ses.get("assist_mode") == "sb" and kind not in ("send", "resume"):
@@ -1623,6 +1625,10 @@ class Assistant:
             return SB.redo_frame(self, ses, ctx, lang, value)
         if kind == "sb_rebuild":
             return SB.rebuild(self, ses, ctx, lang)
+        if kind == "sb_setup":            # шаг 2: оформление и запуск
+            return SB.show_setup(self, ses, ctx, lang)
+        if kind == "sb_frames_view":      # назад к тексту кадров
+            return SB.show_frames(self, ses, ctx, lang)
         if kind == "sb_back":
             return SB.back(self, ses, ctx, lang)
         if kind == "sb_exit":

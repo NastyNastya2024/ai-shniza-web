@@ -5925,6 +5925,10 @@ register_chat_history(app, db)
 # ── Генерации → «Мои работы»; неопубликованные удаляются через 24 ч (flask purge-unpublished-works) ──
 register_generation_works(app, db)
 
+# ── Метрики сайта для админа: POST /api/m (события страниц), /admin/metrics (отчёт) — site_metrics.py ──
+from site_metrics import register_site_metrics  # noqa: E402
+register_site_metrics(app, db, User)
+
 
 @app.after_request
 def _no_cache_html(resp):

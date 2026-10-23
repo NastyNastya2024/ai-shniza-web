@@ -142,6 +142,12 @@ BOARD_SYSTEM = (
     "Rules: keep the order of the story; one frame = one clear moment; vary shot sizes and angles; {count_rule} "
     "Total duration about {seconds} seconds. Camera move ids: {ids}."
 )
+BOARD_SYSTEM_SHORT = (
+    "You are a film storyboard artist. {task}\n"
+    "Return JSON only, short: {\"title\": 2-5 words in {lang}, \"frames\": [{\"title\": 2-4 words in {lang}, "
+    "\"text\": one sentence in {lang} — what we see in this exact moment, \"shot\": shot size in {lang}}]}. "
+    "Every frame must show a DIFFERENT moment of the story in order — never repeat the idea text. {count_rule}"
+)
 FRAME_SYSTEM = (
     "You are a film storyboard artist. Rewrite ONE storyboard frame according to the change request, keep the rest of "
     "the story and the recurring look. Return JSON only: {\"title\": 2-5 words in {lang}, \"title_en\": English UPPERCASE, "
@@ -183,6 +189,16 @@ def v_board(d: Any) -> dict:
     return {"title": _txt(d.get("title"), 80), "bible": _txt(d.get("bible"), 500), "frames": frames[:MAX_FRAMES]}
 
 
+def v_board_short(d: Any) -> dict:
+    frames = []
+    for x in (d.get("frames") if isinstance(d, dict) else None) or []:
+        if isinstance(x, dict) and len(_txt(x.get("text"))) >= 8 and _txt(x.get("title")):
+            frames.append(_frame(x))
+    if len(frames) < MIN_FRAMES or len({f["text"] for f in frames}) < len(frames) * 0.7:   # повторы — не принимаем
+        raise ValueError("frames")
+    return {"title": _txt(d.get("title"), 80), "bible": "", "frames": frames[:MAX_FRAMES]}
+
+
 def v_one(d: Any) -> dict:
     if not isinstance(d, dict) or len(_txt(d.get("prompt"))) < 15 or not _txt(d.get("title")):
         raise ValueError("frame")
@@ -209,6 +225,118 @@ _BEAT_EN = ["bold opening shot", "wide establishing shot", "macro detail shot", 
             "build-up shot", "climax moment", "reaction shot", "final hero shot"]
 
 
+_SPLIT_RX = re.compile(r"\s*(?:[.!?;…]+|,\s*(?:а|но|и|потом|затем|после чего)\s+|\s+(?:и\s+(?:тут|вдруг|потом|затем)|потом|затем|после чего|"
+                       r"в итоге|в конце|and then|then|after that|finally)\s+|\s+и\s+(?=(?:у|он|она|они|его|её|ее|их|парень|девушк|"
+                       r"герой|героин|кот|собак|мы|все)\b)|\s+and\s+(?=(?:he|she|they|her|his|the)\b))\s*", re.I)
+_PLACE_RX = re.compile(r"\b(на|в|во|у|около|возле|on|in|at)\s+((?:[а-яёa-z-]{3,})(?:\s+[а-яёa-z-]{3,})?)", re.I)
+_SHOTS = {
+    "ru": [("Общий план", "Общий план: {c}"), ("Средний план", "Средний план: {c}"), ("Крупно", "Крупно, лица и эмоции: {c}"),
+           ("Деталь", "Деталь — руки, предметы, фактура: {c}"), ("Другой ракурс", "Камера заходит сбоку: {c}"),
+           ("Замедленно", "Ключевой момент замедленно: {c}"), ("Реакция", "Реакция крупно — {c}"), ("Сверху", "Вид сверху: {c}")],
+    "en": [("Wide", "Wide shot: {c}"), ("Medium", "Medium shot: {c}"), ("Close-up", "Close-up on faces and emotion: {c}"),
+           ("Detail", "Detail — hands, objects, texture: {c}"), ("New angle", "The camera moves in from the side: {c}"),
+           ("Slow motion", "The key moment in slow motion: {c}"), ("Reaction", "Reaction close-up — {c}"), ("Top view", "Top-down view: {c}")],
+}
+_SHOT_EN = ["wide shot", "medium shot", "emotional close-up", "detail insert shot", "side angle shot", "slow-motion key moment",
+            "reaction close-up", "top-down shot"]
+
+
+def idea_beats(idea: str) -> list[str]:
+    """«парень с девушкой встречаются на улице и парень врезается в девушку и у нее падают книги» →
+    [«парень с девушкой встречаются на улице», «парень врезается в девушку», «у нее падают книги»]."""
+    parts = [p.strip(" ,—-–:\t").rstrip(".") for p in _SPLIT_RX.split(idea or "") if p and p.strip()]
+    parts = [re.sub(r"^(и|а|но|and)\s+", "", p, flags=re.I) for p in parts]
+    return [p for p in parts if len(p.split()) >= 2][:8] or ([idea.strip()] if idea and idea.strip() else [])
+
+
+_CHARS = ("парень", "девушка", "мужчина", "женщина", "мальчик", "девочка", "ребёнок", "ребенок", "бабушка", "дедушка",
+          "кот", "кошка", "собака", "пёс", "герой", "героиня", "друг", "подруга", "курьер", "продавец", "повар", "учитель",
+          "man", "woman", "boy", "girl", "guy", "cat", "dog", "hero", "friend")
+_MOOD_RX = re.compile(r"^\s*([а-яё]+(?:ая|ое|ый|ий))\s+(истори\w*|сценк\w*|ролик\w*|видео)\s+", re.I)
+
+
+def _chars(text: str) -> list[str]:
+    low = (text or "").lower()
+    found = []
+    for c in _CHARS:
+        if re.search(r"\b" + c[:-1] + r"\w{0,3}\b", low) and c not in found:
+            found.append(c)
+    return found[:2]
+
+
+def story_frames(idea: str, n: int, seconds: float, lang: str) -> list[dict]:
+    """Без LLM. Идея → действия (по «и», «потом», точкам) + место, герои и настроение. Из них — разные кадры:
+    место, знакомство с героями, каждое действие, деталь, замедленный ключевой момент, реакция, финал.
+    Текст кадров не повторяет идею целиком: каждый кадр — свой момент."""
+    lang = L(lang)
+    mood = ""
+    mm = _MOOD_RX.match(idea or "")
+    if mm:
+        mood, idea = mm.group(1).lower(), idea[mm.end():]
+        if lang == "ru":                                        # «романтичная история» → «романтичное настроение»
+            mood = re.sub(r"(ая|ый|ой)$", "ое", mood)
+            mood = re.sub(r"ий$", "ее", mood)
+    beats = idea_beats(idea) or [tr(lang, "главное событие истории", "the key event of the story")]
+    m = _PLACE_RX.search(idea or "")
+    place = (m.group(1) + " " + m.group(2)) if m else ""
+    ch = _chars(idea)
+    who = (" и ".join(ch) if lang == "ru" else " and ".join(ch)) or tr(lang, "герой", "the hero")
+    mood_s = (f", {mood} настроение" if mood else "") if lang == "ru" else (f", {mood} mood" if mood else "")
+    key = beats[len(beats) // 2] if len(beats) > 1 else beats[0]
+    T = lambda ru, en: tr(lang, ru, en)  # noqa: E731
+    # (порядок в истории, приоритет, заголовок, текст, план, англ. подсказка для картинки)
+    cand = [(0, 1, T("Место действия", "Setting"),
+             T(f"Общий план {place}: вокруг идёт своя жизнь{mood_s}." if place else f"Общий план места действия{mood_s}.",
+               f"Wide establishing shot {place}{mood_s}." if place else f"Wide establishing shot{mood_s}."),
+             T("общий", "wide"), f"wide establishing shot {place}")]
+    for ci, c in enumerate(ch):
+        cand.append((1 + ci * 0.1, 3, T(f"Герой: {c}" if ci == 0 else f"Героиня: {c}" if c in ("девушка", "женщина", "девочка", "героиня", "подруга", "кошка") else f"Герой: {c}", f"Hero: {c}"),
+                     T(f"Знакомство: {c} крупно — лицо, взгляд, характер.", f"Introduction: {c} in close-up — face, look, character."),
+                     T("крупный", "close-up"), f"close-up portrait of the {c}"))
+    shots = [(T("Средний план", "Medium"), T("Средний план", "Medium shot")), (T("Общий в движении", "Moving wide"), T("Камера ведёт героев", "Tracking shot")),
+             (T("С плеча", "Over the shoulder"), T("Через плечо героя", "Over the shoulder"))]
+    for bi, bt in enumerate(beats):
+        t0, t1 = shots[bi % len(shots)]
+        cand.append((2 + bi, 1, _txt(bt[:1].upper() + bt[1:], 40).rstrip(".,"), f"{t1}: {bt}.", t0.lower(), f"{t0.lower()}, {bt}"))
+        cand.append((2 + bi + 0.5, 6, T("Другой ракурс", "New angle"), T(f"Тот же момент сбоку, ближе: {bt}.", f"Same moment from the side, closer: {bt}."),
+                     T("средний", "medium"), f"side angle, {bt}"))
+    cand.append((2 + beats.index(key) + 0.3, 2, T("Ключевой момент", "Key moment"),
+                 T(f"Замедленно: {key} — время будто останавливается.", f"Slow motion: {key} — time almost stops."),
+                 T("замедленно", "slow motion"), f"slow motion key moment, {key}"))
+    cand.append((2 + beats.index(key) + 0.6, 4, T("Деталь", "Detail"),
+                 T("Деталь крупно: руки, предметы, фактура — то, что запомнится.", "Detail close-up: hands, objects, texture — what sticks in memory."),
+                 T("деталь", "detail"), f"macro detail insert, {key}"))
+    cand.append((2 + len(beats), 4, T("Реакция", "Reaction"),
+                 T(f"Реакция: {who} — эмоции на лицах, пауза.", f"Reaction: {who} — emotions on their faces, a pause."),
+                 T("крупный", "close-up"), f"reaction close-up of {who}"))
+    if len(ch) >= 2:
+        cand.append((2 + len(beats) + 0.3, 5, T("Взгляды", "Glances"),
+                     T(f"Взгляды встречаются: {ch[0]} и {ch[1]} — крупно, по очереди.", f"Their eyes meet: {ch[0]} and {ch[1]} in turn."),
+                     T("крупный", "close-up"), f"eyes meet, close-ups of the {ch[0]} and the {ch[1]}"))
+    cand.append((99, 1, T("Финал", "Final"), T(f"Финальный кадр{mood_s}: {who} в кадре, история завершена.",
+                                                  f"Final shot{mood_s}: {who} in frame, the story is complete."),
+                 T("общий", "wide"), f"final hero shot of {who}"))
+    pick = sorted(cand, key=lambda c: (c[1], c[0]))[:n]
+    extra = 0
+    fill = [(T("Снизу", "Low angle"), T("Снизу, герой крупно", "Low angle, hero up close"), "low angle"),
+            (T("Сверху", "Top view"), T("Вид сверху", "Top-down view"), "top-down view"),
+            (T("Передний план", "Foreground"), T("Через деталь на переднем плане", "Through a foreground detail"), "foreground framing"),
+            (T("Облёт", "Orbit"), T("Камера облетает вокруг", "The camera orbits around"), "orbiting camera"),
+            (T("Силуэт", "Silhouette"), T("Силуэт на фоне света", "A silhouette against the light"), "backlit silhouette"),
+            (T("Отражение", "Reflection"), T("В отражении стекла", "Seen in a glass reflection"), "reflection shot"),
+            (T("В движении", "Tracking"), T("Камера следует за героем", "The camera follows the hero"), "tracking shot"),
+            (T("Пауза", "Pause"), T("Тихая пауза, общий план", "A quiet pause, wide shot"), "quiet wide pause")]
+    while len(pick) < n:                                    # идея совсем короткая — добираем разными ракурсами
+        bt = beats[extra % len(beats)]
+        t0, t1, en = fill[extra % len(fill)]
+        pick.append((2 + extra % len(beats) + 0.7 + extra * 0.01, 9, t0, f"{t1}: {bt}.", t0.lower(), f"{en}, {bt}"))
+        extra += 1
+    pick.sort(key=lambda c: c[0])
+    secs = _spread(seconds, n)
+    return [{"title": _txt(c[2], 60), "title_en": "", "text": _txt(c[3], 320), "shot": c[4], "camera": "",
+             "seconds": secs[k], "prompt": _txt(c[5], 600)} for k, c in enumerate(pick)]
+
+
 def _spread(total: float, n: int) -> list[float]:
     return [round(total / n, 2)] * n
 
@@ -228,13 +356,20 @@ def fallback_frames(st: dict, lang: str) -> list[dict]:
                 for i, p in enumerate(parts)]
     idea = st.get("idea") or tr(lang, "ваша история", "your story")
     n = max(MIN_FRAMES, min(MAX_FRAMES, int(st.get("count") or 9)))
+    preset = next((i0 for i0, t0, _d in IDEAS[L(lang)] if idea.startswith(t0)), None)
+    if not preset:                                           # своя идея — раскладываем по действиям
+        return story_frames(idea, n, st["seconds"], lang)
+    # пример из окна: сюжетные ходы, в тексте — короткий предмет истории, а не вся фраза в каждом кадре
+    subj = {"ad": ("продукт", "the product"), "build": ("пространство", "the space"),
+            "story": ("герой", "the hero")}[preset][0 if L(lang) == "ru" else 1]
+    full, idea = idea, subj
     beats = _BEATS[L(lang)]
     last = len(beats) - 1
     # первый — хук, последний — финал, между ними — равномерно по списку сюжетных ходов
     idx = [round(k * last / (n - 1)) for k in range(n)]
     secs = _spread(st["seconds"], n)
     return [{"title": beats[j][0], "title_en": "", "text": beats[j][1].format(i=idea), "shot": "", "camera": "",
-             "seconds": secs[k], "prompt": f"{_BEAT_EN[j]} of {idea}"} for k, j in enumerate(idx)]
+             "seconds": secs[k], "prompt": f"{_BEAT_EN[j]}: {full}"} for k, j in enumerate(idx)]
 
 
 def make_frames(a: Any, ses: dict, lang: str, change: str = "") -> bool:
@@ -256,15 +391,20 @@ def make_frames(a: Any, ses: dict, lang: str, change: str = "") -> bool:
         user += f"\nCurrent frames:\n{cur}\nChange request: {change}"
     data = a._llm_json(_fmt(BOARD_SYSTEM, lang, task=task, count_rule=count_rule, seconds=st["seconds"], ids=ids),
                        user, v_board, ses, 3500, timeout_scale=3, task="storyboard")
+    if not data:     # длинный JSON не вышел (слабая модель / обрыв) — короткий вариант без промптов
+        data = a._llm_json(_fmt(BOARD_SYSTEM_SHORT, lang, task=task, count_rule=count_rule), user, v_board_short, ses,
+                           1600, timeout_scale=2, task="storyboard_short")
     if data:
         st["frames"] = data["frames"]
         st["title"] = data["title"] or st.get("title") or ""
         st["bible"] = data["bible"]
+        st["template"] = False
         _fit_seconds(st)
         return False
+    st["template"] = True          # кадры собраны без сценариста — предлагаем «Расписать нейросетью»
+    if change and st["source"] == "idea":     # без LLM правку учитываем как продолжение идеи, а не хвост каждого кадра
+        st["idea"] = (st["idea"].rstrip(". ") + ". " + change)[:500]
     st["frames"] = fallback_frames(st, lang)
-    if change:
-        st["frames"] = [{**f, "text": f["text"] + ". " + change} for f in st["frames"]]
     st["title"] = st.get("title") or _txt(st.get("idea") or st.get("script"), 40)
     return True
 
@@ -492,29 +632,170 @@ IDEAS = {
 }
 
 
+def chat_refs(ses: dict) -> list[dict]:
+    """Картинки, сгенерированные раньше в этом чате (артефакты флоу: герои и картинки) — кандидаты в референсы героев."""
+    out = []
+    for x in reversed(ses.get("arts") or []):
+        if isinstance(x, dict) and x.get("type") in ("hero", "image") and re.match(r"^(https?://|/)", str(x.get("url") or "")):
+            out.append({"id": str(x.get("id")), "url": x["url"], "title": _txt(x.get("title"), 40)})
+    return out[:8]
+
+
 def show_idea(a: Any, ses: dict, ctx: dict, lang: str, head: str | None = None) -> dict:
     st = state(ses)
     st["step"] = "idea"
     ses["await"] = "sb"
+    cands = chat_refs(ses)
+    attached = [f["name"] for f in ses.get("files") or [] if f.get("kind") == "image"]
+    refs = {"title": tr(lang, "Референсы героев", "Character references"),
+            "items": cands, "selected": [r["id"] for r in cands if r["id"] in (st.get("ref_ids") or [])],
+            "attached": attached,
+            "attach": tr(lang, "📎 Прикрепить другие", "📎 Attach others") if cands else tr(lang, "📎 Прикрепить фото героя", "📎 Attach a hero photo"),
+            "note": (tr(lang, "В этом чате уже есть картинки — отметьте, кого взять героями кадров, или прикрепите другие фото.",
+                        "This chat already has images — tick the ones to use as characters, or attach other photos.") if cands else
+                     tr(lang, "Чтобы герои были одинаковыми во всех кадрах, прикрепите их фото скрепкой. Можно без референсов.",
+                        "To keep characters the same in every frame, attach their photos. References are optional."))}
     block = {"type": "choice", "id": "sb_idea", "action": "sb_answer",
              "title": tr(lang, "О чём раскадровка?", "What is the storyboard about?"),
              "options": [{"id": i, "label": t0, "detail": d0} for i, t0, d0 in IDEAS[L(lang)]],
-             "custom_placeholder": tr(lang, "Своя идея одной-двумя фразами", "Your idea in a sentence or two"),
+             "custom_placeholder": tr(lang, "Кто, где и что происходит — одной-двумя фразами. Или вставьте готовый сценарий",
+                                      "Who, where and what happens — a sentence or two. Or paste a ready script"),
+             "custom_first": True,
+             "custom_label": tr(lang, "Своя идея или сценарий", "Your idea or script"),
              "cta": tr(lang, "Расписать кадры", "Write the frames"),
              "extra": {"title": tr(lang, "Сколько кадров", "How many frames"),
                        "options": [{"id": str(n), "label": str(n)} for n in COUNTS],
-                       "selected": str(st.get("count") or 9)}}
-    lines = [head or tr(lang, "Без сценария — тоже можно. Выберите направление или напишите свою идею: я распишу кадры, "
-                              "вы проверите список, потом запустим генерацию.",
-                        "No script is fine. Pick a direction or write your idea: I’ll write the frames, you check them, "
-                        "then we generate.")]
-    return response(lines, _nav(lang), [block], lang, intent="sb_idea")
+                       "selected": str(st.get("count") or 9)},
+             "refs": refs}
+    lines = [head or tr(lang, "🎞 Раскадровка — серия кадров с номером, временем и подписью. Напишите идею или вставьте "
+                              "готовый сценарий — я распишу кадры, вы проверите текст, потом выберем оформление и запустим.",
+                        "🎞 Storyboard — a series of frames with number, timecode and caption. Write an idea or paste a script — "
+                        "I’ll write the frames, you check the text, then we pick the look and run it.")]
+    imgs = [f["name"] for f in ses.get("files") or [] if f.get("kind") == "image"]
+    if imgs:
+        lines.append(tr(lang, f"Фото «{'», «'.join(imgs[:3])}» возьму как референс: герой или продукт будет таким же во всех кадрах.",
+                        f"I’ll use “{'”, “'.join(imgs[:3])}” as a reference so the hero or product stays the same in every frame."))
+    return response(lines, [chip(tr(lang, "Выйти из режима", "Leave mode"), "sb_exit")], [block], lang, intent="sb_idea")
+
+
+TEXT_MODELS = ("deepseek-v3-1", "gpt-5-4", "claude-4-5-haiku", "gemini-3-5-flash", "deepseek-v3")
+
+
+def text_model(a: Any) -> Any:
+    """Текстовая нейросеть студии, которой можно расписать кадры, если помощник-сценарист недоступен."""
+    for mid in TEXT_MODELS:
+        c = a.d.cards.get(mid)
+        if c and a._healthy(mid):
+            return c
+    return None
+
+
+def writer_prompt(st: dict, lang: str) -> str:
+    if st["source"] == "script":
+        task, user = "Split the user's script into storyboard frames.", f"Script:\n{st['script'][:6000]}"
+    else:
+        task, user = ("There is no script: invent a short visual story from the idea and split it into storyboard frames.",
+                      f"Idea: {st['idea']}")
+    return (_fmt(BOARD_SYSTEM_SHORT, lang, task=task, count_rule=f"Make exactly {len(st.get('frames') or []) or st['count']} frames.")
+            + "\n\n" + user + "\nAnswer with the JSON object only, no markdown.")
+
+
+def frames_from_reply(ses: dict, text: str) -> bool:
+    """Ответ текстовой нейросети (кнопка «Расписать нейросетью») → кадры. False — не разобрали."""
+    import json as _json
+    st = state(ses)
+    m = re.search(r"\{[\s\S]*\}", text or "")
+    if not m:
+        return False
+    try:
+        data = v_board_short(_json.loads(m.group(0)))
+    except (ValueError, TypeError):
+        return False
+    st["frames"] = data["frames"]
+    st["title"] = data["title"] or st.get("title") or ""
+    st["template"] = False
+    _fit_seconds(st)
+    return True
+
+
+def _frames_block(st: dict, lang: str, with_frames: bool = True) -> dict:
+    fr = st["frames"]
+    tl = timeline(fr)
+    frames_out = [{"n": i + 1, "title": f["title"], "text": f["text"], "shot": f.get("shot") or "",
+                   "camera": f.get("camera") or "", "time": f"{_tc(tl[i][0])}–{_tc(tl[i][1])}"} for i, f in enumerate(fr)]
+    return {"type": "sb_frames", "step": "frames" if with_frames else "setup", "title": st.get("title") or "",
+            "frames": frames_out if with_frames else [], "cameras": camera_options(lang) if with_frames else [],
+            "settings": [], "models": [], "can_add": with_frames and len(fr) < MAX_FRAMES,
+            "can_del": with_frames and len(fr) > MIN_FRAMES,
+            "labels": {"camera": tr(lang, "Камера", "Camera"), "none": tr(lang, "Без движения", "No movement"),
+                       "shot": tr(lang, "План", "Shot"), "add": tr(lang, "+ Добавить кадр", "+ Add frame"),
+                       "del": tr(lang, "Убрать кадр", "Remove frame"), "redo": tr(lang, "Переписать", "Rewrite"),
+                       "redo_ph": tr(lang, "Новый текст кадра — заменит старый", "New frame text — replaces the old one"),
+                       "model": tr(lang, "Нейросеть", "Model"), "files": tr(lang, "Референсы", "References"),
+                       "hint": tr(lang, "Текст кадра правится прямо здесь", "Edit frame text right here")}}
 
 
 def show_frames(a: Any, ses: dict, ctx: dict, lang: str, head: str | None = None, degraded: bool = False) -> dict:
+    """Шаг 1 — текст кадров. Только список: проверить, поправить, убрать, добавить. Оформление и запуск — следующим шагом."""
     st = state(ses)
     st["step"] = "frames"
     ses["await"] = "sb"
+    fr = st["frames"]
+    tl = timeline(fr)
+    total_sec = round(tl[-1][1]) if tl else 0
+    lines = [head] if head else []
+    lines.append(tr(lang, f"Раскадровка{' «' + st['title'] + '»' if st.get('title') else ''}: {len(fr)} кадров, {total_sec} с. "
+                          "Проверьте текст: правьте прямо в карточке, у кадра можно сменить камеру, убрать его или переписать. "
+                          "Когда всё так — «Дальше: оформление и запуск».",
+                    f"Storyboard{' “' + st['title'] + '”' if st.get('title') else ''}: {len(fr)} frames, {total_sec} s. "
+                    "Check the text — edit it right in the card, change the camera, remove or rewrite a frame. "
+                    "When it reads right, tap “Next: look and run”."))
+    tmpl = degraded or bool(st.get("template"))
+    nxt = chip(tr(lang, "Дальше: оформление и запуск →", "Next: look and run →"), "sb_setup", primary=not tmpl)
+    chips = [nxt]
+    extra: dict[str, Any] = {}
+    tc = text_model(a) if tmpl else None
+    if tmpl and not degraded and tc:                # кадры всё ещё шаблонные — кнопку оставляем, без длинного объяснения
+        chips.insert(0, chip(tr(lang, "✍️ Расписать нейросетью", "✍️ Write with a model"), "generate", tc.id, primary=True))
+        pst = ses.get("pipe") if isinstance(ses.get("pipe"), dict) else {}
+        pst.update(on=True, expect="sb_frames")
+        ses["pipe"] = pst
+        extra = {"generate_model": tc.id, "generate_prompt": writer_prompt(st, lang), "generate_params": {},
+                 "ready": True, "keep_assistant": True, "quiet_reply": True, "pipe_expect": "sb_frames"}
+    if degraded:
+        if tc:
+            lines.insert(len(lines) - 1, tr(
+                lang, "Помощник-сценарист сейчас недоступен, поэтому кадры я разложила по вашей идее сама: место, герои, "
+                      f"каждое действие, ключевой момент и финал. Чтобы кадры придумала нейросеть, нажмите «Расписать нейросетью» — "
+                      f"это один короткий запрос к {tc.title}, стоит копейки.",
+                "The writing model is unavailable, so I laid out the frames from your idea myself: setting, characters, "
+                f"each action, the key moment and the ending. To have a model write them, tap “Write with a model” — "
+                f"one short request to {tc.title}, it costs a few kopecks."))
+            chips.insert(0, chip(tr(lang, "✍️ Расписать нейросетью", "✍️ Write with a model"), "generate", tc.id, primary=True))
+            pst = ses.get("pipe") if isinstance(ses.get("pipe"), dict) else {}
+            pst.update(on=True, expect="sb_frames")
+            ses["pipe"] = pst
+            extra = {"generate_model": tc.id, "generate_prompt": writer_prompt(st, lang), "generate_params": {},
+                     "ready": True, "keep_assistant": True, "quiet_reply": True, "pipe_expect": "sb_frames"}
+        else:
+            lines.insert(len(lines) - 1, tr(
+                lang, "Помощник-сценарист сейчас недоступен, поэтому кадры я разложила по вашей идее сама: место, герои, "
+                      "каждое действие, ключевой момент и финал. Поправьте текст под себя — или опишите историю подробнее "
+                      "(2–4 действия через точку), и я пересоберу кадры.",
+                "The writing model is unavailable, so I laid out the frames from your idea myself. Edit them — or describe "
+                "the story in more detail (2–4 actions separated by periods) and I’ll rebuild the frames."))
+    chips += [chip(tr(lang, "Пересобрать кадры", "Rebuild frames"), "sb_rebuild")] + _nav(lang)
+    return response(lines, chips, [_frames_block(st, lang)], lang, intent="sb_frames", degraded=degraded, **extra)
+
+
+def show_setup(a: Any, ses: dict, ctx: dict, lang: str, head: str | None = None) -> dict:
+    """Шаг 2 — оформление и запуск: формат, кадр, стиль, подписи, длительность, нейросеть, цена."""
+    st = state(ses)
+    st["step"] = "setup"
+    ses["await"] = "sb"
+    pst = ses.get("pipe") if isinstance(ses.get("pipe"), dict) else None
+    if pst and pst.get("expect") == "sb_frames":           # кнопку «Расписать нейросетью» не нажали — ответ не ждём
+        pst["expect"] = "board" if pst.get("stage") == "board" else None
     fr = st["frames"]
     if st["format"] == "series" and len(fr) > MAX_SERIES:
         st["format"] = "sheet"
@@ -522,10 +803,8 @@ def show_frames(a: Any, ses: dict, ctx: dict, lang: str, head: str | None = None
             lang, f"Отдельными картинками — до {MAX_SERIES} кадров за раз, поэтому оставила формат «одним листом».",
             f"Separate images are limited to {MAX_SERIES} frames per run, so I kept the single sheet.")
     card = current_model(a, st)
-    tl = timeline(fr)
     lab = L(lang)
-    frames_out = [{"n": i + 1, "title": f["title"], "text": f["text"], "shot": f.get("shot") or "",
-                   "camera": f.get("camera") or "", "time": f"{_tc(tl[i][0])}–{_tc(tl[i][1])}"} for i, f in enumerate(fr)]
+    tl = timeline(fr)
 
     def pills(key: str, items: list[tuple[str, str]]) -> dict:
         return {"key": key, "options": [{"id": k, "label": v} for k, v in items], "selected": str(st[key])}
@@ -542,24 +821,14 @@ def show_frames(a: Any, ses: dict, ctx: dict, lang: str, head: str | None = None
                              label=tr(lang, "Подписи", "Captions")))
     settings.append(dict(pills("seconds", [(str(x), f"{x} " + tr(lang, "с", "s")) for x in DURATIONS]),
                          label=tr(lang, "Длительность", "Duration")))
-    block = {"type": "sb_frames", "title": st.get("title") or "", "frames": frames_out, "cameras": camera_options(lang),
-             "settings": settings, "models": [], "can_add": len(fr) < MAX_FRAMES, "can_del": len(fr) > MIN_FRAMES,
-             "labels": {"camera": tr(lang, "Камера", "Camera"), "none": tr(lang, "Без движения", "No movement"),
-                        "shot": tr(lang, "План", "Shot"), "add": tr(lang, "+ Добавить кадр", "+ Add frame"),
-                        "del": tr(lang, "Убрать кадр", "Remove frame"), "redo": tr(lang, "Переписать", "Rewrite"),
-                        "redo_ph": tr(lang, "Что изменить в кадре?", "What to change in this frame?"),
-                        "model": tr(lang, "Нейросеть", "Model"), "files": tr(lang, "Референсы", "References"),
-                        "hint": tr(lang, "Текст кадра правится прямо здесь", "Edit frame text right here")}}
+    block = _frames_block(st, lang, with_frames=False)
+    block["settings"] = settings
+    block["count"] = len(fr)
+    block["summary"] = tr(lang, f"{len(fr)} кадров · {round(tl[-1][1]) if tl else 0} с: ", f"{len(fr)} frames · {round(tl[-1][1]) if tl else 0} s: ") \
+        + " · ".join(f["title"] for f in fr[:6]) + (" …" if len(fr) > 6 else "")
     lines = [head] if head else []
-    if degraded:
-        lines.append(tr(lang, "Помощник-сценарист сейчас недоступен — расписала кадры по шаблону, поправьте их под себя.",
-                        "The writing model is unavailable — I used a template, adjust the frames to your story."))
-    total_sec = round(tl[-1][1]) if tl else 0
-    lines.append(tr(lang, f"Раскадровка{' «' + st['title'] + '»' if st.get('title') else ''}: {len(fr)} кадров, {total_sec} с. "
-                          "Проверьте кадры — текст правится прямо в карточке, у каждого кадра можно поменять камеру "
-                          "или переписать его своими словами.",
-                    f"Storyboard{' “' + st['title'] + '”' if st.get('title') else ''}: {len(fr)} frames, {total_sec} s. "
-                    "Check the frames — edit text right in the card, change the camera or rewrite any frame."))
+    lines.append(tr(lang, "Кадры готовы. Теперь оформление: формат, кадр, стиль и нейросеть — цена пересчитается сразу.",
+                    "Frames are set. Now the look: format, frame, style and model — the price updates right away."))
     out_extra: dict[str, Any] = {}
     chips: list[dict] = []
     if not card:
@@ -601,12 +870,37 @@ def show_frames(a: Any, ses: dict, ctx: dict, lang: str, head: str | None = None
                      "generate_files": [{"kind": it["kind"], "name": it["name"]} for it in used]}
         if series is not None:
             out_extra["generate_series"] = series
-    chips += [chip(tr(lang, "Пересобрать кадры", "Rebuild frames"), "sb_rebuild")] + _nav(lang)
-    return response(lines, chips, [block], lang, intent="sb_frames", degraded=degraded, **out_extra)
+    picked = [r for r in chat_refs(ses) if r["id"] in (st.get("ref_ids") or [])]
+    if picked:
+        out_extra["attach_urls"] = [{"src": r["url"], "name": f"hero-{r['id']}.png"} for r in picked]
+        lines.insert(1 if head else 0, tr(lang, f"Референсы героев из чата ({len(picked)}) — добавила в скрепку: по ним нейросеть держит лица и образы.",
+                                          f"Character references from the chat ({len(picked)}) are in the attachments — the model keeps faces and looks from them."))
+    chips += [chip(tr(lang, "← К тексту кадров", "← Back to frames"), "sb_frames_view"),
+              chip(tr(lang, "Выйти из режима", "Leave mode"), "sb_exit")]
+    out_extra["pipe_expect"] = None
+    return response(lines, chips, [block], lang, intent="sb_setup", **out_extra)
+
+
+def apply_writer_reply(a: Any, ses: dict, ctx: dict, lang: str, value: Any) -> dict:
+    """Ответ текстовой нейросети по кнопке «Расписать нейросетью» → карточки кадров. Повторный ответ игнорируем."""
+    pst = ses.get("pipe") if isinstance(ses.get("pipe"), dict) else {}
+    if ses.get("assist_mode") != "sb" or pst.get("expect") != "sb_frames":
+        return {"text": "", "reply": "", "blocks": [], "chips": [], "silent": True}
+    v = value if isinstance(value, dict) else {}
+    if v.get("kind") not in (None, "", "text"):
+        return {"text": "", "reply": "", "blocks": [], "chips": [], "silent": True}
+    pst["expect"] = None
+    if frames_from_reply(ses, str(v.get("reply") or "")):
+        return show_frames(a, ses, ctx, lang, tr(lang, "Нейросеть расписала кадры.", "The model wrote the frames."))
+    return show_frames(a, ses, ctx, lang, tr(
+        lang, "Не разобрала ответ нейросети — кадры остались прежними. Можно нажать «Расписать нейросетью» ещё раз.",
+        "Could not read the model reply — the frames stay as they are. You can tap “Write with a model” again."))
 
 
 def show(a: Any, ses: dict, ctx: dict, lang: str, head: str | None = None) -> dict:
     st = state(ses)
+    if st["step"] == "setup" and st.get("frames"):
+        return show_setup(a, ses, ctx, lang, head)
     if st["step"] == "frames" and st.get("frames"):
         return show_frames(a, ses, ctx, lang, head)
     if st["step"] == "idea":
@@ -619,8 +913,8 @@ def start(a: Any, ses: dict, ctx: dict, lang: str, value: Any = None, text: str 
     old = ses.get("sb") if isinstance(ses.get("sb"), dict) else None
     ses["assist_mode"] = "sb"
     if old and old.get("frames") and value != "new" and not text:
-        out = show_frames(a, ses, ctx, lang, tr(lang, "Продолжаем раскадровку — кадры на месте.",
-                                                 "Back to your storyboard — the frames are here."))
+        out = show(a, ses, ctx, lang, tr(lang, "Продолжаем раскадровку — кадры на месте.",
+                                          "Back to your storyboard — the frames are here."))
         out["chips"] = out["chips"][:-1] + [chip(tr(lang, "Начать новую", "Start a new one"), "sb_start", "new")] + out["chips"][-1:]
         return out
     ses["sb"] = None
@@ -629,7 +923,7 @@ def start(a: Any, ses: dict, ctx: dict, lang: str, value: Any = None, text: str 
         rest = SB_RX.sub(" ", text).strip(" :.,—-\n")
         if len(rest.split()) >= 3:
             return take_text(a, ses, ctx, lang, rest)
-    return show_ask(a, ses, ctx, lang)
+    return show_idea(a, ses, ctx, lang)          # сразу окно: своя идея или сценарий, примеры, число кадров
 
 
 def take_text(a: Any, ses: dict, ctx: dict, lang: str, text: str) -> dict:
@@ -660,7 +954,16 @@ def answer(a: Any, ses: dict, ctx: dict, lang: str, value: Any) -> dict:
         st["count_fixed"] = True
     except (TypeError, ValueError):
         pass
-    text = _txt(v.get("text"), 500)
+    if isinstance(v.get("refs"), list):              # какие картинки из чата взять референсами героев
+        ok = {r["id"]: r for r in chat_refs(ses)}
+        st["ref_ids"] = [str(x) for x in v["refs"][:6] if str(x) in ok]
+    raw = str(v.get("text") or "").strip()
+    if raw and is_script(raw):                       # в окно вставили готовый сценарий
+        st.update(source="script", script=raw[:8000], idea="")
+        st["step"] = "idea"
+        deg = make_frames(a, ses, lang)
+        return show_frames(a, ses, ctx, lang, tr(lang, "Сценарий получила — разбила на кадры.", "Got the script — split it into frames."), deg)
+    text = _txt(raw, 500)
     if not text:
         opt = {i: (t0, d0) for i, t0, d0 in IDEAS[L(lang)]}.get(str(v.get("option") or ""))
         if not opt:
@@ -720,7 +1023,7 @@ def edit(a: Any, ses: dict, ctx: dict, lang: str, value: Any) -> dict:
                 if val == "series" and len(fr) > MAX_SERIES:
                     head = tr(lang, f"Отдельными картинками — до {MAX_SERIES} кадров. Уберите лишние кадры или оставьте лист.",
                               f"Separate images are limited to {MAX_SERIES} frames. Remove some frames or keep the sheet.")
-    out = show_frames(a, ses, ctx, lang, head)
+    out = (show_frames(a, ses, ctx, lang, head) if path.startswith("frames") else show_setup(a, ses, ctx, lang, head))
     out["intent"] = "sb_edit"
     return out
 
@@ -746,9 +1049,11 @@ def redo_frame(a: Any, ses: dict, ctx: dict, lang: str, value: Any) -> dict:
     if data:
         fr[i] = {**data, "seconds": f["seconds"]}
     else:
-        f["text"] = (f["text"].rstrip(". ") + ". " + change)[:320]
+        f["text"] = change[:320]                   # без сценариста: новый текст кадра — ваши слова, вместо старого
         f["prompt"] = ""
-    out = show_frames(a, ses, ctx, lang, tr(lang, f"Переписала кадр {i + 1}.", f"Rewrote frame {i + 1}."), not data)
+    out = show_frames(a, ses, ctx, lang, tr(lang, f"Переписала кадр {i + 1}." if data else
+                                             f"Заменила текст кадра {i + 1} вашим.", f"Rewrote frame {i + 1}."
+                                             if data else f"Replaced frame {i + 1} text with yours."), False)
     out["intent"] = "sb_frame"
     return out
 
@@ -761,10 +1066,12 @@ def rebuild(a: Any, ses: dict, ctx: dict, lang: str, change: str = "") -> dict:
 
 def back(a: Any, ses: dict, ctx: dict, lang: str) -> dict:
     st = state(ses)
+    if st["step"] == "setup":
+        return show_frames(a, ses, ctx, lang)
     if st["step"] == "frames":
-        return show_idea(a, ses, ctx, lang) if st.get("source") == "idea" else show_ask(a, ses, ctx, lang)
+        return show_idea(a, ses, ctx, lang)
     if st["step"] == "idea":
-        return show_ask(a, ses, ctx, lang)
+        return exit_mode(a, ses, ctx, lang)
     return exit_mode(a, ses, ctx, lang)
 
 
@@ -796,7 +1103,7 @@ def message(a: Any, ses: dict, ctx: dict, lang: str, msg: str) -> dict:
         if "count" in s and s["count"] != len(st["frames"]):
             st["count"], st["count_fixed"] = s["count"], True
             return rebuild(a, ses, ctx, lang)
-        return show_frames(a, ses, ctx, lang, tr(lang, "Поменяла настройки.", "Settings updated."))
+        return show_setup(a, ses, ctx, lang, tr(lang, "Поменяла настройки.", "Settings updated."))
     if is_script(msg):                               # прислали новый сценарий целиком
         return take_text(a, ses, ctx, lang, msg)
     return rebuild(a, ses, ctx, lang, msg)

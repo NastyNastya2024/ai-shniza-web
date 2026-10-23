@@ -148,9 +148,11 @@
           item.size = data.size || item.size;
           if (!item.preview && data.preview_url && item.kind === 'image') item.preview = data.preview_url;
           announce(t('attach.announce.added', { name: item.name }));
+          try { if (window.AishM) AishM.track('attach_add', { kind: item.kind }); } catch (_) {}
         } else {
           item.status = 'error';
           item.error = errorText(data.error || (xhr.status === 413 ? 'file_too_large' : 'server'), item.kind, data);
+          try { if (window.AishM) AishM.track('attach_fail', { kind: item.kind, code: data.error || (xhr.status === 413 ? 'file_too_large' : 'server') }); } catch (_) {}
           item.file = file;
         }
         changed();
@@ -159,6 +161,7 @@
         item.xhr = null;
         item.status = 'error';
         item.error = errorText('network', item.kind);
+        try { if (window.AishM) AishM.track('attach_fail', { kind: item.kind, code: 'network' }); } catch (_) {}
         item.file = file;
         changed();
       };
@@ -185,9 +188,10 @@
         error: ''
       };
       S.items.push(item);
-      if (!kind) { item.error = t('attach.err.type'); changed(); return; }
-      if (/\.(heic|heif)$/i.test(file.name || '') || /heic|heif/i.test(file.type || '')) { item.error = t('attach.err.heic'); changed(); return; }
-      if (file.size > MAX_MB[kind] * 1024 * 1024) { item.error = t('attach.err.too_large', { mb: MAX_MB[kind] }); changed(); return; }
+      var mfail = function (code) { try { if (window.AishM) AishM.track('attach_fail', { kind: kind || 'file', code: code }); } catch (_) {} };
+      if (!kind) { item.error = t('attach.err.type'); mfail('type'); changed(); return; }
+      if (/\.(heic|heif)$/i.test(file.name || '') || /heic|heif/i.test(file.type || '')) { item.error = t('attach.err.heic'); mfail('heic'); changed(); return; }
+      if (file.size > MAX_MB[kind] * 1024 * 1024) { item.error = t('attach.err.too_large', { mb: MAX_MB[kind] }); mfail('too_large'); changed(); return; }
       if (kind === 'image' && window.URL && URL.createObjectURL) item.preview = URL.createObjectURL(file);
       upload(item, file);
     });

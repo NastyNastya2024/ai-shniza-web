@@ -457,6 +457,7 @@ window.AISH_DICT_EN = {
   'studio.sb.done': 'Storyboard is ready: all {total} frames are in “My works”.',
   'studio.sb.stopped': 'Stopped the series at frame {n} of {total}. The remaining frames were not started and not charged.',
   'studio.sb.busy': 'The frame series is still generating — please wait until it finishes.',
+  'studio.sb.writerDone': 'The model wrote the frames — laying them out…',
   'studio.chat.again': 'Another one? Describe a new idea or switch the model in the panel',
   'studio.chat.failed': 'The AI couldn’t finish — failed generations are not charged',
   'studio.chat.notStarted': 'Couldn’t start the generation — you were not charged. Try again?',

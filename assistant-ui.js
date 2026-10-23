@@ -24,7 +24,8 @@
     brief: 1, variants: 1, more_variants: 1, back_brief: 1, back: 1, use_variant: 1, skip_polish: 1, restart: 1,
     reel_start: 1, reel_answer: 1, reel_next: 1, reel_back: 1, reel_edit: 1, reel_frame: 1, reel_rebuild: 1,
     reel_sheet: 1, reel_exit: 1,
-    sb_start: 1, sb_noscript: 1, sb_answer: 1, sb_edit: 1, sb_frame: 1, sb_rebuild: 1, sb_back: 1, sb_exit: 1 };
+    sb_start: 1, sb_noscript: 1, sb_answer: 1, sb_edit: 1, sb_frame: 1, sb_rebuild: 1, sb_setup: 1, sb_frames_view: 1, sb_back: 1, sb_exit: 1,
+    pipe_result: 1 };
   var KIND_ICON = { prompt: '✍️', image: '🖼', video: '🎬', music: '🎵', text: '✍️', sfx: '🔊', edit: '✏️' };
 
   function el(tag, cls, text) {
@@ -367,12 +368,18 @@
       return box;
     }
 
-    /** Уточняющее окно как в Buzzy: пронумерованные варианты, первый раскрыт, свой текст последним, «Продолжить». */
+    function safeUrl(u) {
+      return /^https?:\/\//i.test(u || '') || (u && u.charAt(0) === '/') ? u : '';
+    }
+
+    /** Уточняющее окно: своя идея первой (раскадровка) или пронумерованные примеры. */
     function renderChoice(bl) {
       var card = el('div', 'reel-choice');
       card.appendChild(el('div', 'reel-choice__title', bl.title));
-      var picked = bl.options.length ? bl.options[0].id : null;
+      var picked = (!bl.custom_first && bl.options.length) ? bl.options[0].id : null;
       var style = bl.extra ? (bl.extra.selected || (bl.extra.options[0] || {}).id) : null;
+      var refsPicked = {};
+      ((bl.refs && bl.refs.selected) || []).forEach(function (id) { refsPicked[id] = 1; });
       var items = [];
       var list = el('div', 'reel-choice__list');
       function paint() {
@@ -381,8 +388,17 @@
           it.node.classList.toggle('is-on', on);
           it.node.setAttribute('aria-expanded', on ? 'true' : 'false');
         });
+        if (own) own.classList.toggle('is-on', !picked && !!ta.value.trim());
       }
-      bl.options.forEach(function (o, i) {
+      var own = el('label', 'reel-opt reel-opt--own' + (bl.custom_first ? ' reel-opt--lead' : ''));
+      if (bl.custom_label) own.appendChild(el('span', 'reel-opt__label', '✎ ' + bl.custom_label));
+      else own.appendChild(el('span', 'reel-opt__n', String(bl.options.length + 1)));
+      var ta = el('textarea', 'reel-opt__input');
+      ta.rows = bl.custom_first ? 3 : 2;
+      ta.placeholder = bl.custom_placeholder || '';
+      ta.addEventListener('input', function () { if (ta.value.trim()) { picked = null; paint(); } });
+      own.appendChild(ta);
+      function addOption(o, i) {
         var b = el('button', 'reel-opt');
         b.type = 'button';
         var head = el('span', 'reel-opt__head');
@@ -394,16 +410,50 @@
         b.addEventListener('click', function () { picked = o.id; ta.value = ''; paint(); });
         list.appendChild(b);
         items.push({ id: o.id, node: b });
-      });
-      var own = el('label', 'reel-opt reel-opt--own');
-      own.appendChild(el('span', 'reel-opt__n', String(bl.options.length + 1)));
-      var ta = el('textarea', 'reel-opt__input');
-      ta.rows = 2;
-      ta.placeholder = bl.custom_placeholder || '';
-      ta.addEventListener('input', function () { if (ta.value.trim()) { picked = null; paint(); } });
-      own.appendChild(ta);
-      list.appendChild(own);
+      }
+      if (bl.custom_first) {
+        list.appendChild(own);
+        if (bl.options.length) list.appendChild(el('div', 'reel-choice__or', L('или выберите пример', 'or pick an example')));
+        bl.options.forEach(addOption);
+      } else {
+        bl.options.forEach(addOption);
+        list.appendChild(own);
+      }
       card.appendChild(list);
+      if (bl.refs) {
+        var rf = el('div', 'sb-refs');
+        rf.appendChild(el('div', 'reel-choice__sub', bl.refs.title));
+        rf.appendChild(el('p', 'sb-refs__note', bl.refs.note || ''));
+        if (bl.refs.items && bl.refs.items.length) {
+          var thumbs = el('div', 'sb-refs__row');
+          bl.refs.items.forEach(function (it) {
+            var src = safeUrl(it.url);
+            if (!src) return;
+            var b = el('button', 'sb-ref' + (refsPicked[it.id] ? ' is-on' : ''));
+            b.type = 'button';
+            var img = el('img', 'sb-ref__img');
+            img.src = src; img.alt = it.title || '';
+            b.appendChild(img);
+            if (it.title) b.appendChild(el('span', 'sb-ref__cap', it.title));
+            b.addEventListener('click', function () {
+              if (refsPicked[it.id]) delete refsPicked[it.id]; else refsPicked[it.id] = 1;
+              b.classList.toggle('is-on', !!refsPicked[it.id]);
+            });
+            thumbs.appendChild(b);
+          });
+          rf.appendChild(thumbs);
+        }
+        if (bl.refs.attached && bl.refs.attached.length) {
+          rf.appendChild(el('div', 'sb-refs__got', L('Уже в скрепке: ', 'Already attached: ') + bl.refs.attached.join(', ')));
+        }
+        if (bl.refs.attach) {
+          var att = el('button', 'aich-opt sb-refs__attach', bl.refs.attach);
+          att.type = 'button';
+          att.addEventListener('click', function () { opts.onUiAction && opts.onUiAction('attach'); });
+          rf.appendChild(att);
+        }
+        card.appendChild(rf);
+      }
       if (bl.extra) {
         var ex = el('div', 'reel-choice__extra');
         ex.appendChild(el('div', 'reel-choice__sub', bl.extra.title));
@@ -429,6 +479,7 @@
         var opt = bl.options.filter(function (o) { return o.id === picked; })[0];
         var value = { q: bl.id, option: text ? '' : picked, text: text };
         if (bl.extra) value.style = style;
+        if (bl.refs) value.refs = Object.keys(refsPicked);
         opts.onUser && opts.onUser(text || (opt ? opt.label : ''));
         lastBody = { action: { type: bl.action || 'reel_answer', value: value } };
         post(lastBody);
@@ -601,8 +652,10 @@
     function renderSbFrames(bl) {
       var lab = bl.labels;
       var wrap = el('div', 'sb');
+      var setup = bl.step === 'setup';
+      if (setup && bl.summary) wrap.appendChild(el('div', 'sb-summary', bl.summary));
       var list = el('ol', 'sb-list');
-      bl.frames.forEach(function (f) {
+      if (!setup) bl.frames.forEach(function (f) {
         var i = f.n - 1;
         var li = el('li', 'sb-frame');
         var top = el('div', 'sb-frame__top');
@@ -654,7 +707,7 @@
         li.appendChild(det);
         list.appendChild(li);
       });
-      wrap.appendChild(list);
+      if (!setup && bl.frames.length) wrap.appendChild(list);
       if (bl.can_add) {
         var add = el('button', 'sb-add', lab.add);
         add.type = 'button';
@@ -669,11 +722,11 @@
           function (id) { sbEdit('model', id); }));
       }
       var foot = el('div', 'sb-foot');
-      if (bl.sheet) foot.appendChild(sbSheetMap(bl.sheet, bl.frames.length));
+      if (bl.sheet) foot.appendChild(sbSheetMap(bl.sheet, bl.count || bl.frames.length));
       if (bl.cost) foot.appendChild(el('div', 'sb-cost', bl.cost));
       if (bl.files && bl.files.length) foot.appendChild(el('div', 'aich-summary__files', lab.files + ': ' + bl.files.join(' · ')));
       if (foot.childNodes.length) set.appendChild(foot);
-      wrap.appendChild(set);
+      if (set.childNodes.length) wrap.appendChild(set);
       return wrap;
     }
 
@@ -740,7 +793,7 @@
           if (data.generate_model || data.generate_prompt) {
             form = { model: data.generate_model, prompt: data.generate_prompt || '', params: data.generate_params || {},
                      files: data.generate_files || [], series: data.generate_series || null };
-            opts.onFillForm && opts.onFillForm({ model: form.model, prompt: form.prompt, params: form.params, ready: !!data.ready, files: form.files });
+            opts.onFillForm && opts.onFillForm({ model: form.model, prompt: form.prompt, params: form.params, ready: !!data.ready, files: form.files, quiet: !!data.quiet_reply, attach_urls: data.attach_urls || [] });
           }
           return data;
         })
@@ -771,6 +824,11 @@
       if (c.action === 'open_vitrina') {
         if (opts.onUiAction) opts.onUiAction('open_vitrina', c.value);
         else if (c.value) location.href = c.value;
+        return;
+      }
+      if (c.action === 'pipe_result') {
+        lastBody = { action: { type: 'pipe_result', value: c.value } };
+        post(lastBody);
         return;
       }
       if (SERVER[c.action]) {

@@ -17,7 +17,7 @@
   --st-ink:#0F1016; --st-muted:#4B4D59; --st-frame:#FFFFFF; --st-line:rgba(18,20,32,.08);
   --st-shadow:0 2px 6px rgba(18,20,32,.06),0 60px 120px -50px rgba(18,20,32,.45);
   --st-glow-a:rgba(255,211,230,.9); --st-glow-b:rgba(211,227,255,.9); --st-glow-c:rgba(255,230,194,.9);
-  --st-cta-bg:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B); --st-cta-ink:#17110A; --st-cta-shadow:0 14px 34px -12px rgba(255,138,43,.6);
+  --st-cta-bg:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B); --st-cta-ink:#FFFFFF; --st-cta-shadow:0 14px 34px -12px rgba(255,138,43,.6);
   --st-pill-bg:#0F1016; --st-pill-ink:#fff; --st-eye:#646673; --st-eye-n:#0F1016; --st-eye-n-ink:#fff;
   --st-glass-hi:rgba(255,255,255,.88); --st-glass-mid:rgba(255,255,255,.32); --st-glass-lo:rgba(220,224,240,.28);
   --st-glass-stroke:rgba(255,255,255,.7); --st-glass-edge:rgba(18,20,32,.16); --st-glass-shadow:rgba(18,20,32,.2);
