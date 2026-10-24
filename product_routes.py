@@ -881,8 +881,8 @@ def register_product(app, db, User):
     def api_balance_topup(user):
         data = request.get_json(silent=True) or {}
         amount_rub = int(data.get("amount_rub") or 0)
-        if amount_rub < 100:
-            return jsonify({"error": "min_100"}), 400
+        if amount_rub < 1:
+            return jsonify({"error": "min_1"}), 400
         provider = get_payment_provider()
         if not provider.configured():
             # Dev stub credit
@@ -1071,7 +1071,7 @@ def register_product(app, db, User):
 
     ASSISTANT_HELP = [
         (re.compile(r"баланс|пополн|оплат|деньг|руб|сбп|карт", re.I),
-         "Баланс нужен для генераций в Студии. Откройте вкладку «Баланс», выберите сумму от 100 ₽ и нажмите «Пополнить»."),
+         "Баланс нужен для генераций в Студии. Откройте вкладку «Баланс», выберите сумму от 1 ₽ и нажмите «Пополнить»."),
         (re.compile(r"студи|генерац|модел|seedance|kling|seedream|создать|сгенер", re.I),
          "Студия — раздел в шапке: выбираете модель, задаёте промпт и запускаете генерацию. Списание только за готовый результат."),
         (re.compile(r"витрин|опублик|explore|подборк", re.I),

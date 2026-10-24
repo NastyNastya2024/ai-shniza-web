@@ -57,6 +57,10 @@ textarea.inp{resize:vertical;min-height:84px;line-height:1.5}
 .nav a{height:40px;padding:0 14px;border-radius:999px;display:flex;align-items:center;text-decoration:none;color:var(--muted);font-weight:700}
 .nav a[aria-current]{background:var(--panel-solid);color:var(--ink);box-shadow:0 6px 16px -10px var(--shadow)}
 .top .sp{flex:1}
+.top-end{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.top-logout{position:relative;height:40px;padding:0 14px 0 12px;border-radius:12px;border:1px solid var(--line2);background:var(--field);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;flex:0 0 auto}
+.top-logout svg{width:16px;height:16px;flex:0 0 auto}
+.top-logout:hover{color:var(--err);border-color:rgba(194,48,95,.35)}
 .ava{flex:0 0 auto;aspect-ratio:1;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;color:#fff;background:linear-gradient(135deg,#FF9A3D,#F05A7E);overflow:hidden}
 .ava img{width:100%;height:100%;object-fit:cover;display:block}
 .prof-top{display:grid;grid-template-columns:1fr 1fr;gap:16px 28px;align-items:stretch;margin:18px 0 22px;width:100%}
@@ -68,6 +72,9 @@ textarea.inp{resize:vertical;min-height:84px;line-height:1.5}
 .crop-bg[hidden]{display:none}
 .crop{width:min(420px,100%);padding:18px;background:var(--panel-solid)}
 .crop-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.crop-h b{font-size:17px}
+.crop-h .pop-x{width:28px;height:28px;border:none;border-radius:8px;background:transparent;color:var(--muted2);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex:0 0 auto}
+.crop-h .pop-x svg{width:14px;height:14px;display:block}
+.crop-h .pop-x:hover{background:var(--soft,rgba(18,20,32,.06));color:var(--ink)}
 .crop-stage{position:relative;width:100%;aspect-ratio:1;border-radius:20px;overflow:hidden;background:#111;touch-action:none;cursor:grab}
 .crop-stage:active{cursor:grabbing}
 .crop-stage canvas{width:100%;height:100%;display:block}
@@ -103,31 +110,21 @@ html{scrollbar-gutter:stable}
 .stats .heart{color:#E0457B;flex:0 0 auto}
 .p-side{display:flex;flex-direction:column;gap:10px;flex:0 0 240px;width:240px;max-width:240px;align-self:center;margin-left:auto;padding-left:8px}
 .p-side .btn{height:42px;padding:0 16px;font-size:14px;width:100%;box-sizing:border-box}
-.p-side .btn-logout{height:38px;font-size:13.5px;font-weight:700;color:var(--ink);border:1.5px solid var(--line2);background:var(--field);gap:8px}
-.p-side .btn-logout svg{flex:0 0 auto;opacity:.85}
-.p-side .btn-logout:hover{color:var(--err);border-color:rgba(194,48,95,.35)}
-.p-side .btn-logout:hover svg{opacity:1}
 .p-side .btn-gen{white-space:nowrap}
 .p-side .btn-g{width:auto;height:auto;padding:0;justify-content:flex-start;font-size:13px}
 .p-side .hint-side{margin:0;font-size:12px;line-height:1.35;color:var(--muted2);font-weight:600;font-style:italic;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
 /* вкладки — в рамке, как раньше */
-.mode-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 16px;margin:0 0 4px;border-radius:18px;background:var(--violet-bg);border:1px solid rgba(91,53,224,.22);font-size:14px;font-weight:700;color:var(--violet-ink);box-sizing:border-box}
-.mode-bar .sp{flex:1}
-.seg2{display:flex;padding:3px;border-radius:999px;background:var(--field);border:1px solid var(--line)}
-.seg2 button{height:34px;padding:0 14px;border-radius:999px;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:13px;cursor:pointer}
-.seg2 button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
-:root[data-theme=dark] .seg2 button[aria-pressed=true]{color:#1E1238}
 .wk-filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 14px}
 .wk-filters .tab{height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line2);background:var(--field);color:var(--muted);font-weight:800;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .wk-filters .tab small{font-size:12px;opacity:.85}
 .wk-filters .tab[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 :root[data-theme=dark] .wk-filters .tab[aria-selected=true]{color:#1E1238}
 .wk-filters .hint{margin:0 0 0 auto;font-size:12.5px;color:var(--muted2);font-weight:600}
-.tabs{display:flex;gap:4px;padding:5px;border-radius:999px;width:max-content;max-width:100%;overflow-x:auto;scrollbar-width:none;margin:14px 0 18px;background:var(--panel);border:1px solid var(--brd);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 24px 60px -40px var(--shadow);box-sizing:border-box;flex:0 0 auto}
-.tabs.glass{border-radius:999px}
+.tabs{display:flex;gap:4px;padding:5px;border-radius:18px;width:max-content;max-width:100%;overflow-x:auto;scrollbar-width:none;margin:14px 0 18px;background:var(--panel);border:1px solid var(--brd);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 24px 60px -40px var(--shadow);box-sizing:border-box;flex:0 0 auto}
+.tabs.glass{border-radius:18px}
 .tabs::-webkit-scrollbar{display:none}
-.tabs button,.tab{height:40px;padding:0 16px;border-radius:999px;border:none;background:transparent;font-weight:800;font-size:14.5px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;flex:0 0 auto}
+.tabs button,.tab{height:40px;padding:0 16px;border-radius:12px;border:none;background:transparent;font-weight:800;font-size:14.5px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;flex:0 0 auto}
 .tabs button:hover,.tab:hover{color:var(--ink)}
 .tabs button[aria-selected=true],.tab[aria-selected=true]{background:var(--ink);color:var(--bg)}
 :root[data-theme=dark] .tabs button[aria-selected=true],:root[data-theme=dark] .tab[aria-selected=true]{color:#1E1238}
@@ -189,6 +186,7 @@ html{scrollbar-gutter:stable}
 .th-h .sp{flex:1}
 .th-who{min-width:0}.th-who b,.th-who span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .back{display:none}
+.th-h .ib.back{background:var(--violet);color:#fff;border-color:transparent}
 .ref{display:flex;align-items:center;gap:12px;margin:12px 16px 0;padding:10px;border-radius:16px;background:var(--card);border:1px solid var(--line);flex:0 0 auto}
 .ref img{width:54px;height:54px;border-radius:12px;object-fit:cover}
 .ref b{display:block;font-size:14px}.ref span{font-size:12.5px;color:var(--muted)}
@@ -299,6 +297,8 @@ body.is-chat .msgs{position:static;flex:1 1 0;min-height:0!important;height:auto
 }
 @media (max-width:640px){
   .nav{display:none}
+  .top-logout{width:40px;padding:0}
+  .top-logout__lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .wrap{padding:12px 12px 24px}
   :root{--prof-h:auto}
   .prof{padding:14px 14px 16px;gap:12px;height:auto;min-height:0;max-height:none;overflow:visible}
@@ -311,7 +311,6 @@ body.is-chat .msgs{position:static;flex:1 1 0;min-height:0!important;height:auto
   .stats{gap:14px 18px;justify-content:center;margin-top:10px}
   .stats b{font-size:18px}
   .stats span{font-size:11.5px;justify-content:center}
-  .mode-bar{font-size:13px;padding:8px 12px}
   .wk-filters .hint{display:none}
   .p-side{max-width:none;align-self:stretch}
   .p-side .btn{height:40px;padding:0 12px;font-size:13.5px}
@@ -332,6 +331,16 @@ body.is-chat .msgs{position:static;flex:1 1 0;min-height:0!important;height:auto
   td.sum{grid-row:1/3;grid-column:2;align-self:center}
   .msgs{border-radius:20px}
 }
+/* Телефон: карточка профиля не оставляет места ленте, а blur на карточке чата
+   глотает касание — сообщения не прокручиваются. */
+@media (max-width:900px){
+  body.is-chat .prof{display:none}
+  body.is-chat .tabs{margin:0 0 8px}
+  body.is-chat .wrap{padding-top:8px;padding-bottom:8px}
+  body.is-chat .msgs{backdrop-filter:none;-webkit-backdrop-filter:none}
+  body.is-chat .feed,
+  body.is-chat .ml-list{overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 <link rel="stylesheet" href="/aish-style.css?v=12">
@@ -346,8 +355,26 @@ body.is-chat .msgs{position:static;flex:1 1 0;min-height:0!important;height:auto
 :root[data-style="white"][data-theme] .btn-gen{background:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B);color:#FFFFFF}
 :root[data-style="white"][data-theme] .btn-gen svg{stroke:#FFFFFF}
 :root[data-style="black"][data-theme] .btn-gen{background:linear-gradient(100deg,#EEF784 0%,#DCEB4A 40%,#F4C548 74%,#FF9F45 100%);color:#11130A}
-:root[data-style="black"][data-theme] :is(.chip[aria-pressed=true],.seg2 button[aria-pressed=true],.wk-filters .tab[aria-selected=true],.tabs button[aria-selected=true],.tab[aria-selected=true]){color:#0F1016}
+:root[data-style="black"][data-theme] :is(.chip[aria-pressed=true],.wk-filters .tab[aria-selected=true],.tabs button[aria-selected=true],.tab[aria-selected=true]){color:#0F1016}
 :root[data-style="black"][data-theme] .badge{background:#DCEB4A;color:#11130A}
+:root[data-style="black"] .th-h .ib.back{color:#0F1016}
+/* Шапка: выход и квадрат темы — акцентный цвет. Кружок внутри остаётся цветом темы. */
+:root[data-style="white"] .top-end .top-logout,
+:root[data-style="white"] .top-end .aish-fab.is-docked{background:#0F1016;border-color:#0F1016;color:#fff;box-shadow:none;filter:none}
+:root[data-style="white"] .top-end .top-logout:hover,
+:root[data-style="white"] .top-end .aish-fab.is-docked:hover{background:#26272E;border-color:#26272E;color:#fff;filter:none;transform:none}
+:root[data-style="black"] .top-end .top-logout,
+:root[data-style="black"] .top-end .aish-fab.is-docked{background:#F3F4F6;border-color:#F3F4F6;color:#0F1016;box-shadow:none;filter:none}
+:root[data-style="black"] .top-end .top-logout:hover,
+:root[data-style="black"] .top-end .aish-fab.is-docked:hover{background:#fff;border-color:#fff;color:#0F1016;filter:none;transform:none}
+:root[data-style="light"] .top-end .top-logout,
+:root[data-style="light"] .top-end .aish-fab.is-docked{background:#5B35E0;border-color:transparent;color:#fff;box-shadow:none}
+:root[data-style="light"] .top-end .top-logout:hover,
+:root[data-style="light"] .top-end .aish-fab.is-docked:hover{background:#4A2CC0;color:#fff;border-color:transparent;transform:none}
+:root[data-style="violet"] .top-end .top-logout,
+:root[data-style="violet"] .top-end .aish-fab.is-docked{background:#F6F3FF;border-color:#F6F3FF;color:#1E1238;box-shadow:none;filter:none}
+:root[data-style="violet"] .top-end .top-logout:hover,
+:root[data-style="violet"] .top-end .aish-fab.is-docked:hover{background:#fff;border-color:#fff;color:#1E1238;filter:none;transform:none}
 </style>
 </head>
 <body>
@@ -355,18 +382,13 @@ body.is-chat .msgs{position:static;flex:1 1 0;min-height:0!important;height:auto
   <a class="logo" href="/" aria-label="{AI}-шница — на главную"><img id="logo" src="/assets/brand/svg/lockup-light.svg" alt="{AI}-шница"></a>
   <nav class="nav" aria-label="Разделы"><a href="/app">Студия</a><a href="/explore">Витрина</a><a href="/account" aria-current="page">Кабинет</a></nav>
   <span class="sp"></span>
-  <button class="ib" id="themeBtn" type="button" aria-label="Сменить тему"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+  <div class="top-end">
+    <button class="top-logout" type="button" data-act="logout"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span class="top-logout__lbl">Выйти</span></button>
+    <button class="ib" id="themeBtn" type="button" aria-label="Сменить тему"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+  </div>
 </header>
 
 <div class="wrap">
-  <div class="mode-bar" id="modeBar" aria-label="Режим просмотра">
-    <span>Это ваш профиль</span>
-    <div class="seg2" role="group" aria-label="Режим просмотра">
-      <button type="button" id="mEdit" aria-pressed="true">Как вижу я</button>
-      <button type="button" id="mPublic" aria-pressed="false">Как видят другие</button>
-    </div>
-    <span class="sp"></span>
-  </div>
   <section class="glass prof" id="prof" aria-label="Профиль"></section>
     <div class="tabs glass" role="tablist" id="tabs"></div>
   <main class="main" id="view"></main>
@@ -375,7 +397,7 @@ body.is-chat .msgs{position:static;flex:1 1 0;min-height:0!important;height:auto
 <input type="file" id="avaFile" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
 <div class="crop-bg" id="crop" hidden>
   <section class="glass crop" role="dialog" aria-modal="true" aria-labelledby="cropT">
-    <div class="crop-h"><b id="cropT">Фото профиля</b><button class="ib" type="button" data-crop="cancel" aria-label="Закрыть" style="border:none;background:none">✕</button></div>
+    <div class="crop-h"><b id="cropT">Фото профиля</b><button class="pop-x" type="button" data-crop="cancel" aria-label="Закрыть"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
     <div class="crop-stage" id="cropStage"><canvas id="cropCv" width="560" height="560"></canvas><div class="crop-ring"></div></div>
     <p class="hint" style="text-align:center;margin:10px 0 4px">Перетащите фото, чтобы выбрать, что будет в круге</p>
     <label class="crop-zoom"><span aria-hidden="true">−</span><input type="range" id="cropZ" min="1" max="3" step="0.01" value="1" aria-label="Масштаб"><span aria-hidden="true">+</span></label>
@@ -524,11 +546,7 @@ function renderSide() {
     + (u.contacts.length ? '<div class="pcs">' + u.contacts.filter((c) => c.login).map((c) => '<span class="pc' + (c.show ? '' : ' off') + '" title="' + esc(contactTitle(c)) + ' · ' + (c.show ? 'Видно всем' : 'Скрыт от посетителей') + '"><i>' + esc(contactBadge(c)) + '</i>' + esc(c.login) + '</span>').join('') + '</div>' : '')
     + '<div class="stats"><div><b>' + D.works.filter((w) => w.pub).length + '</b><span>на витрине</span></div><div><b>' + D.works.length + '</b><span>всего работ</span></div><div><b>' + clientThreads().length + '</b><span>диалогов</span></div><div><b>' + likesTotal() + '</b><span>' + I.heart + 'лайков</span></div></div>'
     + '</div></div>'
-    + '<div class="p-side">'
-    + '<button class="btn btn-logout" type="button" data-act="logout">' + I.logout + 'Выйти</button>'
-    + '<button class="btn btn-gen" data-act="assistant">' + I.spark + 'Заполнить с помощником</button>'
-    + sideHint
-    + '</div>';
+    + (sideHint ? '<div class="p-side">' + sideHint + '</div>' : '');
 }
 
 /* ================= вкладки ================= */
@@ -630,9 +648,9 @@ async function toggleWorkPub(w, btn) {
 }
 
 /* ---------- Сообщения (внутренний чат) ---------- */
-const HELP_CHIPS = ['Как пополнить баланс?', 'Как опубликовать работу?', 'Что такое Витрина?', 'Как работает чат?', 'Заполнить профиль'];
+const HELP_CHIPS = ['Как пополнить баланс?', 'Как опубликовать работу?', 'Что такое Витрина?', 'Как работает чат?'];
 const HELP = [
-  { re: /баланс|пополн|оплат|деньг|руб|сбп|карт/i, a: 'Баланс нужен для генераций в Студии. Откройте вкладку «Баланс», выберите сумму от 100 ₽ и нажмите «Пополнить». Пока генерация идёт, сумма резервируется; если что-то не вышло — вернётся.' },
+  { re: /баланс|пополн|оплат|деньг|руб|сбп|карт/i, a: 'Баланс нужен для генераций в Студии. Откройте вкладку «Баланс», выберите сумму от 1 ₽ и нажмите «Пополнить». Пока генерация идёт, сумма резервируется; если что-то не вышло — вернётся.' },
   { re: /студи|генерац|модел|seedance|kling|seedream|создать|сгенер/i, a: 'Студия — раздел «Студия» в шапке: выбираете модель, задаёте промпт и запускаете генерацию. Списание только за готовый результат.' },
   { re: /витрин|опублик|explore|подборк/i, a: 'Витрина — публичная лента работ. После генерации можно опубликовать работу; во вкладке «Работы» видно, что на витрине, а что скрыто.' },
   { re: /чат|сообщен|диалог|запрос|промпт|оригинал|заказ/i, a: 'Здесь, во вкладке «Чат», — я и переписка по запросам клиентов (промпт, оригинал, заказ). Отвечайте прямо в {AI}-шнице.' },
@@ -720,8 +738,7 @@ function thread(t) {
     const chips = '<div class="feed-chips">' + HELP_CHIPS.map((c) => '<button type="button" class="chip" data-ac="' + esc(c) + '">' + esc(c) + '</button>').join('') + '</div>';
     return '<div class="th-h"><button class="ib back" data-act="back" aria-label="К списку диалогов">←</button>' + threadAva(t, 40) + '<div class="th-who"><b>' + esc(t.with.name) + '</b><span>Помощник · профиль и приложение</span></div><span class="sp"></span></div>'
       + '<div class="feed" id="feed">' + feed + chips + '</div>'
-      + '<div class="th-foot"><form class="comp" id="cForm"><div class="comp-box"><div class="comp-row"><label class="sr" for="cIn">Сообщение</label><textarea id="cIn" rows="1" placeholder="Спросите про профиль, баланс, студию…"></textarea><button class="comp-send" type="submit" aria-label="Отправить">' + I.send + '</button></div></div></form>'
-      + '<p class="note">Этот чат есть у каждого — здесь можно спросить про приложение или заполнить профиль вместе.</p></div>';
+      + '<div class="th-foot"><form class="comp" id="cForm"><div class="comp-box"><div class="comp-row"><label class="sr" for="cIn">Сообщение</label><textarea id="cIn" rows="1" placeholder="Спросите про профиль, баланс, студию…"></textarea><button class="comp-send" type="submit" aria-label="Отправить">' + I.send + '</button></div></div></form></div>';
   }
   const qa = t.kind === 'prompt' ? [['prompt', 'Поделиться промптом'], ['decline', 'Вежливо отказать']] : t.kind === 'original' ? [['file', 'Отправить оригинал'], ['terms', 'Предложить условия'], ['decline', 'Вежливо отказать']] : [['terms', 'Предложить условия'], ['file', 'Прикрепить файл']];
   const kn = KIND[t.kind] || ['Диалог', ''];
@@ -784,8 +801,8 @@ function vBalance() {
   $('view').innerHTML = '<section class="glass bal"><h2>Баланс</h2><p class="hint" style="margin:0">Деньги на балансе тратятся только на генерации. Пока генерация идёт, сумма резервируется, а если что-то не получилось — возвращается.</p>'
     + '<div class="nums"><div><b>' + rub(b.available) + '</b><span>Доступно</span></div></div>'
     + '<div class="lbl">Пополнить на</div><div class="amts" role="group" aria-label="Сумма пополнения">' + AM.map(([a, n]) => '<button class="amt" data-amt="' + a + '" aria-pressed="' + (pickAmt === a) + '">' + rub(a) + (n ? '<small>' + n + '</small>' : '') + '</button>').join('') + '</div>'
-    + '<div class="topup"><div><label class="lbl" for="amt">Своя сумма, от 100 ₽</label><input class="inp" id="amt" inputmode="numeric" value="' + pickAmt + '"></div><button class="btn btn-p" id="pay" type="button">Пополнить на ' + rub(pickAmt) + '</button></div>'
-    + '<div id="amtErr" class="hint" style="color:var(--err)" hidden>Минимальная сумма — 100 ₽</div>'
+    + '<div class="topup"><div><label class="lbl" for="amt">Своя сумма, от 1 ₽</label><input class="inp" id="amt" inputmode="numeric" value="' + pickAmt + '"></div><button class="btn btn-p" id="pay" type="button">Пополнить на ' + rub(pickAmt) + '</button></div>'
+    + '<div id="amtErr" class="hint" style="color:var(--err)" hidden>Минимальная сумма — 1 ₽</div>'
     + '<label class="ck2"><input type="checkbox" id="auto"><span>Автопополнение: когда на балансе меньше 100 ₽, пополнять на выбранную сумму. Я соглашаюсь на <a href="#">рекуррентные платежи</a> и могу отключить их в любой момент.</span></label>'
     + '<p class="hint">Оплата картой или через СБП. Нажимая «Пополнить», вы принимаете <a href="#">публичную оферту</a>.</p></section>'
     + '<section class="glass hist"><h2 style="font-size:18px">История платежей</h2>' + (b.history.length ? '<table><thead><tr><th>Дата</th><th>Тип</th><th>Описание</th><th>Модель</th><th class="sum">Сумма</th></tr></thead><tbody>'
@@ -797,7 +814,7 @@ function vBalance() {
 function vSettings() {
   const u = editing || (editing = JSON.parse(JSON.stringify(D.user)));
   if (!u.contacts.length) u.contacts.push({ net: 'telegram', login: '', show: true });
-  $('view').innerHTML = '<section class="glass sec"><h2>Профиль и контакты</h2><p class="hint" style="margin:0">Это видят посетители витрины и вашего профиля. Можно заполнить вручную или <button class="btn-g" data-act="assistant" style="border:none;background:none;padding:0;font-weight:800;cursor:pointer">с помощником</button>.</p>'
+  $('view').innerHTML = '<section class="glass sec"><h2>Профиль и контакты</h2><p class="hint" style="margin:0">Это видят посетители витрины и вашего профиля.</p>'
     + '<div class="prof-top"><div class="ph-identity"><div><label class="lbl" for="fName">Имя</label><input class="inp" id="fName" value="' + esc(u.name) + '" placeholder="Например, Мира Свет"></div>'
     + '<div><label class="lbl" for="fNick">Ник</label><input class="inp" id="fNick" value="' + esc(u.nick) + '" placeholder="mira_svet"><div class="hint">Адрес профиля: aishnitsa.ru/@' + esc(u.nick || 'ник') + '</div></div></div>'
     + '<div class="ph-about"><label class="lbl" for="fAbout">О себе</label><textarea class="inp" id="fAbout" maxlength="160" placeholder="Что вы создаёте и для кого. До 160 символов">' + esc(u.about) + '</textarea></div></div>'
@@ -825,7 +842,6 @@ document.addEventListener('click', (e) => {
   }
   const g = e.target.closest('[data-go]'); if (g) { e.preventDefault(); syncForm(); if (g.dataset.go !== 'settings') editing = null; tab = g.dataset.go; if (tab !== 'messages') openThread = null; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   const a = e.target.closest('[data-act]'); const act = a && a.dataset.act;
-  if (act === 'assistant') return openAssistant();
   if (act === 'logout') {
     if (LIVE) {
       api('/api/auth/logout', { method: 'POST' }).finally(() => { location.href = '/auth?next=/account'; });
@@ -873,13 +889,13 @@ document.addEventListener('click', (e) => {
     if (k === 'terms') { $('cIn').value = 'Здравствуйте! Могу сделать. Стоимость — … ₽, срок — … дней. Оплата: …'; return $('cIn').focus(); }
     if (k === 'decline') { $('cIn').value = 'Спасибо за интерес! К сожалению, сейчас не могу поделиться — надеюсь на понимание.'; return $('cIn').focus(); } }
   const am = e.target.closest('[data-amt]'); if (am) { pickAmt = +am.dataset.amt; return vBalance(); }
-  if (e.target.id === 'pay') { const v = +$('amt').value.replace(/\D/g, ''); if (!v || v < 100) { $('amtErr').hidden = false; return $('amt').focus(); }
+  if (e.target.id === 'pay') { const v = +$('amt').value.replace(/\D/g, ''); if (!v || v < 1) { $('amtErr').hidden = false; return $('amt').focus(); }
     try { if (window.AishM) AishM.track('topup_start', { amount: v }); } catch (_) {}
     const b = e.target; b.disabled = true; b.innerHTML = '<span class="typing" style="padding:0;border:none;background:none"><i></i><i></i><i></i></span>Переходим к оплате…';
     (async () => {
       if (LIVE) {
         const { res, data } = await api('/api/balance/topup', { method: 'POST', body: JSON.stringify({ amount_rub: v, autopay: !!($('auto') && $('auto').checked) }) });
-        if (!res.ok) { b.disabled = false; b.textContent = 'Пополнить на ' + rub(v); return toast(data.error === 'min_100' ? 'Минимум 100 ₽' : 'Не удалось начать оплату'); }
+        if (!res.ok) { b.disabled = false; b.textContent = 'Пополнить на ' + rub(v); return toast(data.error === 'min_1' ? 'Минимум 1 ₽' : 'Не удалось начать оплату'); }
         if (data.pay_url) { location.href = data.pay_url; return; }
         await loadLive(); render(); toast('Баланс пополнен на ' + rub(v)); return;
       }
@@ -887,13 +903,10 @@ document.addEventListener('click', (e) => {
     })(); return; }
   const ac = e.target.closest('[data-ac]'); if (ac) {
     const t = D.threads.find((x) => String(x.id) === String(openThread));
-    if (t && t.kind === 'assistant') {
-      if (/заполнить профиль/i.test(ac.dataset.ac)) { tab = 'settings'; render(); toast('Откройте поля профиля — или спросите меня в чате'); return; }
-      return send(t, { text: ac.dataset.ac });
-    }
+    if (t && t.kind === 'assistant') return send(t, { text: ac.dataset.ac });
   }
 });
-document.addEventListener('input', (e) => { if (e.target.id === 'amt') { const v = +e.target.value.replace(/\D/g, '') || 0; pickAmt = v; $('amtErr').hidden = v >= 100 || !v; $('pay').textContent = 'Пополнить на ' + rub(v); document.querySelectorAll('[data-amt]').forEach((b) => b.setAttribute('aria-pressed', +b.dataset.amt === v)); }
+document.addEventListener('input', (e) => { if (e.target.id === 'amt') { const v = +e.target.value.replace(/\D/g, '') || 0; pickAmt = v; $('amtErr').hidden = v >= 1 || !v; $('pay').textContent = 'Пополнить на ' + rub(v); document.querySelectorAll('[data-amt]').forEach((b) => b.setAttribute('aria-pressed', +b.dataset.amt === v)); }
   if (e.target.id === 'mq') { const q = e.target.value.toLowerCase(); document.querySelectorAll('.cv').forEach((c) => { c.hidden = q && !c.textContent.toLowerCase().includes(q); }); } });
 document.addEventListener('change', (e) => {
   if (e.target.dataset.cf === 'net' && editing) {
@@ -917,20 +930,6 @@ document.addEventListener('submit', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey && e.target.id === 'cIn') { e.preventDefault(); e.target.form.requestSubmit(); }
   if (e.key === 'Escape' && $('crop') && !$('crop').hidden) return closeCrop();
-});
-$('mEdit').addEventListener('click', () => {
-  $('mEdit').setAttribute('aria-pressed', 'true');
-  $('mPublic').setAttribute('aria-pressed', 'false');
-});
-$('mPublic').addEventListener('click', () => {
-  const nick = (D.user && D.user.nick) || '';
-  if (!nick) {
-    toast('Сначала укажите ник в профиле');
-    tab = 'settings';
-    render();
-    return;
-  }
-  location.href = '/@' + encodeURIComponent(nick);
 });
 if (window.AishStyle) {   // Белый / Чёрный / Фиолетовый вместо «луна / солнце»
   AishStyle.mount($('themeBtn'), { compact: true, replace: true });

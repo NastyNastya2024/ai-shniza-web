@@ -164,7 +164,10 @@ td .bad{color:var(--crit);font-weight:650}
 /* путь посетителя — окно */
 dialog{border:1px solid var(--line);border-radius:var(--r-xl);padding:0;max-width:min(880px,calc(100vw - 32px));width:100%;background:var(--raised);color:var(--ink);box-shadow:var(--sh-lg)}
 dialog::backdrop{background:rgba(10,8,20,.5);backdrop-filter:blur(4px)}
-.dlg-h{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--raised)}
+.dlg-h{display:flex;align-items:center;gap:10px;padding:16px 12px 16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--raised)}
+.dlg-h .pop-x{width:28px;height:28px;border:none;border-radius:8px;background:transparent;color:var(--ink2);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex:0 0 auto}
+.dlg-h .pop-x svg{width:14px;height:14px;display:block}
+.dlg-h .pop-x:hover{background:var(--surface);color:var(--ink)}
 .dlg-h h3{margin:0;flex:1;font:400 17px/1.25 var(--font-display)}
 .dlg-b{padding:14px 20px 22px;max-height:72vh;overflow:auto}
 .visit{border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;margin:0 0 10px;background:var(--surface);box-shadow:var(--sh-sm)}
@@ -208,7 +211,7 @@ dialog::backdrop{background:rgba(10,8,20,.5);backdrop-filter:blur(4px)}
   </div>
   <main id="root"><p class="empty">Загружаю…</p></main>
 </div>
-<dialog id="dlg" aria-labelledby="dlgT"><div class="dlg-h"><h3 id="dlgT">Путь посетителя</h3><button class="btn" type="button" id="dlgX">Закрыть</button></div><div class="dlg-b" id="dlgB"></div></dialog>
+<dialog id="dlg" aria-labelledby="dlgT"><div class="dlg-h"><h3 id="dlgT">Путь посетителя</h3><button class="pop-x" type="button" id="dlgX" aria-label="Закрыть"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div class="dlg-b" id="dlgB"></div></dialog>
 <div class="tip" id="tip" role="status" aria-live="polite"></div>
 <script>
 (function () {

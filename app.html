@@ -7,7 +7,7 @@
 <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/assets/brand/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/assets/brand/png/apple-touch-icon-180.png">
-<link rel="stylesheet" href="/assistant-ui.css?v=21">
+<link rel="stylesheet" href="/assistant-ui.css?v=22">
 <link rel="stylesheet" href="/attach.css">
 <link rel="stylesheet" href="/chat-history.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="/aish-style.css?v=12">
 <script src="/aish-style.js?v=9"></script>
 <script src="/aish-metrics.js?v=1"></script>
+<script src="/legal-pop.js?v=2"></script>
 <style>
 .brand-logo{height:28px;width:auto;display:block}
 .brand-logo-sm{height:24px}
@@ -82,6 +83,12 @@ body{margin:0;background:#EEEAF8}
   box-shadow:0 0 0 1px rgba(255,162,53,.12), 0 8px 18px -14px rgba(240,110,130,.55);
 }
 .field{border:1px solid var(--field-brd);background:var(--field);color:var(--accent-ink)}
+.sel-btn{height:44px;padding:0 12px 0 10px;border-radius:14px;font-family:'Onest',sans-serif;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:8px;cursor:pointer;max-width:100%;color:var(--ink)}
+.sel-btn .sel-ico{display:inline-flex;flex:0 0 auto}
+.sel-btn #selPrice{color:var(--muted2);font-weight:600}
+.sel-btn .sel-chev{flex:0 0 auto;opacity:.7}
+.sel-btn #selName.sel-empty{font-weight:700;color:var(--ink)}
+.composer-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .prompt-input{color:var(--ink)}
 .prompt-input::placeholder,.search::placeholder{color:var(--muted2)}
 .prompt-input:focus{outline:none}
@@ -354,7 +361,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 @media (max-width:760px){
   #root{padding:0!important;gap:0!important}
   #left{position:fixed;left:0;top:0;bottom:0;z-index:45;width:min(84vw,330px);max-width:none!important;min-width:0!important;border-radius:0 26px 26px 0!important;max-height:none!important;padding:max(18px,env(safe-area-inset-top)) 14px 14px!important;animation:drawerIn .3s cubic-bezier(.3,.7,.3,1) both}
-  main{height:100vh!important;height:100dvh!important;min-height:0!important;padding:10px 0 0}
+  main{height:100vh!important;height:100dvh!important;min-height:0!important;min-width:0!important;padding:10px 0 0}
   main>div:first-child{padding:0 12px!important;min-height:48px!important}
   #leftReopen .icon-btn{width:44px;height:44px}
   .vit-btn{height:44px;padding:0 12px 0 10px}
@@ -364,13 +371,22 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
   #speech{font-size:13px!important}
   #chat{padding:12px 12px 10px!important}
   #msgs>div{max-width:92%!important}
-  #form{padding:0 8px max(8px,env(safe-area-inset-bottom))!important;margin-bottom:var(--kb,0px)!important}
+  main{padding-bottom:calc(150px + var(--kb,0px) + env(safe-area-inset-bottom))!important}
+  #form{position:fixed;left:0;right:0;bottom:var(--kb,0px);z-index:30;width:100%;max-width:100%;box-sizing:border-box;margin:0!important;padding:0 8px max(8px,env(safe-area-inset-bottom))!important}
   .composer{border-radius:22px!important;padding:12px 10px 10px 14px!important}
+  .composer-bar{flex-wrap:nowrap}
+  .composer .btn-submit{margin-left:auto;flex:0 0 46px}
   .composer textarea{font-size:16px!important}
-  .composer [data-toggle-right-open]{flex:1 1 auto;min-width:0;justify-content:flex-start;overflow:hidden}
-  .composer [data-toggle-right-open] #selName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .composer [data-toggle-right-open] #selName.sel-empty{font-weight:600;color:var(--muted2)}
-  .composer [data-toggle-right-open].sel-empty #selPrice{display:none}
+  .composer [data-toggle-right-open]{flex:0 0 44px;width:44px;min-width:44px;height:44px;padding:0;justify-content:center;gap:0;overflow:hidden}
+  .composer [data-toggle-right-open] #selName,
+  .composer [data-toggle-right-open] #selPrice,
+  .composer [data-toggle-right-open] .sel-chev{display:none}
+  .composer .sel-btn:not(.sel-empty){
+    border-color:transparent;
+    background:linear-gradient(var(--field),var(--field)) padding-box,linear-gradient(110deg,#FFA235 0%,#FF7B2C 45%,#FF8F7E 78%,#F6AACF 100%) border-box;
+  }
+  .composer .sel-btn:not(.sel-empty) .sel-ico{color:#FF7B2C}
+  .composer .sel-btn:not(.sel-empty) .sel-ico svg rect{fill:currentColor;stroke:currentColor}
   #selEst{display:none}
   .composer button[type=submit],.composer .btn-submit{padding:0!important;min-width:46px;min-height:46px;width:46px;justify-content:center;gap:0}
   .composer button[type=submit] .sub-t,.composer .btn-submit .sub-t{display:none}
@@ -390,6 +406,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
   .vh-x{width:44px;height:44px}
   .modal-ov{align-items:flex-end;padding:0}
   .modal-card{max-width:none;border-radius:28px 28px 0 0;padding:52px 20px max(20px,env(safe-area-inset-bottom))}
+}
+@media (max-width:360px){
+  #form{padding:0 6px max(6px,env(safe-area-inset-bottom))!important}
+  .composer{padding:10px 8px 8px!important}
+  .composer-bar{gap:6px}
+  .composer [data-attach],
+  .composer [data-toggle-right-open],
+  .composer .btn-submit{width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;flex-basis:40px}
 }
 @media (pointer:coarse){
   .icon-ghost{width:44px!important;height:44px!important}
@@ -428,6 +452,17 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 :root[data-style="black"] .t-dark .glass{box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 24px 60px -30px rgba(0,0,0,.95)}
 :root[data-style="black"] .t-dark .composer.glass{background:rgba(32,33,37,.92)}
 :root[data-style="black"] .t-dark .icon-btn:not(.icon-ghost){background:#202125;border-color:rgba(255,255,255,.1)}
+/* Шарик темы: квадрат как у соседних кнопок, кружок внутри — цвет темы. */
+#leftReopen .aish-fab.is-docked{width:44px;height:44px;border-radius:14px;background:var(--glass);border:1px solid var(--glass-brd);box-shadow:none;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.t-dark #leftReopen .aish-fab.is-docked{background:rgba(46,38,78,.86);border-color:rgba(255,255,255,.16)}
+:root[data-style="black"] .t-dark #leftReopen .aish-fab.is-docked{background:#202125;border-color:rgba(255,255,255,.1);box-shadow:none}
+#leftReopen .aish-fab.is-docked:hover{transform:none;background:var(--glass)}
+.t-dark #leftReopen .aish-fab.is-docked:hover{background:rgba(46,38,78,.86)}
+:root[data-style="black"] .t-dark #leftReopen .aish-fab.is-docked:hover{background:#202125}
+#leftReopen .aish-fab.is-docked .aish-fab__dot{width:22px;height:22px}
+#left .aish-fab.is-docked{width:36px;height:36px;border-radius:10px;background:transparent;border:none;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+#left .aish-fab.is-docked:hover{background:var(--soft);transform:none}
+#left .aish-fab.is-docked .aish-fab__dot{width:16px;height:16px}
 :root[data-style="black"] .t-dark .cabinet{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1)}
 :root[data-style="black"] .t-dark :is(#left.panel,#vit) .model{background:rgba(255,255,255,.045);border-color:rgba(255,255,255,.07)}
 :root[data-style="black"] .t-dark :is(#left.panel,#vit) .model:hover{border-color:rgba(255,255,255,.18)}
@@ -541,14 +576,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
       <div class="composer glass" style="border-radius:26px;padding:14px 14px 12px 18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 24px 60px -26px var(--shadow)">
         <label for="prompt" class="sr-only" data-i18n="studio.composer.label">Задача для модели</label>
         <textarea id="prompt" class="prompt-input" rows="2" placeholder="Опишите ролик, картинку или трек…" data-i18n-attr="placeholder:studio.composer.placeholder" style="width:100%;box-sizing:border-box;border:none;background:transparent;resize:none;font-family:'Onest',sans-serif;font-size:17px;line-height:1.5;padding:2px 0 0"></textarea>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="composer-bar">
           <button type="button" class="field" data-attach aria-label="Прикрепить файл" data-i18n-attr="aria-label:common.attach" style="width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg>
           </button>
-          <button type="button" class="field" id="selBtn" aria-label="Выбрать модель" data-i18n-attr="aria-label:studio.composer.pickModel.aria" data-toggle-right-open style="height:44px;padding:0 14px;border-radius:14px;font-family:'Onest',sans-serif;font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer;max-width:100%">
-            <span id="selName" class="sel-empty" style="font-weight:700;color:var(--ink)" data-i18n="studio.composer.pickModel">Выберите модель</span>
-            <span id="selPrice" style="color:var(--muted2)"></span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+          <button type="button" class="field sel-btn sel-empty" id="selBtn" aria-label="Выбрать модель" data-i18n-attr="aria-label:studio.composer.pickModel.aria" data-toggle-right-open>
+            <span class="sel-ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg></span>
+            <span id="selName" class="sel-empty" data-i18n="studio.composer.pickModel">Модель</span>
+            <span id="selPrice"></span>
+            <svg class="sel-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
           </button>
           <span id="selEst" style="margin-left:auto;font-size:13px;color:var(--muted2)"></span>
           <button type="submit" class="btn-submit" style="height:46px;padding:0 18px;border-radius:16px;border:none;background:radial-gradient(90% 130% at 12% 0%, rgba(255,214,110,0.95) 0%, rgba(255,214,110,0) 55%), linear-gradient(110deg, #FFA235 0%, #FF7B2C 42%, #FF8F7E 74%, #F6AACF 100%);color:#FFFFFF;font-family:'Onest',sans-serif;font-weight:700;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-shadow:0 1px 2px rgba(150,50,20,0.35);box-shadow:inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -3px 8px rgba(236,110,160,0.25), 0 10px 24px -10px rgba(240,110,130,0.7)">
@@ -600,7 +636,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 <script src="/vitrina-data.js"></script>
 <script src="/vitrina-camera-moves.js?v=3"></script>
 <script src="/vitrina-aishnitsa.js?v=14"></script>
-<script src="/assistant-ui.js?v=23"></script>
+<script src="/assistant-ui.js?v=24"></script>
 <script src="/attach.js?v=2"></script>
 <script src="/chat-history.js?v=7"></script>
 <script>
@@ -1221,7 +1257,7 @@ class Component extends DCLogic {
         this.patchLastBot({ text: quiet ? tr('studio.sb.writerDone') : reply, job: false });
         if (quiet && this.eggy && this.eggy.chip) {
           this.eggy.chip({ action: 'pipe_result', value: { kind: 'text', reply: reply, model: (m && (m.model_key || m.slug)) || '' } });
-        }
+        } else if (!opts.series) this.pipeResult({ kind: 'text', reply: String(data.reply || '').slice(0, 8000), model: m.model_key || m.slug });
         return data;
       }
       const url = (data && data.urls && data.urls[0]) || '';
@@ -1240,7 +1276,13 @@ class Component extends DCLogic {
         workId: (data && data.work_id) || '',
         published: !!(data && data.published)
       });
+      if (url && !opts.series) this.pipeResult({ kind: kind === 'music' ? 'audio' : kind, url: url, model: m.model_key || m.slug, work_id: (data && data.work_id) || '' });
       return data;
+    };
+    /** Флоу помощника: готовый результат → артефакт сессии и следующий шаг (если помощник его ждёт). */
+    this.pipeResult = (payload) => {
+      if (!this.eggy || !this.eggy.result) return;
+      setTimeout(() => { try { this.eggy.result(payload); } catch (_) {} }, 600);
     };
     /** «Раскадровка» по кадрам: серия картинок одной моделью, строго по очереди — каждый кадр своим сообщением.
      *  Файлы скрепки (герой / продукт) уходят в каждый кадр; после ошибки серия останавливается. */
@@ -1261,24 +1303,27 @@ class Component extends DCLogic {
         att = AishAttach.payload(m);
       }
       let done = 0;
+      const urls = [];
       try {
         for (let k = 0; k < list.length; k++) {
           const it = list[k];
           const label = tr('studio.sb.frame', { n: it.n || k + 1, total: list.length, title: it.title || '' });
           this.push({ role: 'bot', text: label, job: true });
-          const data = await this.runGenerate(m, it.prompt, params || {}, { att: att || { body: {}, files: [] }, label: label });
+          const data = await this.runGenerate(m, it.prompt, params || {}, { att: att || { body: {}, files: [] }, label: label, series: true });
           if (!data || !data.urls || !data.urls.length) {
             // ошибку уже объяснил runGenerate (botSay); своё сообщение — следом, отдельным push, чтобы не перебить его
             if (k + 1 < list.length) setTimeout(() => this.push({ role: 'bot', text: tr('studio.sb.stopped', { n: k + 1, total: list.length }) }), 900);
             break;
           }
           done += 1;
+          urls.push(data.urls[0]);
         }
       } finally {
         this._seriesBusy = false;
         if (window.AishAttach && att) AishAttach.consume();
       }
       if (done === list.length) this.botSay({ text: tr('studio.sb.done', { total: list.length }) }, 400);
+      if (urls.length) this.pipeResult({ kind: 'image', url: urls[0], urls: urls, series: true, model: m.model_key || m.slug });
       await refreshUser();
     };
     this.watchJob = (jobId, workId) => {
@@ -1342,6 +1387,7 @@ class Component extends DCLogic {
         liked: !!(work && work.liked),
         workStatus: (work && work.status) || ''
       });
+      if (url) this.pipeResult({ kind: kind === 'music' ? 'audio' : kind, url: url, work_id: workId || (work && work.id) || '' });
       await refreshUser();
     };
     /** Выбрана текстовая модель (DeepSeek, Claude, GPT, Gemini, «Авто») — говорим с ней напрямую, как в чате,
@@ -1769,14 +1815,26 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
     }
   },
   onTyping: (on) => app.setState({ typing: on }),
-  onFillForm: ({ model, prompt, params, quiet, attach_urls }) => {
+  onFillForm: ({ model, prompt, params, quiet, attach_urls, keepAssistant, kind }) => {
     app.pendingQuiet = !!quiet;
     if (attach_urls && attach_urls.length && window.AishAttach && AishAttach.addFromUrl) {
-      attach_urls.forEach((r) => { if (r && r.src) AishAttach.addFromUrl(r.src, r.name).catch(function () {}); });
+      const have = (AishAttach.ready ? AishAttach.ready() : []).map((f) => f.name);
+      attach_urls.forEach((r) => {
+        if (!r || !r.src || have.indexOf(r.name) >= 0) return;
+        have.push(r.name);
+        AishAttach.addFromUrl(r.src, r.name).catch(function () {});
+      });
     }
     if (model) {
       let byKey = app.MODELS.find((x) => x.model_key === model || x.slug === model);
       // текст: generate_model может прийти раньше /api/integrations — заглушка, чтобы сразу шёл textChat
+      if (!byKey && kind === 'audio') {
+        byKey = app.priceModel({
+          slug: model, model_key: model, name: model, type: 'music', kind: tr('studio.kind.music'), kinds: [tr('studio.kind.music')],
+          cost: 0, rub: 0, viaGenerate: true, integrated: true
+        });
+        app.MODELS = app.MODELS.concat([byKey]);
+      }
       if (!byKey) {
         byKey = app.priceModel({
           slug: model, model_key: model, name: model,
@@ -1787,8 +1845,7 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
       }
       app.pendingSel = byKey.slug;
       app.setState({ sel: byKey.slug });
-      if (byKey.type === 'text' && !quiet) app.textDirect = true;
-      if (quiet) app.textDirect = false;
+      if (byKey.type === 'text') app.textDirect = !(quiet || keepAssistant);
     }
     if (prompt) app.pendingPrompt = String(prompt);
     app.pendingParams = params && typeof params === 'object' ? params : {};
@@ -1826,6 +1883,7 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
       return;
     }
     if (action === 'login') { M('login_click', { src: 'studio' }); app.login(); return; }
+    if (action === 'new_chat') { app.newGeneration(); return; }
     if (action === 'attach') {
       if (window.AishAttach) { AishAttach.open(); return; }
       const btn = document.querySelector('[data-attach]');

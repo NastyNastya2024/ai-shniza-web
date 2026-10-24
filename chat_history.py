@@ -31,7 +31,8 @@ MAX_BODY = 600_000
 ROLES = ("user", "bot")
 MEDIA_KINDS = ("image", "video", "audio", "music")
 BLOCK_TYPES = ("models", "prompt", "params", "summary", "brief", "variants",
-               "reel_steps", "reel_character", "reel_script", "reel_storyboard", "reel_final", "sb_frames")
+               "reel_steps", "reel_character", "reel_script", "reel_storyboard", "reel_final", "sb_frames",
+               "pipe_arts", "pipe_json", "pipe_method")
 _URL_RX = re.compile(r"^(https?://[^\s\"'<>]{1,1000}|/[^\s\"'<>]{0,1000})$")
 _ID_RX = re.compile(r"^c_[0-9a-f]{20}$")
 

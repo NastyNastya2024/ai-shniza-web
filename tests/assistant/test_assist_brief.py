@@ -483,8 +483,7 @@ def test_restart_button(make_assistant):
     assert blk(r, "models")  # тип сразу → сначала модели
     pick_want_prompt(a, SID, "seedance-2-5")
     r = a.handle("", {}, SID, action={"type": "restart"})
-    assert r["intent"] == "ask_type" and [c["action"] for c in r["chips"]].count("choose_type") == 4   # prompt/image/video/music
-    assert r["chips"][0]["value"] == "prompt"
+    assert r["intent"] == "ask_type" and [c["value"] for c in r["chips"]] == ["prompt", "image", "board", "video", "voice", "music"]   # этапы флоу + музыка
 
 
 def test_junk_on_variants_does_not_call_llm(make_assistant):

@@ -14,6 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="/aish-style.js?v=9"></script>
 <script src="/aish-metrics.js?v=1"></script>
+<script src="/legal-pop.js?v=2"></script>
 <script>(function(){try{if(window.AishStyle)return;var q=new URLSearchParams(location.search).get('theme');var t=q||localStorage.getItem('aish-vitrina-theme')||localStorage.getItem('theme')||localStorage.getItem('aish-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t;}catch(e){}})();</script>
 <style>
 /* ---------- токены ---------- */
@@ -56,10 +57,32 @@ h1{margin:0;font-family:'Days One',sans-serif;font-weight:400;font-size:clamp(28
 .sub{margin:10px 0 28px;font-size:16px;line-height:1.5;color:var(--muted)}
 .sub b{color:var(--ink);font-weight:600}
 
-.gbtn{width:100%;height:54px;border-radius:16px;border:1.5px solid var(--field-brd);background:var(--field);color:var(--ink);display:flex;align-items:center;justify-content:center;gap:12px;font-weight:600;font-size:16px;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s;margin-top:18px}
+.rule{height:1px;margin:22px 0 0;border:0;border-radius:1px;background:var(--field-hover)}
+.gbtn{width:100%;height:54px;border-radius:16px;border:1.5px solid var(--field-brd);background:var(--field);color:var(--ink);display:flex;align-items:center;justify-content:center;gap:12px;font-weight:600;font-size:16px;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s;margin-top:22px}
 .gbtn:hover{border-color:var(--field-hover);box-shadow:0 10px 24px -16px var(--shadow)}
 .gbtn[disabled]{cursor:progress;opacity:.8}
-.consent-wrap{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.consent-pop{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,16,22,.55)}
+.consent-pop__card{position:relative;width:min(520px,100%);max-height:min(86dvh,720px);display:flex;flex-direction:column;padding:14px 14px 10px;border-radius:22px;background:var(--bubble,#fff);color:var(--bubble-ink,var(--ink));text-align:start;box-shadow:0 28px 70px -24px rgba(0,0,0,.55);border:1px solid var(--panel-brd)}
+.consent-pop__x{position:absolute;top:8px;right:8px;z-index:2;width:28px;height:28px;border:none;border-radius:8px;background:transparent;color:var(--muted2);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.consent-pop__x svg{width:14px;height:14px;display:block}
+.consent-pop__x:hover{background:var(--soft);color:var(--ink)}
+.consent-pop__title{margin:2px 36px 12px;font-family:'Days One',sans-serif;font-weight:400;font-size:26px;line-height:1.15;text-align:center}
+.consent-pop__tabs{display:flex;gap:4px;padding:4px;margin:0 0 10px;background:var(--soft);border-radius:14px;flex:none}
+.consent-pop__tab{flex:1;min-height:40px;padding:0 6px;border:none;border-radius:11px;background:transparent;color:var(--muted);font-weight:700;font-size:13px;cursor:pointer}
+.consent-pop__tab--icon{flex:0 0 40px;width:40px;padding:0;display:flex;align-items:center;justify-content:center}
+.consent-pop__tab--icon svg{width:18px;height:18px}
+.consent-pop__tab.is-on{background:var(--bubble,#fff);color:var(--ink);box-shadow:0 1px 3px rgba(18,20,32,.12)}
+.consent-pop__body{overflow:auto;flex:1 1 auto;min-height:120px;padding:4px 6px 10px}
+.consent-pop__lead{margin:12px 4px 8px;text-align:center;font-size:16px;line-height:1.5;color:var(--muted)}
+.consent-pop__lead a,.consent-pop__doc a{color:var(--accent)}
+.consent-pop__doc h1,.consent-pop__doc .inner-title{font-family:'Days One',sans-serif;font-weight:400;font-size:24px;line-height:1.2;margin:4px 0 8px;color:inherit;text-align:start}
+.consent-pop__doc h2{font-size:16px;margin:16px 0 6px;text-align:start}
+.consent-pop__doc p{margin:0 0 10px;font-size:15px;line-height:1.5;color:var(--muted);text-align:start}
+.consent-pop__doc .legal-updated{font-size:13px;color:var(--muted2)}
+.consent-pop__doc .legal-nav{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:16px}
+.consent-pop__doc .legal-nav a{font-weight:700}
+.consent-pop__card .btn{width:100%;flex:none}
+.consent-pop__no{display:block;width:100%;min-height:44px;margin-top:4px;border:none;background:none;color:var(--muted);font-weight:600;font-size:15px;cursor:pointer;flex:none}
 
 /* поля */
 form{display:flex;flex-direction:column;gap:16px}
@@ -74,7 +97,6 @@ form{display:flex;flex-direction:column;gap:16px}
 .inp input:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 4px var(--ring)}
 .inp .eye{position:absolute;right:6px;top:5px;width:44px;height:44px;border:none;background:none;color:var(--muted2);cursor:pointer;border-radius:12px;display:flex;align-items:center;justify-content:center}
 .inp .eye:hover{color:var(--ink)}
-.inp.pw input{padding-right:56px}
 .err .inp input{border-color:var(--err)}
 .err .inp input:focus{box-shadow:0 0 0 4px var(--err-bg)}
 .msg{display:flex;gap:6px;align-items:flex-start;font-size:13.5px;line-height:1.4;color:var(--err)}
@@ -127,7 +149,7 @@ form{display:flex;flex-direction:column;gap:16px}
 .caret{display:inline-block;width:.08em;height:.95em;margin-left:.06em;vertical-align:-.1em;background:#E8691C;border-radius:2px;animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
 @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
-.orb{position:relative;width:clamp(200px,24vw,320px);aspect-ratio:1;animation:float 5s ease-in-out infinite}
+.orb{position:relative;width:clamp(220px,min(28vw,40vh),380px);aspect-ratio:1;animation:float 5s ease-in-out infinite}
 .orb img{position:absolute;inset:0;width:100%;height:100%}
 .halo{position:absolute;inset:-35%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,236,236,.85),rgba(246,206,236,0));z-index:-1}
 :root[data-theme=dark] .halo{background:radial-gradient(closest-side,rgba(255,150,70,.35),rgba(246,206,236,0))}
@@ -165,6 +187,12 @@ form{display:flex;flex-direction:column;gap:16px}
   .bubble{display:none!important}
   .badges{display:none}
   .form-wrap{order:2;flex:1;align-items:flex-start;padding:24px 20px 8px}
+  .card{text-align:center}
+  h1,.sub,.hint,.timer,.link{text-align:center}
+  .lbl,.msg,.banner,.chk,.row{justify-content:center;text-align:center}
+  .lbl{gap:12px}
+  .back{margin-left:auto;margin-right:auto}
+  .inp input{text-align:center}
   .foot{order:3;padding:0 20px max(18px,env(safe-area-inset-bottom))}
 }
 @media (max-width:420px){
@@ -179,10 +207,14 @@ form{display:flex;flex-direction:column;gap:16px}
 /* Темы {AI}-шница UI для входа. Фиолетовый = нынешняя тёмная. */
 :root[data-style="white"][data-theme]{--bg:#ECECF3;--panel:rgba(255,255,255,.9);--panel-brd:rgba(18,20,32,.08);--ink:#0F1016;--muted:#4B4D59;--muted2:#646673;--field:#FFFFFF;--field-brd:rgba(18,20,32,.14);--field-hover:rgba(18,20,32,.28);--focus:#0F1016;--ring:rgba(18,20,32,.14);--primary:#0F1016;--primary-ink:#fff;--soft:rgba(18,20,32,.05);--soft-h:rgba(18,20,32,.09);--accent:#0F1016;--shadow:rgba(18,20,32,.22);--bubble:#FFFFFF;--bubble-ink:#0F1016;--right-bg:url(/assets/bg-white.jpg)}
 :root[data-style="black"][data-theme]{--bg:#131415;--panel:rgba(24,25,28,.92);--panel-brd:rgba(255,255,255,.08);--ink:#F3F4F6;--muted:#A8ABB2;--muted2:#8E9199;--field:rgba(255,255,255,.05);--field-brd:rgba(255,255,255,.14);--field-hover:rgba(255,255,255,.28);--focus:#DCEB4A;--ring:rgba(220,235,74,.22);--primary:#F3F4F6;--primary-ink:#0F1016;--soft:rgba(255,255,255,.06);--soft-h:rgba(255,255,255,.11);--accent:#E7EDB0;--ok:#62D69C;--shadow:rgba(0,0,0,.7);--bubble:#202125;--bubble-ink:#F3F4F6;--right-bg:url(/assets/bg-black.jpg?v=3)}
-:root[data-style="black"][data-theme] .right{box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 30px 80px -30px #000}
-:root[data-style="white"][data-theme] .right{box-shadow:0 1px 2px rgba(18,20,32,.05),0 28px 64px -28px rgba(18,20,32,.25)}
+:root[data-style="black"][data-theme] .right{box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+:root[data-style="white"][data-theme] .right{box-shadow:none}
 :root[data-style="black"][data-theme] .halo{background:radial-gradient(closest-side,rgba(220,235,74,.24),rgba(255,159,69,.12) 62%,rgba(255,159,69,0))}
 :root[data-style="black"][data-theme] .badges > span{background:rgba(32,33,37,.85);color:#A8ABB2;border-color:rgba(255,255,255,.1)}
+/* Квадрат темы — тот же, что у RU и крестика. Кружок внутри остаётся цветом темы. */
+:root[data-style] .corner-tools .aish-fab.is-docked{width:36px;height:36px;border-radius:10px;background:var(--soft);border:1px solid var(--field-brd);box-shadow:none}
+:root[data-style] .corner-tools .aish-fab.is-docked:hover{background:var(--soft-h);transform:none}
+:root[data-style] .corner-tools .aish-fab.is-docked .aish-fab__dot{width:16px;height:16px}
 </style>
 </head>
 <body data-title-key="auth.title">
@@ -222,7 +254,46 @@ const NEXT = (() => {
   if (!n || !n.startsWith('/') || n.startsWith('//') || n.startsWith('/\\')) return '/app';
   return n;
 })();
-const S = { step: 'email', email: '', pw: '', pwMode: false, consent: false, err: '', errField: '', busy: false, google: false, code: '', attempts: 0, locked: false, resendIn: 0, showPw: false };
+const S = { step: 'email', email: '', consent: false, ask: '', tab: 'consent', doc: '', docErr: false, err: '', errField: '', busy: false, google: false, code: '', attempts: 0, locked: false, resendIn: 0 };
+const TAB_PATH = { privacy: '/legal/privacy.html', terms: '/legal/terms.html' };
+const DOC_OK = /^\/legal\/[a-z0-9-]+\.html$/;
+const docCache = {};
+const docLoading = {};
+function legalPath(href) {
+  try {
+    const u = new URL(String(href || ''), location.origin + '/legal/');
+    if (u.origin !== location.origin) return '';
+    return DOC_OK.test(u.pathname) ? u.pathname : '';
+  } catch (e) { return ''; }
+}
+async function loadDoc(path) {
+  if (!DOC_OK.test(path) || docCache[path] || docLoading[path]) return;
+  docLoading[path] = true;
+  try {
+    const res = await fetch(path, { credentials: 'same-origin' });
+    if (!res.ok) throw new Error('http');
+    const parsed = new DOMParser().parseFromString(await res.text(), 'text/html');
+    const wrap = parsed.querySelector('.legal-wrap');
+    if (!wrap) throw new Error('empty');
+    wrap.querySelectorAll('script,style,.legal-kicker').forEach((n) => n.remove());
+    wrap.querySelectorAll('a').forEach((a) => { const next = legalPath(a.getAttribute('href') || ''); if (next) a.setAttribute('href', next); });
+    docCache[path] = wrap.innerHTML;
+    docLoading[path] = false;
+    if (S.doc === path) render();
+  } catch (_) {
+    docLoading[path] = false;
+    if (S.doc === path) { S.docErr = true; render(); }
+  }
+}
+function showTab(id) {
+  if (id === 'consent') { S.tab = 'consent'; S.doc = ''; S.docErr = false; render(); return; }
+  const path = TAB_PATH[id] || (DOC_OK.test(id) ? id : '');
+  if (!path) return;
+  S.tab = path === TAB_PATH.privacy ? 'privacy' : path === TAB_PATH.terms ? 'terms' : 'doc';
+  S.doc = path; S.docErr = false;
+  render();
+  if (!docCache[path]) loadDoc(path);
+}
 async function ensureCsrf() {
   if (window.__csrfToken) return window.__csrfToken;
   const m = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/);
@@ -251,10 +322,6 @@ const authApi = {
     const { res, data } = await api('/api/auth/email-code/verify', { method: 'POST', body: JSON.stringify({ email: email.trim(), code }) });
     if (!res.ok) { try { if (window.AishM) AishM.track('auth_fail', { method: 'code', code: data.error || String(res.status) }); } catch (_) {} const err = new Error(data.error || 'code'); err.code = data.error; throw err; }
   },
-  passwordLogin: async (email, pw) => {
-    const { res, data } = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email: email.trim(), password: pw }) });
-    if (!res.ok) { try { if (window.AishM) AishM.track('auth_fail', { method: 'password', code: data.error || String(res.status) }); } catch (_) {} const err = new Error(data.error || 'invalid'); err.code = data.error; throw err; }
-  }
 };
 const tr = (k, p) => AISH_I18N.t(k, p);
 const SAY_KEYS = ['hello', 'typing', 'badEmail', 'consent', 'sending', 'sendErr', 'code', 'codeErr', 'locked', 'resend', 'pw', 'peek', 'pwErr', 'forgot', 'google', 'googleErr', 'checking', 'done'];
@@ -304,19 +371,16 @@ addEventListener('focusin', (e) => { if (!e.target.matches('input,textarea,selec
 function render() {
   const c = $('card'); let h = '';
   if (S.step === 'email') {
-    const eErr = S.err && S.errField === 'email', cErr = S.err && S.errField === 'consent', pErr = S.err && S.errField === 'password';
-    h += '<h1 id="t">' + esc(tr(S.pwMode ? 'auth.heading' : 'auth.heading.code')) + '</h1><p class="sub">' + esc(S.pwMode ? tr('auth.sub.password') : tr('auth.sub.code')) + '</p>';
+    const eErr = S.err && S.errField === 'email';
+    h += '<h1 id="t">' + esc(tr('auth.heading.code')) + '</h1><p class="sub">' + esc(tr('auth.sub.code')).replace(/\n/g, '<br>') + '</p>';
     if (S.err && (S.errField === 'send' || S.errField === 'google')) h += '<div class="banner" role="alert">' + ICON.alert + '<span>' + esc(S.err) + '</span></div><div style="height:16px"></div>';
     h += '<form id="f" novalidate>'
-      + '<div class="fld' + (eErr ? ' err' : '') + '"><label class="lbl" for="em">' + esc(tr('auth.email.label')) + '</label><div class="inp"><input id="em" type="email" inputmode="email" autocomplete="email" placeholder="' + esc(tr('auth.email.placeholder')) + '" value="' + esc(S.email) + '"' + (eErr ? ' aria-invalid="true" aria-describedby="emE"' : '') + '></div>'
+      + '<div class="fld' + (eErr ? ' err' : '') + '"><label class="sr" for="em">' + esc(tr('auth.email.label')) + '</label><div class="inp"><input id="em" type="email" inputmode="email" autocomplete="email" placeholder="' + esc(tr('auth.email.label')) + '" value="' + esc(S.email) + '"' + (eErr ? ' aria-invalid="true" aria-describedby="emE"' : '') + '></div>'
       + (eErr ? '<div class="msg" id="emE" role="alert">' + ICON.alert + esc(S.err) + '</div>' : '') + '</div>';
-    if (S.pwMode) h += '<div class="fld' + (pErr ? ' err' : '') + '"><div class="lbl"><label for="pw">' + esc(tr('auth.password.label')) + '</label><button type="button" class="link" id="forgot">' + esc(tr('auth.password.forgot')) + '</button></div><div class="inp pw"><input id="pw" type="' + (S.showPw ? 'text' : 'password') + '" autocomplete="current-password" placeholder="' + esc(tr('auth.password.placeholder')) + '" value="' + esc(S.pw) + '"' + (pErr ? ' aria-invalid="true" aria-describedby="pwE"' : '') + '><button type="button" class="eye" id="showPw" aria-label="' + esc(S.showPw ? tr('auth.password.hide') : tr('auth.password.show')) + '">' + (S.showPw ? ICON.eyeOff : ICON.eye) + '</button></div>'
-      + (pErr ? '<div class="msg" id="pwE" role="alert">' + ICON.alert + '<span>' + esc(S.err) + ' <button type="button" class="link" id="toCode">' + esc(tr('auth.mode.toCode')) + '</button></span></div>' : '') + '</div>';
-    h += '<button class="btn btn-p' + (S.busy ? ' busy' : '') + '" type="submit"' + (S.busy ? ' disabled' : '') + '>' + (S.busy ? '<span class="spin"></span>' + esc(S.pwMode ? tr('auth.submit.checking') : tr('auth.submit.sending')) : esc(S.pwMode ? tr('auth.submit.login') : S.errField === 'send' ? tr('auth.submit.retry') : tr('auth.submit.getCode'))) + '</button>'
-      + '<button type="button" class="link center" id="mode" style="min-height:44px">' + esc(S.pwMode ? tr('auth.mode.viaCode') : tr('auth.mode.havePassword')) + '</button></form>';
+    h += '<button class="btn btn-p' + (S.busy ? ' busy' : '') + '" type="submit"' + (S.busy ? ' disabled' : '') + '>' + (S.busy ? '<span class="spin"></span>' + esc(tr('auth.submit.sending')) : esc(S.errField === 'send' ? tr('auth.submit.retry') : tr('auth.submit.getCode'))) + '</button></form>';
+    h += '<div class="rule" role="separator"></div>';
     h += '<button class="gbtn" type="button" id="g"' + (S.google ? ' disabled' : '') + '>' + (S.google ? '<span class="spin" style="color:var(--muted)"></span>' + esc(tr('auth.google.busy')) : ICON.g + esc(tr('auth.google'))) + '</button>';
-    h += '<div class="consent-wrap"><label class="chk' + (cErr ? ' bad' : '') + '"><input type="checkbox" id="cs"' + (S.consent ? ' checked' : '') + '><span>' + tr('auth.consent.html') + '</span></label>'
-      + (cErr ? '<div class="msg" role="alert">' + ICON.alert + esc(S.err) + '</div>' : '') + '</div>';
+    if (S.ask) h += consentPop();
   } else if (S.step === 'code') {
     const bad = S.err && !S.locked;
     h += '<button class="back" type="button" id="bk">' + (tr('auth.code.back').charAt(0) === '\u2190' ? '' : ICON.back) + esc(tr('auth.code.back')) + '</button><h1 id="t">' + esc(tr('auth.code.title')) + '</h1><p class="sub">' + tr('auth.code.sub.html', { email: esc(S.email) }) + '</p>';
@@ -330,19 +394,46 @@ function render() {
   }
   c.innerHTML = h; bind();
 }
+function consentPop() {
+  const tab = S.tab || 'consent';
+  const on = (id) => (tab === id ? ' is-on' : '');
+  const sel = (id) => (tab === id ? 'true' : 'false');
+  let body = '';
+  if (tab === 'consent') body = '<p class="consent-pop__lead">' + tr('auth.consent.html') + '</p>';
+  else body = '<div class="consent-pop__doc">' + (docCache[S.doc] || '<p>' + esc(tr(S.docErr ? 'auth.doc.fail' : 'auth.doc.loading')) + '</p>') + '</div>';
+  return '<div class="consent-pop" role="dialog" aria-modal="true" aria-labelledby="consentTitle">'
+    + '<div class="consent-pop__card">'
+    + '<button type="button" class="consent-pop__x" id="consentX" aria-label="' + esc(tr('common.close')) + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>'
+    + '<h2 class="consent-pop__title" id="consentTitle">' + esc(tr('auth.consent.title')) + '</h2>'
+    + '<div class="consent-pop__tabs" role="tablist">'
+    + '<button type="button" class="consent-pop__tab consent-pop__tab--icon' + on('consent') + '" id="tabConsent" role="tab" aria-selected="' + sel('consent') + '" aria-label="' + esc(tr('auth.tab.consent')) + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></button>'
+    + '<button type="button" class="consent-pop__tab' + on('privacy') + '" id="tabPrivacy" role="tab" aria-selected="' + sel('privacy') + '">' + esc(tr('auth.tab.privacy')) + '</button>'
+    + '<button type="button" class="consent-pop__tab' + on('terms') + '" id="tabTerms" role="tab" aria-selected="' + sel('terms') + '">' + esc(tr('auth.tab.terms')) + '</button>'
+    + '</div>'
+    + '<div class="consent-pop__body">' + body + '</div>'
+    + '<button type="button" class="btn btn-p" id="consentYes">' + esc(tr('auth.consent.agree')) + '</button>'
+    + '<button type="button" class="consent-pop__no" id="consentNo">' + esc(tr('auth.consent.later')) + '</button>'
+    + '</div></div>';
+}
 
 /* ============ СОБЫТИЯ ============ */
 function bind() {
   const on = (id, ev, fn) => { const el = $(id); if (el) el.addEventListener(ev, fn); };
   on('f', 'submit', submitEmail);
   on('em', 'input', (e) => { S.email = e.target.value; if (S.errField === 'email') { S.err = ''; S.errField = ''; render(); $('em').focus(); placeEnd($('em')); } speak(S.email ? 'typing' : 'hello', '', ''); });
-  on('pw', 'input', (e) => { S.pw = e.target.value; if (S.errField === 'password') { S.err = ''; S.errField = ''; render(); $('pw').focus(); placeEnd($('pw')); } });
-  on('pw', 'focus', () => { if (!S.showPw) speak('pw', 'shut'); });
-  on('pw', 'blur', () => speak(S.email ? 'typing' : 'hello'));
-  on('showPw', 'click', () => { S.showPw = !S.showPw; render(); $('pw').focus(); speak(S.showPw ? 'peek' : 'pw', S.showPw ? 'happy' : 'shut'); });
-  on('cs', 'change', (e) => { S.consent = e.target.checked; if (S.errField === 'consent') { S.err = ''; S.errField = ''; render(); } });
-  on('mode', 'click', () => { S.pwMode = !S.pwMode; S.err = ''; S.errField = ''; render(); speak(S.pwMode ? 'pw' : 'hello', S.pwMode ? 'shut' : ''); });
-  on('forgot', 'click', toCodeMode); on('toCode', 'click', toCodeMode);
+  on('consentYes', 'click', acceptConsent);
+  on('consentNo', 'click', closeConsent);
+  on('consentX', 'click', closeConsent);
+  on('tabConsent', 'click', () => showTab('consent'));
+  on('tabPrivacy', 'click', () => showTab('privacy'));
+  on('tabTerms', 'click', () => showTab('terms'));
+  const pop = document.querySelector('.consent-pop');
+  if (pop) pop.addEventListener('click', (e) => {
+    const a = e.target.closest('a');
+    const path = a ? legalPath(a.getAttribute('href') || '') : '';
+    if (path) { e.preventDefault(); showTab(path); return; }
+    if (e.target === pop) closeConsent();
+  });
   on('g', 'click', google);
   on('bk', 'click', () => { Object.assign(S, { step: 'email', code: '', err: '', errField: '', locked: false, attempts: 0 }); render(); speak('hello'); $('em') && $('em').focus(); });
   on('cd', 'input', (e) => { S.code = e.target.value.replace(/\D/g, '').slice(0, 6); if (!S.locked) S.err = ''; render(); $('cd').focus(); if (S.code.length === 6) later('auto', 250, submitCode); });
@@ -356,28 +447,35 @@ function bind() {
   });
 }
 function placeEnd(el) { try { el.setSelectionRange(el.value.length, el.value.length); } catch (e) {} }
-function toCodeMode() { Object.assign(S, { pwMode: false, pw: '', err: '', errField: '' }); render(); speak('forgot', 'happy'); }
-function fail(field, msg, say) { Object.assign(S, { busy: false, google: false, err: msg, errField: field }); render(); speak(say, 'squint', 'wobble'); const el = field === 'email' ? $('em') : field === 'password' ? $('pw') : null; if (el) el.focus(); }
+function fail(field, msg, say) { Object.assign(S, { busy: false, google: false, err: msg, errField: field }); render(); speak(say, 'squint', 'wobble'); const el = field === 'email' ? $('em') : null; if (el) el.focus(); }
 
+function closeConsent() { S.ask = ''; S.doc = ''; S.tab = 'consent'; render(); }
+function askConsent(kind) {
+  S.ask = kind; S.tab = 'consent'; S.doc = ''; S.docErr = false; S.err = ''; S.errField = '';
+  render(); speak('consent');
+  loadDoc('/legal/privacy.html'); loadDoc('/legal/terms.html');
+}
+function acceptConsent() {
+  const kind = S.ask;
+  S.consent = true; S.ask = ''; S.doc = ''; S.tab = 'consent';
+  if (kind === 'google') google();
+  else sendCode();
+}
 async function submitEmail(e) {
   e.preventDefault();
   if (!S.email.trim()) return fail('email', tr('auth.err.enterEmail'), 'badEmail');
   if (!validEmail(S.email)) return fail('email', tr('auth.err.badEmail'), 'badEmail');
-  if (!S.consent) return fail('consent', tr('auth.err.consent'), 'consent');
-  if (S.pwMode) {
-    if (!S.pw) return fail('password', tr('auth.err.enterPassword'), 'pwErr');
-    S.busy = true; S.err = ''; render(); speak('checking', '', 'cook');
-    try { await authApi.passwordLogin(S.email, S.pw); success(); }
-    catch (_) { fail('password', tr('auth.err.wrongCredentials'), 'pwErr'); }
-    return;
-  }
-  S.busy = true; S.err = ''; S.errField = ''; render(); speak('sending', '', 'cook');
+  if (!S.consent) return askConsent('code');
+  return sendCode();
+}
+async function sendCode() {
+  S.ask = ''; S.busy = true; S.err = ''; S.errField = ''; render(); speak('sending', '', 'cook');
   try {
     await authApi.sendCode(S.email);
     Object.assign(S, { busy: false, step: 'code', code: '', attempts: 0, locked: false, err: '', errField: '' });
     tick(); render(); speak('code', 'happy', 'jump'); $('cd').focus();
   } catch (err) {
-    if (err && err.code === 'consent_required') fail('consent', tr('auth.err.consent'), 'consent');
+    if (err && err.code === 'consent_required') { S.consent = false; askConsent('code'); }
     else fail('send', tr('auth.err.sendFailed'), 'sendErr');
   }
 }
@@ -392,8 +490,8 @@ async function submitCode() {
   }
 }
 function google() {
-  if (!S.consent) return fail('consent', tr('auth.err.consentGoogle'), 'consent');
-  S.google = true; S.err = ''; S.errField = ''; render(); speak('google', '', 'cook');
+  if (!S.consent) return askConsent('google');
+  S.ask = ''; S.google = true; S.err = ''; S.errField = ''; render(); speak('google', '', 'cook');
   const q = new URLSearchParams({ next: NEXT, consent: '1' });
   if (validEmail(S.email)) q.set('hint', S.email.trim());
   // короткая пауза — яишенка успевает сказать «Стучусь в Google…»
@@ -401,7 +499,7 @@ function google() {
   setTimeout(() => { location.href = '/api/auth/google?' + q; }, 350);
 }
 function success() {
-  try { if (window.AishM) AishM.track('auth_ok', { method: S.step === 'code' ? 'code' : (S.step === 'pw' ? 'password' : String(S.step || '')) }); } catch (_) {}
+  try { if (window.AishM) AishM.track('auth_ok', { method: S.step === 'code' ? 'code' : String(S.step || '') }); } catch (_) {}
   Object.assign(S, { busy: false, google: false, step: 'done', err: '' });
   render();
   speak('done', 'happy', 'jump');
@@ -442,8 +540,6 @@ const STATES = {
   'send-error':     [{ email: 'anna@example.com', consent: true, err: tr('auth.err.sendFailed'), errField: 'send' }, 'sendErr', 'squint'],
   'google-loading': [{ consent: true, google: true }, 'google', '', 'cook'],
   'google-error':   [{ consent: true, err: tr('auth.err.googleFailed'), errField: 'google' }, 'googleErr', 'squint'],
-  'password':       [{ pwMode: true, email: 'anna@example.com', consent: true }, 'pw', 'shut'],
-  'password-error': [{ pwMode: true, email: 'anna@example.com', consent: true, pw: '12345', err: tr('auth.err.wrongCredentials'), errField: 'password' }, 'pwErr', 'squint'],
   'code':           [{ step: 'code', email: 'anna@example.com', code: '4821', resendIn: 38 }, 'code', 'happy'],
   'code-checking':  [{ step: 'code', email: 'anna@example.com', code: '482193', busy: true, resendIn: 31 }, 'checking', '', 'cook'],
   'code-error':     [{ step: 'code', email: 'anna@example.com', attempts: 1, err: tr('auth.err.wrongCode', { n: 2 }), resendIn: 24 }, 'codeErr', 'squint'],

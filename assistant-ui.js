@@ -25,7 +25,8 @@
     reel_start: 1, reel_answer: 1, reel_next: 1, reel_back: 1, reel_edit: 1, reel_frame: 1, reel_rebuild: 1,
     reel_sheet: 1, reel_exit: 1,
     sb_start: 1, sb_noscript: 1, sb_answer: 1, sb_edit: 1, sb_frame: 1, sb_rebuild: 1, sb_setup: 1, sb_frames_view: 1, sb_back: 1, sb_exit: 1,
-    pipe_result: 1 };
+    pipe_result: 1, pipe_menu: 1, pipe_stage: 1, pipe_sub: 1, pipe_dialog_save: 1, pipe_video_plain: 1, pipe_voice_model: 1, pipe_summary: 1, pipe_arts: 1 };
+  var PIPE_TYPE_ICON = { prompt: '✍️', videoPrompt: '🎬', speechPrompt: '🎙', style: '{ }', hero: '👤', image: '🖼', board: '🎞', video: '🎬', voiceTrack: '🔊' };
   var KIND_ICON = { prompt: '✍️', image: '🖼', video: '🎬', music: '🎵', text: '✍️', sfx: '🔊', edit: '✏️' };
 
   /* метрики сайта (aish-metrics.js): что ответил помощник и какие кнопки жмут */
@@ -48,7 +49,8 @@
     var setupNode = null;
     var lastBody = null;
     var allNodes = [];
-    var pendingCamPreview = null;   // «смотреть пример» → сначала выбрать движение, потом открыть витрину
+    var pendingCamPreview = null;
+    var pipeExpect = null;          // флоу помощника ждёт результат генерации → после неё шлём pipe_result   // «смотреть пример» → сначала выбрать движение, потом открыть витрину
 
     function L(ru, en) { return lang === 'en' ? en : ru; }
 
@@ -63,10 +65,12 @@
     /** Типы (видео/картинка/…) и примеры — отдельными рядами, если в ответе есть и то и другое. */
     function renderChips(list) {
       var types = [], examples = [], rest = [];
+      // главное меню флоу (Промпт · Картинка · Раскадровка · Видео · Озвучка) — первым рядом, как типы
+      var menuRow = (list || []).filter(function (c) { return c && c.action === 'pipe_stage'; }).length >= 4;
       (list || []).forEach(function (c) {
         // устаревшие кнопки воронки «создать ролик» / этапы проекта — больше не показываем
         if (!c || !c.action || /^project_/.test(c.action)) return;
-        if (c.action === 'choose_type' || (c.action === 'reel_start' && c.value !== 'new') || (c.action === 'sb_start' && c.value !== 'new')) types.push(c);
+        if (c.action === 'choose_type' || (menuRow && c.action === 'pipe_stage') || (c.action === 'reel_start' && c.value !== 'new') || (c.action === 'sb_start' && c.value !== 'new')) types.push(c);
         else if (c.example || (c.action === 'send' && c.value && String(c.value).length > 12)) examples.push(c);
         else rest.push(c);
       });
@@ -124,7 +128,7 @@
 
     function renderPrompt(bl) {
       var box = el('div', 'aich-prompt');
-      box.appendChild(el('div', 'aich-prompt__label', L('Промпт под ', 'Prompt for ') + bl.title));
+      box.appendChild(el('div', 'aich-prompt__label', bl.label ? bl.title : L('Промпт под ', 'Prompt for ') + bl.title));
       var txt = el('div', 'aich-prompt__text', bl.text);
       txt.contentEditable = 'true';
       txt.spellcheck = false;
@@ -734,6 +738,61 @@
       return wrap;
     }
 
+    /** Флоу помощника: артефакты сессии по этапам. Живут только в этом чате — пометка внизу. */
+    function safeUrl(u) { u = String(u || ''); return /^(https?:\/\/|\/(?!\/))/.test(u) ? u : ''; }
+    function renderPipeArts(bl) {
+      var box = el('div', 'pipe-arts');
+      box.appendChild(el('div', 'pipe-arts__head', bl.title || ''));
+      var list = el('div', 'pipe-arts__list');
+      (bl.groups || []).forEach(function (g) {
+        var row = el('div', 'pipe-arts__stage' + ((g.items && g.items.length) ? '' : ' is-empty'));
+        row.appendChild(el('div', 'pipe-arts__name', g.title));
+        var items = el('div', 'pipe-arts__items');
+        if (!g.items || !g.items.length) items.appendChild(el('span', 'pipe-arts__none', '—'));
+        (g.items || []).forEach(function (it) {
+          var a = el('span', 'pipe-art');
+          var url = safeUrl(it.url);
+          if (url && it.kind === 'image') { var im = el('img'); im.src = url; im.alt = ''; im.loading = 'lazy'; a.appendChild(im); }
+          else a.appendChild(el('span', 'pipe-art__ic', PIPE_TYPE_ICON[it.type] || '•'));
+          var t = el('span', 'pipe-art__t', it.title || '');
+          if (it.sub) t.appendChild(el('small', null, it.sub));
+          a.appendChild(t);
+          if (url) { var lnk = el('a', 'pipe-art__open', '↗'); lnk.href = url; lnk.target = '_blank'; lnk.rel = 'noopener'; lnk.title = L('Открыть', 'Open'); a.appendChild(lnk); }
+          items.appendChild(a);
+        });
+        row.appendChild(items);
+        list.appendChild(row);
+      });
+      box.appendChild(list);
+      if (bl.note) box.appendChild(el('div', 'pipe-note', '⏳ ' + bl.note));
+      return box;
+    }
+    function renderPipeJson(bl) {
+      var box = el('div', 'pipe-json');
+      var head = el('div', 'pipe-json__head');
+      head.appendChild(el('span', null, bl.title || 'JSON'));
+      var copy = el('button', 'aich-opt', L('Копировать', 'Copy'));
+      copy.type = 'button';
+      copy.addEventListener('click', function () {
+        try { navigator.clipboard.writeText(bl.json || ''); copy.textContent = L('Скопировано', 'Copied'); } catch (e) {}
+      });
+      head.appendChild(copy);
+      box.appendChild(head);
+      box.appendChild(el('pre', 'pipe-json__code', bl.json || ''));
+      return box;
+    }
+    function renderPipeMethod(bl) {
+      var box = el('div', 'pipe-method');
+      (bl.steps || []).forEach(function (st, i) {
+        if (i) box.appendChild(el('span', 'pipe-method__arrow', '→'));
+        var s = el('div', 'pipe-method__step');
+        s.appendChild(el('b', null, st.t));
+        s.appendChild(el('span', null, st.s));
+        box.appendChild(s);
+      });
+      return box;
+    }
+
     function fill(row, data) {
       if (data.lang) lang = data.lang;
       row.textContent = '';
@@ -757,6 +816,9 @@
         else if (bl.type === 'reel_storyboard') col.appendChild(renderStoryboard(bl));
         else if (bl.type === 'reel_final') col.appendChild(renderFinal(bl));
         else if (bl.type === 'sb_frames') col.appendChild(renderSbFrames(bl));
+        else if (bl.type === 'pipe_arts') col.appendChild(renderPipeArts(bl));
+        else if (bl.type === 'pipe_json') col.appendChild(renderPipeJson(bl));
+        else if (bl.type === 'pipe_method') col.appendChild(renderPipeMethod(bl));
       });
       if (data.chips && data.chips.length) col.appendChild(renderChips(data.chips));
       row.appendChild(col);
@@ -797,12 +859,15 @@
           M('assist_reply', { intent: data.intent || 'unknown', degraded: !!data.degraded, gate: data.gate || '', models: nModels });
           if (nModels) M('models_shown', { n: nModels, kind: data.kind || '' });
           if (data.gate === 'login' || data.gate === 'topup') M('gate', { type: data.gate, src: 'assistant' });
+          if ('pipe_expect' in data) pipeExpect = data.pipe_expect || null;
+          if (data.silent) return data;
           if (inPlace && setupNode && setupNode.parentNode) fill(setupNode, data);   // параметры — на месте
           else opts.onBot(data);
           if (data.generate_model || data.generate_prompt) {
             form = { model: data.generate_model, prompt: data.generate_prompt || '', params: data.generate_params || {},
                      files: data.generate_files || [], series: data.generate_series || null };
-            opts.onFillForm && opts.onFillForm({ model: form.model, prompt: form.prompt, params: form.params, ready: !!data.ready, files: form.files, quiet: !!data.quiet_reply, attach_urls: data.attach_urls || [] });
+            opts.onFillForm && opts.onFillForm({ model: form.model, prompt: form.prompt, params: form.params, ready: !!data.ready, files: form.files,
+              quiet: !!data.quiet_reply, attach_urls: data.attach_urls || [], keepAssistant: !!data.keep_assistant, kind: data.generate_kind || '' });
           }
           return data;
         })
@@ -853,13 +918,14 @@
 
     function softReset() {
       setupNode = null;
+      pipeExpect = null;
       form = { model: null, prompt: '', params: {} };
       allNodes = [];
       lastBody = null;
       busy = false;
     }
 
-    return {
+    var ctl = {
       send: function (text) {
         text = String(text || '').trim().slice(0, 2000);
         if (!text || busy) return Promise.resolve(null);
@@ -886,10 +952,24 @@
         });
       },
       softReset: softReset,
+      /** Генерация завершилась: если флоу ждёт результат — сообщить серверу, он сохранит артефакт и предложит шаг дальше.
+       *  payload: {kind: image|video|audio|text, url, urls?, series?, model, work_id, reply?} */
+      result: function (payload, tries) {
+        if (!pipeExpect || !payload) return Promise.resolve(null);
+        tries = tries || 0;
+        if (busy) {
+          if (tries > 20) return Promise.resolve(null);
+          return new Promise(function (r) { setTimeout(r, 1500); }).then(function () { return ctl.result(payload, tries + 1); });
+        }
+        lastBody = { action: { type: 'pipe_result', value: payload } };
+        return post(lastBody, false);
+      },
+      pipeExpect: function () { return pipeExpect; },
       render: render,
       isBusy: function () { return busy; },
       form: function () { return form; }
     };
+    return ctl;
   }
 
   /* ------------------------------------------------------------- standalone */

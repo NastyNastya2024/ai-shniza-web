@@ -78,5 +78,21 @@
 :root[data-style="black"][data-theme] .prof .ava{box-shadow:0 0 0 5px rgba(255,255,255,.12),0 18px 34px -14px rgba(246,168,64,.35)}
 :root[data-style="black"][data-theme] .switch[aria-checked=true]{background:#DCEB4A}
 
-/* кнопка темы в шапке спрятана (переключатель — плавающий кружок): «Войти» — к правому краю */
-.top .login{margin-left:auto}
+/* кружок темы и кнопка аккаунта — одна группа у правого края */
+.top-end{margin-left:auto;display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.top-end .aish-fab.is-docked{width:42px;height:42px;border-radius:14px;background:#0F1016;border:1px solid #0F1016;box-shadow:none;color:#fff}
+.top-end .aish-fab.is-docked:hover{background:#26272E;transform:none}
+:root[data-style="white"] .top-end .aish-fab.is-docked{background:#0F1016;border-color:#0F1016;box-shadow:none}
+:root[data-style="white"] .top-end .aish-fab.is-docked:hover{background:#26272E}
+:root[data-style="black"] .top-end .aish-fab.is-docked{background:#F3F4F6;border-color:#F3F4F6;box-shadow:none;color:#0F1016}
+:root[data-style="black"] .top-end .aish-fab.is-docked:hover{background:#fff}
+:root[data-style="light"] .top-end .aish-fab.is-docked{background:rgba(91,53,224,.08);border-color:rgba(91,53,224,.22);box-shadow:none;color:#4A2CC0}
+:root[data-style="light"] .top-end .aish-fab.is-docked:hover{background:rgba(91,53,224,.14)}
+:root[data-style="violet"] .top-end .aish-fab.is-docked{background:rgba(155,123,255,.14);border-color:rgba(155,123,255,.32);box-shadow:none;color:#CDBFFF}
+:root[data-style="violet"] .top-end .aish-fab.is-docked:hover{background:rgba(155,123,255,.22)}
+.top .login{margin-left:0}
+@media (max-width:640px){
+  .top-end{order:3}
+  .top .theme-tg{margin-left:0!important;order:0}
+  .top .login{margin-left:0!important;order:1}
+}

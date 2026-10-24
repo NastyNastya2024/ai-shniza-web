@@ -5,6 +5,7 @@
 <script>document.documentElement.setAttribute("data-theme","lilac");</script>
 <script src="/aish-style.js?v=10"></script>
 <script src="/aish-metrics.js?v=1"></script>
+<script src="/legal-pop.js?v=2"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{AI}-шница — генеративные модели</title>
 <meta name="description" content="Нейросети для видео, картинок и музыки на русском: Veo 3.1, Kling, Seedance, GPT Image 2, Nano Banana Pro и другие в одном окне. ИИ-помощник напишет промпт и подберёт модель, оплата в рублях без VPN.">
@@ -406,7 +407,7 @@ a{color:var(--ink-ui)}a:hover{opacity:.82}
     gap:5px!important;
     flex:1 1 0;
     min-width:0;
-    border-radius:999px!important;
+    border-radius:14px!important;
   }
   .reply svg{width:14px;height:14px}
   .reply--free{flex:1.55 1 0!important}
@@ -551,7 +552,7 @@ a{color:var(--ink-ui)}a:hover{opacity:.82}
 
 <section class="ws" aria-label="Готовые работы" data-i18n-attr="aria-label:index.works.aria">
   <div class="ws-head">
-    <h2 class="ws-title reveal"><b style="font:inherit" data-i18n="index.works.title.line1">Создавайте картинки.</b><br><span data-i18n="index.works.title.line2">Оживляйте их.</span></h2>
+    <h2 class="ws-title reveal"><b style="font:inherit" data-i18n="index.works.title.line1">Генерируйте шедевры.</b><br><span data-i18n="index.works.title.line2">Оживляйте их.</span></h2>
     <p class="ws-links reveal">
       <span><a href="/app?models=1" class="ws-link" data-i18n="index.works.link.imageGen">Генерация картинок</a><span class="ws-amp">&amp;</span><a href="/app?models=1" class="ws-link" data-i18n="index.works.link.edit">редактирование</a></span>
       <span><a href="/app?models=1" class="ws-link" data-i18n="index.works.link.videoGen">Генерация видео</a><span class="ws-amp">&amp;</span><a href="/app?models=1" class="ws-link" data-i18n="index.works.link.animate">оживление фото</a></span>
@@ -1034,7 +1035,7 @@ function render() {
         b.type = 'button';
         b.className = 'reply' + (r.free ? ' reply--free' : '');
         b.setAttribute('aria-label', r.label);
-        b.style.cssText = `min-height:44px;padding:0 16px;border-radius:999px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;animation-delay:${r.delay}ms`;
+        b.style.cssText = `min-height:44px;padding:0 16px;border-radius:14px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;animation-delay:${r.delay}ms`;
         if (ICONS[r.icon]) b.insertAdjacentHTML('beforeend', ICONS[r.icon]);
         const label = document.createElement('span');
         label.className = 'reply-label';

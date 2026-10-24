@@ -30,7 +30,7 @@ def actions(r):
 def test_chip_in_types_and_window_right_away(make_assistant):
     a = make_assistant(llm=False)
     r = a.handle("выв", {}, SID)
-    assert r["chips"][-1] == {"label": "🎞 Раскадровка", "action": "sb_start"}
+    assert {"label": "🎞 Раскадровка", "action": "pipe_stage", "value": "board"} in r["chips"]
     r = act(a, "sb_start")                      # без вопроса «пришлите сценарий» — сразу окно
     ch = blk(r, "choice")
     assert r["intent"] == "sb_idea" and ch and ch["custom_first"] and "сценарий" in ch["custom_label"]
@@ -153,7 +153,7 @@ def test_back_exit_and_resume(make_assistant):
     assert act(a, "sb_back")["intent"] == "sb_idea"
     a.handle(SCRIPT, {}, SID)
     r = act(a, "sb_exit")
-    assert "Кадры сохранила" in r["text"] and "sb_start" in actions(r)
+    assert "Кадры сохранила" in r["text"] and "pipe_stage" in actions(r)
     r = a.handle("сделай видео про кота", {}, SID)          # после выхода текст идёт обычным путём
     assert not r["intent"].startswith("sb_")
     r = act(a, "sb_start")

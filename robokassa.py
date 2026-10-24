@@ -34,8 +34,8 @@ class RobokassaProvider(PaymentProvider):
         return bool(self.login and self.pass1 and self.pass2)
 
     def start_topup(self, *, user_id: int, amount_kop: int, inv_id: str, description: str) -> PaymentStart:
-        if amount_kop < 10000:
-            raise ValueError("min_topup_100_rub")
+        if amount_kop < 100:
+            raise ValueError("min_topup_1_rub")
         out_sum = f"{amount_kop / 100:.2f}"
         sign_str = f"{self.login}:{out_sum}:{inv_id}:{self.pass1}"
         signature = hashlib.md5(sign_str.encode("utf-8")).hexdigest()

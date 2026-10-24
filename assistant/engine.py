@@ -26,6 +26,7 @@ from . import camera as CAM
 from . import errors as err_mod
 from . import files as F
 from . import params as P
+from . import pipeline as PL
 from . import storyboard as SB
 from .cards import Card, load_cards
 from .lang import detect_lang
@@ -127,7 +128,10 @@ class Assistant:
         except Exception:
             log.exception("assistant handler failed")
             out = response([_generic_error(lang)], [std_chip("retry", "retry", lang)], intent="internal_error")
-        ses["last_chips"] = [{k: c.get(k) for k in ("label", "action", "value")} for c in out.get("chips", [])]
+        if not out.get("silent"):
+            ses["last_chips"] = [{k: c.get(k) for k in ("label", "action", "value")} for c in out.get("chips", [])]
+        pst = ses.get("pipe") if isinstance(ses.get("pipe"), dict) else {}
+        out["pipe_expect"] = pst.get("expect") if pst.get("on") else None   # приложение пришлёт pipe_result после генерации
         if sid:
             self.d.store.set(sid, ses)
         out.setdefault("intent", "unknown")
@@ -173,6 +177,15 @@ class Assistant:
             ses["reel"] = None
             if ses.get("await") == "reel":
                 ses["await"] = "type"
+        # 1а-0) флоу помощника ждёт ответ этапа (идея промпта, диалог, описание героя, текст озвучки)
+        if msg and PL.waiting(ses) and not self._is_guest(ctx):
+            it_pl = route(msg, ctx, ses, self.titles)
+            if it_pl.name in ("crisis", "safety", "safety_person", "injection"):
+                return getattr(self, "_i_" + it_pl.name)(it_pl, msg, ctx, ses, lang)
+            if BR.is_junk(msg) and ses["pipe"].get("await") != "dialog":
+                n = ses["junk_count"] = int(ses.get("junk_count") or 0) + 1
+                return PL.reask(self, ses, ctx, lang, _junk_line(n, lang))
+            return PL.message(self, ses, ctx, lang, msg)
         # 1а) режим «Раскадровка»: свободный текст — сценарий, идея или правка кадров (кроме опасного / кризиса)
         sb_on = SB.active(ses)
         if msg and (sb_on or SB.SB_RX.search(msg)) and not self._is_guest(ctx):
@@ -180,8 +193,8 @@ class Assistant:
             if it_sb.name in ("crisis", "safety", "safety_person", "injection"):
                 return getattr(self, "_i_" + it_sb.name)(it_sb, msg, ctx, ses, lang)
             if sb_on:
-                return SB.message(self, ses, ctx, lang, msg)
-            return SB.start(self, ses, ctx, lang, text=msg)
+                return PL.decorate(SB.message(self, ses, ctx, lang, msg), ses, lang)
+            return PL.decorate(SB.start(self, ses, ctx, lang, text=msg), ses, lang)
         # 1б) мусор вроде «ооло» никуда не пишем — переспрашиваем по месту
         if msg and not re.fullmatch(r"\s*\d{1,2}\s*[.)]?\s*", msg) and BR.is_junk(msg):
             n = ses["junk_count"] = int(ses.get("junk_count") or 0) + 1
@@ -535,7 +548,8 @@ class Assistant:
         """Вопрос «что сделать» + кнопки: Промпт первым, затем типы генерации."""
         if self._is_guest(ctx):
             return self._ask_login(ses, lang, intent)
-        return response(list(lines) + [t("ask_type", lang)], self._type_chips(ctx, lang), lang=lang, intent=intent)
+        return response(list(lines) + [t("ask_type", lang)] + PL.first_note(ses, lang), self._type_chips(ctx, lang),
+                        lang=lang, intent=intent)
 
     def _type_chips(self, ctx: dict, lang: str) -> list[dict]:
         """Верхний ряд: Промпт → видео / картинка / музыка / звук (или правка фото)."""
@@ -543,7 +557,7 @@ class Assistant:
             kinds = ["prompt", "video", "edit", "image", "music"]
         else:
             kinds = ["prompt", "video", "image", "music"]
-        return [chip(b("type_" + k, lang), "choose_type", k) for k in kinds] + [chip(b("type_sb", lang), "sb_start")]
+        return PL.stage_chips(lang, bool(ctx.get("has_image")))
 
     def _gen_type_chips(self, ctx: dict, lang: str) -> list[dict]:
         """Типы генерации после выбора «Промпт» (без пункта Промпт). Видео раньше картинки — готовые кинопромпты чаще."""
@@ -572,8 +586,11 @@ class Assistant:
         ses["assist_mode"] = None
         ses["prompt_gate"] = False
         topic = ses.get("topic") or ""
-        head = t("ask_type_idea", lang, topic=topic) if topic else t("ask_type_plain", lang)
-        return response([head], self._type_chips(ctx, lang), lang=lang, intent="ask_type")
+        if not topic:
+            PL.state(ses)["on"] = True
+            return response([t("hello", lang)], self._type_chips(ctx, lang), lang=lang, intent="ask_type")
+        lines = [t("ask_type_idea", lang, topic=topic)] + PL.first_note(ses, lang)
+        return response(lines, self._type_chips(ctx, lang), lang=lang, intent="ask_type")
 
     def _ask_has_prompt(self, ses: dict, lang: str, intent: str = "has_prompt") -> dict:
         """Спросить, нужен ли промпт. Модель уже может быть в ses['picked'] — не сбрасываем."""
@@ -1295,7 +1312,11 @@ class Assistant:
 
     def _i_smalltalk(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
         ses["await"] = "idea"
-        return self._offer_types([t(it.data.get("kind", "hello"), lang)], ctx, ses, lang, "smalltalk")
+        kind = it.data.get("kind", "hello")
+        if kind == "hello" and not self._is_guest(ctx):
+            PL.state(ses)["on"] = True
+            return response([t("hello", lang)], self._type_chips(ctx, lang), lang=lang, intent="smalltalk")
+        return self._offer_types([t(kind, lang)], ctx, ses, lang, "smalltalk")
 
     def _i_off_topic(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
         # формат → содержание → модель; примеры сюжетов не подсовываем
@@ -1322,9 +1343,21 @@ class Assistant:
     def _action(self, kind: str, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
         has_image = bool(ctx.get("has_image"))
         if kind == "pipe_result":
-            return SB.apply_writer_reply(self, ses, ctx, lang, value)
+            pst = ses.get("pipe") if isinstance(ses.get("pipe"), dict) else {}
+            kind_in = ""
+            if isinstance(value, dict):
+                kind_in = str(value.get("kind") or "")
+            # текст кадров — в раскадровку; картинка листа при expect=board остаётся артефактом флоу
+            if pst.get("expect") == "sb_frames" or (pst.get("expect") == "board" and kind_in in ("", "text")):
+                return SB.apply_writer_reply(self, ses, ctx, lang, value)
+            return PL.result(self, ses, ctx, lang, value)
         if kind.startswith("sb_"):
-            return self._sb_action(kind, value, ctx, ses, lang)
+            return PL.decorate(self._sb_action(kind, value, ctx, ses, lang), ses, lang)
+        if kind.startswith("pipe_"):
+            return self._pipe_action(kind, value, ctx, ses, lang)
+        if kind in ("choose_type", "restart"):   # обычный выбор типа — вне флоу: результат генерации не ждём
+            PL.state(ses).update(expect=None, stage=None, sub=None)
+            ses["pipe"]["await"] = None
         if ses.get("assist_mode") == "sb" and kind not in ("send", "resume"):
             ses["assist_mode"] = None          # любая обычная кнопка — выход из раскадровки (кадры сохраняются)
         if kind == "pick_model":
@@ -1605,6 +1638,37 @@ class Assistant:
         if kind == "send" and isinstance(value, str):
             return self._message(value, ctx, ses, lang)
         return response([], [], intent="noop")
+
+    def _pipe_action(self, kind: str, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
+        """Флоу помощника (pipeline.py): этапы, артефакты сессии, результат генерации."""
+        if kind == "pipe_result":           # служебное: приложение сообщает о готовой генерации
+            return PL.result(self, ses, ctx, lang, value)
+        if self._is_guest(ctx):
+            return self._ask_login(ses, lang, kind)
+        if ses.get("assist_mode") == "sb":
+            ses["assist_mode"] = None
+        if kind == "pipe_menu":
+            return PL.menu(self, ses, ctx, lang)
+        if kind == "pipe_stage":
+            if value == "video" and not PL.arts(ses):
+                # артефактов ещё нет — обычный путь «Видео» (идея из чата сохраняется), результат запишем в артефакты
+                out = self._action("choose_type", "video", ctx, ses, lang)
+                PL.state(ses).update(on=True, stage="video", expect="video")
+                return out
+            return PL.stage(self, ses, ctx, lang, value)
+        if kind == "pipe_sub":
+            return PL.sub(self, ses, ctx, lang, value)
+        if kind == "pipe_dialog_save":
+            return PL.dialog_save(self, ses, ctx, lang)
+        if kind == "pipe_video_plain":
+            return PL.video(self, ses, ctx, lang, plain=True)
+        if kind == "pipe_voice_model":
+            return PL.voice(self, ses, ctx, lang, text=PL.state(ses).get("voice_text") or "", model=str(value or ""))
+        if kind == "pipe_summary":
+            return PL.summary(self, ses, ctx, lang)
+        if kind == "pipe_arts":
+            return PL.menu(self, ses, ctx, lang)
+        return PL.menu(self, ses, ctx, lang)
 
     def _sb_action(self, kind: str, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
         """Режим «Раскадровка» (storyboard.py): кнопки и правки на месте."""

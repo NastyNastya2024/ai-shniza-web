@@ -305,8 +305,8 @@ def test_off_topic_asks_format_not_examples(make_assistant):
     a = make_assistant()
     r = a.handle("какая погода в Москве", {}, SID)
     assert r["intent"] == "off_topic"
-    assert r["chips"][0]["action"] == "choose_type"
-    assert {c["action"] for c in r["chips"]} == {"choose_type", "sb_start"}   # форматы + «Раскадровка», без примеров
+    assert r["chips"][0]["action"] == "pipe_stage"
+    assert {c["action"] for c in r["chips"]} == {"pipe_stage", "choose_type"}   # этапы флоу + музыка, без примеров
     assert "reel_start" not in {c["action"] for c in r["chips"]}
     assert "формат" in r["text"].lower() and "генерир" in r["text"].lower()
     assert not any(c["action"] == "send" for c in r["chips"])
@@ -411,12 +411,11 @@ def test_concurrent_sessions(make_assistant):
 def test_screenshot_scenario_typos_and_buttons(make_assistant):
     a = make_assistant()
     r = a.handle("привет", {}, SID)
-    vals = {c["value"] for c in r["chips"] if c["action"] == "choose_type"}
-    assert vals >= {"prompt", "image", "video", "music"} and "prompt" in vals
+    vals = {c["value"] for c in r["chips"] if c["action"] in ("choose_type", "pipe_stage")}
+    assert vals >= {"prompt", "image", "video", "music", "board", "voice"}
     r = a.handle("надо сделать коты который жарит иишницу", {}, SID)
     assert r["intent"] == "ask_type" and "генерир" in r["text"].lower()
-    assert [c["action"] for c in r["chips"]].count("choose_type") == 4  # вопрос + кнопки, не «открытый»
-    assert r["chips"][0]["value"] == "prompt"
+    assert [c["value"] for c in r["chips"]] == ["prompt", "image", "board", "video", "voice", "music"]  # вопрос + кнопки этапов, не «открытый»
     r = a.handle("карттинку", {}, SID)                                     # опечатка — понимаем
     assert block(r, "models") and all(a.d.cards[m["id"]].kind in ("image", "edit") for m in r["models"])
     r = a.handle("", {}, SID, action={"type": "pick_model", "value": "seedream-5-pro"})
@@ -446,8 +445,7 @@ def test_unclear_answer_reasks_with_buttons(make_assistant):
     a = make_assistant()
     a.handle("котик в космосе", {}, SID)
     r = a.handle("ну не знаю", {}, SID)
-    assert r["intent"] == "ask_type" and [c["action"] for c in r["chips"]].count("choose_type") == 4   # prompt/image/video/music
-    assert r["chips"][0]["value"] == "prompt"
+    assert r["intent"] == "ask_type" and [c["value"] for c in r["chips"]] == ["prompt", "image", "board", "video", "voice", "music"]   # этапы флоу + музыка
     assert block(a.handle("2", {}, SID), "models")  # 2 = картинка → модели
 
 

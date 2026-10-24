@@ -2284,6 +2284,9 @@ STUDIO_ONBOARD_IDS = frozenset({
     "ace-step",
     "elevenlabs-music",
     "stable-audio-2-5",
+    # озвучка — этап «Озвучка» во флоу помощника (assistant/pipeline.py)
+    "elevenlabs-v3",
+    "gemini-3-1-flash-tts",
     # текст / LLM — вкладка «Текст» и чат с моделью
     "deepseek-v3-1",
     "deepseek-v3",

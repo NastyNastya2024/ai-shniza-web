@@ -632,6 +632,16 @@ IDEAS = {
 }
 
 
+def _arm_writer(ses: dict) -> None:
+    """Ждём текст кадров от нейросети. Если флоу уже ждёт лист раскадровки (expect=board), не затираем его."""
+    pst = ses.get("pipe") if isinstance(ses.get("pipe"), dict) else {}
+    if pst.get("expect") == "board":
+        pst["on"] = True
+    else:
+        pst.update(on=True, expect="sb_frames")
+    ses["pipe"] = pst
+
+
 def chat_refs(ses: dict) -> list[dict]:
     """Картинки, сгенерированные раньше в этом чате (артефакты флоу: герои и картинки) — кандидаты в референсы героев."""
     out = []
@@ -757,9 +767,7 @@ def show_frames(a: Any, ses: dict, ctx: dict, lang: str, head: str | None = None
     tc = text_model(a) if tmpl else None
     if tmpl and not degraded and tc:                # кадры всё ещё шаблонные — кнопку оставляем, без длинного объяснения
         chips.insert(0, chip(tr(lang, "✍️ Расписать нейросетью", "✍️ Write with a model"), "generate", tc.id, primary=True))
-        pst = ses.get("pipe") if isinstance(ses.get("pipe"), dict) else {}
-        pst.update(on=True, expect="sb_frames")
-        ses["pipe"] = pst
+        _arm_writer(ses)
         extra = {"generate_model": tc.id, "generate_prompt": writer_prompt(st, lang), "generate_params": {},
                  "ready": True, "keep_assistant": True, "quiet_reply": True, "pipe_expect": "sb_frames"}
     if degraded:
@@ -772,9 +780,7 @@ def show_frames(a: Any, ses: dict, ctx: dict, lang: str, head: str | None = None
                 f"each action, the key moment and the ending. To have a model write them, tap “Write with a model” — "
                 f"one short request to {tc.title}, it costs a few kopecks."))
             chips.insert(0, chip(tr(lang, "✍️ Расписать нейросетью", "✍️ Write with a model"), "generate", tc.id, primary=True))
-            pst = ses.get("pipe") if isinstance(ses.get("pipe"), dict) else {}
-            pst.update(on=True, expect="sb_frames")
-            ses["pipe"] = pst
+            _arm_writer(ses)
             extra = {"generate_model": tc.id, "generate_prompt": writer_prompt(st, lang), "generate_params": {},
                      "ready": True, "keep_assistant": True, "quiet_reply": True, "pipe_expect": "sb_frames"}
         else:
@@ -884,12 +890,14 @@ def show_setup(a: Any, ses: dict, ctx: dict, lang: str, head: str | None = None)
 def apply_writer_reply(a: Any, ses: dict, ctx: dict, lang: str, value: Any) -> dict:
     """Ответ текстовой нейросети по кнопке «Расписать нейросетью» → карточки кадров. Повторный ответ игнорируем."""
     pst = ses.get("pipe") if isinstance(ses.get("pipe"), dict) else {}
-    if ses.get("assist_mode") != "sb" or pst.get("expect") != "sb_frames":
+    if ses.get("assist_mode") != "sb" or pst.get("expect") not in ("sb_frames", "board"):
         return {"text": "", "reply": "", "blocks": [], "chips": [], "silent": True}
     v = value if isinstance(value, dict) else {}
     if v.get("kind") not in (None, "", "text"):
         return {"text": "", "reply": "", "blocks": [], "chips": [], "silent": True}
-    pst["expect"] = None
+    keep_board = pst.get("expect") == "board"
+    if not keep_board:
+        pst["expect"] = None
     if frames_from_reply(ses, str(v.get("reply") or "")):
         return show_frames(a, ses, ctx, lang, tr(lang, "Нейросеть расписала кадры.", "The model wrote the frames."))
     return show_frames(a, ses, ctx, lang, tr(

@@ -34,11 +34,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .nav a{min-height:40px;display:flex;align-items:center;padding:0 14px;border-radius:999px;text-decoration:none;color:var(--muted);font-weight:600;font-size:15px}
 .nav a:hover{color:var(--ink);background:var(--card)}
 .nav a[aria-current]{color:var(--ink);background:var(--card2)}
-.search{position:relative;flex:0 0 48px;min-width:48px;z-index:2;transition:flex-basis .28s cubic-bezier(.4,.1,.2,1),flex-grow .28s cubic-bezier(.4,.1,.2,1),min-width .28s ease}
-.search input{width:100%;box-sizing:border-box;height:48px;border-radius:999px;border:1px solid transparent;background:var(--card);color:var(--ink);padding:0 16px 0 42px;font:500 14.5px 'Manrope',sans-serif;transition:padding .2s ease,background .2s ease,border-color .2s ease,color .2s ease}
+.search{position:relative;flex:0 0 46px;min-width:46px;z-index:2;transition:flex-basis .28s cubic-bezier(.4,.1,.2,1),flex-grow .28s cubic-bezier(.4,.1,.2,1),min-width .28s ease}
+.search input{width:100%;box-sizing:border-box;height:46px;border-radius:14px;border:1px solid transparent;background:var(--card);color:var(--ink);padding:0 14px 0 40px;font:500 14.5px 'Manrope',sans-serif;transition:padding .2s ease,background .2s ease,border-color .2s ease,color .2s ease}
 .search input::placeholder{color:var(--muted2)}
-.search svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;z-index:1}
-.login{height:42px;padding:0 20px;border-radius:999px;border:1px solid rgba(110,86,207,.45);background:var(--violet-bg);color:var(--violet-ink);font-weight:700;font-size:14px;cursor:pointer;flex:0 0 auto}
+.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;z-index:1}
+.tools:not(.search-on) .search svg{left:50%;transform:translate(-50%,-50%)}
+.login{height:42px;padding:0 16px;border-radius:14px;border:1px solid rgba(110,86,207,.45);background:var(--violet-bg);color:var(--violet-ink);font-weight:700;font-size:14px;cursor:pointer;flex:0 0 auto}
 .login:hover{background:rgba(110,86,207,.28)}
 
 /* заголовок и фильтры */
@@ -56,8 +57,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .tools:not(.search-on) .search input{padding:0;border-color:transparent;color:transparent;caret-color:transparent;cursor:pointer}
 .tools:not(.search-on) .search input::placeholder{color:transparent}
 .tools:not(.search-on) .search input::-webkit-search-cancel-button{display:none}
-.filters{display:flex;flex-wrap:wrap;gap:4px;align-items:center;flex:1 1 auto;min-width:0;overflow:visible;transition:opacity .2s ease,flex-basis .28s ease,max-width .28s ease,padding .2s ease,border-width .2s ease}
-.filters-main{display:flex;flex-wrap:wrap;gap:4px;align-items:center;flex:1 1 auto;min-width:0}
+.filters{display:flex;flex-wrap:nowrap;gap:2px;align-items:center;flex:0 1 auto;width:fit-content;max-width:100%;min-width:0;padding:3px;border-radius:14px;overflow:visible;transition:opacity .2s ease,flex-basis .28s ease,max-width .28s ease,padding .2s ease,border-width .2s ease}
+.filters-main{display:flex;flex-wrap:nowrap;gap:2px;align-items:center;flex:0 1 auto;min-width:0}
+.filters .chip.ico{width:38px;height:38px;padding:0;border-radius:10px;border-color:transparent;justify-content:center}
 .tools.search-on .filters{flex:0 0 0;max-width:0;opacity:0;padding-left:0;padding-right:0;border-width:0;pointer-events:none;overflow:hidden}
 .chip{height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;flex:0 0 auto;display:inline-flex;align-items:center}
 .chip:hover{color:var(--ink);border-color:var(--line2)}
@@ -256,7 +258,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 :root[data-theme=light] .h-orb{display:inline-block;width:.92em;height:.92em;margin-left:.16em;vertical-align:-.06em;filter:drop-shadow(0 10px 14px rgba(232,105,28,.35));animation:hOrb 4.2s ease-in-out infinite}
 @media (prefers-reduced-motion:reduce){.h-orb{animation:none!important}}
 @keyframes hOrb{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-6px) rotate(5deg)}}
-:root[data-theme=light] .filters{padding:5px;gap:4px;border-radius:999px;background:rgba(255,255,255,.42);border:1px solid rgba(255,255,255,.9);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px -24px rgba(75,43,184,.5)}
+:root[data-theme=light] .filters{padding:3px;gap:2px;border-radius:14px;background:rgba(255,255,255,.42);border:1px solid rgba(255,255,255,.9);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px -24px rgba(75,43,184,.5)}
 :root[data-theme=light] .filters .chip{background:transparent;border-color:transparent;height:38px}
 :root[data-theme=light] .filters .chip:hover{background:rgba(255,255,255,.85)}
 :root[data-theme=light] .filters .chip[aria-pressed=true]{background:var(--ink);color:#fff}
@@ -295,7 +297,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 :root:not([data-theme=light]) .card .shade{background:linear-gradient(180deg,rgba(20,16,38,0) 45%,rgba(20,16,38,.85))}
 :root:not([data-theme=light]) .badge,:root:not([data-theme=light]) .likes,:root:not([data-theme=light]) .wm-badge{background:rgba(20,16,38,.55)}
 :root:not([data-theme=light]) .card.is-hidden img,:root:not([data-theme=light]) .card.is-hidden video{filter:grayscale(.7) brightness(.62) opacity(.8)}
-:root:not([data-theme=light]) .filters{padding:5px;gap:4px;border-radius:999px;background:linear-gradient(180deg,rgba(66,56,108,.78),rgba(48,40,82,.78));border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 16px 36px -18px rgba(0,0,0,.85)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px -24px rgba(0,0,0,.7)}
+:root:not([data-theme=light]) .filters{padding:3px;gap:2px;border-radius:14px;background:linear-gradient(180deg,rgba(66,56,108,.78),rgba(48,40,82,.78));border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 16px 36px -18px rgba(0,0,0,.85)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px -24px rgba(0,0,0,.7)}
 :root:not([data-theme=light]) .filters .chip{background:transparent;border-color:transparent;height:38px}
 :root:not([data-theme=light]) .filters .chip:hover{background:rgba(255,255,255,.12);color:var(--ink)}
 :root:not([data-theme=light]) .chip[aria-pressed=true],:root:not([data-theme=light]) .filters .chip[aria-pressed=true]{background:#F3F0FF;border-color:#F3F0FF;color:#1E1238;box-shadow:0 8px 18px -10px rgba(0,0,0,.6)}
@@ -375,14 +377,16 @@ html{transition:background-color .3s}
 }
 </style>
 <link rel="stylesheet" href="/aish-style.css?v=12">
-<link rel="stylesheet" href="/aish-style-vitrina.css?v=1">
+<link rel="stylesheet" href="/aish-style-vitrina.css?v=5">
 </head>
 <body data-title-key="explore.title">
 <header class="top">
   <a class="logo" href="/" aria-label="{AI}-шница — на главную" data-i18n-attr="aria-label:common.home.aria"><img class="logo-img logo-light" src="/assets/brand/svg/lockup-light.svg" alt="{AI}-шница — маркетплейс генеративных моделей" data-i18n-attr="alt:common.logo.alt"><img class="logo-img logo-dark" src="/assets/brand/svg/lockup-dark.svg" alt="{AI}-шница — маркетплейс генеративных моделей" data-i18n-attr="alt:common.logo.alt"></a>
   <nav class="nav" aria-label="Разделы"><a href="/app" data-i18n="nav.studio">Студия</a><a href="/explore" aria-current="page" data-i18n="nav.showcase">Витрина</a><a href="/account" data-i18n="nav.cabinet">Кабинет</a></nav>
-  <button class="theme-tg" id="themeTg" type="button" aria-label="Светлая тема" title="Светлая тема"><svg class="i-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg><svg class="i-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-  <button class="login" id="loginBtn" type="button" data-i18n="common.login">Войти</button>
+  <div class="top-end">
+    <button class="theme-tg" id="themeTg" type="button" aria-label="Светлая тема" title="Светлая тема"><svg class="i-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg><svg class="i-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+    <button class="login" id="loginBtn" type="button" data-i18n="common.login">Войти</button>
+  </div>
 </header>
 
 <section class="head">
@@ -390,15 +394,11 @@ html{transition:background-color .3s}
   <div class="tools" id="tools">
     <label class="search" for="q"><span class="sr" data-i18n="explore.search.label">Поиск по витрине</span>
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-      <input id="q" type="search" placeholder="Город, космос, Seedance, креатор…" data-i18n-attr="placeholder:explore.search.placeholder" autocomplete="off"></label>
+      <input id="q" type="search" placeholder="Название или открытый промпт…" data-i18n-attr="placeholder:explore.search.placeholder" autocomplete="off"></label>
     <div class="filters" id="filters" role="group" aria-label="Фильтры" data-i18n-attr="aria-label:explore.filters.aria">
       <div class="filters-main" id="filtersMain">
-        <button class="chip" data-f="all" aria-pressed="true" data-i18n="explore.filter.all">Все</button>
-        <button class="chip" data-f="video" aria-pressed="false" data-i18n="explore.filter.video">Видео</button>
-        <button class="chip" data-f="image" aria-pressed="false" data-i18n="explore.filter.image">Картинки</button>
-        <button class="chip" data-f="prompt" aria-pressed="false" data-i18n="explore.filter.prompt">С промптом</button>
-        <button class="chip" data-f="no_prompt" aria-pressed="false" data-i18n="explore.filter.noPrompt">Без промпта</button>
-        <button class="chip" data-f="Camera" aria-pressed="false">Camera</button>
+        <button class="chip ico" data-f="Camera" aria-pressed="false" title="Движение камеры" aria-label="Движение камеры" data-i18n-attr="title:explore.filter.cameraMove;aria-label:explore.filter.cameraMove"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2"></rect></svg></button>
+        <button class="chip ico" data-f="prompt" aria-pressed="false" title="Промпт" aria-label="Промпт" data-i18n-attr="title:explore.filter.prompt;aria-label:explore.filter.prompt"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M8 13h8M8 17h5"></path></svg></button>
       </div>
     </div>
   </div>
@@ -420,7 +420,7 @@ html{transition:background-color .3s}
   <div class="dbody" id="dBody"></div>
 </aside>
 
-<script src="/vitrina-data.js?v=3"></script>
+<script src="/vitrina-data.js?v=4"></script>
 <script src="/vitrina-camera-moves.js?v=3"></script>
 <script src="/vitrina-aishnitsa.js?v=14"></script>
 <script>
@@ -570,7 +570,6 @@ html{transition:background-color .3s}
   function apply() {
     const q = query.trim().toLowerCase();
     list = works.filter((w) => {
-      const c = C[w.creator] || { name: '', nick: '' };
       if (modelSlugFilter && String(w.model_slug || '') !== modelSlugFilter) return false;
       if (filter === 'video' && w.type !== 'video') return false;
       if (filter === 'image' && w.type !== 'image') return false;
@@ -584,8 +583,9 @@ html{transition:background-color .3s}
         return false;
       }
       if (camGroup && isCameraFilter() && String(w.category || '') !== camGroup) return false;
-      const hay = [w.title, wTitle(w), w.model, w.prompt, w.category, (w.tags || []).join(' '), c.name, cName(c), c.nick].join(' ').toLowerCase();
-      return !q || hay.includes(q);
+      const bits = [w.title, wTitle(w)];
+      if (hasOpenPrompt(w)) bits.push(String(w.prompt || ''));
+      return !q || bits.filter(Boolean).join(' ').toLowerCase().includes(q);
     });
     if (sort === 'top') list.sort((a, b) => (b.likes || 0) - (a.likes || 0));
     if (openId) { openIdx = list.findIndex((w) => w.id === openId); }
@@ -931,7 +931,7 @@ html{transition:background-color .3s}
   filtersEl.addEventListener('click', (e) => {
     const chip = e.target.closest('.chip[data-f]');
     if (!chip) return;
-    filter = chip.dataset.f;
+    filter = filter === chip.dataset.f ? 'all' : chip.dataset.f;
     if (filter === 'all' || filter === 'video' || filter === 'image'
         || filter === 'prompt' || filter === 'no_prompt') modelSlugFilter = '';
     if (!isCameraFilter()) camGroup = '';
