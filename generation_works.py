@@ -98,6 +98,11 @@ def delete_stored(url: str | None) -> bool:
     return False
 
 
+def prompt_source_of(raw: Any) -> str:
+    """Откуда промпт: готовый с витрины нельзя публиковать, свой и от помощника — можно."""
+    return "platform" if str(raw or "").strip() == "platform" else "original"
+
+
 def upload_ttl_sec() -> int:
     try:
         return max(600, int(os.getenv("UPLOAD_TTL_SEC") or 24 * 3600))
@@ -138,6 +143,35 @@ def register_generation_works(app: Any, db: Any, copy_fn: Callable[[int], None] 
     WorkLike = models.get("WorkLike")
     state = {"last_purge": 0.0}
 
+    def ensure_work_columns() -> None:
+        from sqlalchemy import inspect, text
+
+        try:
+            with app.app_context():
+                insp = inspect(db.engine)
+                if "works" not in insp.get_table_names():
+                    return
+                cols = {c["name"] for c in insp.get_columns("works")}
+                stmts = []
+                if "prompt_source" not in cols:
+                    stmts.append(
+                        "ALTER TABLE works ADD COLUMN prompt_source VARCHAR(20) NOT NULL DEFAULT 'original'"
+                    )
+                if "prompt_open" not in cols:
+                    stmts.append("ALTER TABLE works ADD COLUMN prompt_open BOOLEAN NOT NULL DEFAULT 0")
+                for sql in stmts:
+                    db.session.execute(text(sql))
+                if stmts:
+                    db.session.commit()
+        except Exception:  # noqa: BLE001
+            try:
+                with app.app_context():
+                    db.session.rollback()
+            except Exception:
+                pass
+
+    ensure_work_columns()
+
     def _copy_to_storage(work_id: int) -> None:
         """Скачать результат у провайдера и положить в наше хранилище. Ошибка — не страшно: остаётся ссылка провайдера."""
         import media_store
@@ -174,7 +208,7 @@ def register_generation_works(app: Any, db: Any, copy_fn: Callable[[int], None] 
             return
         threading.Thread(target=_copy_to_storage, args=(work_id,), daemon=True, name=f"work-copy-{work_id}").start()
 
-    def record_generation(job_id: str, public: dict, owner_id: Any, prompt: str = "", params: Any = None):
+    def record_generation(job_id: str, public: dict, owner_id: Any, prompt: str = "", params: Any = None, prompt_source: Any = None):
         """Готовая генерация → Work (один раз на задание). Текстовые ответы работами не считаем."""
         if not owner_id or not job_id or not isinstance(public, dict):
             return None
@@ -196,6 +230,8 @@ def register_generation_works(app: Any, db: Any, copy_fn: Callable[[int], None] 
             status="draft",
             job_id=job_id,
             created_at=_now(),
+            prompt_source=prompt_source_of(prompt_source),
+            prompt_open=False,
         )
         db.session.add(work)
         db.session.commit()

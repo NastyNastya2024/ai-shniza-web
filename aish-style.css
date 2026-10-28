@@ -54,7 +54,7 @@
 .aish-fab.is-docked .aish-fab__dot { width: 22px; height: 22px; }
 .aish-fab.is-docked.is-compact .aish-fab__dot { width: 20px; height: 20px; }
 /* на главной у «Войти»: квадрат как кнопка «Войти», кружок внутри — цвет темы */
-.aish-fab.is-header { position: relative; left: auto !important; top: auto !important; z-index: 6; flex: 0 0 auto; width: 40px; height: 40px; margin-left: 10px; border-radius: 14px; cursor: pointer; touch-action: manipulation; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.aish-fab.is-header { position: relative; left: auto !important; top: auto !important; z-index: 6; flex: 0 0 auto; width: 40px; height: 40px; margin-left: 2px; border-radius: 14px; cursor: pointer; touch-action: manipulation; backdrop-filter: none; -webkit-backdrop-filter: none; }
 .aish-fab.is-header:hover { transform: none; }
 .aish-fab.is-header > .aish-fab__dot { width: 22px; height: 22px; border-radius: 50%; box-shadow: none; }
 :root[data-style="white"] .aish-fab.is-header { background: #0F1016; box-shadow: 0 2px 8px rgba(18,20,32,.18); }

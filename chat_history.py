@@ -119,9 +119,15 @@ def clean_message(raw: Any) -> dict | None:
         wid = raw.get("workId")
         if isinstance(wid, (int, str)) and re.match(r"^[A-Za-z0-9_-]{1,64}$", str(wid)):
             m["workId"] = str(wid)
-        for flag in ("job", "loginCta", "topup", "published"):
+        for flag in ("job", "loginCta", "topup", "published", "promptOpen"):
             if raw.get(flag):
                 m[flag] = True
+        src = raw.get("promptSource")
+        if src in ("platform", "original"):
+            m["promptSource"] = src
+        jid = raw.get("jobId")
+        if isinstance(jid, str) and re.fullmatch(r"[a-fA-F0-9]{16,64}", jid):
+            m["jobId"] = jid.lower()
     if not m["text"] and not m.get("files") and not m.get("result") and "assistant" not in m:
         return None
     return m

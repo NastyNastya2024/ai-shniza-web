@@ -24,6 +24,46 @@ from security import ensure_csrf_token, rate_limit
 
 HANDLE_RE = re.compile(r"^[a-zA-Z0-9_]{3,24}$")
 BANNED_HANDLES = {"admin", "support", "api", "explore", "settings", "balance", "account", "root", "ai", "shnica"}
+# Простой ник из имени: кириллица → латиница, первое слово, без пробелов.
+_CYR = {
+    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e",
+    "ж": "zh", "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m",
+    "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u",
+    "ф": "f", "х": "h", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "sch",
+    "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya",
+}
+
+
+def nick_stem(name: str = "", email: str = "") -> str:
+    """Первое слово имени (или начало почты) латиницей. Пусто, если короче 3 символов или занято служебным словом."""
+    raw = (name or "").strip().split()
+    src = raw[0] if raw else (email or "").split("@")[0]
+    out: list[str] = []
+    for ch in src.lower():
+        if ch in _CYR:
+            out.append(_CYR[ch])
+        elif ("a" <= ch <= "z") or ch.isdigit() or ch == "_":
+            out.append(ch)
+    stem = "".join(out)[:16]
+    if len(stem) < 3 or stem in BANNED_HANDLES:
+        return ""
+    return stem
+
+
+def pick_simple_nick(name: str, email: str, user_id: int, taken) -> str:
+    """Свободный простой ник: имя, затем имя+номер, затем user+номер."""
+    stem = nick_stem(name, email)
+    options: list[str] = []
+    if stem:
+        options.append(stem)
+        options.append(f"{stem}{user_id}"[:24])
+    options.append(f"user{user_id}"[:24])
+    for i in range(2, 12):
+        options.append(f"user{user_id}{i}"[:24])
+    for cand in options:
+        if HANDLE_RE.match(cand) and cand not in BANNED_HANDLES and not taken(cand):
+            return cand
+    return f"u{user_id}x"[:24]
 CONTACT_NET_RE = re.compile(r"^[a-z][a-z0-9_]{0,23}$")
 
 
@@ -106,9 +146,23 @@ def register_product(app, db, User):
 
     def profile_for(user_id: int):
         p = CreatorProfile.query.filter_by(user_id=user_id).first()
+        fresh = False
         if not p:
             p = CreatorProfile(user_id=user_id, referral_code=secrets.token_urlsafe(8)[:10])
             db.session.add(p)
+            fresh = True
+        if not (p.handle or "").strip():
+            user = db.session.get(User, user_id)
+            name = (user.name if user else "") or ""
+            email = (user.email if user else "") or ""
+
+            def taken(handle: str) -> bool:
+                other = CreatorProfile.query.filter_by(handle=handle).first()
+                return bool(other and other.user_id != user_id)
+
+            p.handle = pick_simple_nick(name, email, user_id, taken)
+            fresh = True
+        if fresh:
             db.session.commit()
         return p
 
@@ -228,6 +282,7 @@ def register_product(app, db, User):
         model_key = (data.get("model_key") or "").strip()
         prompt = str(data.get("prompt") or "").strip()
         params = data.get("params") if isinstance(data.get("params"), dict) else {}
+        prompt_source = "platform" if str(data.get("prompt_source") or "").strip() == "platform" else "original"
         if not prompt:
             return jsonify({"error": "empty"}), 400
         try:
@@ -265,6 +320,7 @@ def register_product(app, db, User):
                 "user_id": user.id,
                 "model_key": model_key,
                 "prompt": prompt,
+                "prompt_source": prompt_source,
                 "params": params,
                 "enqueued_at": time.time(),
                 "score": score,
@@ -275,7 +331,7 @@ def register_product(app, db, User):
             try:
                 from queue_runtime.jobs import set_job
 
-                set_job(job_id, status="queued_free", user_id=user.id, model_key=model_key, prompt=prompt, price_kop=0, is_free=True)
+                set_job(job_id, status="queued_free", user_id=user.id, model_key=model_key, prompt=prompt, prompt_source=prompt_source, price_kop=0, is_free=True)
             except Exception:
                 pass
             work = Work(
@@ -286,6 +342,8 @@ def register_product(app, db, User):
                 params=json.dumps(params, ensure_ascii=False),
                 status="draft",
                 job_id=job_id,
+                prompt_source=prompt_source,
+                prompt_open=False,
             )
             db.session.add(work)
             db.session.commit()
@@ -323,6 +381,7 @@ def register_product(app, db, User):
                     {
                         **gen_fields,
                         "prompt": prompt,
+                        "prompt_source": prompt_source,
                         "user_id": user.id,
                         "owner_id": user.id,
                         "price_kop": price_kop,
@@ -377,6 +436,8 @@ def register_product(app, db, User):
             params=json.dumps(params, ensure_ascii=False),
             status="draft",
             job_id=job_id_out,
+            prompt_source=prompt_source,
+            prompt_open=False,
         )
         if status == "succeeded":
             work.original_url = stub_url
@@ -462,11 +523,15 @@ def register_product(app, db, User):
             url = work.original_url or work.watermarked_url
         prof = CreatorProfile.query.filter_by(user_id=work.owner_id).first()
         owner_user = User.query.get(work.owner_id) if work.owner_id else None
+        opened = bool(getattr(work, "prompt_open", False))
         return {
             "id": work.id,
             "kind": work.kind,
             "model_key": work.model_key,
-            "prompt": work.prompt,
+            # на витрине промпт виден только если автор его открыл; себе — всегда
+            "prompt": work.prompt if (owner_view or opened) else "",
+            "prompt_open": opened,
+            "prompt_source": getattr(work, "prompt_source", None) or "original",
             "status": work.status,
             "title": work.title,
             "tags": (work.tags or "").split(",") if work.tags else [],
@@ -513,6 +578,7 @@ def register_product(app, db, User):
             return jsonify({"error": "not_found"}), 404
         if work.status == "published":
             work.status = "saved"
+            work.prompt_open = False
             db.session.commit()
         return jsonify({"ok": True, "work": _work_public(work, owner_view=True, viewer_id=user.id)})
 
@@ -528,6 +594,10 @@ def register_product(app, db, User):
         prof = profile_for(user.id)
         if not prof.handle:
             return jsonify({"error": "handle_required"}), 400
+        # готовый промпт витрины: ролик по нему публиковать нельзя
+        if (getattr(work, "prompt_source", None) or "") == "platform":
+            return jsonify({"error": "platform_prompt"}), 403
+        open_prompt = bool(data.get("open_prompt"))
         title = str(data.get("title") or "").strip()[:200]
         tags = data.get("tags") if isinstance(data.get("tags"), list) else []
         tags = [str(t).strip()[:32] for t in tags[:5] if str(t).strip()]
@@ -556,7 +626,9 @@ def register_product(app, db, User):
         work.title = title or (work.prompt[:80] if work.prompt else f"Работа {work.id}")
         work.tags = ",".join(tags)
         work.status = "published"
-        work.published_at = datetime.utcnow()
+        work.published_at = work.published_at or datetime.utcnow()
+        if open_prompt:
+            work.prompt_open = True
         db.session.commit()
         fq = free_quota.get_quota(db, FreeQuota, user.id)
         free_quota.grant_publish_bonus(db, fq)

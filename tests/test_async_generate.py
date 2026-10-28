@@ -48,14 +48,10 @@ def app_ctx(tmp_path, monkeypatch):
     import server
 
     db_file = tmp_path / "async_gen.db"
-    server.app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_file}"
     server.app.config["TESTING"] = True
     with server.app.app_context():
-        server.db.session.remove()
-        try:
-            server.db.engine.dispose()
-        except Exception:
-            pass
+        from tests.db_isolation import use_temp_db
+        use_temp_db(server, db_file)
         server.db.drop_all()
         server.db.create_all()
         yield server

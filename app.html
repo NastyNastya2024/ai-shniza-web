@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="/assets/brand/png/apple-touch-icon-180.png">
 <link rel="stylesheet" href="/assistant-ui.css?v=22">
 <link rel="stylesheet" href="/attach.css">
-<link rel="stylesheet" href="/chat-history.css">
+<link rel="stylesheet" href="/chat-history.css?v=3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/aish-style.css?v=12">
@@ -232,7 +232,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .vit-h .vit-title{margin:0;flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 14px 0 12px;border-radius:14px;border:1px solid var(--glass-brd);background:var(--seg-on);color:var(--accent-ink);font-family:'Onest',sans-serif;font-size:14px;font-weight:600;box-shadow:0 8px 20px -12px var(--shadow);box-sizing:border-box;width:max-content;max-width:100%}
 .vit-h .vit-title svg{flex:0 0 auto}
 .vit-h .vit-full{flex:1 1 auto;min-width:0;padding:0 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.vit-h #vitClose{flex:0 0 auto;margin-left:0}
+.vit-h #vitClose{flex:0 0 44px;width:44px;height:44px;margin-left:2px;border-radius:14px;border:1px solid transparent;background:var(--seg-bg);color:var(--accent-ink);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none}
+.vit-h #vitClose:hover{background:var(--seg-on);color:var(--accent-ink)}
 .vit-ctx{display:flex;flex-wrap:wrap;gap:6px;padding:0 4px}
 .vit-ctx span{max-width:100%;height:28px;padding:0 6px 0 10px;border-radius:999px;background:var(--seg-bg);font-size:12.5px;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;gap:5px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .vit-ctx b{color:var(--ink);font-weight:700;overflow:hidden;text-overflow:ellipsis}
@@ -318,9 +319,23 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .rp-tab[aria-selected=true]{background:var(--seg-on);color:var(--accent-ink);box-shadow:0 4px 12px -6px var(--shadow)}
 .rp-pane{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px}
 .rp-pane.hidden{display:none!important}
-.vit-top{display:flex;align-items:flex-start;gap:8px}
-.vit-top .vit-sub{flex:1 1 auto;margin:2px 4px 0}
-.vit-top .vit-full{height:32px;padding:0 12px;border-radius:10px;font-size:12.5px}
+.vit-tools{display:flex;align-items:center;flex-wrap:nowrap;gap:8px;min-width:0}
+.vit-tools .vit-full{margin-left:auto;height:40px;padding:0 12px;border-radius:14px;font-size:13px;flex:0 0 auto;white-space:nowrap}
+.vit-tools .vt-search{position:relative;flex:0 0 40px;min-width:40px;z-index:2;transition:flex-basis .28s cubic-bezier(.4,.1,.2,1),flex-grow .28s cubic-bezier(.4,.1,.2,1),min-width .28s ease}
+.vit-tools.search-on .vt-search{flex:1 1 auto;min-width:0}
+.vit-tools .vt-search input{width:100%;box-sizing:border-box;height:40px;border-radius:14px;border:1px solid var(--panel-brd);background:var(--seg-on);color:var(--ink);padding:0 12px 0 34px;font:500 13.5px 'Onest',sans-serif}
+.vit-tools .vt-search input::placeholder{color:var(--muted2)}
+.vit-tools .vt-search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink);pointer-events:none}
+.vit-tools:not(.search-on) .vt-search input{padding:0;color:transparent;caret-color:transparent;cursor:pointer}
+.vit-tools:not(.search-on) .vt-search input::placeholder{color:transparent}
+.vit-tools:not(.search-on) .vt-search input::-webkit-search-cancel-button{display:none}
+.vit-tools:not(.search-on) .vt-search svg{left:50%;transform:translate(-50%,-50%)}
+.vit-tools .vt-filters{display:flex;flex-wrap:nowrap;gap:2px;align-items:center;padding:3px;border-radius:14px;border:1px solid var(--panel-brd);background:var(--seg-on);width:fit-content;flex:0 0 auto;transition:opacity .2s ease,flex-basis .28s ease,max-width .28s ease,padding .2s ease}
+.vit-tools.search-on .vt-filters{flex:0 0 0;max-width:0;opacity:0;padding:0;border-width:0;overflow:hidden;pointer-events:none}
+.vit-tools .vt-ico{width:34px;height:34px;flex:0 0 34px;padding:0;border:none;border-radius:10px;background:transparent;color:var(--ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.vit-tools .vt-ico:hover{background:var(--soft-hover)}
+.vit-tools .vt-ico[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.vit-tools .vt-ico[aria-pressed=true]:hover{background:var(--ink);color:var(--bg)}
 /* слева — только чаты, список на всю высоту */
 .chats.chats-side{flex:1 1 auto;min-height:0;margin-top:4px;border:0;background:transparent;padding:0 2px}
 .chats.chats-side .chats-list{flex:1 1 auto;max-height:none;margin:0 -2px}
@@ -339,7 +354,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 
 /* уже экран: колонки сжимаются, витрина остаётся в ряду */
 @media (min-width:980px) and (max-width:1320px){
-  #vit{flex:0 1 300px;max-width:300px;min-width:240px}
+  #vit{flex:0 1 380px;max-width:380px;min-width:360px}
   #left{flex:0 1 260px;max-width:280px;min-width:220px}
   main{flex:1 1 300px!important;min-width:260px!important}
 }
@@ -602,10 +617,23 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
         <button type="button" role="tab" id="rpTabVit" class="rp-tab" data-rp-tab="vit" aria-controls="rpVit" aria-selected="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect></svg><span data-i18n="studio.vit.title">Витрина</span></button>
         <button type="button" role="tab" id="rpTabModels" class="rp-tab" data-rp-tab="models" aria-controls="rpModels" aria-selected="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7z"></path></svg><span data-i18n="studio.rp.models">Нейросети</span></button>
       </div>
-      <button type="button" id="vitClose" class="icon-btn icon-ghost" aria-label="Закрыть панель" title="Закрыть" data-i18n-attr="aria-label:studio.rp.close;title:common.close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+      <button type="button" id="vitClose" class="icon-btn" aria-label="Закрыть панель" title="Закрыть" data-i18n-attr="aria-label:studio.rp.close;title:common.close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
     </div>
     <div id="rpVit" class="rp-pane" role="tabpanel" aria-labelledby="rpTabVit">
-      <div class="vit-top"><p class="vit-sub" data-i18n="studio.vit.sub">Похожие работы — посмотрите, как это уже сделали, и возьмите модель или стиль</p><a class="vit-full" id="vitFull2" href="/explore" data-i18n="nav.allWorks">Все работы</a></div>
+      <div class="vit-tools" id="vitTools">
+        <label class="vt-search" for="vitQ"><span class="sr-only" data-i18n="explore.search.label">Поиск по витрине</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input id="vitQ" type="search" placeholder="Название или открытый промпт…" data-i18n-attr="placeholder:explore.search.placeholder" autocomplete="off">
+        </label>
+        <div class="vt-filters" role="group" aria-label="Фильтры" data-i18n-attr="aria-label:explore.filters.aria">
+          <button type="button" class="vt-ico" data-vf="video" aria-pressed="false" title="Камера" aria-label="Камера" data-i18n-attr="title:explore.filter.camera;aria-label:explore.filter.camera"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2"></rect></svg></button>
+          <button type="button" class="vt-ico" data-vf="Camera" aria-pressed="false" title="Движение камеры" aria-label="Движение камеры" data-i18n-attr="title:explore.filter.cameraMove;aria-label:explore.filter.cameraMove"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="2.5" width="11" height="8" rx="1.6"></rect><path d="M14 5 20.5 3v7.5L14 8.2"></path><path d="M3.5 18.5h17"></path><path d="M7 15.5 3.5 18.5 7 21.5"></path><path d="M17 15.5 20.5 18.5 17 21.5"></path></svg></button>
+          <button type="button" class="vt-ico" data-vf="prompt" aria-pressed="false" title="С промптом" aria-label="С промптом" data-i18n-attr="title:explore.filter.prompt;aria-label:explore.filter.prompt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M8 13h8M8 17h5"></path></svg></button>
+          <button type="button" class="vt-ico" data-vf="image" aria-pressed="false" title="Картинки" aria-label="Картинки" data-i18n-attr="title:explore.filter.image;aria-label:explore.filter.image"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="8.5" cy="10" r="1.5"></circle><path d="m21 16-5-5-9 8"></path></svg></button>
+          <button type="button" class="vt-ico" data-vf="all" aria-pressed="true" title="Все работы" aria-label="Все работы" data-i18n-attr="title:explore.filter.allWorks;aria-label:explore.filter.allWorks"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg></button>
+        </div>
+        <a class="vit-full" id="vitFull2" href="/explore" data-i18n="nav.allWorks">Все работы</a>
+      </div>
       <div class="vit-ctx" id="vitCtx"></div>
       <div class="vit-body" id="vitBody"></div>
     </div>
@@ -630,15 +658,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 </div>
 
 
-<script src="/i18n/dict-ru.js"></script>
-<script src="/i18n/dict-en.js"></script>
+<script src="/i18n/dict-ru.js?v=3"></script>
+<script src="/i18n/dict-en.js?v=3"></script>
 <script src="/i18n/runtime.js"></script>
 <script src="/vitrina-data.js"></script>
 <script src="/vitrina-camera-moves.js?v=3"></script>
 <script src="/vitrina-aishnitsa.js?v=14"></script>
 <script src="/assistant-ui.js?v=24"></script>
 <script src="/attach.js?v=2"></script>
-<script src="/chat-history.js?v=7"></script>
+<script src="/chat-history.js?v=9"></script>
 <script>
 /* Тема общая со витриной/профилем: localStorage aish-vitrina-theme (+ theme). ?theme= перекрывает. */
 function readSharedTheme() {
@@ -713,6 +741,7 @@ async function applyVitrinaSeed(seed) {
   const isCam = seed.kind === 'camera_move';
   app.pendingPrompt = String(seed.prompt);
   app.pendingSel = m.slug;
+  app.promptSource = 'platform';   // готовый промпт витрины — ролик публиковать нельзя
   app.setState({ sel: m.slug, chat: true, text: '', assist: true });
   if (!app.state.authed) {
     saveVitrinaSeed(seed);
@@ -1027,7 +1056,7 @@ class Component extends DCLogic {
         return;
       }
       M('generate_click', { model: m.model_key || m.slug, kind: m.type || '', src: this.eggy && this.eggy.form && this.eggy.form().model ? 'assistant' : 'composer' });
-      this.botSay({ text: tr('studio.chat.cooking'), job: true }, 700);
+      this.botSay({ text: tr('studio.chat.cooking'), job: true, promptSource: this.promptSource === 'platform' ? 'platform' : 'original' }, 700);
       this.later('cook', 900, () => this.runJob(m, prompt, this.pendingParams || {}));
     };
     this.runJob = async (m, prompt, genParams) => {
@@ -1058,7 +1087,7 @@ class Component extends DCLogic {
       }
       const start = await api('/api/jobs/start', {
         method: 'POST',
-        body: JSON.stringify({ model_key: m.model_key, prompt, params, confirm: priceKop > 10000 })
+        body: JSON.stringify({ model_key: m.model_key, prompt, params, confirm: priceKop > 10000, prompt_source: this.promptSource === 'platform' ? 'platform' : 'original' })
       });
       if (!start.res.ok) {
         const err = start.data.error || 'error';
@@ -1084,7 +1113,8 @@ class Component extends DCLogic {
       MP(1);
       this._jobT0 = this._jobT0 || {};
       this._jobT0[jobId] = { t: Date.now(), info: jInfo };
-      this.patchLastBot({ text: start.data.status === 'queued_free' ? tr('studio.chat.queuedFree') : tr('studio.chat.queued'), jobId: jobId });
+      this.patchLastBot({ text: start.data.status === 'queued_free' ? tr('studio.chat.queuedFree') : tr('studio.chat.queued'), job: true, jobId: jobId, promptSource: this.promptSource === 'platform' ? 'platform' : 'original' });
+      if (window.AishHistory && AishHistory.flush) AishHistory.flush(true);
       await refreshUser();
       if (start.data.status === 'succeeded') { await this.finishJob(jobId, workId); return; }
       this.watchJob(jobId, workId);
@@ -1147,10 +1177,87 @@ class Component extends DCLogic {
       }
       return { res: { ok: false, status: 504 }, data: { error: 'timeout' } };
     };
+    /* Закрыли страницу посреди генерации: номер задания лежит в сообщении — дожидаемся и показываем результат в этом чате. */
+    this.patchByJob = (jobId, patch) => {
+      const msgs = this.state.msgs || [];
+      const i = msgs.findIndex((m) => m && m.jobId === jobId);
+      if (i < 0) return;
+      const copy = msgs.slice();
+      copy[i] = Object.assign({}, msgs[i], patch);
+      this.state.msgs = copy;
+      lastMsgs = -1;
+      scheduleRender();
+      if (window.AishHistory) AishHistory.watch(copy);
+    };
+    this.followGenerate = async (jobId) => {
+      const maxMs = 20 * 60 * 1000;
+      const start = Date.now();
+      let interval = 2000;
+      this.patchByJob(jobId, { text: tr('studio.history.jobHere'), job: true });
+      while (Date.now() - start < maxMs) {
+        let res, data;
+        try {
+          ({ res, data } = await api('/api/generate/jobs/' + encodeURIComponent(jobId), { cache: 'no-store' }));
+        } catch (_) {
+          await new Promise((r) => setTimeout(r, 3000));
+          continue;
+        }
+        if (!res || res.status === 404) {
+          this.patchByJob(jobId, { text: tr('studio.history.jobGone'), job: false, result: false });
+          return;
+        }
+        if (res.status >= 400) {
+          await new Promise((r) => setTimeout(r, 3000));
+          continue;
+        }
+        const st = data && data.status;
+        if (st === 'running') this.patchByJob(jobId, { text: tr('studio.chat.almost'), job: true });
+        else if (st === 'queued' || st === 'dispatched') this.patchByJob(jobId, { text: tr('studio.history.jobHere'), job: true });
+        if (st === 'succeeded') {
+          const url = (data.urls && data.urls[0]) || '';
+          const kind = data.kind || 'image';
+          const prev = (this.state.msgs || []).find((m) => m && m.jobId === jobId);
+          const src = data.prompt_source === 'platform' || data.prompt_source === 'original'
+            ? data.prompt_source
+            : (prev && prev.promptSource);
+          const platform = src === 'platform';
+          this.patchByJob(jobId, {
+            text: url ? tr('studio.chat.backInChat') : tr('studio.chat.failedRetry'),
+            job: false,
+            result: !!url,
+            mediaUrl: url,
+            mediaKind: kind === 'audio' || kind === 'music' ? 'audio' : (kind === 'video' ? 'video' : 'image'),
+            workId: (data.work_id && String(data.work_id)) || '',
+            published: !!data.published,
+            promptSource: platform ? 'platform' : 'original',
+            promptOpen: !!data.prompt_open
+          });
+          if (window.AishHistory && AishHistory.flush) AishHistory.flush();
+          return;
+        }
+        if (st === 'failed' || st === 'error') {
+          this.patchByJob(jobId, { text: tr('studio.chat.failedRetry'), job: false, result: false });
+          if (window.AishHistory && AishHistory.flush) AishHistory.flush();
+          return;
+        }
+        await new Promise((r) => setTimeout(r, interval));
+        interval = Math.min(5000, interval + 500);
+      }
+      this.patchByJob(jobId, { text: tr('studio.history.jobHere'), job: true });
+    };
+    this.resumeOpenJobs = () => {
+      const seen = this._resumeJobs || (this._resumeJobs = new Set());
+      (this.state.msgs || []).forEach((m) => {
+        if (!m || m.role !== 'bot' || !m.job || m.result || !m.jobId || seen.has(m.jobId)) return;
+        seen.add(m.jobId);
+        this.followGenerate(m.jobId);
+      });
+    };
     this.runGenerate = async (m, prompt, genParams, opts) => {
       opts = opts || {};   // opts.att — файлы скрепки, посчитанные один раз на всю серию; opts.label — «Кадр 3 из 9 · …»
-      this.patchLastBot({ text: opts.label || tr(m && m.type === 'text' ? 'studio.chat.thinking' : 'studio.chat.cooking'), job: true });
-      const body = { model: m.model_key || m.slug, prompt: prompt || '' };
+      const promptSource = this.promptSource === 'platform' ? 'platform' : 'original';
+      this.patchLastBot({ text: opts.label || tr(m && m.type === 'text' ? 'studio.chat.thinking' : 'studio.chat.cooking'), job: true, promptSource: promptSource });
+      const body = { model: m.model_key || m.slug, prompt: prompt || '', prompt_source: promptSource };
       if (genParams && typeof genParams === 'object' && Object.keys(genParams).length) body.params = genParams;
       // Скрепка: ждём, пока файл догрузится, и кладём номера файлов (upl_…) в image / audio / video
       if (opts.att) {
@@ -1177,7 +1284,8 @@ class Component extends DCLogic {
       if (window.AishAttach && !opts.att && (res.ok || res.status === 202)) AishAttach.consume();
       if (res.status === 202 && data && data.job_id) {
         jobIdStarted = data.job_id;
-        this.patchLastBot({ text: opts.label ? opts.label + ' · ' + tr('studio.chat.queued') : tr('studio.chat.queued'), job: true });
+        this.patchLastBot({ text: opts.label ? opts.label + ' · ' + tr('studio.chat.queued') : tr('studio.chat.queued'), job: true, jobId: data.job_id, promptSource: promptSource });
+        if (window.AishHistory && AishHistory.flush) AishHistory.flush(true);
         ({ res, data } = await this.pollGenerate(data.job_id, data.poll_url));
       }
       if (!res.ok) {
@@ -1266,6 +1374,8 @@ class Component extends DCLogic {
       if (url) M('gen_done', Object.assign({ ms: Date.now() - mt0 }, mInfo));
       else M('gen_fail', Object.assign({ code: 'failed', http: res.status || 0, started: true, ms: Date.now() - mt0 }, mInfo));
       const replyText = String((data && data.reply) || tr('studio.chat.queued')).trim() || tr('studio.chat.queued');
+      const fromJob = data && (data.prompt_source === 'platform' || data.prompt_source === 'original') ? data.prompt_source : promptSource;
+      const platform = fromJob === 'platform';
       this.patchLastBot({
         text: opts.label ? opts.label + '\n' + replyText : replyText,
         result: !!url,
@@ -1274,7 +1384,9 @@ class Component extends DCLogic {
         job: false,
         // работа в «Моих работах»: неопубликованная хранится 24 часа — под результатом сразу предлагаем опубликовать
         workId: (data && data.work_id) || '',
-        published: !!(data && data.published)
+        published: !!(data && data.published),
+        promptSource: platform ? 'platform' : 'original',
+        promptOpen: !!(data && data.prompt_open)
       });
       if (url && !opts.series) this.pipeResult({ kind: kind === 'music' ? 'audio' : kind, url: url, model: m.model_key || m.slug, work_id: (data && data.work_id) || '' });
       return data;
@@ -1376,6 +1488,8 @@ class Component extends DCLogic {
         MP(-1);
         M('gen_done', Object.assign({ ms: j0 ? Date.now() - j0.t : 0 }, j0 ? j0.info : { kind: kind }));
       }
+      const src = (work && work.prompt_source) || this.promptSource;
+      const platform = src === 'platform';
       this.patchLastBot({
         text: tr('studio.chat.done'),
         result: true,
@@ -1385,7 +1499,9 @@ class Component extends DCLogic {
         published: !!(work && work.status === 'published'),
         likes: work && work.likes != null ? work.likes : 0,
         liked: !!(work && work.liked),
-        workStatus: (work && work.status) || ''
+        workStatus: (work && work.status) || '',
+        promptSource: platform ? 'platform' : 'original',
+        promptOpen: !!(work && work.prompt_open)
       });
       if (url) this.pipeResult({ kind: kind === 'music' ? 'audio' : kind, url: url, work_id: workId || (work && work.id) || '' });
       await refreshUser();
@@ -1442,6 +1558,7 @@ class Component extends DCLogic {
       if (window.AishHistory) await AishHistory.detach();
       clearTimeout(this.timers.bot); clearTimeout(this.timers.cook); clearTimeout(this.timers.lead); clearTimeout(this.timers.ck); clearTimeout(this.timers.intro);
       this.pendingPrompt = ''; this.pendingSel = ''; this.pendingParams = {};
+      this.promptSource = 'original';
       this.textHistory = [];
       this.textDirect = false;
       this._cameraSeedPending = false;
@@ -1472,6 +1589,7 @@ class Component extends DCLogic {
         finishCameraSeed(text);
         return;
       }
+      this.promptSource = 'original';   // свой текст или правка не с витрины
       this.pendingPrompt = text;
       this.pendingSel = (cur && cur.type !== 'text') ? cur.slug : '';
       this.setState({ chat: true, text: '' });
@@ -1611,6 +1729,7 @@ class Component extends DCLogic {
       if (e && e.preventDefault) e.preventDefault();
       clearTimeout(this.timers.bot); clearTimeout(this.timers.cook); clearTimeout(this.timers.lead); clearTimeout(this.timers.ck);
       this.pendingPrompt = ''; this.pendingSel = ''; this.pendingParams = {};
+      this.promptSource = 'original';
       this.textHistory = [];
       this.textDirect = false;
       this._shownFiles = {};
@@ -1850,8 +1969,9 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
     if (prompt) app.pendingPrompt = String(prompt);
     app.pendingParams = params && typeof params === 'object' ? params : {};
   },
-  onGenerateSeries: (job) => { app.cookSeries(job || {}); },
+  onGenerateSeries: (job) => { app.promptSource = 'original'; app.cookSeries(job || {}); },
   onGenerate: ({ model, prompt, params }) => {
+    app.promptSource = 'original';   // промпт собрал помощник или человек — можно публиковать
     if (model) {
       const byKey = app.MODELS.find((x) => x.model_key === model || x.slug === model);
       if (byKey) { app.pendingSel = byKey.slug; app.setState({ sel: byKey.slug }); }
@@ -2080,6 +2200,33 @@ function filesRow(files, ts) {
   });
   return row;
 }
+/* Под результатом: готовый промпт витрины публиковать нельзя; свой или от помощника — видео и промпт отдельно. */
+function pubOfferHtml(m) {
+  const id = esc(m.workId || '');
+  if (m.promptSource === 'platform') {
+    return '<div class="pub-offer" data-pub-box="' + id + '">'
+      + '<p class="pub-t">' + esc(tr('studio.publish.platform')) + '</p>'
+      + '<div class="pub-row"><button type="button" class="btn-purple pub-btn" data-own-video>' + esc(tr('studio.publish.makeOwn')) + '</button></div>'
+      + '</div>';
+  }
+  if (!m.workId) return '';
+  if (m.published && m.promptOpen) {
+    return '<div class="pub-done">' + esc(tr('studio.publish.bothDone')) + ' <a href="/w/' + id + '" target="_blank" rel="noopener">' + esc(tr('studio.publish.see')) + '</a></div>';
+  }
+  let btns = '';
+  if (!m.published) {
+    btns += '<button type="button" class="btn-purple pub-btn" data-publish-work="' + id + '" data-publish-kind="video">' + esc(tr('studio.publish.video')) + '</button>';
+  }
+  if (!m.promptOpen) {
+    btns += '<button type="button" class="pub-open" data-publish-work="' + id + '" data-publish-kind="prompt">' + esc(tr('studio.publish.promptBtn')) + '</button>';
+  }
+  return '<div class="pub-offer" data-pub-box="' + id + '">'
+    + '<p class="pub-t">' + esc(m.published ? tr('studio.publish.videoDone') : tr('studio.publish.offer')) + '</p>'
+    + '<div class="pub-row">' + btns
+    + '<a class="pub-open" href="/w/' + id + '" target="_blank" rel="noopener">' + esc(tr('common.open')) + '</a></div>'
+    + '<p class="pub-rules">' + tr('studio.publish.rules.html') + '</p>'
+    + '</div>';
+}
 function msgEl(m) {
   if (m.role === 'note') {   // служебная строка истории: «Переписка восстановлена…»
     const n = document.createElement('div');
@@ -2112,7 +2259,7 @@ function msgEl(m) {
     return el;
   }
   el.className = 'msg-in'; el.style.cssText = 'display:flex;align-items:flex-end;gap:10px;max-width:86%';
-  if (m.history && m.job && !m.result) m = Object.assign({}, m, { text: tr('studio.history.jobGone') });   // генерация шла, когда страница закрылась
+  if (m.history && m.job && !m.result && !m.jobId) m = Object.assign({}, m, { text: tr('studio.history.jobGone') });   // номер задания не сохранился — вернуть результат некуда
   let media = '';
   // из истории: неопубликованная генерация старше 24 часов уже удалена — не показываем битую картинку
   const DAY = 24 * 3600 * 1000;
@@ -2131,16 +2278,8 @@ function msgEl(m) {
   // опубликовать сразу после генерации: иначе через 24 часа работа удалится
   let pubBlock = '';
   if (m.result && !workGone && m.mediaUrl) {
-    if (m.workId && !m.published) {
-      pubBlock = '<div class="pub-offer" data-pub-box="' + esc(m.workId) + '">'
-        + '<p class="pub-t">' + esc(tr('studio.publish.offer')) + '</p>'
-        + '<div class="pub-row"><button type="button" class="btn-purple pub-btn" data-publish-work="' + esc(m.workId) + '">' + esc(tr('studio.publish.btn')) + '</button>'
-        + '<a class="pub-open" href="/w/' + esc(m.workId) + '" target="_blank" rel="noopener">' + esc(tr('common.open')) + '</a></div>'
-        + '<p class="pub-rules">' + tr('studio.publish.rules.html') + '</p>'
-        + '</div>';
-    } else if (!m.workId) {
-      pubBlock = '<p class="pub-note">' + esc(tr('studio.publish.guestNote')) + '</p>';
-    }
+    if (m.promptSource === 'platform' || m.workId) pubBlock = pubOfferHtml(m);
+    else pubBlock = '<p class="pub-note">' + esc(tr('studio.publish.guestNote')) + '</p>';
   }
   const likeChip = m.workId && (m.published || !m.result)
     ? '<button type="button" class="btn-like-work' + (m.liked ? ' is-on' : '') + '" data-like-work="' + esc(m.workId) + '" aria-pressed="' + (m.liked ? 'true' : 'false') + '" style="height:36px;padding:0 14px;border-radius:12px;border:1px solid ' + (m.liked ? '#E0457B' : 'var(--field-brd)') + ';background:' + (m.liked ? 'rgba(224,69,123,.12)' : 'var(--field)') + ';color:' + (m.liked ? '#E0457B' : 'var(--ink)') + ';font:700 13px Manrope,system-ui,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px">♥ <span data-like-n>' + (m.likes || 0) + '</span></button>'
@@ -2172,24 +2311,31 @@ function msgEl(m) {
 /* Опубликовать на витрине прямо из чата (POST /api/works/<id>/publish, как в кабинете) */
 async function publishFromChat(btn) {
   const id = btn.getAttribute('data-publish-work');
+  const kind = btn.getAttribute('data-publish-kind') === 'prompt' ? 'prompt' : 'video';
   const box = btn.closest('[data-pub-box]');
   const msg = (app.state.msgs || []).find((x) => String(x.workId) === String(id));
+  const label = () => tr(kind === 'prompt' ? 'studio.publish.promptBtn' : 'studio.publish.video');
   btn.disabled = true;
   btn.textContent = tr('studio.publish.busy');
   const say = (html) => { if (box) box.querySelector('.pub-t').innerHTML = html; };
   try {
     const title = msg && msg.prompt ? String(msg.prompt).slice(0, 80) : '';
-    const { res, data } = await api('/api/works/' + encodeURIComponent(id) + '/publish', { method: 'POST', body: JSON.stringify({ agree_rules: true, title: title }) });
+    const { res, data } = await api('/api/works/' + encodeURIComponent(id) + '/publish', { method: 'POST', body: JSON.stringify({ agree_rules: true, title: title, open_prompt: kind === 'prompt' }) });
     if (res.ok) {
-      M('publish', { work: String(id) });
-      if (msg) { msg.published = true; msg.likes = 0; }
-      if (box) box.outerHTML = '<div class="pub-done">' + esc(tr('studio.publish.done')) + ' <a href="/w/' + esc(id) + '" target="_blank" rel="noopener">' + esc(tr('studio.publish.see')) + '</a></div>';
+      M('publish', { work: String(id), kind: kind });
+      if (msg) {
+        msg.published = true;
+        if (kind === 'prompt') msg.promptOpen = true;
+        if (msg.likes == null) msg.likes = 0;
+      }
+      if (box && msg) box.outerHTML = pubOfferHtml(msg);
       if (window.AishHistory) AishHistory.flush();
       return;
     }
     const err = (data && data.error) || '';
     M('publish_fail', { code: err || String(res.status) });
-    if (err === 'handle_required') say(esc(tr('studio.publish.needHandle')) + ' <a href="/account#settings">' + esc(tr('studio.publish.toProfile')) + '</a>');
+    if (err === 'platform_prompt') say(esc(tr('studio.publish.platform')));
+    else if (err === 'handle_required') say(esc(tr('studio.publish.needHandle')) + ' <a href="/account#settings">' + esc(tr('studio.publish.toProfile')) + '</a>');
     else if (err === 'moderation') say(esc(tr('studio.publish.moderation')));
     else if (res.status === 401) say(esc(tr('studio.publish.needLogin')));
     else if (err === 'not_found') say(esc(tr('studio.publish.gone')));
@@ -2198,7 +2344,7 @@ async function publishFromChat(btn) {
     say(esc(tr('studio.publish.failed')));
   }
   btn.disabled = false;
-  btn.textContent = tr('studio.publish.btn');
+  btn.textContent = label();
 }
 
 /* события */
@@ -2219,6 +2365,8 @@ document.addEventListener('click', async (e) => {
     }
     return;
   }
+  const ownBtn = e.target.closest('[data-own-video]');
+  if (ownBtn) { e.preventDefault(); if (app.newGeneration) app.newGeneration(); return; }
   const pubBtn = e.target.closest('[data-publish-work]');
   if (pubBtn) { e.preventDefault(); await publishFromChat(pubBtn); return; }
   const resumeBtn = e.target.closest('[data-history-resume]');
@@ -2528,6 +2676,7 @@ if (window.AishHistory) {
       app.textDirect = false;
       if (app.eggy && app.eggy.softReset) app.eggy.softReset();
       app.setState({ chat: true, typing: false, msgs: msgs.map((m) => Object.assign({ id: Date.now() + Math.random() }, m)) });
+      if (app.resumeOpenJobs) app.resumeOpenJobs();
     },
     onNew: () => app.newGeneration()   // «+ Новый»: сохранить чат, сбросить сессию помощника, спросить тип заново
   });
@@ -2731,6 +2880,7 @@ loadIntegrations();
   }
   let open = false, preview = null, pvMode = 'view', lastKey = '', timer = 0, lastSent = null;
   let modelFilter = true, lastSel = '';
+  let vitQuery = '', vitFilters = new Set();
   const $ = (id) => document.getElementById(id);
   const esc2 = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const modelObj = () => app.MODELS.find((m) => m.slug === app.state.sel) || null;
@@ -2833,12 +2983,26 @@ loadIntegrations();
     const m = modelObj();
     const mName = m ? (MODEL_OF[m.slug] || m.name) : '';
     const filtered = !!(modelFilter && m);
+    const q = vitQuery.trim().toLowerCase();
+    const narrow = filtered && vitFilters.size === 0 && !q;
     let mw = [];
-    if (filtered) {
+    if (narrow) {
       mw = WORKS.filter((w) => sameModel(w, m, mName)).sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 24);
     } else {
       mw = WORKS.slice().sort((a, b) => (b.likes || 0) - (a.likes || 0));
     }
+    mw = mw.filter((w) => {
+      const types = [];
+      if (vitFilters.has('video')) types.push(w.type === 'video');
+      if (vitFilters.has('image')) types.push(w.type === 'image');
+      if (vitFilters.has('Camera')) types.push(isCameraWork(w));
+      if (types.length && !types.some(Boolean)) return false;
+      if (vitFilters.has('prompt') && !(w.prompt_open && String(w.prompt || '').trim())) return false;
+      if (!q) return true;
+      const bits = [w.title, wTitle(w)];
+      if (w.prompt_open && String(w.prompt || '').trim()) bits.push(String(w.prompt));
+      return bits.filter(Boolean).join(' ').toLowerCase().includes(q);
+    });
     return { m, mName, mw, modelFilter: filtered };
   }
   function syncScrim() { if (typeof updateStudioScrim === 'function') updateStudioScrim(); }
@@ -3103,6 +3267,34 @@ loadIntegrations();
     if (!e.target.closest('[data-clear-model]')) return;
     modelFilter = false;
     lastKey = '';
+    draw();
+  });
+  function syncVitTools() {
+    const tools = $('vitTools');
+    const q = $('vitQ');
+    if (!tools || !q) return;
+    tools.classList.toggle('search-on', !!q.value.trim() || document.activeElement === q);
+    tools.querySelectorAll('[data-vf]').forEach((b) => {
+      const on = b.dataset.vf === 'all' ? vitFilters.size === 0 : vitFilters.has(b.dataset.vf);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+  const vitQ = $('vitQ');
+  if (vitQ) {
+    vitQ.addEventListener('input', (e) => { vitQuery = e.target.value || ''; syncVitTools(); lastKey = ''; if (preview) { preview = null; pvMode = 'view'; } draw(); });
+    vitQ.addEventListener('focus', syncVitTools);
+    vitQ.addEventListener('blur', () => setTimeout(syncVitTools, 0));
+  }
+  const vitTools = $('vitTools');
+  if (vitTools) vitTools.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-vf]');
+    if (!b) return;
+    if (b.dataset.vf === 'all') vitFilters.clear();
+    else if (vitFilters.has(b.dataset.vf)) vitFilters.delete(b.dataset.vf);
+    else vitFilters.add(b.dataset.vf);
+    syncVitTools();
+    lastKey = '';
+    if (preview) { preview = null; pvMode = 'view'; }
     draw();
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && open && !app.state.modal) setOpen(false); });

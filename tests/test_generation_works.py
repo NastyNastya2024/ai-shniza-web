@@ -25,7 +25,6 @@ def srv(tmp_path, monkeypatch):
     monkeypatch.delenv("WORKS_UNPUBLISHED_TTL_HOURS", raising=False)
     import server
 
-    server.app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{tmp_path / 'works.db'}"
     server.app.config["TESTING"] = True
     jobs = {}
     import queue_runtime.jobs as qj
@@ -35,11 +34,8 @@ def srv(tmp_path, monkeypatch):
     server._jobs = jobs
     server.app.extensions["generation_works"]["_state"]["last_purge"] = 0.0
     with server.app.app_context():
-        server.db.session.remove()
-        try:
-            server.db.engine.dispose()
-        except Exception:
-            pass
+        from tests.db_isolation import use_temp_db
+        use_temp_db(server, tmp_path / "works.db")
         server.db.drop_all()
         server.db.create_all()
         yield server
@@ -55,8 +51,9 @@ def _login(srv, c, email="w@t.local"):
     return u
 
 
-def _job(srv, owner, kind="video", urls=("https://cdn.example/out.mp4",), status="succeeded", jid=JOB):
+def _job(srv, owner, kind="video", urls=("https://cdn.example/out.mp4",), status="succeeded", jid=JOB, prompt_source="original"):
     srv._jobs[jid] = {"owner_id": owner, "prompt": "кот прыгает в снег", "params": {"duration": 5},
+                      "prompt_source": prompt_source,
                       "public": {"job_id": jid, "status": status, "kind": kind, "model": "p-video", "urls": list(urls)}}
 
 
@@ -163,6 +160,79 @@ def test_copy_result_to_own_storage(srv, monkeypatch):
     w = srv.db.session.get(_Work(srv), wid)
     srv.db.session.refresh(w)
     assert w.original_url == f"s3://b/works/{u.id}/{wid}.webp" and w.thumb_url == w.original_url
+
+
+def test_auth_assigns_a_simple_nick(srv):
+    c = srv.app.test_client()
+    u = _login(srv, c, email="anna@t.local")
+    u.name = "Анна Комарова"
+    srv.db.session.commit()
+    me = c.get("/api/auth/me").get_json()
+    assert me["user"]["handle"] == "anna"
+    assert c.get("/api/auth/me").get_json()["user"]["handle"] == "anna"
+
+
+def test_same_name_gets_another_nick(srv):
+    c = srv.app.test_client()
+    a = _login(srv, c, email="a@t.local")
+    a.name = "Анна"
+    srv.db.session.commit()
+    assert c.get("/api/auth/me").get_json()["user"]["handle"] == "anna"
+    c2 = srv.app.test_client()
+    b = _login(srv, c2, email="b@t.local")
+    b.name = "Анна"
+    srv.db.session.commit()
+    assert c2.get("/api/auth/me").get_json()["user"]["handle"] == f"anna{b.id}"
+
+
+def test_short_name_gets_user_nick(srv):
+    c = srv.app.test_client()
+    u = _login(srv, c)  # имя «W» короче трёх букв
+    assert c.get("/api/auth/me").get_json()["user"]["handle"] == f"user{u.id}"
+
+
+def _csrf(c):
+    return {"X-CSRF-Token": c.get("/api/csrf").get_json()["csrf_token"]}
+
+
+def test_platform_prompt_cannot_be_published(srv, monkeypatch):
+    import media_store
+    monkeypatch.setattr(media_store, "download_url_to_bytes", lambda url: None)
+    c = srv.app.test_client()
+    u = _login(srv, c, email="plat@t.local")
+    u.name = "Платформа"
+    srv.db.session.commit()
+    _job(srv, u.id, prompt_source="platform")
+    r = c.get(f"/api/generate/jobs/{JOB}").get_json()
+    assert r["prompt_source"] == "platform" and r["prompt_open"] is False
+    w = srv.db.session.get(_Work(srv), r["work_id"])
+    assert w.prompt_source == "platform"
+    pub = c.post(f"/api/works/{r['work_id']}/publish", json={"agree_rules": True}, headers=_csrf(c))
+    assert pub.status_code == 403 and pub.get_json()["error"] == "platform_prompt"
+    srv.db.session.refresh(w)
+    assert w.status == "draft"
+
+
+def test_own_prompt_publishes_video_then_prompt(srv, monkeypatch):
+    import media_store
+    monkeypatch.setattr(media_store, "download_url_to_bytes", lambda url: None)
+    c = srv.app.test_client()
+    u = _login(srv, c, email="own@t.local")
+    u.name = "Свой"
+    srv.db.session.commit()
+    jid = "d" * 24
+    _job(srv, u.id, jid=jid, prompt_source="original")
+    wid = c.get(f"/api/generate/jobs/{jid}").get_json()["work_id"]
+    video = c.post(f"/api/works/{wid}/publish", json={"agree_rules": True}, headers=_csrf(c))
+    assert video.status_code == 200
+    body = video.get_json()["work"]
+    assert body["status"] == "published" and body["prompt_open"] is False and "кот" in body["prompt"]
+    card = next(i for i in c.get("/api/explore").get_json()["items"] if i["id"] == wid)
+    assert card["prompt_open"] is False and card["prompt"] == ""
+    opened = c.post(f"/api/works/{wid}/publish", json={"agree_rules": True, "open_prompt": True}, headers=_csrf(c))
+    assert opened.status_code == 200 and opened.get_json()["work"]["prompt_open"] is True
+    card2 = next(i for i in c.get("/api/explore").get_json()["items"] if i["id"] == wid)
+    assert card2["prompt_open"] is True and "кот" in card2["prompt"]
 
 
 def test_cli_dry_run(srv):

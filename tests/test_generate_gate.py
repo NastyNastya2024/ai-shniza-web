@@ -33,17 +33,13 @@ def srv(tmp_path, monkeypatch):
     )
     server.app.config["ASSISTANT"] = server.ASSISTANT
 
-    server.app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{tmp_path / 'gate.db'}"
     server.app.config["TESTING"] = True
     monkeypatch.setattr(server, "_integration_prices", lambda: {
         "veo-3-1": "17 ₽ / секунда", "seedream-5-pro": "3,9 ₽ / изображение at 1K", "kling-v2-5-turbo-pro": "6 ₽ / секунда",
         "ideogram-v3-turbo": "бесплатно"})
     with server.app.app_context():
-        server.db.session.remove()
-        try:
-            server.db.engine.dispose()
-        except Exception:
-            pass
+        from tests.db_isolation import use_temp_db
+        use_temp_db(server, tmp_path / "gate.db")
         server.db.drop_all()
         server.db.create_all()
         yield server

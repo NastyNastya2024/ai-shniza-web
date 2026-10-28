@@ -20,14 +20,10 @@ def srv(tmp_path, monkeypatch):
         monkeypatch.delenv(k, raising=False)
     import server
 
-    server.app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{tmp_path / 'chats.db'}"
     server.app.config["TESTING"] = True
     with server.app.app_context():
-        server.db.session.remove()
-        try:
-            server.db.engine.dispose()
-        except Exception:
-            pass
+        from tests.db_isolation import use_temp_db
+        use_temp_db(server, tmp_path / "chats.db")
         server.db.drop_all()
         server.db.create_all()
         yield server
@@ -145,6 +141,15 @@ def test_junk_is_dropped(srv):
     assert "blocks" not in clean_message(big)["assistant"]                     # огромная карточка → только текст
     assert len(clean_messages([{"role": "user", "text": str(i)} for i in range(500)])) == 200
     assert clean_messages("nope") == []
+    kept = clean_message({"role": "bot", "text": "в очереди", "job": True, "jobId": "Ab" * 16})
+    assert kept["job"] is True and kept["jobId"] == "ab" * 16
+    assert "jobId" not in clean_message({"role": "bot", "text": "x", "jobId": "../etc"})
+    src = clean_message({"role": "bot", "text": "готово", "result": True, "promptSource": "platform", "promptOpen": True,
+                         "mediaUrl": "https://cdn.example/a.mp4", "mediaKind": "video"})
+    assert src["promptSource"] == "platform" and src["promptOpen"] is True
+    junk = clean_message({"role": "bot", "text": "готово", "result": True, "promptSource": "stolen",
+                          "mediaUrl": "https://cdn.example/a.mp4", "mediaKind": "video"})
+    assert "promptSource" not in junk
 
 
 def test_limits_purge_old_and_extra(srv, monkeypatch):

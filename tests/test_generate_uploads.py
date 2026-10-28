@@ -24,7 +24,6 @@ def srv(tmp_path, monkeypatch):
     import server
     import uploads
 
-    server.app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{tmp_path / 'upl.db'}"
     server.app.config["TESTING"] = True
     monkeypatch.setattr(server, "_integration_prices", lambda: {"seedream-5-pro": "3,9 ₽ / изображение at 1K"})
 
@@ -56,11 +55,8 @@ def srv(tmp_path, monkeypatch):
     server._captured = captured
 
     with server.app.app_context():
-        server.db.session.remove()
-        try:
-            server.db.engine.dispose()
-        except Exception:
-            pass
+        from tests.db_isolation import use_temp_db
+        use_temp_db(server, tmp_path / "upl.db")
         server.db.drop_all()
         server.db.create_all()
         yield server

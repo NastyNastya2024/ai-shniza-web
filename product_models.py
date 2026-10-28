@@ -66,6 +66,10 @@ def init_product_models(db: SQLAlchemy):
         downloads = db.Column(db.Integer, default=0)
         likes = db.Column(db.Integer, default=0)
         job_id = db.Column(db.String(64), nullable=True, index=True)
+        # platform — ролик по готовому промпту витрины, его нельзя публиковать;
+        # original — промпт написан сами или собран помощником
+        prompt_source = db.Column(db.String(20), nullable=False, default="original")
+        prompt_open = db.Column(db.Boolean, nullable=False, default=False)
 
     class FreeQuota(db.Model):
         __tablename__ = "free_quotas"

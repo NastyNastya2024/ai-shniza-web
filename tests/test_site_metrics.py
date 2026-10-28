@@ -143,14 +143,10 @@ def srv(tmp_path, monkeypatch):
     monkeypatch.setenv("ADMIN_EMAILS", "boss@t.local")
     import server
 
-    server.app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{tmp_path / 'm.db'}"
     server.app.config["TESTING"] = True
     with server.app.app_context():
-        server.db.session.remove()
-        try:
-            server.db.engine.dispose()
-        except Exception:
-            pass
+        from tests.db_isolation import use_temp_db
+        use_temp_db(server, tmp_path / "m.db")
         server.db.drop_all()
         server.db.create_all()
         yield server

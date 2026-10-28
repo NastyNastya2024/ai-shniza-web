@@ -623,7 +623,9 @@ class Assistant:
         return response([t("ask_add_to_prompt", lang)], chips, lang=lang, intent=intent, generate_model=card.id)
 
     def _maybe_ask_add_then_setup(self, card: Card, ctx: dict, ses: dict, lang: str, intent: str) -> dict:
-        """К настройкам; если промпт уже подробный и ещё не спрашивали — сначала «добавить что-то?»."""
+        """Видео — сразу настройки, как у обычного ролика. У длинного промпта другого типа сначала «добавить что-то?»."""
+        if card.kind == "video":
+            return self._setup_from_idea(card, ctx, ses, lang, intent)
         idea = (ses.get("idea") or ses.get("prompt") or ctx.get("draft") or "").strip()
         if idea and BR.is_rich_prompt(idea) and not ses.get("add_prompt_asked"):
             return self._ask_add_to_prompt(card, ses, lang, "add_prompt")
@@ -906,8 +908,14 @@ class Assistant:
         if not idea and not ses.get("prompt") and not self.d.brief:
             ses["await"] = "idea"
             return response([t("describe_idea", lang)], [], intent=intent, generate_model=card.id)
-        # промпт уже собран в брифе — если развёрнутый, спросить «добавить?», иначе сразу настройки
+        # промпт уже собран: видео — сразу те же настройки, что у обычного ролика; иначе «добавить?» у длинного текста
         if self.d.brief and ses.get("prompt"):
+            if card.kind == "video":
+                raw_params, adj = P.fit(P.extract(ses.get("idea") or ses["prompt"]), card)
+                params = P.with_defaults(card, {**P.validate(card, ses.get("params")), **raw_params})
+                ses["params"] = params
+                head = t("video_settings", lang, title=card.title)
+                return self._setup_reply(card, ses, ctx, lang, intent, head, "", False, adj)
             if BR.is_rich_prompt(ses["prompt"]) and not ses.get("add_prompt_asked"):
                 if not ses.get("idea"):
                     ses["idea"] = ses["prompt"]

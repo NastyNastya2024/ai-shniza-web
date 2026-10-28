@@ -23,9 +23,10 @@ def client(tmp_path, monkeypatch):
     # Avoid seed side-effects where possible — import after env
     import server
 
-    server.app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_file}"
     server.app.config["TESTING"] = True
     with server.app.app_context():
+        from tests.db_isolation import use_temp_db
+        use_temp_db(server, db_file)
         server.db.create_all()
     return server.app.test_client()
 

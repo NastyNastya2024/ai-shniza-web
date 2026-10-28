@@ -100,7 +100,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .empty{padding:80px 20px;text-align:center;color:var(--muted)}
 
 /* боковая панель */
-.ov{display:none}
+.ov{position:fixed;inset:0;z-index:14;border:0;padding:0;margin:0;opacity:0;pointer-events:none;background:transparent;transition:opacity .35s ease}
+@media (max-width:640px){
+  body.split .ov{opacity:1;pointer-events:auto;background:rgba(236,236,243,.42);backdrop-filter:blur(28px) saturate(1.15);-webkit-backdrop-filter:blur(28px) saturate(1.15);cursor:pointer}
+  :root:not([data-theme=light]) body.split .ov{background:rgba(16,14,28,.46)}
+}
 .grid,.head,.tools{transition:padding-right .42s cubic-bezier(.3,.7,.2,1)}
 .split .grid,.split .head{padding-right:calc(var(--panel-w) + clamp(16px,2vw,28px))}
 .split .grid{column-count:4}
@@ -397,8 +401,11 @@ html{transition:background-color .3s}
       <input id="q" type="search" placeholder="Название или открытый промпт…" data-i18n-attr="placeholder:explore.search.placeholder" autocomplete="off"></label>
     <div class="filters" id="filters" role="group" aria-label="Фильтры" data-i18n-attr="aria-label:explore.filters.aria">
       <div class="filters-main" id="filtersMain">
-        <button class="chip ico" data-f="Camera" aria-pressed="false" title="Движение камеры" aria-label="Движение камеры" data-i18n-attr="title:explore.filter.cameraMove;aria-label:explore.filter.cameraMove"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2"></rect></svg></button>
-        <button class="chip ico" data-f="prompt" aria-pressed="false" title="Промпт" aria-label="Промпт" data-i18n-attr="title:explore.filter.prompt;aria-label:explore.filter.prompt"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M8 13h8M8 17h5"></path></svg></button>
+        <button class="chip ico" data-f="video" aria-pressed="false" title="Камера" aria-label="Камера" data-i18n-attr="title:explore.filter.camera;aria-label:explore.filter.camera"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2"></rect></svg></button>
+        <button class="chip ico" data-f="Camera" aria-pressed="false" title="Движение камеры" aria-label="Движение камеры" data-i18n-attr="title:explore.filter.cameraMove;aria-label:explore.filter.cameraMove"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="2.5" width="11" height="8" rx="1.6"></rect><path d="M14 5 20.5 3v7.5L14 8.2"></path><path d="M3.5 18.5h17"></path><path d="M7 15.5 3.5 18.5 7 21.5"></path><path d="M17 15.5 20.5 18.5 17 21.5"></path></svg></button>
+        <button class="chip ico" data-f="prompt" aria-pressed="false" title="С промптом" aria-label="С промптом" data-i18n-attr="title:explore.filter.prompt;aria-label:explore.filter.prompt"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M8 13h8M8 17h5"></path></svg></button>
+        <button class="chip ico" data-f="image" aria-pressed="false" title="Картинки" aria-label="Картинки" data-i18n-attr="title:explore.filter.image;aria-label:explore.filter.image"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="8.5" cy="10" r="1.5"></circle><path d="m21 16-5-5-9 8"></path></svg></button>
+        <button class="chip ico" data-f="all" aria-pressed="true" title="Все работы" aria-label="Все работы" data-i18n-attr="title:explore.filter.allWorks;aria-label:explore.filter.allWorks"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg></button>
       </div>
     </div>
   </div>
@@ -463,7 +470,7 @@ html{transition:background-color .3s}
     if (window.AISH_LIKES) window.AISH_LIKES.toggleLocal(w);
   }
 
-  let filter = 'all', query = '', sort = 'new', list = works.slice(), openIdx = -1, openId = null, mode = 'view', lastSent = null;
+  let filters = new Set(), query = '', sort = 'new', list = works.slice(), openIdx = -1, openId = null, mode = 'view', lastSent = null;
   let modelSlugFilter = '';
   let camGroup = '';
   const CAM_ASPECT_KEY = 'aish-cam-aspect';
@@ -496,7 +503,7 @@ html{transition:background-color .3s}
   };
   const CAM_GROUP_ORDER = Object.keys(CAM_GROUP_LABELS);
   function isCameraFilter() {
-    return filter === 'Camera' || String(filter || '').indexOf('Camera') === 0;
+    return filters.has('Camera');
   }
   function camLabel(gid) {
     const L = (window.AISH_I18N && window.AISH_I18N.LANG === 'en') ? 'en' : 'ru';
@@ -558,8 +565,13 @@ html{transition:background-color .3s}
       const qi = $('q');
       if (qi) qi.value = q0;
     }
-    if (f0) filter = f0;
-    if (cam0) { camGroup = cam0; if (!f0) filter = 'Camera'; }
+    if (f0 && f0 !== 'all') {
+      f0.split(',').forEach((part) => {
+        const id = part.trim();
+        if (id === 'video' || id === 'image' || id === 'prompt' || id === 'Camera' || id === 'no_prompt') filters.add(id);
+      });
+    }
+    if (cam0) { camGroup = cam0; filters.add('Camera'); }
     if (m0) modelSlugFilter = m0;
   })();
 
@@ -571,18 +583,19 @@ html{transition:background-color .3s}
     const q = query.trim().toLowerCase();
     list = works.filter((w) => {
       if (modelSlugFilter && String(w.model_slug || '') !== modelSlugFilter) return false;
-      if (filter === 'video' && w.type !== 'video') return false;
-      if (filter === 'image' && w.type !== 'image') return false;
-      if (filter === 'prompt' && !hasOpenPrompt(w)) return false;
-      if (filter === 'no_prompt' && hasOpenPrompt(w)) return false;
-      if (filter === 'Camera' || String(filter || '').indexOf('Camera') === 0) {
-        if (!isCameraWork(w)) return false;
-      } else if (filter !== 'all' && filter !== 'video' && filter !== 'image'
-          && filter !== 'prompt' && filter !== 'no_prompt'
-          && String(w.model || '').indexOf(filter) !== 0) {
-        return false;
+      const types = [];
+      if (filters.has('video')) types.push(w.type === 'video');
+      if (filters.has('image')) types.push(w.type === 'image');
+      if (filters.has('Camera')) types.push(isCameraWork(w));
+      if (types.length && !types.some(Boolean)) return false;
+      if (filters.has('prompt') && !hasOpenPrompt(w)) return false;
+      if (filters.has('no_prompt') && hasOpenPrompt(w)) return false;
+      if (camGroup && filters.has('Camera')) {
+        const inGroup = isCameraWork(w) && String(w.category || '') === camGroup;
+        const other = (filters.has('video') && w.type === 'video' && !isCameraWork(w))
+          || (filters.has('image') && w.type === 'image');
+        if (!inGroup && !other) return false;
       }
-      if (camGroup && isCameraFilter() && String(w.category || '') !== camGroup) return false;
       const bits = [w.title, wTitle(w)];
       if (hasOpenPrompt(w)) bits.push(String(w.prompt || ''));
       return !q || bits.filter(Boolean).join(' ').toLowerCase().includes(q);
@@ -907,10 +920,10 @@ html{transition:background-color .3s}
       }
       mode = m === 'back' ? 'view' : m; drawer(); return;
     }
-    const g = e.target.closest('[data-go]'); if (g) { const i = list.findIndex((w) => w.id === g.dataset.go); if (i >= 0) open(i); else { filter = 'all'; query = ''; $('q').value = ''; syncChips(); apply(); open(list.findIndex((w) => w.id === g.dataset.go)); } return; }
+    const g = e.target.closest('[data-go]'); if (g) { const i = list.findIndex((w) => w.id === g.dataset.go); if (i >= 0) open(i); else { filters.clear(); query = ''; $('q').value = ''; syncChips(); apply(); open(list.findIndex((w) => w.id === g.dataset.go)); } return; }
     const cp = e.target.closest('[data-copy]'); if (cp) { navigator.clipboard && navigator.clipboard.writeText(cp.dataset.copy); cp.textContent = tr('common.copied'); cp.classList.add('done'); setTimeout(() => { cp.textContent = tr('common.copy'); cp.classList.remove('done'); }, 1600); }
   });
-  $('close').addEventListener('click', close);
+  $('close').addEventListener('click', close); $('ov').addEventListener('click', close);
   const setHdr = () => document.documentElement.style.setProperty('--hdr', document.querySelector('.top').offsetHeight + 'px'); setHdr(); addEventListener('resize', setHdr);
   $('prev').addEventListener('click', () => step(-1)); $('next').addEventListener('click', () => step(1));
   $('share').addEventListener('click', (e) => { navigator.clipboard && navigator.clipboard.writeText(location.href); const b = e.currentTarget; b.style.color = 'var(--ok)'; setTimeout(() => (b.style.color = ''), 1200); });
@@ -922,7 +935,10 @@ html{transition:background-color .3s}
   });
   const filtersEl = $('filters');
   function syncChips() {
-    document.querySelectorAll('.chip[data-f]').forEach((c) => c.setAttribute('aria-pressed', c.dataset.f === filter));
+    document.querySelectorAll('.chip[data-f]').forEach((c) => {
+      const on = c.dataset.f === 'all' ? filters.size === 0 : filters.has(c.dataset.f);
+      c.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
   }
   function syncSearch() {
     const on = !!($('q').value || '').trim() || document.activeElement === $('q');
@@ -931,9 +947,9 @@ html{transition:background-color .3s}
   filtersEl.addEventListener('click', (e) => {
     const chip = e.target.closest('.chip[data-f]');
     if (!chip) return;
-    filter = filter === chip.dataset.f ? 'all' : chip.dataset.f;
-    if (filter === 'all' || filter === 'video' || filter === 'image'
-        || filter === 'prompt' || filter === 'no_prompt') modelSlugFilter = '';
+    if (chip.dataset.f === 'all') filters.clear();
+    else if (filters.has(chip.dataset.f)) filters.delete(chip.dataset.f);
+    else filters.add(chip.dataset.f);
     if (!isCameraFilter()) camGroup = '';
     syncChips();
     apply();
@@ -991,6 +1007,8 @@ html{transition:background-color .3s}
         video: kind === 'video' ? (it.media_url || '') : '',
         likes: it.likes || 0,
         liked: !!it.liked,
+        prompt: it.prompt_open ? (it.prompt || '') : '',
+        prompt_open: !!it.prompt_open,
         creator: cid,
         date: (it.published_at || '').slice(0, 10),
         dur: '',

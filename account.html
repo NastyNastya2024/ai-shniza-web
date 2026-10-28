@@ -626,6 +626,10 @@ async function toggleWorkPub(w, btn) {
           render();
           return;
         }
+        if (data && data.error === 'platform_prompt') {
+          toast('Это видео по готовому промпту с витрины — опубликовать нельзя. Создайте свой ролик в Студии.');
+          return;
+        }
         toast(next ? 'Не удалось опубликовать' : 'Не удалось скрыть');
         return;
       }

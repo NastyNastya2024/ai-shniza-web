@@ -415,8 +415,8 @@ def test_pick_video_skips_improve_prompt(make_assistant):
         (c.get("action") == "generate") for c in (r.get("chips") or []))
 
 
-def test_rich_video_prompt_asks_add_before_settings(make_assistant):
-    """Развёрнутый промпт (как с витрины) → спросить, добавить ли что-то, потом настройки."""
+def test_rich_video_prompt_asks_settings_like_a_normal_video(make_assistant):
+    """Готовый развёрнутый промпт → сразу настройки видео, как у обычного ролика."""
     a = make_assistant(brief=True)
     rich = (
         "Ginger cat in stylish glasses on a reflective table. Movement: slow orbit around the subject. "
@@ -426,21 +426,10 @@ def test_rich_video_prompt_asks_add_before_settings(make_assistant):
     r = a.handle("видео: " + rich, {}, SID)
     assert blk(r, "models")
     r = a.handle("", {}, SID, action={"type": "pick_model", "value": "seedance-2-5"})
-    assert r["intent"] == "add_prompt"
-    assert any(c.get("action") == "add_prompt" and c.get("value") == "no" for c in r["chips"])
-    r = a.handle("", {}, SID, action={"type": "add_prompt", "value": "no"})
+    assert r["intent"] != "add_prompt"
     assert r.get("generate_model") == "seedance-2-5"
-    assert blk(r, "params") or blk(r, "summary") or any(
-        (c.get("action") == "generate") for c in (r.get("chips") or []))
-    # «да» → дописать текст → настройки
-    a2 = make_assistant(brief=True)
-    a2.handle("видео: " + rich, {}, "add2")
-    a2.handle("", {}, "add2", action={"type": "pick_model", "value": "seedance-2-5"})
-    r = a2.handle("", {}, "add2", action={"type": "add_prompt", "value": "yes"})
-    assert "добавить" in (r.get("text") or "").lower() or "add" in (r.get("text") or "").lower()
-    r = a2.handle("add a gentle camera shake", {}, "add2")
-    assert "gentle camera shake" in (a2.d.store.get("add2").get("idea") or "")
-    assert r.get("generate_model") == "seedance-2-5"
+    assert blk(r, "params") or blk(r, "summary")
+    assert "Ginger cat" in (r.get("generate_prompt") or "")
 
 
 def test_pick_image_asks_has_prompt_before_idea(make_assistant):

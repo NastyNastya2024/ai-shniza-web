@@ -85,7 +85,10 @@
       }
       if (m.workId) c.workId = String(m.workId);
       if (m.published) c.published = true;   // опубликованная — хранится; неопубликованная через 24 ч удаляется
+      if (m.promptOpen) c.promptOpen = true;
+      if (m.promptSource === 'platform' || m.promptSource === 'original') c.promptSource = m.promptSource;
       if (m.job) c.job = true;
+      if (m.jobId && /^[a-f0-9]{16,64}$/i.test(String(m.jobId))) c.jobId = String(m.jobId).toLowerCase();
       if (m.loginCta) c.loginCta = true;
       if (m.topup) c.topup = true;
     }
@@ -200,7 +203,16 @@
     var now = Date.now();
     var hadFiles = msgs.some(function (m) { return m.files && m.files.length; });
     var gone = msgs.some(function (m) { return m.files && m.files.length && now - (m.ts || 0) > DAY; });
-    var out = msgs.map(function (m) { var c = Object.assign({}, m); c.history = true; return c; });
+    var out = msgs.map(function (m, i) {
+      var c = Object.assign({}, m);
+      c.history = true;
+      // старая строка «готовлю» перед ответом об ошибке — не открытая генерация
+      if (c.role === 'bot' && c.job && !c.result && !c.jobId) {
+        var later = msgs.slice(i + 1).some(function (n) { return n && (n.role === 'bot' || n.role === 'user'); });
+        if (later) c.job = false;
+      }
+      return c;
+    });
     var note = (opts2 && opts2.note) || 'restored';
     var text = t('studio.history.note.' + note);
     if (hadFiles) text += ' ' + t(gone ? 'studio.history.note.filesGone' : 'studio.history.note.files24');

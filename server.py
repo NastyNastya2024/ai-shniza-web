@@ -5295,11 +5295,13 @@ def api_generate_job(job_id: str):
     if public.get("status") == "succeeded" and owner:
         try:
             gw = app.extensions.get("generation_works")
-            work = gw["record"](job_id, public, owner, job.get("prompt") or "", job.get("params")) if gw else None
+            work = gw["record"](job_id, public, owner, job.get("prompt") or "", job.get("params"), job.get("prompt_source")) if gw else None
             if work is not None:
                 public["work_id"] = work.id
                 public["expires_at"] = gw["expires_iso"](work)
                 public["published"] = work.status == "published"
+                public["prompt_source"] = getattr(work, "prompt_source", None) or "original"
+                public["prompt_open"] = bool(getattr(work, "prompt_open", False))
         except Exception:  # noqa: BLE001
             db.session.rollback()
             app.logger.exception("record generation work failed")
@@ -5438,6 +5440,7 @@ def api_generate():
     audio_data_url = data.get("audio") if isinstance(data.get("audio"), str) else None
     video_data_url = data.get("video") if isinstance(data.get("video"), str) else None
     raw_params = data.get("params") if isinstance(data.get("params"), dict) else None
+    prompt_source = "platform" if str(data.get("prompt_source") or "").strip() == "platform" else "original"
 
     spec = INTEGRATED_MODELS.get(model_id)
     if not spec:
@@ -5635,6 +5638,7 @@ def api_generate():
                 "input_payload": input_payload,
                 "owner_id": session.get("user_id"),
                 "prompt": prompt[:4000],          # для «Моих работ» и публикации на витрине
+                "prompt_source": prompt_source,   # platform — готовый промпт витрины, публиковать нельзя
                 "params": safe_params or None,
                 "route": route_meta,
             })

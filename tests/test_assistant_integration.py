@@ -36,14 +36,10 @@ def server(tmp_path, monkeypatch):
     )
     srv.app.config["ASSISTANT"] = srv.ASSISTANT
 
-    srv.app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{tmp_path / 'a.db'}"
     srv.app.config["TESTING"] = True
     with srv.app.app_context():
-        srv.db.session.remove()
-        try:
-            srv.db.engine.dispose()
-        except Exception:
-            pass
+        from tests.db_isolation import use_temp_db
+        use_temp_db(srv, tmp_path / "a.db")
         srv.db.drop_all()
         srv.db.create_all()
         yield srv
