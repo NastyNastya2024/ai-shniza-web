@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from typing import Any, Optional
 
-from flask import Response, g, jsonify, request, session, stream_with_context
+from flask import Response, g, jsonify, redirect, request, send_from_directory, session, stream_with_context
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import billing
@@ -582,6 +582,25 @@ def register_product(app, db, User):
             db.session.commit()
         return jsonify({"ok": True, "work": _work_public(work, owner_view=True, viewer_id=user.id)})
 
+    @app.delete("/api/works/<int:work_id>")
+    @require_user
+    def api_works_delete(user, work_id):
+        work = Work.query.filter_by(id=work_id, owner_id=user.id).first()
+        if not work:
+            return jsonify({"error": "not_found"}), 404
+        from generation_works import delete_stored
+        for url in {work.original_url, work.watermarked_url, work.thumb_url}:
+            if url:
+                delete_stored(url)
+        WorkLike.query.filter_by(work_id=work.id).delete(synchronize_session=False)
+        Complaint.query.filter_by(work_id=work.id).delete(synchronize_session=False)
+        Thread.query.filter_by(work_id=work.id).update(
+            {Thread.work_id: None}, synchronize_session=False
+        )
+        db.session.delete(work)
+        db.session.commit()
+        return jsonify({"ok": True})
+
     @app.post("/api/works/<int:work_id>/publish")
     @require_user
     def api_works_publish(user, work_id):
@@ -663,6 +682,29 @@ def register_product(app, db, User):
         viewer = current_user()
         owner_view = bool(viewer and viewer.id == work.owner_id)
         return jsonify({"work": _work_public(work, owner_view=owner_view, viewer_id=viewer.id if viewer else None)})
+
+    @app.get("/api/works/<int:work_id>/media")
+    def api_work_media(work_id):
+        """Плеер в чате: файл у нас или редирект на текущую ссылку. Без отдельной страницы."""
+        work = Work.query.get(work_id)
+        if not work or (work.status != "published" and (not current_user() or current_user().id != work.owner_id)):
+            return jsonify({"error": "not_found"}), 404
+        viewer = current_user()
+        owner_view = bool(viewer and viewer.id == work.owner_id)
+        url = (work.original_url or work.watermarked_url) if owner_view else (work.watermarked_url or work.original_url)
+        if not url:
+            return jsonify({"error": "not_found"}), 404
+        if url.startswith("s3://"):
+            url = media_store.presign(url)
+        if url.startswith("/media/"):
+            rel = url[len("/media/"):].lstrip("/")
+            if not rel or ".." in rel.split("/"):
+                return jsonify({"error": "not_found"}), 404
+            root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "media")
+            return send_from_directory(root, rel, conditional=True)
+        if url.startswith("https://") or url.startswith("http://"):
+            return redirect(url, code=302)
+        return jsonify({"error": "not_found"}), 404
 
     @app.post("/api/works/<int:work_id>/like")
     @rate_limit(40, 60, "work_like")

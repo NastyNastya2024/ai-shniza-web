@@ -235,6 +235,49 @@ def test_own_prompt_publishes_video_then_prompt(srv, monkeypatch):
     assert card2["prompt_open"] is True and "кот" in card2["prompt"]
 
 
+def test_work_media_stays_on_the_current_file(srv):
+    c = srv.app.test_client()
+    u = _login(srv, c)
+    W = _Work(srv)
+    w = W(owner_id=u.id, kind="video", model_key="m", prompt="самолет", status="published",
+           original_url="https://cdn.example/plane.mp4", created_at=_now())
+    srv.db.session.add(w)
+    srv.db.session.commit()
+    own = c.get(f"/api/works/{w.id}/media")
+    assert own.status_code == 302 and own.headers["Location"] == "https://cdn.example/plane.mp4"
+    stranger = srv.app.test_client()
+    pub = stranger.get(f"/api/works/{w.id}/media")
+    assert pub.status_code == 302
+    w.status = "draft"
+    srv.db.session.commit()
+    assert stranger.get(f"/api/works/{w.id}/media").status_code == 404
+    assert c.get(f"/api/works/{w.id}/media").status_code == 302
+
+
+def test_owner_deletes_work_from_showcase(srv, monkeypatch):
+    removed = []
+    monkeypatch.setattr("generation_works.delete_stored", lambda url: removed.append(url) or True)
+    c = srv.app.test_client()
+    u = _login(srv, c, email="del@t.local")
+    W = _Work(srv)
+    w = W(owner_id=u.id, kind="video", model_key="m", prompt="удали меня", status="published",
+           original_url="/media/works/9/9.mp4", watermarked_url="/media/works/9/9_pub.mp4",
+           created_at=_now())
+    srv.db.session.add(w)
+    srv.db.session.commit()
+    wid = w.id
+    other = srv.app.test_client()
+    _login(srv, other, email="other@t.local")
+    denied = other.delete(f"/api/works/{wid}", headers=_csrf(other))
+    assert denied.status_code == 404
+    assert srv.db.session.get(W, wid) is not None
+    gone = c.delete(f"/api/works/{wid}", headers=_csrf(c))
+    assert gone.status_code == 200 and gone.get_json()["ok"] is True
+    assert set(removed) == {"/media/works/9/9.mp4", "/media/works/9/9_pub.mp4"}
+    assert srv.db.session.get(W, wid) is None
+    assert c.get(f"/api/works/{wid}").status_code == 404
+
+
 def test_cli_dry_run(srv):
     r = srv.app.test_cli_runner().invoke(args=["purge-unpublished-works", "--dry-run"])
     assert "would delete 0" in r.output

@@ -80,6 +80,7 @@
       : [];
     for (var i = 0; i < imgs.length; i++) {
       var img = imgs[i];
+      if (img.classList && img.classList.contains('reply-mark')) continue;
       var kind = detectBrandKind(img);
       var theme = detectBrandTheme(img);
       var next = brandSrc(kind, theme);

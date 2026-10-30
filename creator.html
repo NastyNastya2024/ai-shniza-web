@@ -69,6 +69,17 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .badge{position:absolute;left:10px;top:10px;height:26px;padding:0 9px 0 7px;border-radius:999px;background:rgba(18,17,19,.65);backdrop-filter:blur(8px);display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700}
 .likes{position:absolute;right:10px;top:10px;z-index:3;height:30px;padding:0 10px;border-radius:999px;border:none;background:rgba(18,17,19,.65);backdrop-filter:blur(8px);display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:inherit;cursor:pointer;opacity:0;transition:opacity .25s,background .15s,transform .15s}
 .card:hover .likes,.likes.is-on,.likes:focus-visible{opacity:1}
+.card-del{position:absolute;left:10px;top:10px;z-index:5;width:30px;height:30px;padding:0;border:none;border-radius:999px;background:rgba(18,17,19,.65);backdrop-filter:blur(8px);color:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .25s,background .15s,transform .15s}
+.cw:hover .card-del,.cw:focus-within .card-del,.card-del:focus-visible{opacity:1}
+.cw:has(.card-del):hover .badge,.cw:has(.card-del):focus-within .badge{opacity:0}
+.card-del:hover{background:#E0457B}
+.card-del:active{transform:scale(.96)}
+.d-del{width:100%;margin-top:14px;height:44px;border-radius:14px;border:1px solid rgba(224,69,123,.45);background:transparent;color:#E0457B;font:800 14px 'Manrope',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.d-del:hover{background:rgba(224,69,123,.1)}
+@media (hover:none){
+  .card-del{opacity:1}
+  .cw:has(.card-del) .badge{opacity:0}
+}
 .likes.is-on{background:rgba(224,69,123,.85);color:#fff}
 .likes:active{transform:scale(.96)}
 .tag-like{border:none;cursor:pointer;font:inherit;color:inherit}
@@ -704,6 +715,39 @@ html[lang=en] .pc.off::after{content:'hidden'}
     if (e.target.closest('[data-answer]')) { window.AISH_REQ.set(card.dataset.r, { status: 'answered' }); setTimeout(() => { renderTabs(); renderInbox(); }, 300); }
   });
 
+  function workApiId(w) {
+    if (!owner() || !w) return '';
+    const id = w.apiId != null ? w.apiId : w.id;
+    return /^\d+$/.test(String(id || '')) ? String(id) : '';
+  }
+  async function removeWork(id) {
+    const w = allMine.find((x) => String(x.id) === String(id));
+    const apiId = workApiId(w);
+    if (!w || !apiId) return;
+    if (!window.confirm(tr('creator.delete.confirm', { title: wTitle(w) }))) return;
+    let d = {};
+    try {
+      const r = await fetch('/api/works/' + apiId, {
+        method: 'DELETE',
+        credentials: 'same-origin',
+        headers: { 'X-CSRF-Token': await csrf() }
+      });
+      d = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        toast(d.error === 'not_found' ? tr('creator.delete.gone') : tr('creator.delete.failed'));
+        return;
+      }
+    } catch (_) {
+      toast(tr('creator.delete.failed'));
+      return;
+    }
+    allMine = allMine.filter((x) => String(x.id) !== String(w.id));
+    delete pubMap[w.id];
+    if (String(openId) === String(w.id)) { openId = null; closeDrawer(); }
+    persist();
+    renderAll();
+    toast(tr('creator.delete.done'));
+  }
   function renderGrid() {
     renderInbox(); if (owner() && tab === 'req') return;
     const q = query.trim().toLowerCase();
@@ -717,12 +761,16 @@ html[lang=en] .pc.off::after{content:'hidden'}
     $('empty').textContent = tab === 'hid' ? tr('creator.empty.hidden') : tr('creator.empty.works');
     document.body.classList.toggle('owner', owner());
     $('grid').innerHTML = list.map((w, i) => {
-      const media = w.video ? '<video src="' + esc(w.video) + '" poster="' + esc(w.src) + '" muted loop playsinline preload="none" width="' + w.w + '" height="' + w.h + '"></video>' : '<img src="' + esc(w.src) + '" alt="' + esc(wTitle(w)) + '" loading="lazy" width="' + w.w + '" height="' + w.h + '">';
-      return '<div class="cw"><button class="card' + (openId === w.id ? ' active' : '') + (w.published ? '' : ' is-hidden') + '" data-i="' + i + '" aria-label="' + esc(wTitle(w)) + '">' + media
+      const posterOk = w.src && !/\.(mp4|webm|mov)(\?|$)/i.test(String(w.src));
+      const media = w.video
+        ? '<video src="' + esc(w.video) + '"' + (posterOk ? ' poster="' + esc(w.src) + '"' : '') + ' muted playsinline preload="metadata" width="' + w.w + '" height="' + w.h + '"></video>'
+        : '<img src="' + esc(w.src) + '" alt="' + esc(wTitle(w)) + '" loading="lazy" width="' + w.w + '" height="' + w.h + '">';
+      return '<div class="cw"><button class="card' + (openId === w.id ? ' active' : '') + (w.published ? '' : ' is-hidden') + '" data-i="' + i + '" data-wid="' + esc(w.id) + '" aria-label="' + esc(wTitle(w)) + '">' + media
         + (w.published ? '' : '<span class="hid-mark">' + ICON.eyeOff + '</span>')
         + '<span class="shade"></span>' + (w.type === 'video' ? WM + '<span class="badge">' + ICON.play + esc(w.dur) + '</span>' : '')
         + '<span class="likes' + (w.liked ? ' is-on' : '') + '" data-like="' + esc(w.id) + '" role="button" tabindex="0" aria-pressed="' + (w.liked ? 'true' : 'false') + '" aria-label="' + esc(tr('common.like')) + '">' + ICON.heart + '<span>' + (w.likes || 0) + '</span></span>'
         + '<span class="meta"><span class="t">' + esc(wTitle(w)) + '</span><span class="who">' + esc(w.model) + ' · ' + esc(L.dateLabel(w)) + '</span></span></button>'
+        + (workApiId(w) ? '<button type="button" class="card-del" data-del-work="' + esc(w.id) + '" aria-label="' + esc(tr('creator.delete.aria')) + '">' + ICON.trash + '</button>' : '')
         + (owner() ? '<button class="pub ' + (w.published ? 'on' : 'offp') + '" data-pub="' + w.id + '" aria-pressed="' + w.published + '" aria-label="' + esc(w.published ? tr('creator.pub.aria.on') : tr('creator.pub.aria.off')) + '"><span class="dot"></span>' + esc(w.published ? tr('creator.status.published') : tr('creator.status.hidden')) + '</button>' : '')
         + '</div>';
     }).join('');
@@ -836,7 +884,8 @@ html[lang=en] .pc.off::after{content:'hidden'}
     if (owner()) {
       lower = '<div class="pubrow"><div style="flex:1"><div class="t1">' + esc(w.published ? tr('creator.status.published') : tr('creator.status.hidden')) + '</div><div class="t2">' + esc(w.published ? tr('creator.pub.text.on') : tr('creator.pub.text.off')) + '</div></div>'
         + '<button class="switch" role="switch" aria-checked="' + w.published + '" aria-label="' + esc(tr('creator.pub.switch')) + '" data-pub="' + w.id + '"></button></div>'
-        + '<div class="mini-stats"><div><b>' + (w.published ? (w.likes * 7 + 120) : 0) + '</b><span>' + esc(tr('creator.stat.views')) + '</span></div><div><b>' + (w.published ? (w.likes || 0) : 0) + '</b><span>' + esc(tr('creator.stat.likes')) + '</span></div><div><b>' + (w.published ? Math.round((w.likes || 0) / 300) : 0) + '</b><span>' + esc(tr('creator.stat.requests')) + '</span></div></div>';
+        + '<div class="mini-stats"><div><b>' + (w.published ? (w.likes * 7 + 120) : 0) + '</b><span>' + esc(tr('creator.stat.views')) + '</span></div><div><b>' + (w.published ? (w.likes || 0) : 0) + '</b><span>' + esc(tr('creator.stat.likes')) + '</span></div><div><b>' + (w.published ? Math.round((w.likes || 0) / 300) : 0) + '</b><span>' + esc(tr('creator.stat.requests')) + '</span></div></div>'
+        + (workApiId(w) ? '<button type="button" class="d-del" data-del-work="' + esc(w.id) + '">' + ICON.trash + esc(tr('creator.delete.btn')) + '</button>' : '');
     } else if (mode === 'view') {
       const reqLbl = esc(tr(w.type === 'video' ? 'vitrina.req.promptOrVideo' : 'vitrina.req.promptOrOriginal'));
       lower = '<div class="actions"><button class="btn btn-p" data-act="request">' + ICON.spark + reqLbl + '</button></div>';
@@ -960,6 +1009,8 @@ html[lang=en] .pc.off::after{content:'hidden'}
       toggleLike(w).then(() => { renderGrid(); if (openId === w.id) drawer(); }).catch(() => {});
       return;
     }
+    const del = e.target.closest('[data-del-work]');
+    if (del) { e.preventDefault(); e.stopPropagation(); removeWork(del.getAttribute('data-del-work')); return; }
     const p = e.target.closest('[data-pub]'); if (p) { const w = allMine.find((x) => x.id === p.dataset.pub); setPub(w.id, !w.published); return; }
     const b = e.target.closest('.card'); if (b) open(list[+b.dataset.i].id);
   });
@@ -1003,6 +1054,8 @@ html[lang=en] .pc.off::after{content:'hidden'}
         }
       }
     }
+    const del = e.target.closest('[data-del-work]');
+    if (del) { e.preventDefault(); removeWork(del.getAttribute('data-del-work')); return; }
     const p = e.target.closest('[data-pub]'); if (p) { const w = allMine.find((x) => x.id === p.dataset.pub); setPub(w.id, !w.published); return; }
     const a = e.target.closest('[data-act]');
     if (a) {
@@ -1027,7 +1080,7 @@ html[lang=en] .pc.off::after{content:'hidden'}
     const cp = e.target.closest('[data-copy]'); if (cp) { try { navigator.clipboard.writeText(cp.dataset.copy); } catch (er) {} toast(tr('common.copied')); return; }
     if (e.target.closest('[data-do=cancel]')) { editing = null; close(); return; }
     const sw = e.target.closest('.switch[data-f=show]'); if (sw && editing) { syncEdit(); const k = editing.contacts[+sw.dataset.k]; k.show = !k.show; settings(); return; }
-    const del = e.target.closest('[data-del]'); if (del && editing) { syncEdit(); editing.contacts.splice(+del.dataset.del, 1); settings(); return; }
+    const delRow = e.target.closest('[data-del]'); if (delRow && editing) { syncEdit(); editing.contacts.splice(+delRow.dataset.del, 1); settings(); return; }
     if (e.target.closest('#addC') && editing) { syncEdit(); editing.contacts.push({ net: 'instagram', login: '', show: true }); settings(); const ins = $('dBody').querySelectorAll('[data-f=login]'); ins[ins.length - 1].focus(); }
   });
   $('dBody').addEventListener('change', (e) => {
@@ -1098,7 +1151,18 @@ html[lang=en] .pc.off::after{content:'hidden'}
       (data.items || []).forEach((it) => mergeApiWork(it, it.status === 'published'));
       if (window.AISH_LIKES) window.AISH_LIKES.hydrate(allMine);
       renderAll();
+      revealWork();
     } catch (_) {}
+  }
+  function revealWork() {
+    const want = qs.get('work');
+    if (!want) return;
+    const w = allMine.find((x) => String(x.id) === String(want) || String(x.apiId) === String(want));
+    if (!w) return;
+    openId = w.id;
+    renderGrid();
+    const card = document.querySelector('.card[data-wid="' + String(w.id).replace(/"/g, '') + '"]');
+    if (card) card.scrollIntoView({ block: 'center', inline: 'nearest' });
   }
   async function loadPublicWorks() {
     const handle = C.handle || C.nick || window.__CREATOR_HANDLE__;
@@ -1112,6 +1176,7 @@ html[lang=en] .pc.off::after{content:'hidden'}
       (data.works || []).forEach((it) => mergeApiWork(it, true));
       if (window.AISH_LIKES) window.AISH_LIKES.hydrate(allMine);
       renderAll();
+      revealWork();
     } catch (_) {}
   }
   (async function bootOwner() {

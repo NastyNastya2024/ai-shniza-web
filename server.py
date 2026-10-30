@@ -962,7 +962,7 @@ def api_chat():
         if result.get("ok"):
             prediction = result["prediction"]
             outputs = _flatten_output(prediction.get("output"))
-            reply = "\n".join(outputs).strip() or str(prediction.get("output") or "")
+            reply = _join_text_chunks(outputs) or str(prediction.get("output") or "")
             if reply:
                 return _chat_ok(reply, deepseek_model, "replicate")
             last_detail = "empty deepseek reply"
@@ -2439,6 +2439,11 @@ def _provider_model_ref(spec: dict, *, has_image: bool = False) -> str | None:
             return spec.get("higgsfield_model_i2v")
         return spec.get("higgsfield_model")
     return spec.get("replicate_model")
+
+
+def _join_text_chunks(outputs: list[str]) -> str:
+    """Чанки текстовой модели — куски одного ответа. Склеиваем без перевода строки между токенами."""
+    return "".join(outputs).strip()
 
 
 def _flatten_output(output) -> list[str]:
@@ -5773,7 +5778,7 @@ def api_generate():
             elif not reply:
                 reply = str(out)
         else:
-            reply = "\n".join(outputs).strip() or str(prediction.get("output") or prediction.get("text") or "")
+            reply = _join_text_chunks(outputs) or str(prediction.get("output") or prediction.get("text") or "")
         return jsonify({"kind": "text", "reply": reply, **common})
 
     media_urls = [u for u in outputs if isinstance(u, str) and u.startswith("http")]
@@ -5936,6 +5941,10 @@ register_generation_works(app, db)
 from site_metrics import register_site_metrics  # noqa: E402
 register_site_metrics(app, db, User)
 
+# ── Подключения MCP: свои MCP-серверы пользователя → кнопки под результатом в студии — mcp_routes.py ──
+from mcp_routes import register_mcp  # noqa: E402
+register_mcp(app, db)
+
 
 @app.after_request
 def _no_cache_html(resp):
@@ -6003,7 +6012,20 @@ def admin_page():
 
 @app.route("/w/<int:work_id>")
 def work_page(work_id):
+    """Работа открывается на витрине автора, а не отдельной страницей."""
     ensure_csrf_token()
+    models = app.extensions.get("product_models") or {}
+    Work = models.get("Work")
+    Profile = models.get("CreatorProfile")
+    if Work is not None and Profile is not None:
+        work = db.session.get(Work, work_id)
+        if work is not None:
+            viewer_id = session.get("user_id")
+            visible = work.status == "published" or viewer_id == work.owner_id
+            prof = Profile.query.filter_by(user_id=work.owner_id).first() if visible else None
+            handle = (getattr(prof, "handle", None) or "").strip() if prof else ""
+            if handle:
+                return redirect("/@" + handle + "?work=" + str(work_id))
     return send_from_directory(BASE_DIR, "work.html")
 
 
@@ -6018,9 +6040,35 @@ def creator_cabinet_page():
     ensure_csrf_token()
     return send_from_directory(BASE_DIR, "creator.html")
 
+# Публичные файлы из папки проекта — только вёрстка и медиа по белому списку расширений.
+# Раньше маршрут отдавал ЛЮБОЙ файл: /.env (ключи), /app.db (база), /.git/…, /server.py.
+PUBLIC_EXT = {
+    "html", "css", "js", "mjs",
+    "png", "jpg", "jpeg", "webp", "gif", "svg", "ico", "avif",
+    "woff", "woff2", "ttf", "otf",
+    "mp4", "webm", "mov", "mp3", "wav", "ogg", "m4a",
+    "pdf", "webmanifest",
+}
+PUBLIC_ROOT_FILES = {"robots.txt", "sitemap.xml", "favicon.ico", "manifest.json", "site.webmanifest"}
+PRIVATE_DIRS = {"api", "tests", "deploy", "scripts", "assistant", "queue_runtime", "prompts", "docs",
+                "models_catalog", "__pycache__", "node_modules", "venv", ".venv", "instance", "uploads", "backups"}
+
+
+def _public_file_ok(filename: str) -> bool:
+    parts = [p for p in filename.replace("\\", "/").split("/") if p]
+    if not parts or any(p.startswith(".") or p == ".." for p in parts):
+        return False                      # .env, .git/, .ssh/ …
+    if parts[0] in PRIVATE_DIRS or parts[0].lower().startswith("omniroute"):
+        return False
+    if len(parts) == 1 and parts[0] in PUBLIC_ROOT_FILES:
+        return True
+    ext = parts[-1].rsplit(".", 1)[-1].lower() if "." in parts[-1] else ""
+    return ext in PUBLIC_EXT
+
+
 @app.route("/<path:filename>")
 def public_files(filename):
-    if filename.startswith("api/"):
+    if not _public_file_ok(filename):
         return jsonify({"error": "not found"}), 404
     ensure_csrf_token()
     return send_from_directory(BASE_DIR, filename)

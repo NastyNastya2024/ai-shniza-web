@@ -54,10 +54,10 @@
       document.querySelector('[data-title]').textContent = w.title || 'Без названия';
       document.querySelector('[data-meta]').textContent = (w.model_key || '') + ' · ' + (w.prompt || '').slice(0, 160);
       const media = document.querySelector('[data-media]');
-      const url = w.media_url || w.thumb_url;
-      if (w.kind === 'video') media.innerHTML = `<video src="${url || ''}" controls playsinline style="max-width:100%;border-radius:16px"></video>`;
-      else if (w.kind === 'audio') media.innerHTML = `<audio src="${url || ''}" controls></audio>`;
-      else media.innerHTML = `<img src="${url || ''}" alt="" style="max-width:100%;border-radius:16px">`;
+      const url = '/api/works/' + encodeURIComponent(id) + '/media';
+      if (w.kind === 'video') media.innerHTML = `<video src="${url}" controls playsinline style="max-width:100%;border-radius:16px"></video>`;
+      else if (w.kind === 'audio') media.innerHTML = `<audio src="${url}" controls></audio>`;
+      else media.innerHTML = `<img src="${url}" alt="" style="max-width:100%;border-radius:16px">`;
       document.querySelector('[data-repeat]').href = `/?prompt=${encodeURIComponent(w.prompt || '')}&model=${encodeURIComponent(w.model_key || '')}`;
       const likeBtn = document.querySelector('[data-like]');
       paintLike(likeBtn, w.liked, w.likes);

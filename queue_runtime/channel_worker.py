@@ -145,7 +145,7 @@ def _format_success(job: dict[str, Any], prediction: dict[str, Any], provider: s
             elif not reply:
                 reply = str(out)
         else:
-            reply = "\n".join(outputs).strip() or str(
+            reply = srv._join_text_chunks(outputs) or str(
                 prediction.get("output") or prediction.get("text") or ""
             )
         return {"kind": "text", "reply": reply, **common}

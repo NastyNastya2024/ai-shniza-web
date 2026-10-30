@@ -41,14 +41,18 @@
 .msg-file .msg-file-gone{font-weight:500;opacity:.85}
 
 /* под результатом генерации: «Опубликовать на витрине» — неопубликованные хранятся 24 часа */
-.pub-offer{display:flex;flex-direction:column;gap:8px;width:100%;max-width:340px;padding:10px 12px;border-radius:14px;border:1px solid var(--field-brd);background:var(--field);box-sizing:border-box}
-.pub-offer .pub-t{margin:0;font-size:13px;line-height:1.45;color:var(--ink)}
+.pub-offer{container-type:inline-size;display:flex;flex-direction:column;gap:10px;width:100%;max-width:none;align-self:stretch;padding:14px 16px;border-radius:14px;border:1px solid var(--field-brd);background:var(--field);box-sizing:border-box}
+.pub-offer .pub-t{margin:0;font-size:14px;line-height:1.45;color:var(--ink)}
 .pub-offer .pub-t a,.pub-rules a,.pub-done a,.pub-gone a{color:var(--accent-ink,#4B2BB8);font-weight:600}
-.pub-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.pub-btn{height:38px;padding:0 16px;border-radius:12px;font-size:13.5px;cursor:pointer}
+.pub-row{display:flex;align-items:stretch;gap:8px;flex-wrap:nowrap}
+.pub-btn{min-height:44px;height:auto;padding:0 16px;border-radius:12px;font-size:14px;cursor:pointer;white-space:nowrap}
 .pub-btn:disabled{opacity:.6;cursor:default}
-.pub-open{height:38px;padding:0 12px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font:700 13px 'Onest',system-ui,sans-serif;color:var(--ink);text-decoration:none;border:1px solid var(--field-brd);background:var(--field);cursor:pointer}
-.pub-row .pub-btn,.pub-row button.pub-open{flex:1 1 140px;text-align:center}
+.pub-open{min-height:44px;height:auto;padding:0 16px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font:700 14px 'Onest',system-ui,sans-serif;color:var(--ink);text-decoration:none;border:1px solid var(--field-brd);background:var(--field);cursor:pointer;white-space:nowrap}
+.pub-row .pub-btn,.pub-row button.pub-open{flex:1 1 0;min-width:0;text-align:center}
+@container (max-width:440px){
+  .pub-row{flex-direction:column}
+  .pub-row .pub-btn,.pub-row button.pub-open{width:100%}
+}
 .pub-row a.pub-open{flex:0 0 auto}
 .pub-rules{margin:0;font-size:11.5px;color:var(--muted2)}
 .pub-note{margin:0;font-size:12.5px;color:var(--muted2)}
