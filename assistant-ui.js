@@ -25,7 +25,8 @@
     reel_start: 1, reel_answer: 1, reel_next: 1, reel_back: 1, reel_edit: 1, reel_frame: 1, reel_rebuild: 1,
     reel_sheet: 1, reel_exit: 1,
     sb_start: 1, sb_noscript: 1, sb_answer: 1, sb_edit: 1, sb_frame: 1, sb_rebuild: 1, sb_setup: 1, sb_frames_view: 1, sb_back: 1, sb_exit: 1,
-    pipe_result: 1, pipe_menu: 1, pipe_stage: 1, pipe_sub: 1, pipe_dialog_save: 1, pipe_video_plain: 1, pipe_voice_model: 1, pipe_summary: 1, pipe_arts: 1 };
+    pipe_result: 1, pipe_menu: 1, pipe_stage: 1, pipe_sub: 1, pipe_dialog_save: 1, pipe_video_plain: 1, pipe_voice_model: 1, pipe_summary: 1, pipe_arts: 1,
+    mode_start: 1, mode_input: 1, mode_next: 1, mode_back: 1, mode_redo: 1, mode_go: 1, mode_episode: 1, mode_exit: 1, mode_pause: 1, mode_resume: 1 };
   var PIPE_TYPE_ICON = { prompt: '✍️', videoPrompt: '🎬', speechPrompt: '🎙', style: '{ }', hero: '👤', image: '🖼', board: '🎞', video: '🎬', voiceTrack: '🔊' };
   var KIND_ICON = { prompt: '✍️', image: '🖼', video: '🎬', music: '🎵', text: '✍️', sfx: '🔊', edit: '✏️' };
 
@@ -139,6 +140,15 @@
       box.appendChild(txt);
       if (bl.note) box.appendChild(el('div', 'aich-prompt__note', bl.note));
       box.appendChild(el('div', 'aich-prompt__hint', L('можно исправить прямо здесь', 'you can edit it right here')));
+      return box;
+    }
+
+    /** Режимы «Рилс» / «Сериал»: сценарий, герои, подпись — по строкам, только чтение (правка — сообщением). */
+    function renderModeText(bl) {
+      var box = el('div', 'aich-mtext');
+      if (bl.title) box.appendChild(el('div', 'aich-mtext__title', bl.title));
+      box.appendChild(el('div', 'aich-mtext__text', bl.text || ''));
+      if (bl.note) box.appendChild(el('div', 'aich-mtext__note', bl.note));
       return box;
     }
 
@@ -804,6 +814,7 @@
       (data.blocks || []).forEach(function (bl) {
         if (bl.type === 'models') col.appendChild(renderModels(bl));
         else if (bl.type === 'prompt') col.appendChild(renderPrompt(bl));
+        else if (bl.type === 'mode_text') col.appendChild(renderModeText(bl));
         else if (bl.type === 'params') col.appendChild(renderParams(bl));
         else if (bl.type === 'summary') col.appendChild(renderSummary(bl));
         else if (bl.type === 'brief') col.appendChild(renderBrief(bl));
@@ -863,6 +874,10 @@
           if (data.silent) return data;
           if (inPlace && setupNode && setupNode.parentNode) fill(setupNode, data);   // параметры — на месте
           else opts.onBot(data);
+          // помощник сам делает безопасное обратимое действие: тема, панель справа, новый чат
+          if (data.ui_do && data.ui_do.action && opts.onUiAction) {
+            try { opts.onUiAction(data.ui_do.action, data.ui_do.value); } catch (_) {}
+          }
           if (data.generate_model || data.generate_prompt) {
             form = { model: data.generate_model, prompt: data.generate_prompt || '', params: data.generate_params || {},
                      files: data.generate_files || [], series: data.generate_series || null };

@@ -542,7 +542,7 @@ window.AISH_DICT_RU = {
   'studio.history.guestEmpty': 'Войдите — чаты сохранятся в аккаунте ({days} дн.). Сейчас черновик лежит в этом браузере.',
   'studio.rp.aria': 'Витрина и нейросети',
   'studio.rp.tabs': 'Витрина и каталог нейросетей',
-  'studio.rp.models': 'Нейросети',
+  'studio.rp.models': 'Список',
   'studio.rp.mcp': 'MCP',
   'studio.rp.close': 'Закрыть панель',
   'studio.chat.modelDown': 'Эта нейросеть сейчас недоступна — деньги не списаны. Выберите другую модель в панели',

@@ -28,6 +28,11 @@
 .aich-prompt__text{font-size:15px;line-height:1.45;outline:none;border-radius:8px;padding:2px 4px;margin:0 -4px}
 .aich-prompt__text:focus{background:var(--card-on,#fff);box-shadow:0 0 0 2px rgba(75,43,184,.25)}
 .aich-prompt__note{font-size:12px;color:var(--muted2,#6E62A3);margin-top:6px}
+/* режимы «Рилс» / «Сериал»: сценарий по строкам */
+.aich-mtext{border:1px solid var(--field-brd,rgba(91,53,224,.18));background:var(--card,rgba(255,255,255,.6));border-radius:16px;padding:12px 16px}
+.aich-mtext__title{font-size:12px;font-weight:700;color:var(--muted,#5B4D93);margin-bottom:6px}
+.aich-mtext__text{font-size:14.5px;line-height:1.55;white-space:pre-line;color:var(--ink,#1E1238)}
+.aich-mtext__note{font-size:12px;color:var(--muted2,#6E62A3);margin-top:8px}
 .aich-prompt__hint{font-size:11px;color:var(--muted2,#6E62A3);opacity:.7;margin-top:4px}
 
 .aich-params{display:flex;flex-direction:column;gap:10px;padding:2px 0}

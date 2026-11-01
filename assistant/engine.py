@@ -25,16 +25,18 @@ from . import brief as BR
 from . import camera as CAM
 from . import errors as err_mod
 from . import files as F
+from . import modes as MD
 from . import params as P
 from . import pipeline as PL
 from . import storyboard as SB
+from . import understand as UN
 from .cards import Card, load_cards
 from .lang import detect_lang
 from .llm import LLMChain, LLMUnavailable
 from .prompts import SYSTEM, build_user, fallback_prompt, validate_output
 from .recommend import PIN_FIRST, Pick, cheapest, price_value, recommend
 from .render import chip, estimate, model_item, per_second, response, short_price, std_chip
-from .router import MINORS_SEXUAL, NSFW, VIOLENCE, Intent, detect_kind, detect_needs, lev, route, squeeze, topic_of
+from .router import MINORS_SEXUAL, NSFW, OFF_TOPIC, VIOLENCE, Intent, detect_kind, detect_needs, lev, route, squeeze, topic_of
 from .session import MAX_SESSION_ID, MemoryStore, load
 from .texts import EXAMPLES, REFINE_SUGGEST, b, t
 from .ui_help import ui_help
@@ -68,6 +70,8 @@ class AssistantDeps:
     inputs_fn: Callable[[str], list] | None = None
     # модель открыта в студии? id → True/False (server._is_studio_visible). None — все модели с карточками
     catalog_fn: Callable[[str], bool] | None = None
+    # слой 2 понимания (understand.py): непонятную правилам фразу разбирает нейросеть. В проде включён (ASSIST_UNDERSTAND_LLM)
+    understand_llm: bool = False
 
 
 def _norm(s: str) -> str:
@@ -128,6 +132,7 @@ class Assistant:
         except Exception:
             log.exception("assistant handler failed")
             out = response([_generic_error(lang)], [std_chip("retry", "retry", lang)], intent="internal_error")
+        out = MD.decorate(out, ses, lang)   # режим «Рилс» / «Сериал» идёт — под любым ответом «↩ вернуться к шагу»
         if not out.get("silent"):
             ses["last_chips"] = [{k: c.get(k) for k in ("label", "action", "value")} for c in out.get("chips", [])]
         pst = ses.get("pipe") if isinstance(ses.get("pipe"), dict) else {}
@@ -171,6 +176,11 @@ class Assistant:
         act = self._text_as_action(msg, ses)
         if act:
             return self._action(act[0], act[1], ctx, ses, lang)
+        # 1') понимание фразы (understand.py): «включи клода», вопрос-совет, «тёмная тема», режимы; шаг режима ждёт текст
+        if msg:
+            got = self._understand(msg, ctx, ses, lang)
+            if got is not None:
+                return got
         # Режим «Рилс» отключён: если остался старый черновик в сессии — сбрасываем и идём обычным путём.
         if ses.get("assist_mode") == "reel" or isinstance(ses.get("reel"), dict):
             ses["assist_mode"] = None
@@ -330,7 +340,117 @@ class Assistant:
                     return self._setup_reply(card, ses, ctx, lang, "param", t("settings_saved", lang, label=lbl), adj=adj)
                 if ses.get("prompt") and intent.name != "generate_task":
                     return self._refine(card, msg, ctx, ses, lang)
-        return getattr(self, "_i_" + intent.name)(intent, msg, ctx, ses, lang)
+        out = getattr(self, "_i_" + intent.name)(intent, msg, ctx, ses, lang)
+        # «хочу рилс про кофе» — обычный путь (одно видео) + предложение пройти рилс по шагам
+        if intent.name == "generate_task" and UN.REELS_WORD.search(msg) and not MD.state(ses) and not self._is_guest(ctx):
+            out["chips"] = list(out.get("chips") or []) + [chip(t("mode_reels_offer", lang), "mode_start", {"id": "reels", "text": msg})]
+        return out
+
+    # ================================================================ понимание фразы
+    def _understand(self, msg: str, ctx: dict, ses: dict, lang: str) -> dict | None:
+        """None — фраза для обычного маршрута (router + флоу). Иначе — готовый ответ."""
+        it0 = route(msg, ctx, ses, self.titles)
+        if it0.name == "ui_help" and not self._is_guest(ctx):
+            u0 = UN.fast(msg, self.d.cards)
+            if u0 and u0["intent"] == "ui_do":   # «открой витрину» — не объяснять, а открыть
+                return self._ui_do(u0, ctx, ses, lang)
+        if it0.name in UN.PROTECTED or (it0.name == "off_topic" and OFF_TOPIC.search(msg)):
+            return None                     # безопасность, ошибки, справки и явное «не по теме» (погода) — как раньше
+        md = MD.active(ses)
+        text_step = bool(md and MD.wants_text(ses) and not PL.waiting(ses) and not SB.active(ses))
+        u = UN.fast(msg, self.d.cards)
+        if u and u["intent"] == "question" and text_step and not (UN.QUESTION_START.search(msg) or UN.HOWTO.search(msg)):
+            u = None                        # «Как бариста варит кофе?» на шаге «Идея» — это идея, не вопрос
+        if u is None and text_step:
+            return MD.on_text(self, ses, ctx, lang, msg)
+        if (u is None and self.d.understand_llm and it0.name in ("ask_type", "off_topic") and len(msg.split()) >= 2
+                and ses.get("await") in (None, "type", "gen_type") and not PL.waiting(ses) and not SB.active(ses)):
+            u = UN.ask_llm(self, msg, ses, ctx)
+        if u is None:
+            return None
+        return self._understood(u, msg, ctx, ses, lang)
+
+    def _understood(self, u: dict, msg: str, ctx: dict, ses: dict, lang: str) -> dict | None:
+        intent = u["intent"]
+        if intent == "switch_model":
+            mid = u.get("model") or ""
+            card = self.d.cards.get(mid)
+            if not card or (self.d.catalog_fn and not self.d.catalog_fn(mid)):
+                return None
+            if self._is_guest(ctx):
+                return self._ask_login(ses, lang, "switch_model")
+            if card.kind != "text":
+                return self._pick(mid, ctx, ses, lang, "switch_model")
+            out = self._text_chat_ready(card, ses, lang, "switch_model")
+            head = t("switched_model", lang, title=card.title)     # цена за ответ видна у кнопки модели
+            alt = [m for m in UN.FAMILY_MODELS.get(u.get("family") or "", ()) if m != mid and m in self.d.cards]
+            if alt:
+                head += "\n" + t("switched_alt", lang, title=self.d.cards[alt[-1]].title)
+                out["chips"] = [chip(self.d.cards[alt[-1]].title, "pick_model", alt[-1])] + list(out.get("chips") or [])
+            out["text"] = out["reply"] = head
+            return out
+        if intent == "ui_do":
+            return self._ui_do(u, ctx, ses, lang)
+        if intent == "start_mode":
+            if self._is_guest(ctx):
+                return self._ask_login(ses, lang, "mode_start")
+            m = MD.state(ses)
+            if m and m["id"] == u.get("mode"):
+                return MD.show(self, ses, ctx, lang, t("mode_already", lang))
+            if m:                               # идёт другой режим — не бросаем его молча
+                new = MD.MODES[u.get("mode") or "reels"]["title"][1 if lang.startswith("en") else 0]
+                old = MD.MODES[m["id"]]["title"][1 if lang.startswith("en") else 0]
+                return response([t("mode_switch_ask", lang, new=new, old=old)],
+                                [chip(t("mode_switch_yes", lang, new=new), "mode_start", {"id": u.get("mode") or "reels", "text": msg}, primary=True),
+                                 MD.resume_chip(ses, lang)], [], lang, intent="mode_switch_ask")
+            return MD.start(self, ses, ctx, lang, u.get("mode") or "reels", text=msg)
+        if intent == "question":
+            return self._answer(msg, ctx, ses, lang)
+        return None
+
+    def _ui_do(self, u: dict, ctx: dict, ses: dict, lang: str) -> dict:
+        ui, val = u.get("ui"), u.get("value")
+        if ui == "theme":
+            names = {"white": t("theme_white", lang), "black": t("theme_black", lang), "light": t("theme_light", lang),
+                     "violet": t("theme_violet", lang)}
+            others = [chip(names[k], "set_theme", k) for k in ("white", "black", "violet", "light") if k != val]
+            return response([t("theme_done", lang, name=names.get(val, val))], others[:3], [], lang, intent="ui_do",
+                            ui_do={"action": "set_theme", "value": val})
+        if ui == "panel":
+            key = {"models": "panel_models", "mcp": "panel_mcp", "vit": "panel_vit"}.get(val, "panel_models")
+            return response([t(key, lang)], [], [], lang, intent="ui_do", ui_do={"action": "open_panel", "value": val})
+        return response([t("new_chat_done", lang)], [], [], lang, intent="ui_do", ui_do={"action": "new_chat", "value": None})
+
+    def _answer(self, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
+        """Вопрос-совет: «какая лучше для видео» — подборка из каталога; остальное — ответ по фактам студии."""
+        has_image = bool(ctx.get("has_image"))
+        kind = detect_kind(msg, has_image)
+        if kind in KINDS and re.search(r"лучш|посовет|выбра|подойд|подход|какую|какая|какой|какие|что взять|топ|"
+                                       r"стоит|цен[аыу]|стоимост|дешев|дорог|better|best|recommend|which|price|cost", msg, re.I):
+            kind = "music" if kind == "sfx" else kind
+            needs = detect_needs(msg)
+            if kind == "text":
+                pick = self._recommend("text", needs, has_image)
+            else:
+                pick = self._recommend(kind, needs, has_image)
+            word = err_mod.KIND_WORD.get(lang, err_mod.KIND_WORD["ru"]).get(kind, kind)
+            saved = {k: ses.get(k) for k in ("await", "kind", "shown", "assist_mode")}
+            out = self._show_models(pick, ses, lang, "question_models", head=t("answer_models", lang, kind=word))
+            if MD.active(ses):                     # в режиме подборка — справка, шаг не сбиваем
+                ses.update(saved)
+            return out
+        got = UN.answer_llm(self, msg, ses, lang)
+        if got:
+            chips = [chip(self.d.cards[m].title, "pick_model", m) for m in got["models"]]
+            return response([got["answer"]], chips, [], lang, intent="question")
+        low = msg.lower()
+        if re.search(r"тем[аеуы]\b|фон|оформлен|theme", low):
+            return response([t("answer_theme", lang)], [chip(t("theme_black", lang), "set_theme", "black"),
+                                                        chip(t("theme_white", lang), "set_theme", "white"),
+                                                        chip(t("theme_violet", lang), "set_theme", "violet")], [], lang,
+                            intent="question", degraded=True)
+        return response([t("answer_unknown", lang)], [std_chip("open_models", "open_models", lang)] + self._type_chips(ctx, lang)[:3],
+                        [], lang, intent="question", degraded=True)
 
     def _text_as_action(self, msg: str, ses: dict) -> tuple[str, Any] | None:
         if not msg or len(msg.split()) > 6:
@@ -1358,7 +1478,13 @@ class Assistant:
             # текст кадров — в раскадровку; картинка листа при expect=board остаётся артефактом флоу
             if pst.get("expect") == "sb_frames" or (pst.get("expect") == "board" and kind_in in ("", "text")):
                 return SB.apply_writer_reply(self, ses, ctx, lang, value)
-            return PL.result(self, ses, ctx, lang, value)
+            return MD.after_result(self, ses, ctx, lang, value, PL.result(self, ses, ctx, lang, value))
+        if kind.startswith("mode_"):            # режимы «Рилс» / «Сериал» (modes.py)
+            if self._is_guest(ctx):
+                return self._ask_login(ses, lang, kind)
+            return MD.action(self, kind, value, ctx, ses, lang)
+        if kind == "restart":
+            ses["mode"] = None
         if kind.startswith("sb_"):
             return PL.decorate(self._sb_action(kind, value, ctx, ses, lang), ses, lang)
         if kind.startswith("pipe_"):

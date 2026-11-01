@@ -168,6 +168,8 @@ def build_from_env(models: dict[str, dict] | None = None, price_fn: Callable[[st
         inputs_fn=(lambda mid: list((models.get(mid) or {}).get("inputs") or [])) if models is not None else None,
         catalog_fn=visible_fn,
         brief=(e.get("ASSIST_BRIEF") or "1").strip().lower() not in {"0", "false", "no"},
+        # непонятную правилам фразу («включи мне клода») разбирает нейросеть помощника; 0 — только правила
+        understand_llm=(e.get("ASSIST_UNDERSTAND_LLM") or "1").strip().lower() not in {"0", "false", "no"},
     )
     return Assistant(deps)
 

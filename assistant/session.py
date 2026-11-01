@@ -67,6 +67,7 @@ def empty_session() -> dict[str, Any]:
         "sb": None,          # режим «Раскадровка»: {step, source, script, idea, frames, format, aspect, style, model}
         "reel": None,        # режим «Рилс»: {step, idea, style, refs, characters, script, frames, model, final}
         "pipe": None,        # флоу помощника и ожидание результата: {on, stage, sub, await, expect, chat}; раскадровка ставит expect=sb_frames
+        "mode": None,        # режимы «Рилс» / «Сериал» (modes.py): {id, step, data, paused}
         "arts": [],          # артефакты флоу этой сессии (промпты, картинки, ролики). «Новый чат» и TTL сессии их стирают
     }
 

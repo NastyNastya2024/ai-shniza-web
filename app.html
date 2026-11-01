@@ -7,7 +7,7 @@
 <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/assets/brand/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/assets/brand/png/apple-touch-icon-180.png">
-<link rel="stylesheet" href="/assistant-ui.css?v=22">
+<link rel="stylesheet" href="/assistant-ui.css?v=23">
 <link rel="stylesheet" href="/attach.css">
 <link rel="stylesheet" href="/chat-history.css?v=5">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -152,6 +152,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .btn-purple:hover{background:var(--purple-soft-h)}
 .btn-login{border:none;background:var(--user-bg);color:var(--user-ink);font-family:'Onest',sans-serif;font-weight:700;cursor:pointer;box-shadow:0 8px 18px -12px var(--shadow)}
 .btn-login:hover{filter:brightness(1.08)}
+/* кнопки в пузыре чата — по ширине текста, одинаковый отступ слева и справа */
+.msg-bot .glass>.btn-login,.msg-bot .glass>.btn-purple{align-self:flex-start;width:fit-content;max-width:100%;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;padding-left:18px;padding-right:18px}
 .t-dark .btn-login:hover{filter:brightness(0.96)}
 .icon-btn{width:44px;height:44px;border-radius:14px;border:1px solid var(--glass-brd);background:var(--glass);backdrop-filter:blur(14px);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
 .icon-btn:hover{color:var(--ink)}
@@ -317,8 +319,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .vit-full:hover{background:var(--seg-on)}
 /* правая панель: вкладки «Витрина | Нейросети» */
 .vit-h .rp-tabs{flex:1 1 auto;min-width:0;display:flex;gap:2px;padding:3px;border-radius:14px;background:var(--seg-bg)}
-.rp-tab{flex:1 1 0;min-width:0;height:38px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 8px;border:0;border-radius:11px;background:transparent;color:var(--muted);font:600 14px 'Onest',sans-serif;cursor:pointer;white-space:nowrap}
-.rp-tab span{overflow:hidden;text-overflow:ellipsis}
+.rp-tab{flex:1 1 auto;min-width:max-content;height:38px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;border:0;border-radius:11px;background:transparent;color:var(--muted);font:600 14px 'Onest',sans-serif;cursor:pointer;white-space:nowrap}
+.rp-tab span{overflow:visible}
 .rp-tab[data-rp-tab=mcp]{flex:0 0 auto;padding:0 12px}
 .rp-tab svg{flex:0 0 auto}
 .rp-tab:hover{color:var(--ink)}
@@ -414,7 +416,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
   .composer button[type=submit] .sub-t,.composer .btn-submit .sub-t{display:none}
   .composer .btn-submit__ico{display:block;margin:0;flex:none}
   .rp-tab{padding:0 4px;gap:4px}
-  .rp-tab[data-rp-tab=mcp]{padding:0 8px}
+  .rp-tab[data-rp-tab=mcp]{padding:0 6px}
   #vit{
     position:fixed!important;inset:0!important;width:100%!important;max-width:none!important;min-width:0!important;flex:none!important;
     height:auto!important;max-height:none!important;border-radius:0!important;z-index:46!important;
@@ -624,7 +626,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
     <div class="vit-h">
       <div class="rp-tabs" role="tablist" aria-label="Правая панель" data-i18n-attr="aria-label:studio.rp.tabs">
         <button type="button" role="tab" id="rpTabVit" class="rp-tab" data-rp-tab="vit" aria-controls="rpVit" aria-selected="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect></svg><span data-i18n="studio.vit.title">Витрина</span></button>
-        <button type="button" role="tab" id="rpTabModels" class="rp-tab" data-rp-tab="models" aria-controls="rpModels" aria-selected="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7z"></path></svg><span data-i18n="studio.rp.models">Нейросети</span></button>
+        <button type="button" role="tab" id="rpTabModels" class="rp-tab" data-rp-tab="models" aria-controls="rpModels" aria-selected="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7z"></path></svg><span data-i18n="studio.rp.models">Список</span></button>
         <button type="button" role="tab" id="rpTabMcp" class="rp-tab" data-rp-tab="mcp" aria-controls="rpMcp" aria-selected="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0V8zM12 18v4"></path></svg><span data-i18n="studio.rp.mcp">MCP</span></button>
       </div>
       <button type="button" id="vitClose" class="icon-btn" aria-label="Закрыть панель" title="Закрыть" data-i18n-attr="aria-label:studio.rp.close;title:common.close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
@@ -669,15 +671,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 </div>
 
 
-<script src="/i18n/dict-ru.js?v=5"></script>
+<script src="/i18n/dict-ru.js?v=6"></script>
 <script src="/i18n/dict-en.js?v=5"></script>
 <script src="/i18n/runtime.js"></script>
 <script src="/vitrina-data.js"></script>
 <script src="/vitrina-camera-moves.js?v=3"></script>
 <script src="/vitrina-aishnitsa.js?v=14"></script>
-<script src="/assistant-ui.js?v=24"></script>
+<script src="/assistant-ui.js?v=25"></script>
 <script src="/attach.js?v=2"></script>
-<script src="/aish-mcp.js?v=1"></script>
+<script src="/aish-mcp.js?v=2"></script>
 <script src="/chat-history.js?v=9"></script>
 <script>
 /* Тема общая со витриной/профилем: localStorage aish-vitrina-theme (+ theme). ?theme= перекрывает. */
@@ -2000,6 +2002,18 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
   },
   onUiAction: (action, value) => {
     if (action === 'open_models') { app.openPanel(); return; }
+    // действия помощника (understand.py / modes.py): тема, вкладка справа, подключения MCP нужной категории
+    if (action === 'set_theme') { if (window.AishStyle) AishStyle.set(String(value || '')); return; }
+    if (action === 'open_panel') {
+      if (value === 'models') { app.openPanel(); return; }
+      if (window.rpShow) rpShow(value === 'mcp' ? 'mcp' : 'vit');
+      return;
+    }
+    if (action === 'open_mcp') {
+      if (window.AishMcp && AishMcp.studioCat) AishMcp.studioCat(String(value || 'all'));
+      if (window.rpShow) rpShow('mcp');
+      return;
+    }
     if (action === 'open_topup') {
       M('topup_click', { src: 'studio' });
       try {
@@ -2361,7 +2375,7 @@ function msgEl(m) {
     + pubBlock
     + (likeChip ? '<div style="display:flex;flex-wrap:wrap;gap:8px">' + likeChip + '</div>' : '')
     + (m.loginCta ? '<button type="button" class="btn-login" data-cta data-login style="height:40px;padding:0 18px;border-radius:12px;font-size:14px">' + esc(tr('studio.chat.loginRun')) + '</button>' : '')
-    + (m.topup ? '<a href="/account#balance" data-m-topup class="btn-purple" style="height:40px;padding:0 18px;border-radius:12px;font-size:14px;display:inline-flex;align-items:center;text-decoration:none">' + esc(tr('studio.chat.toBalance')) + '</a>' : '')
+    + (m.topup ? '<a href="/account#balance" data-m-topup class="btn-purple" style="height:40px;padding:0 18px;border-radius:12px;font-size:14px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none">' + esc(tr('studio.chat.toBalance')) + '</a>' : '')
     + (Array.isArray(m.chips) && m.chips.length
       ? '<div class="assist-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px">'
         + m.chips.slice(0, 5).map((c, i) => '<button type="button" class="field" data-assist-chip="' + i + '" style="height:34px;padding:0 12px;border-radius:999px;font:700 12px Onest,system-ui,sans-serif;cursor:pointer">' + esc(c.label || c.action || '') + '</button>').join('')

@@ -556,5 +556,11 @@
       }
     });
   }
-  window.AishMcp = { account: account, offer: offer, open: open, studio: studio, _reset: () => { btnCache = null; } };
+  /** Помощник ведёт в нужную категорию каталога («виральность», «монтаж», «reels»). */
+  function studioCat(cat) {
+    if (CATS.some((c) => c[0] === cat)) sp.cat = cat;
+    sp.open = '';
+    if (sp.el) spDraw();
+  }
+  window.AishMcp = { account: account, offer: offer, open: open, studio: studio, studioCat: studioCat, _reset: () => { btnCache = null; } };
 })();
