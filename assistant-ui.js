@@ -26,7 +26,8 @@
     reel_sheet: 1, reel_exit: 1,
     sb_start: 1, sb_noscript: 1, sb_answer: 1, sb_edit: 1, sb_frame: 1, sb_rebuild: 1, sb_setup: 1, sb_frames_view: 1, sb_back: 1, sb_exit: 1,
     pipe_result: 1, pipe_menu: 1, pipe_stage: 1, pipe_sub: 1, pipe_dialog_save: 1, pipe_video_plain: 1, pipe_voice_model: 1, pipe_summary: 1, pipe_arts: 1,
-    mode_start: 1, mode_input: 1, mode_next: 1, mode_back: 1, mode_redo: 1, mode_go: 1, mode_episode: 1, mode_exit: 1, mode_pause: 1, mode_resume: 1 };
+    mode_start: 1, mode_input: 1, mode_next: 1, mode_back: 1, mode_redo: 1, mode_go: 1, mode_episode: 1, mode_exit: 1, mode_pause: 1, mode_resume: 1,
+    tree_hint: 1, tree_event: 1 };   // дерево подсказок: клик по подсказке шага истории / событие под результатом
   var PIPE_TYPE_ICON = { prompt: '✍️', videoPrompt: '🎬', speechPrompt: '🎙', style: '{ }', hero: '👤', image: '🖼', board: '🎞', video: '🎬', voiceTrack: '🔊' };
   var KIND_ICON = { prompt: '✍️', image: '🖼', video: '🎬', music: '🎵', text: '✍️', sfx: '🔊', edit: '✏️' };
 
@@ -56,7 +57,7 @@
     function L(ru, en) { return lang === 'en' ? en : ru; }
 
     function chipBtn(c) {
-      var btn = el('button', 'aich-chip' + (c.primary ? ' aich-chip--primary' : '') + (c.action === 'reel_start' ? ' aich-chip--reel' : '') + (c.action === 'sb_start' ? ' aich-chip--sb' : ''), c.label);
+      var btn = el('button', 'aich-chip' + (c.primary ? ' aich-chip--primary' : '') + (c.action === 'reel_start' ? ' aich-chip--reel' : '') + (c.action === 'sb_start' ? ' aich-chip--sb' : '') + (c.action === 'tree_hint' ? ' aich-chip--tree' : ''), c.label);
       btn.type = 'button';
       if (c.action === 'choose_type' && KIND_ICON[c.value]) btn.textContent = KIND_ICON[c.value] + ' ' + c.label;
       btn.addEventListener('click', function () { onChip(c); });
@@ -923,6 +924,7 @@
       if (SERVER[c.action]) {
         M('assist_action', { action: c.action, value: short(c.value) });
         if (c.action === 'pick_model') M('model_pick', { model: short(c.value), src: 'assistant' });
+        if (c.action === 'tree_hint') M('tree_hint', { story: short(c.value && c.value.s), step: c.value && c.value.t, i: c.value && c.value.i });
         opts.onUser && opts.onUser(c.label);
         lastBody = { action: { type: c.action, value: c.value } };
         post(lastBody);
@@ -980,6 +982,12 @@
         return post(lastBody, false);
       },
       pipeExpect: function () { return pipeExpect; },
+      /** Событие под результатом для дерева подсказок: like · dislike · regen · error · topup_needed · download.
+       *  Помощник ответит коротко и предложит следующий шаг истории (если человек в истории); иначе ответ silent. */
+      treeEvent: function (name) {
+        if (busy || !name) return Promise.resolve(null);
+        return post({ action: { type: 'tree_event', value: { name: String(name) } } }, false);
+      },
       render: render,
       isBusy: function () { return busy; },
       form: function () { return form; }

@@ -89,12 +89,25 @@ def _safe_next(raw: str | None, default: str = "/app") -> str:
     return default
 
 
+def _public_base() -> str:
+    return (os.getenv("BASE_URL") or os.getenv("PUBLIC_BASE_URL") or "").strip().rstrip("/")
+
+
 def _google_redirect_uri() -> str:
     """Must match Authorized redirect URI in Google Cloud Console exactly."""
-    base = (os.getenv("BASE_URL") or os.getenv("PUBLIC_BASE_URL") or "").strip().rstrip("/")
+    base = _public_base()
     if base:
         return f"{base}/auth/google/callback"
     return url_for("google_oauth_callback", _external=True)
+
+
+def _oauth_redirect_uri(provider: str) -> str:
+    """Callback URL провайдера. Берётся из BASE_URL, а не из адреса в браузере,
+    чтобы localhost и 127.0.0.1 не расходились с тем, что указано в консоли."""
+    base = _public_base()
+    if base:
+        return f"{base}/api/auth/{provider}/callback"
+    return url_for("oauth_callback", provider=provider, _external=True)
 
 
 def _pkce_challenge(verifier: str) -> str:
@@ -477,10 +490,11 @@ def register_auth(app, db, User):
             return redirect(f"/auth?auth_error=oauth_not_configured&provider={quote(provider)}")
         nxt = _safe_next(request.args.get("next"), "/app")
         session["auth_next"] = nxt
+        session["oauth_consent"] = request.args.get("consent") == "1"
         state = secrets.token_urlsafe(24)
         session["oauth_state"] = state
         session["oauth_provider"] = provider
-        redirect_uri = url_for("oauth_callback", provider=provider, _external=True)
+        redirect_uri = _oauth_redirect_uri(provider)
         params = {
             "client_id": client_id,
             "redirect_uri": redirect_uri,
@@ -508,7 +522,7 @@ def register_auth(app, db, User):
         if not code:
             return redirect("/auth?auth_error=oauth_code")
 
-        redirect_uri = url_for("oauth_callback", provider=provider, _external=True)
+        redirect_uri = _oauth_redirect_uri(provider)
         try:
             if provider == "vk":
                 token_resp = requests.get(
@@ -544,6 +558,23 @@ def register_auth(app, db, User):
             return redirect("/auth?auth_error=oauth_failed")
 
         user = _upsert_oauth_user(db, User, provider, provider_id, email, name)
+        if session.pop("oauth_consent", None):
+            try:
+                for mapper in db.Model.registry.mappers:
+                    cls = mapper.class_
+                    if getattr(cls, "__tablename__", None) == "creator_profiles":
+                        prof = db.session.get(cls, user.id)
+                        if not prof:
+                            prof = cls(user_id=user.id)
+                            db.session.add(prof)
+                        prof.email_verified = True
+                        prof.consent_152 = True
+                        if name and hasattr(prof, "display_name") and not prof.display_name:
+                            prof.display_name = name[:120]
+                        db.session.commit()
+                        break
+            except Exception:
+                db.session.rollback()
         session.pop("oauth_state", None)
         session.pop("oauth_provider", None)
         session["user_id"] = user.id

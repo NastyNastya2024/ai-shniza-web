@@ -562,5 +562,7 @@
     sp.open = '';
     if (sp.el) spDraw();
   }
-  window.AishMcp = { account: account, offer: offer, open: open, studio: studio, studioCat: studioCat, _reset: () => { btnCache = null; } };
+  window.AishMcp = { account: account, offer: offer, open: open, studio: studio, studioCat: studioCat, _reset: () => { btnCache = null; },
+    /** Есть ли подключённые MCP (для подсказок помощника). null — список ещё не загружали. */
+    connected: () => (sp.loaded ? sp.list.length > 0 : null) };
 })();

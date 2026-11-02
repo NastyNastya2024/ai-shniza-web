@@ -249,3 +249,4 @@ div.reel-edit{display:block}
 .t-dark .pipe-method__step b{color:inherit}
 .pipe-method__arrow{align-self:center;opacity:.5}
 @media (max-width:560px){.pipe-arts__stage{grid-template-columns:1fr;gap:4px}.pipe-arts__name{padding-top:0}.pipe-method__arrow{display:none}}
+.aich-chip--tree{border-style:dashed}   /* подсказка шага истории (дерево подсказок) */

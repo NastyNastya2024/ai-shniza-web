@@ -87,7 +87,7 @@ T: dict[str, dict[str, str]] = {
     "theme_violet": {"ru": "🟣 Фиолетовая", "en": "🟣 Violet"},
     "theme_done": {"ru": "Переключила тему: {name}. Вернуть — кружок справа внизу или кнопки ниже.",
                    "en": "Theme switched: {name}. Switch back with the circle at the bottom right or the buttons below."},
-    "panel_models": {"ru": "Открыла список нейросетей справа.", "en": "Opened the model list on the right."},
+    "panel_models": {"ru": "Открыла вкладку «Модели» справа.", "en": "Opened the Models tab on the right."},
     "panel_mcp": {"ru": "Открыла вкладку «MCP» справа — подключения сервисов.", "en": "Opened the “MCP” tab on the right — service connections."},
     "panel_vit": {"ru": "Открыла витрину справа.", "en": "Opened the showcase on the right."},
     "new_chat_done": {"ru": "Начинаем заново.", "en": "Starting over."},

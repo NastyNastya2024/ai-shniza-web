@@ -29,6 +29,7 @@ from . import modes as MD
 from . import params as P
 from . import pipeline as PL
 from . import storyboard as SB
+from . import tree as TR
 from . import understand as UN
 from .cards import Card, load_cards
 from .lang import detect_lang
@@ -72,6 +73,10 @@ class AssistantDeps:
     catalog_fn: Callable[[str], bool] | None = None
     # слой 2 понимания (understand.py): непонятную правилам фразу разбирает нейросеть. В проде включён (ASSIST_UNDERSTAND_LLM)
     understand_llm: bool = False
+    # дерево подсказок (tree.HintTree): истории → шаги → реакции → подсказки. None — помощник работает без дерева
+    tree: Any = None
+    # запись событий дерева для админки (нехарактерные действия, новые пути); сервер пишет в БД
+    tree_log: Callable[[dict], None] | None = None
 
 
 def _norm(s: str) -> str:
@@ -114,6 +119,8 @@ class Assistant:
         ctx["attachments"] = files
         if any(f["kind"] == "image" for f in files):
             ctx["has_image"] = True
+        ctx["_files_changed"] = bool(files) and files != (ses.get("files") or [])
+        ctx["_tree_sid"] = sid
         if files != (ses.get("files") or []):
             ses["files_told"] = False                            # набор файлов поменялся — скажем о нём снова
         ses["files"] = files
@@ -126,12 +133,21 @@ class Assistant:
             if action and isinstance(action, dict) and action.get("type"):
                 if action.get("type") != "send":
                     ses["junk_count"] = 0
-                out = self._action(str(action["type"]), action.get("value"), ctx, ses, lang)
+                if action["type"] == "tree_hint":          # подсказка дерева: реакция + текст подсказки в ядро
+                    out = TR.hint_action(self, action.get("value"), ctx, ses, lang)
+                elif action["type"] == "tree_event":       # лайк / скачал / ошибка… под результатом
+                    out = TR.event_action(self, action.get("value"), ctx, ses, lang)
+                else:
+                    out = self._action(str(action["type"]), action.get("value"), ctx, ses, lang)
             else:
                 out = self._message(msg, ctx, ses, lang)
         except Exception:
             log.exception("assistant handler failed")
             out = response([_generic_error(lang)], [std_chip("retry", "retry", lang)], intent="internal_error")
+        try:                                # дерево подсказок: следующий шаг истории с учётом реакции и контекста
+            out = TR.on_turn(self, out, msg, action, ctx, ses, lang)
+        except Exception:
+            log.exception("assistant tree failed")
         out = MD.decorate(out, ses, lang)   # режим «Рилс» / «Сериал» идёт — под любым ответом «↩ вернуться к шагу»
         if not out.get("silent"):
             ses["last_chips"] = [{k: c.get(k) for k in ("label", "action", "value")} for c in out.get("chips", [])]
@@ -349,6 +365,8 @@ class Assistant:
     # ================================================================ понимание фразы
     def _understand(self, msg: str, ctx: dict, ses: dict, lang: str) -> dict | None:
         """None — фраза для обычного маршрута (router + флоу). Иначе — готовый ответ."""
+        if ctx.get("_tree_hint"):           # текст подсказки дерева — деталь задачи, а не команда интерфейса
+            return None
         it0 = route(msg, ctx, ses, self.titles)
         if it0.name == "ui_help" and not self._is_guest(ctx):
             u0 = UN.fast(msg, self.d.cards)

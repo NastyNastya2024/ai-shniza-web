@@ -5928,6 +5928,10 @@ register_assistant(
     account_fn=lambda _uid: _generate_account() if _generate_require_auth() else None,
 )
 
+# ── Дерево подсказок помощника: лог шагов историй, /admin/hint-tree (схема, нехарактерные, новое, версии) ──
+from hint_tree_routes import register_hint_tree  # noqa: E402
+register_hint_tree(app, db, User, ASSISTANT)
+
 # ── Скрепка: POST/GET/DELETE /api/uploads (файлы для генерации; записи — в Redis, иначе в памяти) ──
 register_uploads(app, redis_fn=_assist_redis)
 

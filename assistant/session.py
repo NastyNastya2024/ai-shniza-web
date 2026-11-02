@@ -61,6 +61,7 @@ def empty_session() -> dict[str, Any]:
         "gen_kind": None,    # тип генерации (video/image…), пока kind временно = text на шаге доработки
         "gen_model": None,   # id модели генерации, выбранной до брифа — после polish не спрашивать снова
         "polish_draft": "",  # промпт на шаге «доработать / использовать» — не терять при чате с Claude/GPT
+        "tree": None,        # дерево подсказок: {story, step, shown, ign, off, trail, ts, prof, pc} — см. tree.state()
         "polish_model": None,
         "prompt_gate": False,  # показывали ли «нужен промпт?» — для кнопки «Назад» с брифа
         "from_polish": False,  # список моделей после «Использовать этот промпт» (если модель ещё не была выбрана)

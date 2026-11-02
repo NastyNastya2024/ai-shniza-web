@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Дерево подсказок — {AI}-шница</title>
+<link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+<script src="/aish-style.js?v=3"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/aish-style.css?v=3">
+<style>
+/* Дерево подсказок: те же темы и токены, что у страницы метрик (admin-metrics.html). */
+:root{
+  --font-display:'Days One','Onest',system-ui,sans-serif; --font-sans:'Onest',system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r-pill:999px; --r-xl:28px; --r-lg:22px; --r-md:16px; --r-sm:12px; --r-xs:8px;
+  /* Белый — по умолчанию */
+  --ground:#ECECF3; --pearl:url(/assets/bg-white.jpg); --surface:#FFFFFF; --raised:#FFFFFF; --sunken:#F2F2F6; --hover:#E9E9F0;
+  --line:rgba(18,20,32,.10); --line-strong:rgba(18,20,32,.20); --ink:#0F1016; --ink2:#4B4D59; --ink3:#646673;
+  --sel:#0F1016; --on-sel:#FFFFFF;
+  --cta:linear-gradient(100deg,#FFC24A,#FF8A2B 55%,#F2668B); --on-cta:#17110A; --glow:0 10px 28px -10px rgba(255,138,43,.55);
+  --sh-sm:0 1px 2px rgba(18,20,32,.06),0 2px 8px -2px rgba(18,20,32,.08);
+  --sh-md:0 1px 2px rgba(18,20,32,.06),0 12px 32px -14px rgba(18,20,32,.18);
+  --sh-lg:0 2px 6px rgba(18,20,32,.05),0 28px 64px -24px rgba(18,20,32,.28);
+  --focus:0 0 0 3px rgba(255,138,43,.35);
+  --note-bg:#FFF1E0; --note-ink:#7A3E00;
+  /* данные (светлые поверхности) */
+  --s1:#2a78d6; --crit:#d03b3b; --grid:#e6e6ec; --axis:#c9c9d2; --wash:rgba(42,120,214,.10);
+  --o1:#86b6ef; --o2:#5598e7; --o3:#2a78d6; --o4:#1c5cab; --o5:#104281;
+}
+:root[data-style="light"]{
+  --ground:#EEEAF8; --pearl:url(/assets/bg-light.jpg); --surface:#FFFFFF; --raised:#FFFFFF; --sunken:#F4F1FC; --hover:#EDE8FA;
+  --line:rgba(80,60,160,.12); --line-strong:rgba(80,60,160,.22); --ink:#1E1238; --ink2:#5B4D93; --ink3:#6E62A3;
+  --sel:#1E1238; --on-sel:#FFFFFF;
+  --cta:linear-gradient(110deg,#FFA235,#FF7B2C 42%,#FF8F7E 74%,#F6AACF); --on-cta:#FFFFFF; --glow:0 14px 34px -12px rgba(240,110,130,.55);
+  --sh-sm:0 1px 2px rgba(75,43,184,.06),0 2px 8px -2px rgba(75,43,184,.10);
+  --sh-md:0 1px 2px rgba(75,43,184,.06),0 14px 34px -16px rgba(75,43,184,.28);
+  --sh-lg:0 2px 6px rgba(75,43,184,.06),0 30px 70px -24px rgba(75,43,184,.38);
+  --focus:0 0 0 3px rgba(91,53,224,.28);
+  --note-bg:#FFF0E4; --note-ink:#7A3410;
+  --grid:#ECE8F6; --axis:#D3CCEA;
+}
+:root[data-style="black"]{
+  --ground:#131415; --pearl:url(/assets/bg-black.jpg?v=3); --surface:#18191C; --raised:#202125; --sunken:#0F1012; --hover:#27282D;
+  --line:rgba(255,255,255,.08); --line-strong:rgba(255,255,255,.18); --ink:#F3F4F6; --ink2:#A8ABB2; --ink3:#8E9199;
+  --sel:#F3F4F6; --on-sel:#0F1016;
+  --cta:linear-gradient(100deg,#EEF784 0%,#DCEB4A 40%,#F4C548 74%,#FF9F45 100%); --on-cta:#11130A;
+  --glow:0 0 0 1px rgba(220,235,74,.2),0 12px 32px -10px rgba(246,168,64,.42);
+  --sh-sm:inset 0 1px 0 rgba(255,255,255,.05),0 2px 8px -2px rgba(0,0,0,.6);
+  --sh-md:inset 0 1px 0 rgba(255,255,255,.06),0 18px 40px -18px rgba(0,0,0,.9);
+  --sh-lg:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1px rgba(255,255,255,.04),0 32px 80px -24px #000;
+  --focus:0 0 0 3px rgba(220,235,74,.30);
+  --note-bg:rgba(244,197,72,.12); --note-ink:#F4D98A;
+}
+:root[data-style="violet"]{
+  --ground:#15122A; --pearl:url(/assets/bg-dark.jpg); --surface:#221C3E; --raised:#2E264E; --sunken:#1A1533; --hover:#3A3160;
+  --line:rgba(255,255,255,.14); --line-strong:rgba(255,255,255,.25); --ink:#F6F3FF; --ink2:#C9C0EE; --ink3:#A79DD6;
+  --sel:#F3EFFF; --on-sel:#1E1238;
+  --cta:linear-gradient(110deg,#FFA235,#FF7B2C 42%,#FF8F7E 74%,#F6AACF); --on-cta:#FFFFFF; --glow:0 14px 34px -12px rgba(240,110,130,.65);
+  --sh-sm:inset 0 1px 0 rgba(255,255,255,.08),0 2px 8px -2px rgba(0,0,0,.5);
+  --sh-md:inset 0 1px 0 rgba(255,255,255,.1),0 18px 40px -18px rgba(0,0,0,.85);
+  --sh-lg:inset 0 1px 0 rgba(255,255,255,.1),0 70px 140px -40px rgba(0,0,0,.9);
+  --focus:0 0 0 3px rgba(255,150,70,.35);
+  --note-bg:rgba(255,162,53,.14); --note-ink:#FFD3A1;
+}
+/* данные на тёмных поверхностях (Чёрный, Фиолетовый) */
+:root:is([data-style="black"],[data-style="violet"]){
+  --s1:#3987e5; --crit:#e66767; --grid:rgba(255,255,255,.07); --axis:rgba(255,255,255,.16); --wash:rgba(57,135,229,.16);
+  --o1:#1c5cab; --o2:#3987e5; --o3:#6da7ec; --o4:#9ec5f4; --o5:#cde2fb;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{background:var(--ground)}
+body{margin:0;min-height:100vh;color:var(--ink);font:15px/1.5 var(--font-sans);background:var(--ground) var(--pearl) center top/cover fixed no-repeat}
+a{color:inherit}
+.wrap{max-width:1280px;margin:0 auto;padding:20px 16px 60px}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;margin-bottom:14px}
+h1{font:400 24px/1.2 var(--font-display);margin:0}
+.muted{color:var(--ink3);font-size:13px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-sm);padding:16px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 14px}
+.tab{border:1px solid var(--line);background:var(--surface);color:var(--ink2);border-radius:var(--r-pill);padding:7px 14px;font:600 13px var(--font-sans);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--sel);color:var(--on-sel);border-color:var(--sel)}
+.btn{border:1px solid var(--line-strong);background:var(--raised);color:var(--ink);border-radius:var(--r-sm);padding:7px 12px;font:600 13px var(--font-sans);cursor:pointer}
+.btn:focus-visible,.tab:focus-visible,input:focus-visible,select:focus-visible{outline:none;box-shadow:var(--focus)}
+.btn.cta{background:var(--cta);color:var(--on-cta);border:0;box-shadow:var(--glow)}
+.btn.ghost{background:transparent}
+.draft{display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--note-bg);color:var(--note-ink);border-radius:var(--r-md);padding:10px 14px;margin-bottom:12px;font-weight:600}
+.draft.on{display:flex}
+.grid{display:grid;grid-template-columns:minmax(260px,380px) 1fr;gap:14px}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.tree{max-height:72vh;overflow:auto;padding-right:4px}
+.vec>summary,.sub>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:6px 6px;border-radius:var(--r-xs)}
+.vec>summary::-webkit-details-marker,.sub>summary::-webkit-details-marker{display:none}
+.vec>summary{font-weight:700}
+.vec>summary:hover,.sub>summary:hover,.st:hover{background:var(--hover)}
+.sub{margin-left:12px}
+.st{display:flex;align-items:center;gap:6px;margin-left:24px;padding:5px 6px;border-radius:var(--r-xs);cursor:pointer;font-size:14px;border:0;background:none;color:inherit;text-align:left;width:calc(100% - 24px)}
+.st[aria-current="true"]{background:var(--sunken);font-weight:600}
+.badge{font:700 11px var(--font-sans);border-radius:var(--r-pill);padding:1px 7px;background:var(--sunken);color:var(--ink2);white-space:nowrap}
+.badge.warn{background:var(--crit);color:#fff}
+.badge.low{background:transparent;border:1px dashed var(--line-strong)}
+.grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.steps{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.step{border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px;background:var(--raised)}
+.step h4{margin:0 0 8px;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-strong);border-radius:var(--r-pill);padding:4px 10px;font-size:13px;background:var(--surface)}
+.chip button{border:0;background:none;color:var(--ink3);cursor:pointer;font-size:14px;line-height:1;padding:0}
+.add{display:flex;gap:6px;margin-top:8px}
+input,select,textarea{font:14px var(--font-sans);color:var(--ink);background:var(--sunken);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 10px;min-width:0}
+input{flex:1}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--ink3);font-weight:600;font-size:12px}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.flag{color:var(--crit);font-weight:700}
+.hidden{display:none!important}
+.sbx{display:grid;grid-template-columns:1fr 200px auto;gap:8px}
+@media (max-width:640px){.sbx{grid-template-columns:1fr}}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;font-size:14px;margin-top:10px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--sel);color:var(--on-sel);padding:9px 16px;border-radius:var(--r-pill);font-weight:600;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+dialog{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);color:var(--ink);box-shadow:var(--sh-lg);max-width:560px;width:calc(100% - 32px)}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><a href="/admin" class="muted">← Админка</a><h1>Дерево подсказок</h1>
+      <div class="muted">Версия <b data-ver>—</b> · помощник ведёт по истории и подсказывает следующий шаг; вопросы сверх дерева отвечает сам</div></div>
+    <label class="muted">Период <select data-days><option value="1">1 день</option><option value="7" selected>7 дней</option><option value="30">30 дней</option><option value="90">90 дней</option></select></label>
+  </div>
+  <div class="draft" data-draft>Черновик <span data-draft-ver></span> — изменения ещё не видны людям.
+    <button class="btn cta" data-publish>Опубликовать</button><button class="btn ghost" data-discard>Сбросить</button></div>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-tab="scheme">Схема</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="atypical">Нехарактерные действия</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="new">Новое</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="sandbox">Песочница</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="versions">Версии</button>
+  </div>
+
+  <section data-pane="scheme" class="grid">
+    <div class="panel"><input data-filter placeholder="Найти историю или профессию" style="width:100%;margin-bottom:8px"><div class="tree" data-tree></div></div>
+    <div class="panel" data-card><div class="muted">Выберите историю слева: шаги, подсказки, примеры с витрины, нехарактерные действия на шагах.</div></div>
+  </section>
+
+  <section data-pane="atypical" class="panel hidden">
+    <p class="muted" style="margin-top:0">Человек в известной истории и на известном шаге сделал то, чего нет в подсказках. Красным — больше 5% на шаге (при 20+ проходах). «В подсказки» добавляет действие в черновик.</p>
+    <table><thead><tr><th>История · шаг</th><th>Действие</th><th class="num">Раз</th><th class="num">Доля</th><th></th></tr></thead><tbody data-atypical></tbody></table>
+  </section>
+
+  <section data-pane="new" class="panel hidden">
+    <p class="muted" style="margin-top:0">Новые пути: 3+ действия подряд вне каталога. Красным — 20+ разных диалогов за период. «Сделать историей» открывает мастер.</p>
+    <table><thead><tr><th>Путь</th><th class="num">Диалогов</th><th>Профессии</th><th></th></tr></thead><tbody data-paths></tbody></table>
+    <h3 style="font-size:15px;margin:18px 0 6px">Переходы между историями посреди шага</h3>
+    <table><thead><tr><th>Из</th><th>В</th><th class="num">Раз</th></tr></thead><tbody data-jumps></tbody></table>
+    <p class="muted" data-noprof></p>
+  </section>
+
+  <section data-pane="sandbox" class="panel hidden">
+    <div class="sbx"><input data-sb-text placeholder="Фраза пользователя, например «покажи клиенту 3 варианта кухни»"><select data-sb-prof><option value="">Профессия не указана</option></select><button class="btn cta" data-sb-go>Проверить</button></div>
+    <div data-sb-out class="muted" style="margin-top:12px">Показывает историю, подсказки по контекстам и реакциям — по черновику, если он есть.</div>
+  </section>
+
+  <section data-pane="versions" class="panel hidden">
+    <table><thead><tr><th>Версия</th><th>Статус</th><th>Что изменилось</th><th>Кто</th><th>Когда</th><th></th></tr></thead><tbody data-versions></tbody></table>
+  </section>
+</div>
+
+<dialog data-wizard>
+  <form method="dialog" data-wform>
+    <h3 style="margin-top:0">Новая история из лога</h3>
+    <div class="kv">
+      <label>Название</label><input name="title" required maxlength="80">
+      <label>Вектор</label><select name="vector" required></select>
+      <label>Подвектор</label><select name="sub" required></select>
+      <label>Профессии</label><input name="professions" placeholder="CRE.BLOG, MKT.SMM">
+      <label>Шаг 1</label><input name="s1" required placeholder="«фраза пользователя»">
+      <label>Подсказки 1</label><input name="h1" placeholder="через · точку">
+      <label>Шаг 2</label><input name="s2" placeholder="Результат">
+      <label>Подсказки 2</label><input name="h2" placeholder="Скачать · Ещё вариант">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px"><button class="btn ghost" value="cancel">Отмена</button><button class="btn cta" value="ok">В черновик</button></div>
+  </form>
+</dialog>
+<div class="toast" data-toast role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  async function csrf() { const m = document.cookie.match(/(?:^|; )csrf_token=([^;]+)/); if (m) return decodeURIComponent(m[1]); const r = await fetch('/api/csrf', { credentials: 'same-origin' }); return (await r.json()).csrf_token || ''; }
+  async function api(path, opts = {}) {
+    const method = (opts.method || 'GET').toUpperCase();
+    const headers = { 'Content-Type': 'application/json' };
+    if (method !== 'GET') headers['X-CSRF-Token'] = await csrf();
+    const res = await fetch(path, { credentials: 'same-origin', ...opts, headers });
+    return { res, data: await res.json().catch(() => ({})) };
+  }
+  function toast(t) { const n = $('[data-toast]'); n.textContent = t; n.classList.add('on'); setTimeout(() => n.classList.remove('on'), 2200); }
+  const days = () => $('[data-days]').value;
+  let S = { tree: null, counters: {}, current: null };
+
+  /* ---------- вкладки */
+  document.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => {
+    document.querySelectorAll('[data-tab]').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+    document.querySelectorAll('[data-pane]').forEach((p) => p.classList.toggle('hidden', p.dataset.pane !== b.dataset.tab));
+    ({ atypical: loadAtypical, new: loadNew, versions: loadVersions })[b.dataset.tab]?.();
+  }));
+
+  /* ---------- схема */
+  async function load() {
+    const { res, data } = await api('/api/admin/hint-tree?days=' + days());
+    if (!res.ok) { $('[data-tree]').textContent = 'Нет доступа (ADMIN_EMAILS)'; return; }
+    S.tree = data.tree; S.counters = data.counters || {};
+    $('[data-ver]').textContent = data.version;
+    $('[data-draft]').classList.toggle('on', !!data.draft);
+    $('[data-draft-ver]').textContent = data.draft ? 'v' + data.draft : '';
+    const sel = $('[data-sb-prof]');
+    if (sel.options.length === 1) (S.tree.professions || []).forEach((p) => sel.add(new Option(p.title + ' · ' + p.id, p.id)));
+    drawTree();
+  }
+  function drawTree() {
+    const q = ($('[data-filter]').value || '').trim().toLowerCase();
+    const root = $('[data-tree]');
+    root.innerHTML = '';
+    (S.tree.vectors || []).forEach((v) => {
+      let vRuns = 0, vOdd = 0, html = '';
+      v.subs.forEach((s) => {
+        const items = s.stories.filter((o) => !q || (o.title + ' ' + o.id + ' ' + (o.professions || []).join(' ')).toLowerCase().includes(q));
+        if (!items.length) return;
+        let sh = '';
+        items.forEach((o) => {
+          const c = S.counters[o.id] || {};
+          vRuns += c.starts || 0; vOdd += c.atypical || 0;
+          sh += `<button class="st" data-story="${esc(o.id)}" ${S.current === o.id ? 'aria-current="true"' : ''}>
+            <span class="grow">${esc(o.title)}</span>
+            ${o.priority === 'low' ? '<span class="badge low" title="Низкий приоритет">low</span>' : ''}
+            ${o.status === 'deprecated' ? '<span class="badge low">выкл</span>' : ''}
+            ${c.starts ? `<span class="badge" title="Начали историю">${c.starts}</span>` : ''}
+            ${c.atypical ? `<span class="badge warn" title="Нехарактерные действия">${c.atypical}</span>` : ''}</button>`;
+        });
+        html += `<details class="sub" ${q ? 'open' : ''}><summary><span class="grow">${esc(s.title)}</span><span class="muted">${items.length}</span></summary>${sh}</details>`;
+      });
+      if (!html) return;
+      const d = document.createElement('details');
+      d.className = 'vec'; if (q) d.open = true;
+      d.innerHTML = `<summary><span class="grow">${esc(v.title)} <span class="muted">${esc(v.id)}</span></span>${vRuns ? `<span class="badge">${vRuns}</span>` : ''}${vOdd ? `<span class="badge warn">${vOdd}</span>` : ''}</summary>${html}`;
+      root.appendChild(d);
+    });
+  }
+  $('[data-filter]').addEventListener('input', drawTree);
+  $('[data-tree]').addEventListener('click', (e) => { const b = e.target.closest('[data-story]'); if (b) openStory(b.dataset.story); });
+
+  async function openStory(id) {
+    S.current = id; drawTree();
+    const { data } = await api('/api/admin/hint-tree/story/' + encodeURIComponent(id) + '?days=' + days());
+    const o = data.story; if (!o) return;
+    const odd = {}; (data.atypical || []).forEach((a) => { (odd[a.step] = odd[a.step] || []).push(a); });
+    const card = $('[data-card]');
+    card.innerHTML = `<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <div><div class="muted">${esc(data.vector)} › ${esc(data.sub)} › ${esc(o.id)}${data.from_draft ? ' · из черновика' : ''}</div>
+        <h2 style="margin:2px 0 4px;font-size:18px">${esc(o.title)}</h2>
+        <div class="muted">Профессии: ${esc((o.professions || []).join(', ') || '—')} · приоритет ${esc(o.priority || 'normal')}</div></div>
+        <button class="btn ghost" data-status="${o.status === 'deprecated' ? 'active' : 'deprecated'}">${o.status === 'deprecated' ? 'Включить' : 'Выключить историю'}</button></div>
+      ${(data.examples || []).length ? `<div class="muted" style="margin-top:8px">Примеры с витрины: ${data.examples.map(esc).join(', ')}</div>` : ''}
+      <div class="steps">${o.steps.map((st, i) => `<div class="step" data-step="${i}"><h4>${i + 1}. ${esc(st.step)}</h4>
+          <div class="chips">${(st.hints || []).map((h, j) => `<span class="chip">${esc(h)}<button title="Убрать" data-del="${j}" aria-label="Убрать">×</button></span>`).join('')}</div>
+          <div class="add"><input placeholder="Новая подсказка" maxlength="80"><button class="btn" data-addh>Добавить</button></div>
+          ${(odd[i] || []).length ? `<div class="muted" style="margin-top:8px">Нехарактерные: ${(odd[i]).map((a) => `<button class="btn ghost" data-odd="${esc(a.label)}" title="Добавить в подсказки">${esc(a.label)} · ${a.count}</button>`).join(' ')}</div>` : ''}
+        </div>`).join('')}</div>`;
+    card.querySelectorAll('[data-step]').forEach((box) => {
+      const i = +box.dataset.step;
+      box.querySelector('[data-addh]').onclick = () => { const v = box.querySelector('input').value.trim(); if (v) draft({ op: 'add_hint', story: id, step: i, label: v }, id); };
+      box.querySelectorAll('[data-odd]').forEach((b) => b.onclick = () => draft({ op: 'add_hint', story: id, step: i, label: b.dataset.odd }, id));
+      box.querySelectorAll('[data-del]').forEach((b) => b.onclick = () => {
+        const hints = o.steps[i].hints.filter((_, j) => j !== +b.dataset.del);
+        if (!hints.length) { toast('На шаге нужна хотя бы одна подсказка'); return; }
+        draft({ op: 'edit_hints', story: id, step: i, hints }, id);
+      });
+    });
+    card.querySelector('[data-status]').onclick = (e) => draft({ op: 'set_status', story: id, status: e.target.dataset.status }, id);
+  }
+
+  async function draft(op, reopen) {
+    const { res, data } = await api('/api/admin/hint-tree/draft', { method: 'POST', body: JSON.stringify(op) });
+    if (!res.ok) { toast(data.error || 'Не получилось'); return; }
+    toast('В черновике v' + data.draft);
+    await load();
+    if (reopen) openStory(reopen);
+  }
+  $('[data-publish]').onclick = async () => {
+    const { res, data } = await api('/api/admin/hint-tree/publish', { method: 'POST', body: '{}' });
+    toast(res.ok ? 'Опубликовано: v' + data.active : (data.error || 'Ошибка')); load();
+  };
+  $('[data-discard]').onclick = async () => { await api('/api/admin/hint-tree/discard', { method: 'POST', body: '{}' }); toast('Черновик сброшен'); load(); };
+
+  /* ---------- нехарактерные */
+  async function loadAtypical() {
+    const { data } = await api('/api/admin/hint-tree/atypical?days=' + days());
+    const tb = $('[data-atypical]');
+    tb.innerHTML = (data.items || []).map((a) => `<tr><td><button class="btn ghost" data-go="${esc(a.story)}">${esc(a.story)}</button> · шаг ${a.step + 1}</td>
+      <td>${esc(a.label)}</td><td class="num">${a.count}</td><td class="num ${a.flag ? 'flag' : ''}">${Math.round(a.share * 100)}%</td>
+      <td><button class="btn" data-add='${esc(JSON.stringify({ op: 'add_hint', story: a.story, step: a.step, label: a.label }))}'>В подсказки</button></td></tr>`).join('')
+      || '<tr><td colspan="5" class="muted">За период нехарактерных действий нет</td></tr>';
+    tb.querySelectorAll('[data-add]').forEach((b) => b.onclick = () => draft(JSON.parse(b.dataset.add)));
+    tb.querySelectorAll('[data-go]').forEach((b) => b.onclick = () => { document.querySelector('[data-tab="scheme"]').click(); openStory(b.dataset.go); });
+  }
+
+  /* ---------- новое */
+  async function loadNew() {
+    const { data } = await api('/api/admin/hint-tree/new?days=' + days());
+    $('[data-paths]').innerHTML = (data.paths || []).map((p, i) => `<tr><td>${esc(p.signature)}<div class="muted">${(p.examples || []).map(esc).join('<br>')}</div></td>
+      <td class="num ${p.flag ? 'flag' : ''}">${p.dialogs}</td><td>${esc(Object.keys(p.professions || {}).join(', '))}</td>
+      <td><button class="btn" data-wiz="${i}">Сделать историей</button></td></tr>`).join('') || '<tr><td colspan="4" class="muted">Новых путей нет</td></tr>';
+    $('[data-jumps]').innerHTML = (data.jumps || []).map((j) => `<tr><td>${esc(j.from)}</td><td>${esc(j.to)}</td><td class="num">${j.count}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">—</td></tr>';
+    $('[data-noprof]').textContent = data.no_profession_starts ? `Историй начато без известной профессии: ${data.no_profession_starts}. Если их много в одном векторе — кандидат в новую группу пользователей (от 30 человек).` : '';
+    document.querySelectorAll('[data-wiz]').forEach((b) => b.onclick = () => wizard((data.paths || [])[+b.dataset.wiz]));
+  }
+  function wizard(p) {
+    const dlg = $('[data-wizard]'), f = $('[data-wform]');
+    const vs = f.vector, ss = f.sub;
+    vs.innerHTML = (S.tree.vectors || []).map((v) => `<option value="${esc(v.id)}">${esc(v.title)}</option>`).join('');
+    const fill = () => { const v = S.tree.vectors.find((x) => x.id === vs.value); ss.innerHTML = (v ? v.subs : []).map((s) => `<option value="${esc(s.id)}">${esc(s.title)}</option>`).join(''); };
+    vs.onchange = fill; fill();
+    const ex = (p && p.examples && p.examples[0]) || '';
+    f.title.value = ''; f.professions.value = Object.keys((p && p.professions) || {}).filter((x) => x !== '—').join(', ');
+    f.s1.value = ex ? '«' + ex.split(' → ')[0] + '»' : ''; f.h1.value = ex.split(' → ').slice(1).join(' · ');
+    dlg.showModal();
+    dlg.onclose = () => {
+      if (dlg.returnValue !== 'ok') return;
+      const steps = [{ step: f.s1.value, hints: f.h1.value.split('·').map((x) => x.trim()).filter(Boolean) }];
+      if (f.s2.value.trim()) steps.push({ step: f.s2.value, hints: f.h2.value.split('·').map((x) => x.trim()).filter(Boolean) });
+      draft({ op: 'add_story', vector: vs.value, sub: ss.value, title: f.title.value, steps,
+        professions: f.professions.value.split(',').map((x) => x.trim().toUpperCase()).filter(Boolean), note: 'история из лога' });
+    };
+  }
+
+  /* ---------- песочница */
+  $('[data-sb-go]').onclick = async () => {
+    const out = $('[data-sb-out]');
+    const { data } = await api('/api/admin/hint-tree/sandbox', { method: 'POST', body: JSON.stringify({ text: $('[data-sb-text]').value, profession: $('[data-sb-prof]').value }) });
+    if (!data.story) {
+      out.innerHTML = data.out ? `Не история, а просьба вне платформы (${esc(data.out.id)}): <b>${esc(data.out.reaction)}</b>` : `История не найдена (оценка ${data.score}). Помощник ответит сам; если таких фраз много — появятся во вкладке «Новое».`;
+      return;
+    }
+    const s = data.story;
+    const row = (k, v) => `<tr><td>${esc(k)}</td><td>${(v || []).map((h) => `<span class="chip">${esc(h)}</span>`).join(' ')}</td></tr>`;
+    out.innerHTML = `<div><b>${esc(s.title)}</b> <span class="muted">${esc(s.id)} · оценка ${data.score} · v${esc(data.version)}${data.from_draft ? ' (черновик)' : ''}</span></div>
+      <table style="margin-top:8px"><thead><tr><th>Контекст</th><th>Первые подсказки</th></tr></thead><tbody>${Object.entries(data.contexts).map(([k, v]) => row(k, v)).join('')}</tbody></table>
+      <table style="margin-top:8px"><thead><tr><th>Реакция</th><th>Что покажем</th></tr></thead><tbody>${Object.entries(data.reactions).map(([k, v]) => row(k, v)).join('')}</tbody></table>`;
+  };
+
+  /* ---------- версии */
+  async function loadVersions() {
+    const { data } = await api('/api/admin/hint-tree/versions');
+    $('[data-versions]').innerHTML = (data.items || []).map((v) => `<tr><td>v${esc(v.version)}${v.version === data.active ? ' <span class="badge">сейчас</span>' : ''}</td>
+      <td>${esc(v.status)}</td><td>${esc(v.note)}</td><td>${esc(v.by)}</td><td>${esc((v.published_at || v.created_at || '').slice(0, 16).replace('T', ' '))}</td>
+      <td>${v.status === 'archived' ? `<button class="btn" data-rb="${esc(v.version)}">Откатить сюда</button>` : ''}
+          <a class="btn ghost" href="/api/admin/hint-tree/export?version=${encodeURIComponent(v.version)}">JSON</a></td></tr>`).join('')
+      || `<tr><td colspan="6" class="muted">Пока только встроенная версия v${esc(data.active)}. Первая правка создаст черновик.</td></tr>`;
+    document.querySelectorAll('[data-rb]').forEach((b) => b.onclick = async () => {
+      const { res, data: d } = await api('/api/admin/hint-tree/rollback', { method: 'POST', body: JSON.stringify({ version: b.dataset.rb }) });
+      toast(res.ok ? 'Активна v' + d.active : (d.error || 'Ошибка')); load(); loadVersions();
+    });
+  }
+
+  $('[data-days]').addEventListener('change', load);
+  load();
+})();
+</script>
+</body>
+</html>

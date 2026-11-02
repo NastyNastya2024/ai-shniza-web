@@ -59,6 +59,7 @@ h1{margin:0;font-family:'Days One',sans-serif;font-weight:400;font-size:clamp(28
 
 .rule{height:1px;margin:22px 0 0;border:0;border-radius:1px;background:var(--field-hover)}
 .gbtn{width:100%;height:54px;border-radius:16px;border:1.5px solid var(--field-brd);background:var(--field);color:var(--ink);display:flex;align-items:center;justify-content:center;gap:12px;font-weight:600;font-size:16px;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s;margin-top:22px}
+.gbtn+.gbtn{margin-top:10px}
 .gbtn:hover{border-color:var(--field-hover);box-shadow:0 10px 24px -16px var(--shadow)}
 .gbtn[disabled]{cursor:progress;opacity:.8}
 .consent-pop{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,16,22,.55)}
@@ -254,7 +255,7 @@ const NEXT = (() => {
   if (!n || !n.startsWith('/') || n.startsWith('//') || n.startsWith('/\\')) return '/app';
   return n;
 })();
-const S = { step: 'email', email: '', consent: false, ask: '', tab: 'consent', doc: '', docErr: false, err: '', errField: '', busy: false, google: false, code: '', attempts: 0, locked: false, resendIn: 0 };
+const S = { step: 'email', email: '', consent: false, ask: '', tab: 'consent', doc: '', docErr: false, err: '', errField: '', busy: false, google: false, yandex: false, code: '', attempts: 0, locked: false, resendIn: 0 };
 const TAB_PATH = { privacy: '/legal/privacy.html', terms: '/legal/terms.html' };
 const DOC_OK = /^\/legal\/[a-z0-9-]+\.html$/;
 const docCache = {};
@@ -324,10 +325,11 @@ const authApi = {
   },
 };
 const tr = (k, p) => AISH_I18N.t(k, p);
-const SAY_KEYS = ['hello', 'typing', 'badEmail', 'consent', 'sending', 'sendErr', 'code', 'codeErr', 'locked', 'resend', 'pw', 'peek', 'pwErr', 'forgot', 'google', 'googleErr', 'checking', 'done'];
+const SAY_KEYS = ['hello', 'typing', 'badEmail', 'consent', 'sending', 'sendErr', 'code', 'codeErr', 'locked', 'resend', 'pw', 'peek', 'pwErr', 'forgot', 'google', 'yandex', 'googleErr', 'checking', 'done'];
 let mood = '';
 const ICON = {
   g: '<svg width="22" height="22" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>',
+  ya: '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#FC3F1D"/><text x="12" y="16.6" text-anchor="middle" font-family="Manrope,Arial,sans-serif" font-size="15" font-weight="700" fill="#fff">Я</text></svg>',
   alert: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>',
   eye: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
   eyeOff: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.9 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 4.4-1.1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
@@ -373,13 +375,15 @@ function render() {
   if (S.step === 'email') {
     const eErr = S.err && S.errField === 'email';
     h += '<h1 id="t">' + esc(tr('auth.heading.code')) + '</h1><p class="sub">' + esc(tr('auth.sub.code')).replace(/\n/g, '<br>') + '</p>';
-    if (S.err && (S.errField === 'send' || S.errField === 'google')) h += '<div class="banner" role="alert">' + ICON.alert + '<span>' + esc(S.err) + '</span></div><div style="height:16px"></div>';
+    if (S.err && (S.errField === 'send' || S.errField === 'google' || S.errField === 'yandex')) h += '<div class="banner" role="alert">' + ICON.alert + '<span>' + esc(S.err) + '</span></div><div style="height:16px"></div>';
     h += '<form id="f" novalidate>'
       + '<div class="fld' + (eErr ? ' err' : '') + '"><label class="sr" for="em">' + esc(tr('auth.email.label')) + '</label><div class="inp"><input id="em" type="email" inputmode="email" autocomplete="email" placeholder="' + esc(tr('auth.email.label')) + '" value="' + esc(S.email) + '"' + (eErr ? ' aria-invalid="true" aria-describedby="emE"' : '') + '></div>'
       + (eErr ? '<div class="msg" id="emE" role="alert">' + ICON.alert + esc(S.err) + '</div>' : '') + '</div>';
     h += '<button class="btn btn-p' + (S.busy ? ' busy' : '') + '" type="submit"' + (S.busy ? ' disabled' : '') + '>' + (S.busy ? '<span class="spin"></span>' + esc(tr('auth.submit.sending')) : esc(S.errField === 'send' ? tr('auth.submit.retry') : tr('auth.submit.getCode'))) + '</button></form>';
     h += '<div class="rule" role="separator"></div>';
-    h += '<button class="gbtn" type="button" id="g"' + (S.google ? ' disabled' : '') + '>' + (S.google ? '<span class="spin" style="color:var(--muted)"></span>' + esc(tr('auth.google.busy')) : ICON.g + esc(tr('auth.google'))) + '</button>';
+    const socBusy = S.google || S.yandex;
+    h += '<button class="gbtn" type="button" id="g"' + (socBusy ? ' disabled' : '') + '>' + (S.google ? '<span class="spin" style="color:var(--muted)"></span>' + esc(tr('auth.google.busy')) : ICON.g + esc(tr('auth.google'))) + '</button>';
+    h += '<button class="gbtn" type="button" id="ya"' + (socBusy ? ' disabled' : '') + '>' + (S.yandex ? '<span class="spin" style="color:var(--muted)"></span>' + esc(tr('auth.yandex.busy')) : ICON.ya + esc(tr('auth.yandex'))) + '</button>';
     if (S.ask) h += consentPop();
   } else if (S.step === 'code') {
     const bad = S.err && !S.locked;
@@ -435,6 +439,7 @@ function bind() {
     if (e.target === pop) closeConsent();
   });
   on('g', 'click', google);
+  on('ya', 'click', yandex);
   on('bk', 'click', () => { Object.assign(S, { step: 'email', code: '', err: '', errField: '', locked: false, attempts: 0 }); render(); speak('hello'); $('em') && $('em').focus(); });
   on('cd', 'input', (e) => { S.code = e.target.value.replace(/\D/g, '').slice(0, 6); if (!S.locked) S.err = ''; render(); $('cd').focus(); if (S.code.length === 6) later('auto', 250, submitCode); });
   on('cdGo', 'click', submitCode);
@@ -447,7 +452,7 @@ function bind() {
   });
 }
 function placeEnd(el) { try { el.setSelectionRange(el.value.length, el.value.length); } catch (e) {} }
-function fail(field, msg, say) { Object.assign(S, { busy: false, google: false, err: msg, errField: field }); render(); speak(say, 'squint', 'wobble'); const el = field === 'email' ? $('em') : null; if (el) el.focus(); }
+function fail(field, msg, say) { Object.assign(S, { busy: false, google: false, yandex: false, err: msg, errField: field }); render(); speak(say, 'squint', 'wobble'); const el = field === 'email' ? $('em') : null; if (el) el.focus(); }
 
 function closeConsent() { S.ask = ''; S.doc = ''; S.tab = 'consent'; render(); }
 function askConsent(kind) {
@@ -459,6 +464,7 @@ function acceptConsent() {
   const kind = S.ask;
   S.consent = true; S.ask = ''; S.doc = ''; S.tab = 'consent';
   if (kind === 'google') google();
+  else if (kind === 'yandex') yandex();
   else sendCode();
 }
 async function submitEmail(e) {
@@ -498,9 +504,16 @@ function google() {
   try { if (window.AishM) AishM.track('auth_ok', { method: 'google_start' }); } catch (_) {}
   setTimeout(() => { location.href = '/api/auth/google?' + q; }, 350);
 }
+function yandex() {
+  if (!S.consent) return askConsent('yandex');
+  S.ask = ''; S.yandex = true; S.err = ''; S.errField = ''; render(); speak('yandex', '', 'cook');
+  const q = new URLSearchParams({ next: NEXT, consent: '1' });
+  try { if (window.AishM) AishM.track('auth_ok', { method: 'yandex_start' }); } catch (_) {}
+  setTimeout(() => { location.href = '/api/auth/yandex?' + q; }, 350);
+}
 function success() {
   try { if (window.AishM) AishM.track('auth_ok', { method: S.step === 'code' ? 'code' : String(S.step || '') }); } catch (_) {}
-  Object.assign(S, { busy: false, google: false, step: 'done', err: '' });
+  Object.assign(S, { busy: false, google: false, yandex: false, step: 'done', err: '' });
   render();
   speak('done', 'happy', 'jump');
   later('go', 1400, () => { location.href = NEXT; });

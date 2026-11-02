@@ -40,6 +40,11 @@ CTX_SCHEMA: dict[str, tuple[type, int]] = {
     "job_failover": (bool, 0),
     "draft": (str, 1000),
     "lang": (str, 2),
+    # для дерева подсказок (контекст листа): телефон, подключены ли MCP, есть ли сохранённые стили, профессия из профиля
+    "device": (str, 8),            # mobile | desktop
+    "mcp_connected": (bool, 0),
+    "saved_styles": (bool, 0),
+    "profession": (str, 16),       # код из справочника профессий (DES.INTER, MKT.PERF…), меняет только порядок подсказок
 }
 
 
@@ -141,7 +146,8 @@ def build_from_env(models: dict[str, dict] | None = None, price_fn: Callable[[st
                    env: dict[str, str] | None = None, transport: Any = None,
                    on_event: Callable[[dict], None] | None = None,
                    cost_fn: Callable[[str, dict], "int | None"] | None = None,
-                   visible_fn: Callable[[str], bool] | None = None) -> Assistant:
+                   visible_fn: Callable[[str], bool] | None = None,
+                   tree_log: Callable[[dict], None] | None = None) -> Assistant:
     """cost_fn(model_id, params) → цена запуска в копейках (как будет считать биллинг). None — посчитаем из price_fn.
     visible_fn(model_id) → модель открыта в студии; на этапах проекта помощник советует только такие."""
     e = env if env is not None else os.environ
@@ -170,8 +176,24 @@ def build_from_env(models: dict[str, dict] | None = None, price_fn: Callable[[st
         brief=(e.get("ASSIST_BRIEF") or "1").strip().lower() not in {"0", "false", "no"},
         # непонятную правилам фразу («включи мне клода») разбирает нейросеть помощника; 0 — только правила
         understand_llm=(e.get("ASSIST_UNDERSTAND_LLM") or "1").strip().lower() not in {"0", "false", "no"},
+        tree=load_tree(e),
+        tree_log=tree_log,
     )
     return Assistant(deps)
+
+
+def load_tree(env: dict[str, str] | None = None):
+    """Дерево подсказок: ASSIST_TREE=0 — выключить; ASSIST_TREE_PATH — другой файл. Битый файл не роняет помощника."""
+    from .tree import HintTree
+
+    e = env if env is not None else os.environ
+    if (e.get("ASSIST_TREE") or "1").strip().lower() in {"0", "false", "no"}:
+        return None
+    try:
+        return HintTree.load_json(e.get("ASSIST_TREE_PATH") or None)
+    except Exception:
+        log.exception("assistant: hint tree not loaded")
+        return None
 
 
 def metrics_hook(db: Any, metric_model: Any) -> Callable[[dict], None]:
@@ -267,6 +289,7 @@ def status(assistant: Assistant, account_check: bool | None = None) -> dict[str,
         "deadline_sec": chain.deadline_sec if chain else None,
         "session_store": store, "redis": redis_ok,
         "cards": len(d.cards),
+        "hint_tree": getattr(d.tree, "version", None),
         "account_check": "on" if (d.account_check if account_check is None else account_check) else "off",
         "hint": None if (d.llm and d.llm.available) else
         "LLM выключена: нет ни одного провайдера с ключом и моделью → промпты собираются по шаблону. "

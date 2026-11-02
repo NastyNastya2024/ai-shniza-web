@@ -626,7 +626,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
     <div class="vit-h">
       <div class="rp-tabs" role="tablist" aria-label="Правая панель" data-i18n-attr="aria-label:studio.rp.tabs">
         <button type="button" role="tab" id="rpTabVit" class="rp-tab" data-rp-tab="vit" aria-controls="rpVit" aria-selected="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect></svg><span data-i18n="studio.vit.title">Витрина</span></button>
-        <button type="button" role="tab" id="rpTabModels" class="rp-tab" data-rp-tab="models" aria-controls="rpModels" aria-selected="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7z"></path></svg><span data-i18n="studio.rp.models">Список</span></button>
+        <button type="button" role="tab" id="rpTabModels" class="rp-tab" data-rp-tab="models" aria-controls="rpModels" aria-selected="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7z"></path></svg><span data-i18n="studio.rp.models">Модели</span></button>
         <button type="button" role="tab" id="rpTabMcp" class="rp-tab" data-rp-tab="mcp" aria-controls="rpMcp" aria-selected="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0V8zM12 18v4"></path></svg><span data-i18n="studio.rp.mcp">MCP</span></button>
       </div>
       <button type="button" id="vitClose" class="icon-btn" aria-label="Закрыть панель" title="Закрыть" data-i18n-attr="aria-label:studio.rp.close;title:common.close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
@@ -671,7 +671,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 </div>
 
 
-<script src="/i18n/dict-ru.js?v=6"></script>
+<script src="/i18n/dict-ru.js?v=7"></script>
 <script src="/i18n/dict-en.js?v=5"></script>
 <script src="/i18n/runtime.js"></script>
 <script src="/vitrina-data.js"></script>
@@ -1909,6 +1909,10 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
       // скрепка: тип и имя готовых файлов — ассистент называет их по имени в ответах и сводке
       attachments: window.AishAttach ? AishAttach.ready().map((f) => ({ kind: f.kind, name: f.name })) : [],
       draft: app.state.text || '',
+      // дерево подсказок: телефон → до 3 кнопок; нет MCP → «Подключить…»; профессия из профиля меняет порядок подсказок
+      device: (window.matchMedia && matchMedia('(max-width: 760px)').matches) ? 'mobile' : 'desktop',
+      mcp_connected: (window.AishMcp && AishMcp.connected && AishMcp.connected() !== null) ? AishMcp.connected() : undefined,
+      profession: (app.profile && app.profile.profession) || '',
     }, app.lastJobCtx || {}, {
       lang: uiLang === 'en' ? 'en' : 'ru',   // язык ответов помощника = язык интерфейса (всегда поверх)
     });
@@ -2021,6 +2025,13 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
         localStorage.setItem('aish-assist-resume', String(Date.now()));
       } catch (e) {}
       location.href = '/account#balance';
+      return;
+    }
+    // пример с открытым промптом (движение камеры / официальная работа) — в боковой витрине, без ухода со страницы
+    if (action === 'open_work') {
+      const id = String(value || '');
+      if (window.vitOpenWork && window.vitOpenWork(id)) return;
+      location.href = '/explore?work=' + encodeURIComponent(id);
       return;
     }
     if (action === 'open_vitrina') {
@@ -2465,6 +2476,9 @@ document.addEventListener('click', async (e) => {
     if (app.eggy && app.eggy.resume) await app.eggy.resume();
     return;
   }
+  // дерево подсказок: скачал результат — значит принят, помощник предложит следующий шаг истории
+  const dl = e.target.closest('a[download]');
+  if (dl && dl.closest('#chat, [data-chat-scroll]') && app.eggy && app.eggy.treeEvent) { try { app.eggy.treeEvent('download'); } catch (_) {} }
   const likeBtn = e.target.closest('[data-like-work]');
   if (likeBtn) {
     e.preventDefault();
@@ -2479,6 +2493,7 @@ document.addEventListener('click', async (e) => {
         return;
       }
       const on = !!data.liked;
+      if (on && app.eggy && app.eggy.treeEvent) { try { app.eggy.treeEvent('like'); } catch (_) {} }   // дерево: лайк → следующий шаг истории
       likeBtn.classList.toggle('is-on', on);
       likeBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
       likeBtn.style.borderColor = on ? '#E0457B' : '';

@@ -199,6 +199,8 @@ ANSWER_SYSTEM = (
     "You are the friendly assistant of {AI}-shnitsa, a studio of generative AI models. Answer the user's question in "
     "{lang}, 1-4 short sentences, concrete and practical. Use ONLY the facts below (models with prices, interface "
     "help, modes). If the facts do not cover it, say so briefly and suggest the closest thing the studio can do. "
+    "If CONTEXT names the user's current story and step, keep the answer consistent with it and end on that step. "
+    "Never name the studio's internal architecture, API suppliers or routing services; talk about models and prices only. "
     "Return JSON only: {\"answer\": text, \"models\": [up to 3 model ids from FACTS that fit the question, or []]}."
 )
 
@@ -222,7 +224,7 @@ def facts(a: Any, lang: str) -> str:
         lines.append(f"- {c.id}: {c.title} ({c.kind}{', ' + price if price else ''})")
     ui = [f"- {k}: " + " ".join(v.get("ru") or []) for k, v in HELP.items()]
     ui += ["- themes: кружок справа внизу — Белая, Чёрная, Светлая, Фиолетовая; помощник может переключить сам.",
-           "- panel: справа вкладки Витрина, Список (каталог нейросетей), MCP (подключения сервисов: vidIQ, Higgsfield — прогноз виральности, Dropbox, 3D)."]
+           "- panel: справа вкладки Витрина, Модели (каталог нейросетей), MCP (подключения сервисов: vidIQ, Higgsfield — прогноз виральности, Dropbox, 3D)."]
     modes = ["- режим «Рилс»: идея → сценарий с хуком → раскадровка → видео → озвучка/музыка → монтаж → прогноз виральности → публикация.",
              "- режим «Сериал»: мир и герои → портреты героев → сценарий серии → раскадровка → видео → следующая серия с теми же героями."]
     return "MODELS:\n" + "\n".join(lines)[:3500] + "\nINTERFACE:\n" + "\n".join(ui)[:2500] + "\nMODES:\n" + "\n".join(modes)
@@ -230,5 +232,7 @@ def facts(a: Any, lang: str) -> str:
 
 def answer_llm(a: Any, question: str, ses: dict, lang: str) -> dict | None:
     system = ANSWER_SYSTEM.replace("{lang}", "Russian" if lang == "ru" else "English")
-    return a._llm_json(system, facts(a, lang) + "\n\nQUESTION: " + question[:600], _v_answer(a.d.cards), ses,
-                       max_tokens=320, task="answer")
+    from .tree import context_text
+    tctx = context_text(ses, getattr(a.d, "tree", None))
+    return a._llm_json(system, facts(a, lang) + ("\n\n" + tctx if tctx else "") + "\n\nQUESTION: " + question[:600],
+                       _v_answer(a.d.cards), ses, max_tokens=320, task="answer")
