@@ -1,0 +1,663 @@
+{
+  "seedance-2-5": {
+    "id": "seedance-2-5",
+    "kind": "video",
+    "inputs": [
+      "text",
+      "image"
+    ],
+    "max_sec": 30,
+    "aspects": [
+      "16:9",
+      "9:16",
+      "1:1"
+    ],
+    "audio": "native",
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "видео со звуком, до 30 с"
+  },
+  "wan-3-0": {
+    "id": "wan-3-0",
+    "kind": "video",
+    "inputs": [
+      "text",
+      "image"
+    ],
+    "max_sec": 30,
+    "aspects": [
+      "16:9",
+      "9:16",
+      "1:1"
+    ],
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "дёшево, 480p–1080p, до 30 с"
+  },
+  "veo-3-1": {
+    "id": "veo-3-1",
+    "kind": "video",
+    "inputs": [
+      "text",
+      "image"
+    ],
+    "max_sec": 8,
+    "aspects": [
+      "16:9",
+      "9:16"
+    ],
+    "audio": "native",
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "кино-картинка, речь и звук"
+  },
+  "veo-3-1-fast": {
+    "id": "veo-3-1-fast",
+    "kind": "video",
+    "inputs": [
+      "text",
+      "image"
+    ],
+    "max_sec": 8,
+    "aspects": [
+      "16:9",
+      "9:16"
+    ],
+    "audio": "native",
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "как Veo 3.1, быстрее и дешевле"
+  },
+  "kling-v2-5-turbo-pro": {
+    "id": "kling-v2-5-turbo-pro",
+    "kind": "video",
+    "inputs": [
+      "text",
+      "image"
+    ],
+    "max_sec": 10,
+    "aspects": [
+      "16:9",
+      "9:16",
+      "1:1"
+    ],
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "плавное движение и камера"
+  },
+  "kling-v3-0-hf": {
+    "id": "kling-v3-0-hf",
+    "kind": "video",
+    "inputs": [
+      "text",
+      "image"
+    ],
+    "max_sec": 15,
+    "aspects": [
+      "16:9",
+      "9:16",
+      "1:1"
+    ],
+    "audio": "native",
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "Kling 3.0 Pro со звуком, до 15 с"
+  },
+  "pixverse-v6": {
+    "id": "pixverse-v6",
+    "kind": "video",
+    "inputs": [
+      "text",
+      "image"
+    ],
+    "max_sec": 10,
+    "aspects": [
+      "16:9",
+      "9:16",
+      "1:1"
+    ],
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "яркая стилизация, 360p–1080p"
+  },
+  "p-video": {
+    "id": "p-video",
+    "kind": "video",
+    "inputs": [
+      "text",
+      "image"
+    ],
+    "max_sec": 20,
+    "aspects": [
+      "16:9",
+      "9:16",
+      "1:1"
+    ],
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "очень дёшево, черновики до 20 с"
+  },
+  "hailuo-02": {
+    "id": "hailuo-02",
+    "kind": "video",
+    "inputs": [
+      "text",
+      "image"
+    ],
+    "max_sec": 10,
+    "aspects": null,
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "динамика, точно по промпту"
+  },
+  "gemini-omni-flash": {
+    "id": "gemini-omni-flash",
+    "kind": "video",
+    "inputs": [
+      "text"
+    ],
+    "max_sec": 8,
+    "aspects": [
+      "16:9",
+      "9:16",
+      "1:1"
+    ],
+    "audio": "native",
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "видео со звуком, сильная физика и следование промпту"
+  },
+  "soul-cinema": {
+    "id": "soul-cinema",
+    "kind": "image",
+    "inputs": [
+      "text",
+      "image"
+    ],
+    "max_sec": null,
+    "aspects": [
+      "16:9",
+      "9:16",
+      "1:1"
+    ],
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "киношные кадры, зерно, свет, mood как у фильма"
+  },
+  "minimax-h3": {
+    "id": "minimax-h3",
+    "kind": "video",
+    "inputs": [
+      "text",
+      "image"
+    ],
+    "max_sec": 15,
+    "aspects": null,
+    "audio": "native",
+    "text_render": 3,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "мультимодальность: текст, кадры и референсы, звук, до 2K"
+  },
+  "grok-imagine-video-1-5": {
+    "id": "grok-imagine-video-1-5",
+    "kind": "video",
+    "inputs": [
+      "image"
+    ],
+    "max_sec": 15,
+    "aspects": null,
+    "audio": "native",
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "оживляет фото, со звуком"
+  },
+  "gen4-turbo": {
+    "id": "gen4-turbo",
+    "kind": "video",
+    "inputs": [
+      "image"
+    ],
+    "max_sec": 10,
+    "aspects": null,
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "быстро оживляет фото, 720p"
+  },
+  "seedream-5-pro": {
+    "id": "seedream-5-pro",
+    "kind": "image",
+    "inputs": [
+      "text",
+      "image"
+    ],
+    "max_sec": null,
+    "aspects": [
+      "1:1",
+      "3:4",
+      "4:3",
+      "9:16",
+      "16:9"
+    ],
+    "audio": null,
+    "text_render": 3,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "детали и текст на картинке, 2K"
+  },
+  "gpt-image-2": {
+    "id": "gpt-image-2",
+    "kind": "image",
+    "inputs": [
+      "text",
+      "image"
+    ],
+    "max_sec": null,
+    "aspects": [
+      "1:1",
+      "3:2",
+      "2:3"
+    ],
+    "audio": null,
+    "text_render": 2,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "иллюстрации, макеты, инфографика"
+  },
+  "gpt-image-2-5-flare": {
+    "id": "gpt-image-2-5-flare",
+    "kind": "image",
+    "inputs": [
+      "text",
+      "image"
+    ],
+    "max_sec": null,
+    "aspects": [
+      "1:1",
+      "3:2",
+      "2:3"
+    ],
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "линейка GPT Image 2.5, высокое качество"
+  },
+  "gpt-image-2-5-sunburst": {
+    "id": "gpt-image-2-5-sunburst",
+    "kind": "image",
+    "inputs": [
+      "text",
+      "image"
+    ],
+    "max_sec": null,
+    "aspects": [
+      "1:1",
+      "3:2",
+      "2:3"
+    ],
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "линейка GPT Image 2.5, высокое качество"
+  },
+  "nano-banana-pro": {
+    "id": "nano-banana-pro",
+    "kind": "edit",
+    "inputs": [
+      "text",
+      "image"
+    ],
+    "max_sec": null,
+    "aspects": [
+      "1:1",
+      "3:4",
+      "4:3",
+      "9:16",
+      "16:9"
+    ],
+    "audio": null,
+    "text_render": 3,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "сложный смысл, точный текст в кадре, студийное качество"
+  },
+  "nano-banana-2": {
+    "id": "nano-banana-2",
+    "kind": "edit",
+    "inputs": [
+      "text",
+      "image"
+    ],
+    "max_sec": null,
+    "aspects": [
+      "1:1",
+      "3:4",
+      "4:3",
+      "9:16",
+      "16:9"
+    ],
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "правит фото словами, смешивает фото"
+  },
+  "ideogram-v3-turbo": {
+    "id": "ideogram-v3-turbo",
+    "kind": "image",
+    "inputs": [
+      "text"
+    ],
+    "max_sec": null,
+    "aspects": [
+      "1:1",
+      "3:4",
+      "4:3",
+      "9:16",
+      "16:9"
+    ],
+    "audio": null,
+    "text_render": 3,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "логотипы и надписи без ошибок"
+  },
+  "ace-step": {
+    "id": "ace-step",
+    "kind": "music",
+    "inputs": [
+      "text"
+    ],
+    "max_sec": 120,
+    "aspects": null,
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "дёшево, инструментал ~60 с"
+  },
+  "elevenlabs-music": {
+    "id": "elevenlabs-music",
+    "kind": "music",
+    "inputs": [
+      "text"
+    ],
+    "max_sec": null,
+    "aspects": null,
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "треки с вокалом или без, для рекламы"
+  },
+  "stable-audio-2-5": {
+    "id": "stable-audio-2-5",
+    "kind": "sfx",
+    "inputs": [
+      "text"
+    ],
+    "max_sec": 60,
+    "aspects": null,
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "звуки и музыка до 190 с"
+  },
+  "omni-auto-free": {
+    "id": "omni-auto-free",
+    "kind": "text",
+    "inputs": [
+      "text"
+    ],
+    "max_sec": null,
+    "aspects": null,
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "бесплатные ответы, быстрый черновик"
+  },
+  "deepseek-v3-1": {
+    "id": "deepseek-v3-1",
+    "kind": "text",
+    "inputs": [
+      "text"
+    ],
+    "max_sec": null,
+    "aspects": null,
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "недорого, силён в рассуждении и коде"
+  },
+  "claude-sonnet-5": {
+    "id": "claude-sonnet-5",
+    "kind": "text",
+    "inputs": [
+      "text"
+    ],
+    "max_sec": null,
+    "aspects": null,
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "аккуратное письмо и разбор сложных задач"
+  },
+  "claude-4-5-haiku": {
+    "id": "claude-4-5-haiku",
+    "kind": "text",
+    "inputs": [
+      "text"
+    ],
+    "max_sec": null,
+    "aspects": null,
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "быстрые короткие ответы"
+  },
+  "gemini-3-5-flash": {
+    "id": "gemini-3-5-flash",
+    "kind": "text",
+    "inputs": [
+      "text"
+    ],
+    "max_sec": null,
+    "aspects": null,
+    "audio": null,
+    "text_render": null,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "быстро и универсально"
+  },
+  "gpt-5-4": {
+    "id": "gpt-5-4",
+    "kind": "text",
+    "inputs": [
+      "text"
+    ],
+    "max_sec": null,
+    "aspects": null,
+    "audio": null,
+    "text_render": 3,
+    "realism": null,
+    "stylization": null,
+    "motion": null,
+    "consistency": null,
+    "speed": null,
+    "best_for": [],
+    "weak": [],
+    "note_ru": "сильный универсальный текст"
+  }
+}

@@ -71,19 +71,31 @@ def test_story_detected_and_hints_added(ta):
 
 def test_click_hint_moves_to_next_step(ta):
     r = ta.handle("покажи клиенту 3 варианта кухни в разных стилях", {}, "t2")
-    c = next(c for c in tree_chips(r) if c["label"] == "Загрузить план или фото")
+    c = next(c for c in tree_chips(r) if c["label"].startswith("Стили:"))
     r2 = ta.handle("", {}, "t2", action={"type": "tree_hint", "value": c["value"]})
-    assert r2["tree"]["reaction"] == "R01"
+    assert r2["tree"]["reaction"] == "R02"
     assert r2["tree"]["path"][3] == 2
     assert "Сравнить рядом" in [x["label"] for x in r2["chips"]]
+    assert "Не поняла" not in (r2.get("text") or "")
+
+
+def test_upload_hint_opens_the_picker_and_keeps_the_photo(ta):
+    ctx = {"lang": "ru", "has_image": True, "attachments": [{"id": "upl1", "kind": "image", "name": "photo.jpg"}]}
+    r = ta.handle("нужно оживить картинку", ctx, "photo")
+    assert not any(c["label"].startswith("Загрузить") for c in r.get("chips") or [])
+    r2 = ta.handle("", ctx, "photo", action={"type": "tree_hint", "value": {"label": "Загрузить картину", "i": 0}})
+    assert r2["intent"] == "need_file" and r2.get("ui_do", {}).get("action") == "attach"
+    assert "Не поняла" not in r2["text"] and "уже в задаче" in r2["text"]
 
 
 def test_second_hint_is_branch_with_way_back(ta):
     r = ta.handle("покажи клиенту 3 варианта кухни в разных стилях", {}, "t3")
-    c = tree_chips(r)[1]
+    c = next(c for c in tree_chips(r) if c["label"].startswith("Стили:"))
     r2 = ta.handle("", {}, "t3", action={"type": "tree_hint", "value": c["value"]})
     assert r2["tree"]["reaction"] == "R02"
-    assert r2["chips"][0]["label"].startswith("↩ Основной путь")
+    assert r2["chips"][0]["label"].startswith("↩ Дальше:")
+    assert "Основной путь" not in r2["chips"][0]["label"]
+    assert "Финал истории" not in r2["text"]
 
 
 def test_question_mid_story_answered_with_way_back(ta):

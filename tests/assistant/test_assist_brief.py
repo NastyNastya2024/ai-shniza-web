@@ -22,7 +22,8 @@ def brief_json(clear=True, summary="кот-повар готовит завтр�
 
 
 def variants_json(n=3, tag="A"):
-    return json.dumps({"variants": [{"title": f"Вариант {tag}{i}", "prompt": f"A ginger cat chef variant {tag}{i}, warm kitchen light, steam"}
+    return json.dumps({"variants": [{"title": f"Вариант {tag}{i}",
+                                     "prompt": f"Рыжий кот-повар, вариант {tag}{i}: тёплая кухня, пар над сковородой, мягкий свет."}
                                     for i in range(n)]}, ensure_ascii=False)
 
 
@@ -332,7 +333,7 @@ def test_rule_variants_are_readable_sentences(make_assistant):
 
 
 def test_variants_second_chance_single_prompt(make_assistant):
-    one = json.dumps({"prompt": "A calm sunset over the sea, golden light, slow drone flight", "note": ""})
+    one = json.dumps({"prompt": "Спокойный закат над морем, золотой свет, медленный пролёт камеры.", "note": ""})
     tr = FakeTransport(omniroute=[("ok", "not json"), ("ok", "still not json"), ("ok", one)],
                        groq=[("http", 503)])
     a = make_assistant(tr, brief=True)
@@ -341,7 +342,7 @@ def test_variants_second_chance_single_prompt(make_assistant):
     r = to_variants(a, SID)
     items = blk(r, "variants")["items"]
     assert not r["degraded"] and len(items) == 3
-    assert items[0]["text"].startswith("A calm sunset") and items[1]["text"].startswith("A calm sunset")
+    assert items[0]["text"].startswith("Спокойный закат") and "камера" in items[1]["text"]
     assert items[1]["text"] != items[0]["text"]
 
 
@@ -364,6 +365,25 @@ def test_validate_variants_tolerates_shapes():
 def test_variants_prompt_asks_for_rich_structure():
     assert "model.structure" in BR.VARIANTS_SYSTEM and "Use EVERY detail" in BR.VARIANTS_SYSTEM
     assert "prompt_example" in BR.VARIANTS_SYSTEM and "ONE coherent scene" in BR.VARIANTS_SYSTEM
+    assert "language `lang`" in BR.VARIANTS_SYSTEM and "Each prompt: English" not in BR.VARIANTS_SYSTEM
+
+
+def test_variants_follow_interface_language_and_the_photo():
+    from assistant.cards import Card
+    card = Card(id="t", title="T", kind="video", modes=["t2v"], tags=[],
+                strengths={"ru": "с", "en": "s"}, limits={"ru": "", "en": ""}, speed={"ru": "", "en": ""},
+                rank=1, params={}, ask_first=[], prompt_style="x",
+                prompt_example="A woman at a desk in a sunlit study.")
+    text = "Девушка у костра, перья в волосах, огонь на переднем плане."
+    got = BR.variants_from_one(card, text, "ru")
+    assert "handheld" not in got[1]["text"] and "камера" in got[1]["text"]
+    assert BR.in_lang(got[0]["text"], "ru") and not BR.in_lang("Main subject: a young woman at a desk.", "ru")
+    payload = json.loads(BR.variants_user(card, text, {}, [], {}, "ru", has_image=True))
+    assert payload["has_image"] is True and payload["lang"] == "ru"
+    assert "prompt_example" not in payload["model"]
+    assert not BR.scene_words("нужно оживить картинку")
+    frame = BR.photo_frame("ru")
+    assert BR.keeps_photo(frame, "ru") and not BR.keeps_photo("Девушка за столом в солнечном кабинете.", "ru")
 
 
 def test_selfcheck_runs_with_fake_provider(monkeypatch, capsys):
@@ -432,21 +452,22 @@ def test_rich_video_prompt_asks_settings_like_a_normal_video(make_assistant):
     assert "Ginger cat" in (r.get("generate_prompt") or "")
 
 
-def test_pick_image_asks_has_prompt_before_idea(make_assistant):
-    """Картинка без идеи → «улучшить промпт?», без лишнего «опишите идею одной фразой»."""
-    a = make_assistant(brief=True)
-    r = a.handle("", {}, SID, action={"type": "choose_type", "value": "image"})
-    assert blk(r, "models")
-    r = a.handle("", {}, SID, action={"type": "pick_model", "value": "seedream-5-pro"})
-    assert r["intent"] == "has_prompt"
-    assert "Опишите идею одной фразой" not in r["text"]
-    assert any(c.get("action") == "has_prompt" and c.get("value") == "yes" for c in r["chips"])
-    r = a.handle("", {}, SID, action={"type": "has_prompt", "value": "yes"})
-    assert r["intent"] == "brief"
-    assert "Опишите идею одной фразой" not in r["text"]
-    r = a.handle("кот на кухне жарит яичницу", {}, SID)
-    assert r["intent"] in ("brief", "variants")
-    assert a.d.store.get(SID).get("idea", "").startswith("кот")
+def test_image_builds_prompt_before_models(make_assistant):
+    """Картинка: сначала промпт, модели один раз в конце — не до и не после повторно."""
+    a = make_assistant(llm=False, brief=True)
+    r = a.handle("сделай карточку для маркетплейса: кружка кофе на белом фоне", {}, SID)
+    assert r["intent"] == "brief" and not blk(r, "models")
+    r = a.handle("", {}, SID, action={"type": "variants", "value": "skip"})
+    assert r["intent"] == "variants" and not blk(r, "models")
+    vid = (a.d.store.get(SID).get("variants") or [{}])[0].get("id")
+    r = a.handle("", {}, SID, action={"type": "use_variant", "value": vid})
+    assert blk(r, "models") and blk(r, "prompt")
+    assert "кружка" in blk(r, "prompt")["text"] or "кофе" in blk(r, "prompt")["text"].lower()
+    mid = r["models"][0]["id"]
+    r2 = a.handle("", {}, SID, action={"type": "pick_model", "value": mid})
+    assert not blk(r2, "models")
+    assert r2.get("generate_model") == mid
+    assert blk(r2, "summary") or blk(r2, "prompt")
 
 
 def test_skip_polish_keeps_first_model(make_assistant):

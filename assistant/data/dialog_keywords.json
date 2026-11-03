@@ -1,0 +1,50 @@
+{
+  "COM.CARD": {
+    "keywords": ["маркетплейс", "wb", "вайлдберриз", "ozon", "озон", "яндекс маркет", "карточка", "товар", "инфографика", "селлер"],
+    "slots": ["product", "look"]
+  },
+  "COM.PVIDEO": {
+    "keywords": ["видео товара", "видеообложка", "ролик для карточки"],
+    "slots": ["product"]
+  },
+  "IMG.COVER": {
+    "keywords": ["обложка", "баннер", "превью", "постер", "youtube", "сторис"],
+    "slots": ["format"]
+  },
+  "IMG.BRAND": {
+    "keywords": ["логотип", "лого", "айдентика"],
+    "slots": ["name"]
+  },
+  "VID.REELS": {
+    "keywords": ["рилс", "reels", "шортс", "тикток", "вертикальное видео", "залетит"],
+    "slots": ["goal", "own"]
+  },
+  "VID.ANIM": {
+    "keywords": ["оживи", "анимируй", "пусть двигается"],
+    "slots": ["source"]
+  },
+  "VID.PROMO": {
+    "keywords": ["реклама", "промо", "коммерческий ролик", "анонс"],
+    "slots": ["goal"]
+  },
+  "STO.SERIES": {
+    "keywords": ["сериал", "серия", "эпизод", "герой", "персонаж"],
+    "slots": ["hero"]
+  },
+  "DSN.INTER": {
+    "keywords": ["интерьер", "комната", "кухня", "гостиная", "сканди", "лофт"],
+    "slots": ["room"]
+  },
+  "MKT.PERF": {
+    "keywords": ["креативы", "таргет", "a/b", "рся", "vk реклама"],
+    "slots": ["offer"]
+  },
+  "INT.CONNECT": {
+    "keywords": ["mcp", "мсп", "подключить сервис", "подключение", "интеграция", "токен", "oauth", "vidiq", "higgsfield", "dropbox", "meshy", "tripo", "blender", "elevenlabs"],
+    "slots": ["goal"]
+  },
+  "AUD.SONG": {
+    "keywords": ["песня", "трек", "музыка со словами"],
+    "slots": ["topic"]
+  }
+}

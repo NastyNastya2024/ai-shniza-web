@@ -28,10 +28,15 @@ def test_endpoint_flow(app):
     r = c.post("/api/assistant/chat", json={"messages": [{"role": "user", "content": "сделай видео: кот в снегу"}]})
     assert r.status_code == 200 and r.headers["Cache-Control"] == "no-store"
     d = r.get_json()
-    assert d["model"] == "assistant" and d["channel"] == "rules" and d["reply"] and len(d["models"]) >= 2
+    assert d["model"] == "assistant" and d["reply"]
+    assert d["intent"] == "variants" and not d["models"]
+    d = c.post("/api/assistant/chat", json={"action": {"type": "idea_next"}}).get_json()
+    assert d["intent"] == "flow_path"
+    d = c.post("/api/assistant/chat", json={"action": {"type": "path_direct"}}).get_json()
+    assert len(d["models"]) >= 2
     mid = d["models"][0]["id"]
     d2 = c.post("/api/assistant/chat", json={"action": {"type": "pick_model", "value": mid}, "context": {}}).get_json()
-    assert d2["channel"] in {"omniroute", "groq"} and d2["generate_model"] == mid and d2["generate_prompt"]
+    assert d2["generate_model"] == mid and "кот" in (d2.get("generate_prompt") or "").lower()
 
 
 def test_session_bound_to_cookie_not_body(app):

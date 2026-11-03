@@ -67,6 +67,34 @@ def detail_level(text: str) -> int:
     return len(content_words(text))
 
 
+_NO_SCENE = re.compile(
+    r"^(ожив\w*|анимир\w*|анимац\w*|движен\w*|кадр\w*|снимк\w*|animate\w*|animation|move|motion|this|uploaded)$", I)
+
+
+def scene_words(text: str) -> list[str]:
+    """Слова про то, что в кадре. «Оживить картинку» само по себе сцену не описывает."""
+    return [w for w in content_words(text) if not _NO_SCENE.match(w)]
+
+
+def photo_frame(lang: str) -> str:
+    if lang == "en":
+        return ("Animate the uploaded photo. Keep the person, clothes, place and light exactly as in the picture. "
+                "Add a slight natural motion.")
+    return ("Оживи загруженное фото. Человек, одежда, место и свет остаются как на снимке. "
+            "Лёгкое естественное движение.")
+
+
+def keeps_photo(text: str, lang: str, idea: str = "") -> bool:
+    """Промпт про загруженный кадр, а не про выдуманную сцену."""
+    low = (text or "").lower()
+    own = [w for w in scene_words(idea) if len(w) >= 4]
+    if own:
+        return all(w in low for w in own[:4])
+    if lang == "en":
+        return "uploaded" in low or "as in the picture" in low
+    return "загружен" in low or "как на сним" in low or "как на фото" in low
+
+
 def is_rich_prompt(text: str) -> bool:
     """Уже развёрнутый промпт (как с витрины / после сборки) — спросить, добавить ли что-то, а не гонять бриф заново."""
     s = (text or "").strip()
@@ -414,27 +442,50 @@ def rule_variants(card: Card, subject: str, answers: dict[str, str], extra: list
     return uniq
 
 
-# варианты из ОДНОГО LLM-промпта, если на 3 варианта модели не хватило (англ. приёмы для англ. промпта)
-STYLE_TWISTS = {
-    "video": [("Динамичнее", "dynamic handheld camera, faster action, bright punchy colors"),
-              ("Как в кино", "cinematic slow motion, dramatic rim light, shallow depth of field")],
-    "image": [("Ярче", "vivid saturated colors, crisp details, high contrast"),
-              ("Атмосфернее", "soft cinematic lighting, gentle haze, muted film palette")],
-    "edit": [("Аккуратнее", "subtle natural edit, keep everything else unchanged"),
-             ("Смелее", "bold noticeable change, clean result")],
-    "music": [("Энергичнее", "energetic, faster tempo, punchy drums"),
-              ("Мягче", "mellow, slower tempo, warm analog sound")],
-    "sfx": [("Ближе", "close-up, crisp and loud"), ("Дальше", "distant, soft, natural reverb")],
-    "text": [("Короче", "keep it concise, punchy sentences"), ("Подробнее", "add concrete details, examples, and a clear structure")],
+# второй и третий вариант, если модель вернула один промпт. Текст дописки — на языке интерфейса.
+_TWISTS = {
+    "ru": {
+        "video": [("Динамичнее", "камера с руки, движение быстрее, цвета ярче"),
+                  ("Как в кино", "замедленное движение, контровой свет, малая глубина резкости")],
+        "image": [("Ярче", "насыщенные цвета, чёткие детали, выше контраст"),
+                  ("Атмосфернее", "мягкий свет, лёгкая дымка, приглушённая плёночная палитра")],
+        "edit": [("Аккуратнее", "правка едва заметная, всё остальное без изменений"),
+                 ("Смелее", "изменение заметное, результат чистый")],
+        "music": [("Энергичнее", "быстрее темп, плотнее ударные"),
+                  ("Мягче", "медленнее темп, тёплый звук")],
+        "sfx": [("Ближе", "крупно, чётко и громко"), ("Дальше", "издалека, мягко, с естественным эхом")],
+        "text": [("Короче", "короче и плотнее"), ("Подробнее", "больше конкретных деталей")],
+    },
+    "en": {
+        "video": [("More motion", "handheld camera, faster action, brighter colors"),
+                  ("More cinematic", "slow motion, rim light, shallow depth of field")],
+        "image": [("Brighter", "vivid colors, crisp details, higher contrast"),
+                  ("Moodier", "soft light, light haze, muted film palette")],
+        "edit": [("Subtler", "a subtle change, keep everything else"),
+                 ("Bolder", "a clear change, clean result")],
+        "music": [("More energy", "faster tempo, punchier drums"),
+                  ("Softer", "slower tempo, warmer sound")],
+        "sfx": [("Closer", "close-up, crisp and loud"), ("Farther", "distant, soft, natural reverb")],
+        "text": [("Shorter", "shorter and tighter"), ("More detail", "more concrete details")],
+    },
 }
 
 
+def in_lang(text: str, lang: str) -> bool:
+    """Русский интерфейс не принимает промпт, написанный латиницей."""
+    if lang != "ru":
+        return True
+    cyr = len(re.findall(r"[А-Яа-яЁё]", text or ""))
+    lat = len(re.findall(r"[A-Za-z]", text or ""))
+    return cyr >= 12 and cyr > lat
+
+
 def variants_from_one(card: Card, prompt: str, lang: str) -> list[dict]:
+    pack = _TWISTS["en" if lang == "en" else "ru"]
     first = "Основной" if lang != "en" else "Main"
     out = [{"id": "v1", "title": first, "text": prompt}]
-    for i, (title_ru, twist) in enumerate(STYLE_TWISTS.get(card.kind, STYLE_TWISTS["image"]), 2):
-        out.append({"id": f"v{i}", "title": title_ru if lang != "en" else twist.split(",")[0].capitalize(),
-                    "text": prompt.rstrip(". ") + ", " + twist + "."})
+    for i, (title, twist) in enumerate(pack.get(card.kind, pack["image"]), 2):
+        out.append({"id": f"v{i}", "title": title, "text": prompt.rstrip(". ") + ". " + twist + "."})
     return out
 
 
@@ -479,7 +530,9 @@ VARIANTS_SYSTEM = (
     "- edit: what to change → what to keep → desired look.\n"
     "Video rule: default to ONE coherent scene with one main action and clear camera work. "
     "Do not expand into multi-scene storyboards unless the idea clearly needs it.\n"
-    "Each prompt: English (except when the model profile is music/sfx and the example is English already), "
+    "Write every prompt in language `lang`: ru means Russian, en means English. Never switch language. "
+    "If has_image is true, the uploaded picture is the scene. Do not invent another person, place, clothes or story, "
+    "and do not copy the subject of prompt_example. Say only how to move or change that picture, using the person's words. "
     "110-160 words, one paragraph, no lists, no tech flags (no aspect ratio / duration numbers). "
     "The 3 prompts must differ in creative direction while keeping the same subject and "
     "all the person's answers. Avoid `model.avoid`. Text that must appear in the output: "
@@ -499,9 +552,12 @@ def brief_user(card: Card, idea: str, lang: str, use_profile: bool = False) -> s
 
 
 def variants_user(card: Card, idea: str, answers: dict[str, str], extra: list[str], params: dict, lang: str,
-                  change: str = "") -> str:
-    payload = {"model": mini(card, lang), "kind": card.kind, "lang": lang, "idea": idea[:600],
-               "answers": answers, "extra": extra[-5:], "params": params}
+                  change: str = "", has_image: bool = False) -> str:
+    model = mini(card, lang)
+    if has_image:
+        model.pop("prompt_example", None)
+    payload = {"model": model, "kind": card.kind, "lang": lang, "idea": idea[:600],
+               "answers": answers, "extra": extra[-5:], "params": params, "has_image": bool(has_image)}
     if change:
         payload["change"] = change[:300]
     return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))

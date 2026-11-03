@@ -178,6 +178,7 @@ def build_from_env(models: dict[str, dict] | None = None, price_fn: Callable[[st
         understand_llm=(e.get("ASSIST_UNDERSTAND_LLM") or "1").strip().lower() not in {"0", "false", "no"},
         tree=load_tree(e),
         tree_log=tree_log,
+        dialog_v2=(e.get("ASSIST_DIALOG") or "1").strip().lower() not in {"0", "false", "no"},
     )
     return Assistant(deps)
 
@@ -272,6 +273,25 @@ def handle_request(assistant: Assistant, body: Any, flask_session: Any, user_id:
     return out
 
 
+def _build_stamp() -> str:
+    """Короткий номер сборки: git, иначе время файла сервера."""
+    import subprocess
+    try:
+        out = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=os.path.dirname(os.path.dirname(__file__)),
+            stderr=subprocess.DEVNULL, text=True, timeout=2,
+        ).strip()
+        if out:
+            return out
+    except Exception:
+        pass
+    try:
+        return "t" + str(int(os.path.getmtime(__file__)))
+    except Exception:
+        return "local"
+
+
 def status(assistant: Assistant, account_check: bool | None = None) -> dict[str, Any]:
     """Почему ассистент отвечает шаблоном: провайдеры LLM, ключи, breaker, последняя ошибка, хранилище."""
     d = assistant.d
@@ -292,6 +312,8 @@ def status(assistant: Assistant, account_check: bool | None = None) -> dict[str,
         "Память диалога не в Redis: при нескольких процессах контекст теряется. Поднимите Redis и перезапустите сервер — помощник берёт тот же клиент, что и очереди.",
         "cards": len(d.cards),
         "hint_tree": getattr(d.tree, "version", None),
+        "dialog_manager": "on" if d.dialog_v2 else "off",
+        "build": _build_stamp(),
         "account_check": "on" if (d.account_check if account_check is None else account_check) else "off",
         "hint": None if (d.llm and d.llm.available) else
         "LLM выключена: нет ни одного провайдера с ключом и моделью → промпты собираются по шаблону. "

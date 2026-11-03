@@ -28,7 +28,11 @@
     pipe_result: 1, pipe_menu: 1, pipe_stage: 1, pipe_sub: 1, pipe_dialog_save: 1, pipe_video_plain: 1, pipe_voice_model: 1, pipe_summary: 1, pipe_arts: 1,
     mode_start: 1, mode_input: 1, mode_next: 1, mode_back: 1, mode_redo: 1, mode_go: 1, mode_episode: 1, mode_exit: 1, mode_pause: 1, mode_resume: 1,
     tree_hint: 1, tree_event: 1, edit_prompt: 1, files_confirm: 1, media_pick: 1, resume_task: 1,
-    model_switch: 1, switch_pick: 1, text_note: 1 };   // переход между текстовой моделью и генерацией
+    model_switch: 1, switch_pick: 1, text_note: 1,   // переход между текстовой моделью и генерацией
+    idea_next: 1, idea_alt: 1, path_photos: 1, path_board: 1, path_direct: 1,
+    flow_slot: 1, flow_next: 1, flow_show: 1, flow_skip: 1,
+    open_mcp: 1, mcp_goal: 1, mcp_compare: 1, mcp_try: 1, mcp_connected: 1, mcp_failed: 1, mcp_support: 1, mcp_topic: 1,
+    ui_more: 1 };
   var PIPE_TYPE_ICON = { prompt: '✍️', videoPrompt: '🎬', speechPrompt: '🎙', style: '{ }', hero: '👤', image: '🖼', board: '🎞', video: '🎬', voiceTrack: '🔊' };
   var KIND_ICON = { prompt: '✍️', image: '🖼', video: '🎬', music: '🎵', text: '✍️', sfx: '🔊', edit: '✏️' };
 
@@ -131,7 +135,7 @@
 
     function renderPrompt(bl) {
       var box = el('div', 'aich-prompt');
-      box.appendChild(el('div', 'aich-prompt__label', bl.label ? bl.title : L('Промпт под ', 'Prompt for ') + bl.title));
+      box.appendChild(el('div', 'aich-prompt__label', bl.label ? bl.title : L('Промпт для ', 'Prompt for ') + bl.title));
       var txt = el('div', 'aich-prompt__text', bl.text);
       txt.contentEditable = 'true';
       txt.spellcheck = false;
@@ -298,7 +302,6 @@
         var ul = el('ul', 'aich-open__list');
         open.forEach(function (q) { ul.appendChild(el('li', null, q.label)); });
         box0.appendChild(ul);
-        box0.appendChild(el('div', 'aich-prompt__hint', L('ответьте одним сообщением в поле ниже', 'answer in one message below')));
         wrap.appendChild(box0);
       }
       bl.questions.forEach(function (q) {
@@ -350,6 +353,7 @@
       box.appendChild(head);
       if (bl.params && bl.params.length) box.appendChild(el('div', 'aich-summary__params', bl.params.join(' · ')));
       if (bl.prompt) {
+        box.appendChild(el('div', 'aich-prompt__label', L('Промпт для ', 'Prompt for ') + (bl.title || '')));
         var ta = el('textarea', 'aich-summary__prompt');
         ta.value = bl.prompt;
         ta.rows = 4;
@@ -869,7 +873,11 @@
       if (opts.avatarHTML) av.innerHTML = opts.avatarHTML; else av.className = 'aich-avatar';
       row.appendChild(av);
       var col = el('div', 'aich-col');
-      if (data.text || !(data.blocks && data.blocks.length)) col.appendChild(el('div', 'aich-bubble', data.text || data.reply || ''));
+      var said = String(data.text || data.reply || '').trim();
+      var hasBlocks = data.blocks && data.blocks.length;
+      var hasChips = data.chips && data.chips.length;
+      if (said) col.appendChild(el('div', 'aich-bubble', said));
+      else if (!hasBlocks && !hasChips) return row;
       (data.blocks || []).forEach(function (bl) {
         if (bl.type === 'models') col.appendChild(renderModels(bl));
         else if (bl.type === 'prompt') col.appendChild(renderPrompt(bl));
@@ -1016,6 +1024,16 @@
         return post(lastBody);
       },
       chip: onChip,
+      mcpConnected: function (id, name) {
+        if (busy) return Promise.resolve(null);
+        lastBody = { action: { type: 'mcp_connected', value: { id: id || '', name: name || '' } } };
+        return post(lastBody);
+      },
+      mcpFailed: function () {
+        if (busy) return Promise.resolve(null);
+        lastBody = { action: { type: 'mcp_failed' } };
+        return post(lastBody);
+      },
       /** Вернулись после входа или пополнения: сервер заново проверит вход → баланс и покажет то же место. */
       resume: function () { if (busy) return Promise.resolve(null); lastBody = { action: { type: 'resume' } }; return post(lastBody); },
       /** Новый диалог: сбросить cookie/память на сервере и спросить тип генерации. */

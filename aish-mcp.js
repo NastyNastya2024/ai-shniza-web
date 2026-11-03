@@ -472,6 +472,14 @@
   }
   async function spAfter(data) {
     if (data.oauth_url && safeHref(data.oauth_url)) { location.href = data.oauth_url; return; }
+    if (data.connection && data.connection.status === 'ok' && window.app && app.eggy && app.eggy.mcpConnected) {
+      const pid = data.connection._preset || '';
+      const mark = pid || String(data.connection.id || '');
+      if (mark && sp._told !== mark) {
+        sp._told = mark;
+        app.eggy.mcpConnected(pid, data.connection.name || '');
+      }
+    }
     if (data.connection) {
       const i = sp.list.findIndex((x) => x.id === data.connection.id);
       if (i >= 0) sp.list[i] = data.connection; else sp.list.push(data.connection);
@@ -539,6 +547,7 @@
       const q = new URLSearchParams(location.search);
       if (q.get('mcp')) {
         sp.note = q.get('mcp') === 'ok' ? 'Подключено. Отметьте инструменты — они появятся кнопками под результатом генерации.' : 'Вход не завершён — попробуйте ещё раз.';
+        if (q.get('mcp') !== 'ok' && window.app && app.eggy && app.eggy.mcpFailed) app.eggy.mcpFailed();
         sp.cat = 'mine';
         const cid = +q.get('id');
         sp._openCid = cid;
@@ -562,7 +571,18 @@
     sp.open = '';
     if (sp.el) spDraw();
   }
-  window.AishMcp = { account: account, offer: offer, open: open, studio: studio, studioCat: studioCat, _reset: () => { btnCache = null; },
+  function focus(id) {
+    const apply = () => {
+      const p = sp.presets.find((x) => x.id === id);
+      if (p && p.cats && p.cats.length) sp.cat = p.cats[0];
+      sp.open = id || '';
+      sp.q = '';
+      spDraw();
+    };
+    if (sp.loaded && sp.presets.length) apply();
+    else spLoad().then(apply);
+  }
+  window.AishMcp = { account: account, offer: offer, open: open, studio: studio, studioCat: studioCat, focus: focus, _reset: () => { btnCache = null; },
     /** Есть ли подключённые MCP (для подсказок помощника). null — список ещё не загружали. */
     connected: () => (sp.loaded ? sp.list.length > 0 : null) };
 })();

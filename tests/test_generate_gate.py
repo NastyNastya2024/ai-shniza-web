@@ -186,22 +186,12 @@ def test_assistant_asks_login_then_topup_then_generate(srv):
         s.clear()
         s["user_id"] = u.id
     d = _chat(c, {"action": {"type": "resume"}})
+    assert d["intent"] == "variants"
+    assert not any(b.get("type") == "models" for b in d.get("blocks") or [])
+    d = _chat(c, {"action": {"type": "idea_next"}})
+    d = _chat(c, {"action": {"type": "path_direct"}})
     assert any(b.get("type") == "models" for b in d["blocks"])
     d = _chat(c, {"action": {"type": "pick_model", "value": "veo-3-1"}})
-    assert d["intent"] == "has_prompt"
-    d = _chat(c, {"action": {"type": "has_prompt", "value": "yes"}})
-    assert d["intent"] == "brief"
-    d = _chat(c, {"action": {"type": "variants", "value": "skip"}})
-    if d["intent"] == "brief":
-        d = _chat(c, {"action": {"type": "variants", "value": "skip"}})
-    assert d["intent"] == "variants" and len(d["blocks"][0]["items"]) >= 2
-    d = _chat(c, {"action": {"type": "use_variant", "value": "v1"}})
-    assert d["intent"] == "use_variant" and len(d["models"]) >= 2
-    d = _chat(c, {"action": {"type": "skip_polish"}})
-    # модель уже выбрана до polish → сразу к запуску (или снова список моделей)
-    if d.get("gate") != "topup":
-        if d.get("intent") == "skip_polish" or any(b.get("type") == "models" for b in d.get("blocks") or []):
-            d = _chat(c, {"action": {"type": "pick_model", "value": "veo-3-1"}})
     assert d["gate"] == "topup" and d["chips"][0]["action"] == "open_topup"
     assert any(x["action"] == "resume" for x in d["chips"])
     assert "10 ₽" in d["text"] and "136 ₽" in d["text"]
@@ -221,10 +211,10 @@ def test_assistant_cookie_survives_session_clear(srv):
     with c.session_transaction() as s:
         s["user_id"] = u.id
     d = _chat(c, {"message": "картинка: логотип кофейни"})
-    assert any(b.get("type") == "models" for b in d.get("blocks") or [])
+    assert d["intent"] == "variants"
+    assert not any(b.get("type") == "models" for b in d.get("blocks") or [])
+    d = _chat(c, {"action": {"type": "idea_next"}})
     d = _chat(c, {"action": {"type": "pick_model", "value": "seedream-5-pro"}})
-    if d.get("intent") == "has_prompt":
-        d = _chat(c, {"action": {"type": "has_prompt", "value": "no"}})
     assert d.get("generate_model") == "seedream-5-pro"
     with c.session_transaction() as s:
         s.clear()                                      # так делает вход в auth.py

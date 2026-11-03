@@ -51,7 +51,7 @@ TYPE_RULES: list[tuple[str, re.Pattern]] = [
                   r"(low|high)[- ]?angle", r"three[- ]?quarter", r"wide (cinematic )?shot", r"\bdrone shot\b",
                   r"\btime[- ]?lapse\b", r"раскадров", r"съ[её]мк", r"прол[её]т камер", r"обл[её]т",
                   r"движени[ея] камер", r"траектори[яи] камер")),
-    ("image", _rx(r"картин", r"картинк", r"пикч", r"\bфотк", r"изображ", r"\bмем\b", r"\bобои\b", r"wallpaper", r"постер", r"плакат", r"\bфото\b", r"\bарт\b", r"логотип", r"\bлого\b", r"баннер", r"обложк",
+    ("image", _rx(r"картин", r"картинк", r"пикч", r"\bфотк", r"изображ", r"\bмем\b", r"\bобои\b", r"wallpaper", r"постер", r"плакат", r"\bфото\b", r"\bарт\b", r"логотип", r"\bлого\b", r"баннер", r"обложк", r"карточк",
                   r"иллюстрац", r"аватар", r"\bпринт", r"открытк", r"рисун", r"нарисуй", r"\bиконк", r"стикер", r"\bimage\b", r"\bpicture\b",
                   r"\bposter\b", r"\blogo\b", r"\bbanner\b", r"illustrat", r"\bavatar\b", r"\bdraw\b", r"\bicon\b", r"\bsticker\b")),
     # после image: «текст на картинке» уже поймает image; иначе — текстовая генерация

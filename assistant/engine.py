@@ -3,7 +3,8 @@
 Сценарий (brief=on, по умолчанию):
   «Промпт»: тип генерации → модель → уточнения (clarify модели) → варианты → polish → запуск.
   Видео сразу: модель → идея как промпт → параметры → запуск (без «улучшить промпт?»).
-  Картинка/музыка/…: модель → «нужен промпт?» → да: clarify → варианты → polish;
+  Картинка: сначала промпт (уточнения → варианты), потом один раз модели.
+  Музыка и остальные: модель → «нужен промпт?» → да: clarify → варианты → polish;
                                             нет: идея как промпт → параметры → запуск.
 Без брифа (brief=off): идея → модели → промпт под выбранную модель.
 
@@ -23,6 +24,7 @@ from typing import Any, Callable
 
 from . import brief as BR
 from . import dialog as DG
+from . import dialog_flow as DFLOW
 from . import camera as CAM
 from . import errors as err_mod
 from . import files as F
@@ -78,6 +80,8 @@ class AssistantDeps:
     tree: Any = None
     # запись событий дерева для админки (нехарактерные действия, новые пути); сервер пишет в БД
     tree_log: Callable[[dict], None] | None = None
+    # диалог v2: идея → путь → совет модели → карточка. В тестах ядра выключен, в проде включён.
+    dialog_v2: bool = False
 
 
 def _norm(s: str) -> str:
@@ -161,6 +165,7 @@ class Assistant:
             back = DG.return_chip(ses, lang)
             if back and not any(c.get("action") == "resume_task" for c in out.get("chips") or []):
                 out["chips"] = list(out.get("chips") or []) + [back]
+        out = self._fill_empty(out, ses, lang, action)
         if msg:
             DG.remember(ses, "user", msg)
         if not out.get("silent"):
@@ -177,6 +182,12 @@ class Assistant:
         out.setdefault("degraded", False)
         out["lang"] = lang
         out["llm"] = self._llm_info
+        if self.d.dialog_v2:
+            out["dialog"] = DFLOW.meta(ses)
+            if DFLOW.active(ses) and out.get("intent") in ("price", "compare", "question", "capabilities", "error_help"):
+                back = DFLOW.back_chip(ses)
+                if back and not any(c.get("action") == "flow_show" for c in out.get("chips") or []):
+                    out["chips"] = list(out.get("chips") or []) + [back]
         if self.d.on_event:
             try:
                 self.d.on_event({"intent": out["intent"], "lang": lang, "llm_used": self._llm_info["used"],
@@ -184,6 +195,27 @@ class Assistant:
                                  "degraded": out["degraded"], "ms": int((time.monotonic() - t0) * 1000)})
             except Exception:
                 log.exception("assistant on_event failed")
+        return out
+
+    def _fill_empty(self, out: dict, ses: dict, lang: str, action: dict | None) -> dict:
+        """Пустой пузырь не отдаём: ни без текста, ни без кнопок."""
+        if out.get("silent"):
+            return out
+        if (out.get("text") or "").strip() or out.get("blocks"):
+            return out
+        log.warning("assistant empty reply intent=%s action=%s", out.get("intent"),
+                    (action or {}).get("type") if isinstance(action, dict) else "")
+        if self.d.tree_log:
+            try:
+                self.d.tree_log({"kind": "empty", "intent": out.get("intent"),
+                                 "action": (action or {}).get("type") if isinstance(action, dict) else "",
+                                 "label": str((action or {}).get("value") if isinstance(action, dict) else "")[:80]})
+            except Exception:
+                log.exception("assistant empty log failed")
+        back = DFLOW.back_chip(ses) if isinstance(ses.get("flow"), dict) else None
+        out["text"] = out["reply"] = "Не поняла, что сделать. Опишите задачу словами."
+        if back and not any(c.get("action") == "flow_show" for c in out.get("chips") or []):
+            out["chips"] = list(out.get("chips") or []) + [back]
         return out
 
     def _lang(self, msg: str, ses: dict, ctx: dict) -> str:
@@ -208,6 +240,10 @@ class Assistant:
         act = self._text_as_action(msg, ses)
         if act:
             return self._action(act[0], act[1], ctx, ses, lang)
+        if msg and DG.mcp_about(msg) and not ctx.get("_tree_hint"):
+            hit = DG.mcp_turn(self, msg, ctx, ses, lang)
+            if hit is not None:
+                return hit
         if msg:
             how, found = DG.refer(msg, ses)
             if how == "many":
@@ -221,6 +257,12 @@ class Assistant:
                 ses["files_ok"] = True
                 ses["focus_note"] = DG.take_line(found[0], lang)
         # 1') понимание фразы (understand.py): «включи клода», вопрос-совет, «тёмная тема», режимы; шаг режима ждёт текст
+        if msg and self.d.dialog_v2 and DFLOW.active(ses) and not DG.mcp_about(msg) and ses.get("await") not in ("polish", "chat") and ses.get("kind") != "text":
+            it_flow = route(msg, ctx, ses, self.titles)
+            if it_flow.name not in ("crisis", "safety", "safety_person", "injection", "price", "error_help", "ui_help", "generate_now"):
+                got_flow = DFLOW.on_message(self, msg, ctx, ses, lang)
+                if got_flow is not None:
+                    return got_flow
         if msg:
             got = self._understand(msg, ctx, ses, lang)
             if got is not None:
@@ -288,6 +330,8 @@ class Assistant:
                 if ses.get("assist_mode") == "prompt":
                     # ветка «Промпт»: идея → сразу варианты промпта, без доп. вопросов и без нейросети
                     return self._prompt_from_idea(ctx, ses, lang)
+                if ses.get("kind") == "image" and self.d.brief:
+                    return self._enter_brief(ctx, ses, lang)
                 if ses.get("picked") and ses["picked"] in self.d.cards:
                     return self._pick(ses["picked"], ctx, ses, lang)
                 # модель ещё не выбрана — сначала нейросеть, потом вопросы / промпт
@@ -371,6 +415,8 @@ class Assistant:
                        needs=detect_needs(msg) or ses.get("needs") or [])
             if ses.get("picked") and ses["picked"] in self.d.cards:
                 return self._pick(ses["picked"], ctx, ses, lang)
+            if ses.get("kind") == "image" and self.d.brief:
+                return self._enter_brief(ctx, ses, lang)
             ses["assist_mode"] = ses.get("assist_mode") or "direct"
             return self._offer_models_for_kind(ctx, ses, lang, "generate_task",
                                               mode=ses.get("assist_mode") or "direct")
@@ -825,6 +871,10 @@ class Assistant:
             ses.update(assist_mode=None, kind=None)
             return self._ask_type(ses, ctx, lang)
         if aw == "model":
+            if ses.get("kind") == "image" and ses.get("variants") and not ses.get("gen_model"):
+                card = self._brief_card(ses)
+                if card:
+                    return self._show_variants(card, ses, lang, [t("variants_head", lang)], False)
             if ses.get("from_polish"):
                 ses["from_polish"] = False
                 return self._offer_polish(ses, ctx, lang, "back",
@@ -866,6 +916,9 @@ class Assistant:
                                 lang=lang, intent="back")
             if not ses.get("kind") and mid and mid in self.d.cards:
                 ses["kind"] = self.d.cards[mid].kind
+            if ses.get("kind") == "image" and not ses.get("gen_model"):
+                ses["kind"] = None
+                return self._ask_type(ses, ctx, lang)
             return self._offer_models_for_kind(ctx, ses, lang, "back", mode="direct")
         if aw == "variants":
             # ветка «Промпт» без опросника — назад к «опишите идею»
@@ -1179,6 +1232,10 @@ class Assistant:
             ses["prompt_base"] = text
             ses["prompt"] = text
             prompt = text
+        flow = ses.get("flow") if isinstance(ses.get("flow"), dict) else None
+        if flow is not None:
+            flow["idea"] = text
+            flow["stage"] = "card"
         return self._setup_reply(card, ses, ctx, lang, "edit_prompt", t("prompt_changed", lang))
 
     def _files_confirm(self, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
@@ -1295,15 +1352,27 @@ class Assistant:
             idea = msg if BR.has_subject(msg) else ""
             self._new_task(it.kind, idea, it.needs, it.topic if idea else "", ses)
             return self._ask_login(ses, lang, "generate_task")
+        if self.d.dialog_v2 and (it.kind or "") != "text":
+            opened = DFLOW.start(self, msg, it, ctx, ses, lang)
+            if opened is not None:
+                return opened
         if self.d.brief and not BR.has_subject(msg):   # «нужно сделать видео» — о чём? сначала суть
             self._new_task(it.kind, "", it.needs, "", ses)
             ses["assist_mode"] = "direct"
             return self._ask_subject(it.kind or "image", ses, ctx, lang)
         self._new_task(it.kind, msg, it.needs, it.topic, ses)
-        # тип уже ясен → сначала модель, потом «нужен промпт?» / clarify
+        # картинка: сначала промпт, модели — один раз после варианта
+        if (it.kind or "") == "image" and self.d.brief:
+            return self._enter_brief(ctx, ses, lang)
+        # видео и остальное: сначала модель, потом «нужен промпт?» / clarify
         return self._offer_models_for_kind(ctx, ses, lang, "generate_task", mode="direct")
 
     def _i_ask_type(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
+        if self.d.dialog_v2 and not self._is_guest(ctx):
+            story = DFLOW.guess_story(msg, self.d.tree)
+            if story:
+                return DFLOW.start(self, msg, DFLOW._Kind(story), ctx, ses, lang)
+            return DFLOW.ask_type(self, msg, ctx, ses, lang)
         self._new_task(None, msg, it.needs, it.topic, ses)
         return self._ask_type(ses, ctx, lang)
 
@@ -1445,22 +1514,38 @@ class Assistant:
         raw_params, adj = P.fit(P.extract(idea + " " + " ".join(br.get("extra") or [])), card)
         params = P.with_defaults(card, {**P.validate(card, ses.get("params")), **raw_params})
         answers_text = self._answers_text(br)
-        data = self._llm_json(BR.VARIANTS_SYSTEM, BR.variants_user(card, idea, answers_text, br.get("extra") or [],
-                                                                  params, lang, change), BR.validate_variants, ses, 1400,
-                              timeout_scale=2.5, task="variants")
+        extra = list(br.get("extra") or [])
+        if ctx.get("has_image") and not BR.scene_words(idea):
+            idea = BR.photo_frame(lang)
+        elif ctx.get("has_image"):
+            lock = ("Кадр — загруженное фото: человека, одежду, место и свет не меняй."
+                    if lang != "en" else
+                    "The frame is the uploaded photo: do not change the person, clothes, place or light.")
+            if lock not in extra:
+                extra.append(lock)
+        data = self._llm_json(BR.VARIANTS_SYSTEM, BR.variants_user(card, idea, answers_text, extra,
+                                                                  params, lang, change, bool(ctx.get("has_image"))),
+                              BR.validate_variants, ses, 1400, timeout_scale=2.5, task="variants")
         if data is None and self.d.llm is not None and self._llm_info.get("error") != "budget":
             # на 3 варианта модели не хватило (время/формат) — просим ОДИН промпт
-            full = "; ".join([idea] + [f"{k}: {v}" for k, v in answers_text.items()] + list(br.get("extra") or []))
+            full = "; ".join([idea] + [f"{k}: {v}" for k, v in answers_text.items()] + extra)
             if change:
                 full += "; " + change
             one = self._llm_json(SYSTEM, build_user(card, full, params, lang), validate_output, ses, 450,
                                  timeout_scale=1.5, task="variants_one")
-            if one and one.get("prompt") and one.get("note") != "unsafe" and not _unsafe(one["prompt"]):
+            if one and one.get("prompt") and one.get("note") != "unsafe" and not _unsafe(one["prompt"]) and BR.in_lang(one["prompt"], lang):
                 data = {"variants": BR.variants_from_one(card, one["prompt"], lang)}
+        if data and not all(BR.in_lang(v.get("text") or "", lang) for v in data.get("variants") or []):
+            data = None
+        if data and ctx.get("has_image") and not all(
+                BR.keeps_photo(v.get("text") or "", lang, idea) for v in data.get("variants") or []):
+            data = None
         degraded = data is None
         if degraded:
             answers = {k: v for k, v in (br.get("a") or {}).items()}
-            items = BR.rule_variants(card, idea, answers, list(br.get("extra") or []), lang, int(ses.get("var_round") or 0),
+            if change and change not in extra:
+                extra.append(change)
+            items = BR.rule_variants(card, idea, answers, extra, lang, int(ses.get("var_round") or 0),
                                      questions=br.get("q"))
         else:
             items = [v for v in data["variants"] if not _unsafe(v["text"])]
@@ -1531,6 +1616,8 @@ class Assistant:
     def _i_compare(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
         ids = [m for m in it.data.get("models", []) if m in self.d.cards]
         cards = [self.d.cards[m] for m in ids]
+        if self.d.dialog_v2:
+            return DFLOW.compare_cards(self, cards, lang)
         if cards and not ses.get("kind"):
             ses["kind"] = cards[0].kind
         return self._show_models(Pick(cards, True), ses, lang, "compare", head=t("compare_head", lang))
@@ -1741,6 +1828,8 @@ class Assistant:
             head = f"Сделаем {word}."
             if took_reply:
                 head = f"Сделаем {word}. Беру промпт из ответа {from_name} выше."
+        if self.d.dialog_v2:
+            return DFLOW.from_handoff(self, prompt or text, kind, from_name, took_reply, ctx, ses, lang, stay)
         out = self._show_models(pick, ses, lang, "model_switch", head=head)
         out["chips"] = list(out.get("chips") or []) + [stay]
         ids = [m.get("id") for m in out.get("models") or []]
@@ -1766,6 +1855,10 @@ class Assistant:
             ses["mode"] = None
         if kind.startswith("sb_"):
             return PL.decorate(self._sb_action(kind, value, ctx, ses, lang), ses, lang)
+        if self.d.dialog_v2:
+            hit = DFLOW.on_action(self, kind, value, ctx, ses, lang)
+            if hit is not None:
+                return hit
         if kind.startswith("pipe_"):
             return self._pipe_action(kind, value, ctx, ses, lang)
         if kind in ("choose_type", "restart"):   # обычный выбор типа — вне флоу: результат генерации не ждём
@@ -1834,6 +1927,11 @@ class Assistant:
                     return self._prompt_from_idea(ctx, ses, lang)
                 ses["junk_count"] = 0
                 return self._ask_prompt_idea(ses, lang)
+            # картинка: сначала суть и промпт, модели позже
+            if value == "image" and self.d.brief:
+                if BR.has_subject(ses.get("idea") or ""):
+                    return self._enter_brief(ctx, ses, lang)
+                return self._ask_subject("image", ses, ctx, lang)
             # тип сразу → модель → «нужен промпт?»
             return self._offer_models_for_kind(ctx, ses, lang, "choose_type", mode="direct")
         if kind == "has_prompt":
@@ -1992,6 +2090,22 @@ class Assistant:
                 ses["gen_kind"] = ses.get("kind") or card.kind
                 ses["polish_draft"] = ses["prompt"]
                 ses["params"] = P.with_defaults(card, P.validate(card, ses.get("params")))
+                flow = ses.get("flow") if self.d.dialog_v2 and isinstance(ses.get("flow"), dict) else None
+                if flow and flow.get("stage") == "variants":
+                    flow["idea"] = ses["prompt"]
+                    flow["stage"] = "polish"
+                    flow["next"] = "polish"
+                    ses["idea"] = ses["prompt"]
+                    return self._offer_polish(ses, ctx, lang, "use_variant",
+                                              head=t("polish_ask", lang, title=v["title"]))
+                # картинку ещё не выбирали: один список моделей вместе с готовым промптом
+                if (ses.get("kind") or card.kind) == "image" and not ses.get("gen_model") and not ses.get("brief_for_model"):
+                    ses["kind"] = "image"
+                    ses["picked"] = None
+                    word = err_mod.KIND_WORD.get(lang, err_mod.KIND_WORD["ru"]).get("image", "картинки")
+                    return self._show_models(
+                        self._recommend("image", ses.get("needs") or [], bool(ctx.get("has_image"))),
+                        ses, lang, "use_variant", head=t("polish_skip", lang, kind=word))
                 return self._offer_polish(ses, ctx, lang, "use_variant",
                                           head=t("polish_ask", lang, title=v["title"]))
             # «Продолжить» / «Сделать промпт» на этапе открытых вопросов → сначала кнопки
@@ -2000,6 +2114,24 @@ class Assistant:
                 return self._brief_after_open(card, ses, ctx, lang)
             return self._variants(card, ses, ctx, lang)
         if kind == "skip_polish":
+            flow = ses.get("flow") if self.d.dialog_v2 and isinstance(ses.get("flow"), dict) else None
+            if flow and flow.get("stage") in ("polish", "variants"):
+                prompt = ses.get("prompt") or ses.get("prompt_base") or ses.get("polish_draft") or flow.get("idea") or ""
+                flow["idea"] = prompt
+                ses["idea"] = prompt
+                ses["prompt"] = prompt
+                ses["prompt_base"] = prompt
+                ses["kind"] = flow.get("kind") or ses.get("kind")
+                which = flow.get("prompt_for") or "idea"
+                if which == "photos":
+                    flow["path"] = "photos"
+                    flow["next"] = "cast_images"
+                    return DFLOW._advise(self, ctx, ses, lang)
+                if which == "board":
+                    return DFLOW._board(self, ctx, ses, lang)
+                if (flow.get("kind") or "") == "video":
+                    return DFLOW._paths(self, ses, lang)
+                return DFLOW._advise(self, ctx, ses, lang)
             k = ses.get("kind") if ses.get("kind") != "text" else None
             k = k or ses.get("gen_kind")
             if not k or k == "text":
@@ -2037,6 +2169,14 @@ class Assistant:
         if kind == "resume":  # вернулись после входа / пополнения — показать то же место с новой проверкой
             if self._is_guest(ctx):
                 return self._ask_login(ses, lang, "resume")
+            if isinstance(ses.get("mcp"), dict) and ses["mcp"].get("stage"):
+                return DG.mcp_show(self, ctx, ses, lang)
+            if self.d.dialog_v2 and isinstance(ses.get("flow"), dict) and ses["flow"].get("stage") not in (None, "", "card"):
+                return DFLOW.show(self, ctx, ses, lang)
+            if self.d.dialog_v2 and not isinstance(ses.get("flow"), dict) and ses.get("kind") not in (None, "text") and (ses.get("idea") or ""):
+                opened = DFLOW.start_saved(self, ctx, ses, lang)
+                if opened is not None:
+                    return opened
             if SB.active(ses):
                 return SB.show(self, ses, ctx, lang, t("resumed", lang))
             card = self._current_card(ses, ctx) if ses.get("picked") else None
@@ -2069,7 +2209,25 @@ class Assistant:
             return response([t("rephrase_ask", lang)], [], intent="rephrase")
         if kind == "send" and isinstance(value, str):
             return self._message(value, ctx, ses, lang)
-        return response([], [], intent="noop")
+        if kind == "mcp_goal":
+            return DG.mcp_goal(self, value, ctx, ses, lang)
+        if kind == "open_mcp":
+            return DG.mcp_open(self, value, ctx, ses, lang)
+        if kind == "mcp_compare":
+            return DG.mcp_compare(ses, lang)
+        if kind == "mcp_try" or kind == "mcp_connected":
+            return DG.mcp_connected(self, value, ctx, ses, lang) if kind == "mcp_connected" else DG.mcp_try(self, ctx, ses, lang)
+        if kind == "mcp_failed":
+            return DG.mcp_failed(ses, lang)
+        if kind == "mcp_support":
+            return DG.mcp_support(lang)
+        if kind == "mcp_topic":
+            return response(["О какой теме найти тренды?"], [], intent="mcp")
+        if kind == "ui_more":
+            return DG.ui_more(lang)
+        if kind == "retry":
+            return response(["Не вышло с прошлого раза. Опишите задачу ещё раз — начну заново."], [], intent="retry")
+        return response(["Не поняла, что сделать. Опишите задачу словами."], [], intent="noop")
 
     def _pipe_action(self, kind: str, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
         """Флоу помощника (pipeline.py): этапы, артефакты сессии, результат генерации."""

@@ -82,6 +82,8 @@ def empty_session() -> dict[str, Any]:
         "switch_kind": "",
         "switch_text": "",
         "text_ask": "",      # фраза, которую отправить в текстовую модель после выбора
+        "flow": None,        # диалог v2: {stage, kind, story, slots, idea, path, next}
+        "mcp": None,         # помощь с подключением: {stage, goal, service}
     }
 
 

@@ -146,6 +146,72 @@ def recommend(cards: dict[str, Card], kind: str, needs: list[str] | None = None,
     return Pick(picked, exact)
 
 
+def advise(cards: dict[str, Card], caps: dict, profile: dict, price_fn: PriceFn,
+            health_fn: HealthFn | None = None, catalog_fn: Callable[[str], bool] | None = None,
+            n: int = 3) -> list[Card]:
+    """2–3 модели под уже собранную задачу. Жёсткие фильтры, потом цель, потом цена.
+
+    Неизвестные оценки в caps не подставляем: null не участвует в счёте.
+    """
+    kind = profile.get("kind") or "image"
+    kinds = {"image", "edit"} if kind == "image" else {kind}
+    pool = [c for c in cards.values() if c.kind in kinds and _healthy(c, health_fn)]
+    if catalog_fn is not None:
+        vis = [c for c in pool if catalog_fn(c.id)]
+        if vis:
+            pool = vis
+    aspect = profile.get("aspect")
+    if aspect:
+        fitted = [c for c in pool if aspect in (c.params.get("aspect_ratio") or [])]
+        if fitted:
+            pool = fitted
+    if profile.get("text"):
+        fitted = [c for c in pool if isinstance((caps.get(c.id) or {}).get("text_render"), (int, float))
+                  and (caps.get(c.id) or {})["text_render"] >= 2]
+        if fitted:
+            pool = fitted
+    if profile.get("needs_image"):
+        fitted = [c for c in pool if "i2v" in (c.modes or []) or "i2i" in (c.modes or [])]
+        if fitted:
+            pool = fitted
+    if not pool:
+        return []
+
+    def score(c: Card) -> float:
+        cap = caps.get(c.id) or {}
+        s = c.rank / 100.0
+        tr = cap.get("text_render")
+        if profile.get("text") and isinstance(tr, (int, float)):
+            s += float(tr) * 4
+        if profile.get("audio") and cap.get("audio") in ("native", "lipsync", "music"):
+            s += 6
+        cons = cap.get("consistency")
+        if profile.get("same_hero") and isinstance(cons, (int, float)):
+            s += float(cons) * 2
+        pv = price_value(price_fn(c.id))
+        if pv is not None:
+            s += max(0.0, 8.0 - min(pv, 40.0) / 5.0)
+        return s
+
+    ranked = sorted(pool, key=lambda c: (-score(c), c.id))
+    best = ranked[0]
+    best_price = price_value(price_fn(best.id))
+    out = [best]
+    alt = next((c for c in ranked[1:]
+                if best_price is not None and (price_value(price_fn(c.id)) or 0) > best_price), None)
+    if alt:
+        out.append(alt)
+    cheap = min(ranked, key=lambda c: (price_value(price_fn(c.id)) if price_value(price_fn(c.id)) is not None else 1e9, c.id))
+    if cheap.id not in {c.id for c in out}:
+        out.append(cheap)
+    cur = profile.get("current")
+    if cur:
+        hit = next((c for c in pool if c.id == cur), None)
+        if hit and hit.id not in {c.id for c in out[:1]}:
+            out = [hit] + [c for c in out if c.id != hit.id]
+    return out[:n]
+
+
 def cheapest(cards: dict[str, Card], kind: str | None, price_fn: PriceFn, health_fn: HealthFn | None = None,
              limit: int = 5) -> list[tuple[Card, str | None]]:
     rows = [c for c in cards.values() if (kind is None or c.kind == kind) and _healthy(c, health_fn)]

@@ -46,9 +46,9 @@ MAKE_VERB = re.compile(r"\b(сделай|создай|нарисуй|сгене�
 # ─────────────────────────────────────────── действия в интерфейсе (безопасные и обратимые)
 THEME_RX: list[tuple[str, re.Pattern]] = [
     ("black", re.compile(r"(т[её]мн|ч[её]рн|ночн|dark|black)\w*\s+(тем|фон|режим|оформлен|интерфейс|theme|mode|background)|"
-                         r"(тем|фон|режим|оформлен|интерфейс|theme|mode)\w*\s+(т[её]мн|ч[её]рн|ночн|dark|black)|\bсделай\s+темнее|темн(ая|ую) тема", I)),
+                         r"(тем|фон|режим|оформлен|интерфейс|theme|mode)\w*(?:\s+\S+){0,2}\s+(т[её]мн|ч[её]рн|ночн|dark|black)|\bсделай\s+темнее|темн(ая|ую) тема", I)),
     ("white", re.compile(r"(светл|бел|дневн|light|white)\w*\s+(тем|фон|режим|оформлен|интерфейс|theme|mode|background)|"
-                         r"(тем|фон|режим|оформлен|интерфейс|theme|mode)\w*\s+(светл|бел|light|white)|\bсделай\s+светлее", I)),
+                         r"(тем|фон|режим|оформлен|интерфейс|theme|mode)\w*(?:\s+\S+){0,2}\s+(светл|бел|light|white)|\bсделай\s+светлее", I)),
     ("violet", re.compile(r"фиолет\w*\s+(тем|фон|оформлен)|(тем|фон)\w*\s+фиолет|violet|purple theme", I)),
 ]
 PANEL_RX: list[tuple[str, re.Pattern]] = [
@@ -115,6 +115,10 @@ def fast(text: str, cards: dict | None = None) -> dict | None:
         return {"intent": "ui_do", "ui": "new_chat", "src": "rules"}
     for theme, rx in THEME_RX:
         if rx.search(t):
+            # «кружка на белом фоне» — описание кадра, не смена темы
+            if re.search(r"карточк|картин|фото|маркетплейс|инфографик|\bвб\b|вайлд|озон|ozon|кроссов|товар|на\s+(бел|ч[её]рн)\w*\s+фон", t, I) and not re.search(
+                    r"тем[аыуе]|режим|оформлен|интерфейс|theme", t, I):
+                continue
             return {"intent": "ui_do", "ui": "theme", "value": theme, "src": "rules"}
     for panel, rx in PANEL_RX:
         if rx.search(t):

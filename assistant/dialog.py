@@ -475,6 +475,225 @@ def confirm(ses: dict, value: Any, card_kind: str) -> str | None:
     return None
 
 
+# ---------------------------------------------------------------- подключения MCP
+_MCP_RX = re.compile(r"\bmcp\b|мсп", re.I)
+_MCP_NAME = re.compile(r"vidiq|dropbox|meshy|tripo|elevenlabs", re.I)
+_MCP_ASK = re.compile(r"подключ|зачем|какой|какие|как\b|нужен|выбра", re.I)
+_CLAUDE_MCP = re.compile(r"(клод|claude).{0,48}(mcp|мсп|подключ)|(mcp|мсп|подключ).{0,48}(клод|claude)", re.I)
+
+_GOALS = (
+    ("Тренды и ключевые слова", "trends", "vidiq"),
+    ("Прогноз виральности", "viral", "higgsfield"),
+    ("Хранить и отправлять файлы", "files", "dropbox"),
+    ("3D-модели", "3d", "meshy"),
+)
+
+
+def mcp_about(msg: str) -> bool:
+    """Вопрос про подключение сервиса, а не про генерацию и не про тему оформления."""
+    t = msg or ""
+    if _CLAUDE_MCP.search(t) or _MCP_RX.search(t):
+        return True
+    if _MCP_NAME.search(t) and _MCP_ASK.search(t):
+        return True
+    if re.search(r"higgsfield", t, re.I) and re.search(r"mcp|мсп|подключ|виральн|прогноз", t, re.I):
+        return True
+    return False
+
+
+def _presets() -> list[dict]:
+    try:
+        from mcp_routes import PRESETS
+        return list(PRESETS)
+    except Exception:
+        return []
+
+
+def _preset(pid: str) -> dict | None:
+    for p in _presets():
+        if p.get("id") == pid:
+            return p
+    return None
+
+
+def _service_for(goal: str) -> str:
+    for _label, gid, pid in _GOALS:
+        if gid == goal:
+            return pid
+    return "vidiq"
+
+
+def _task_known(ses: dict) -> str:
+    """Уже ясно, что человек делает — не спрашивать заново. Пусто, если неясно."""
+    flow = ses.get("flow") if isinstance(ses.get("flow"), dict) else {}
+    blob = " ".join(str(x or "") for x in (ses.get("idea"), ses.get("kind"), flow.get("story"), flow.get("source"))).lower()
+    if re.search(r"рилс|reels|шортс|видео", blob):
+        return "trends"
+    if re.search(r"3d|меш|трипо", blob):
+        return "3d"
+    if re.search(r"dropbox|хранилищ|файл", blob) and "mcp" not in blob:
+        return ""
+    return ""
+
+
+def _advice(pid: str, lang: str) -> str:
+    if pid == "vidiq":
+        return ("Для рилса советую vidIQ: покажет популярные темы и ключевые слова, "
+                "а под готовым видео появится кнопка «Проверить по трендам».")
+    if pid == "higgsfield":
+        return "Для прогноза, залетит ли ролик, советую Higgsfield: балл, сила начала и удержание."
+    if pid == "dropbox":
+        return "Чтобы хранить и забирать файлы, советую Dropbox: результат можно сохранить и взять футаж обратно."
+    if pid == "meshy":
+        return "Для 3D-модели советую Meshy: из текста или картинки получится модель."
+    p = _preset(pid)
+    name = (p or {}).get("name") or pid
+    return f"Для этой задачи советую {name}."
+
+
+def _steps_line(pid: str) -> str:
+    p = _preset(pid) or {}
+    if p.get("auth") == "oauth":
+        return "Нажмите «Подключить» → войдите в аккаунт сервиса → разрешите доступ."
+    return "Вставьте ключ из личного кабинета сервиса."
+
+
+def _mcp_state(ses: dict) -> dict:
+    m = ses.get("mcp")
+    return m if isinstance(m, dict) else {}
+
+
+def mcp_turn(engine: Any, msg: str, ctx: dict, ses: dict, lang: str) -> dict | None:
+    if not mcp_about(msg):
+        return None
+    if _CLAUDE_MCP.search(msg or ""):
+        from .render import response
+        return response(
+            ["Не нужно. Подключения работают в студии отдельно и подходят к любым моделям."],
+            [], lang=lang, intent="mcp")
+    if engine._is_guest(ctx):
+        ses["mcp"] = {"stage": "ask", "goal": _task_known(ses), "service": ""}
+        return engine._ask_login(ses, lang, "mcp")
+    known = _task_known(ses)
+    if known:
+        return mcp_advise(engine, known, ctx, ses, lang)
+    return mcp_ask(ses, lang)
+
+
+def mcp_ask(ses: dict, lang: str) -> dict:
+    from .render import chip, response
+    ses["mcp"] = {"stage": "ask", "goal": "", "service": ""}
+    chips = [chip(label, "mcp_goal", gid) for label, gid, _pid in _GOALS]
+    return response(["Для какой задачи подключение?"], chips, lang=lang, intent="mcp")
+
+
+def mcp_goal(engine: Any, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
+    return mcp_advise(engine, str(value or "trends"), ctx, ses, lang)
+
+
+def mcp_advise(engine: Any, goal: str, ctx: dict, ses: dict, lang: str) -> dict:
+    from .render import chip, response
+    pid = _service_for(goal)
+    alt = "higgsfield" if pid == "vidiq" else "vidiq"
+    ses["mcp"] = {"stage": "advise", "goal": goal, "service": pid}
+    p = _preset(pid) or {}
+    name = p.get("name") or pid
+    other = (_preset(alt) or {}).get("name") or alt
+    chips = [
+        chip(f"Подключить {name}", "open_mcp", pid, primary=True),
+        chip(f"Подключить {other}", "open_mcp", alt),
+        chip("Чем они отличаются", "mcp_compare"),
+    ]
+    return response([_advice(pid, lang)], chips, lang=lang, intent="mcp")
+
+
+def mcp_compare(ses: dict, lang: str) -> dict:
+    from .render import chip, response
+    pid = str(_mcp_state(ses).get("service") or "vidiq")
+    text = ("vidIQ — темы и ключевые слова для ролика. Higgsfield — прогноз, залетит ли уже снятый ролик. "
+            "Для рилса обычно начинают с vidIQ.")
+    return response([text], [chip("Подключить vidIQ", "open_mcp", "vidiq", primary=True),
+                             chip("Подключить Higgsfield", "open_mcp", "higgsfield")],
+                    lang=lang, intent="mcp")
+
+
+def mcp_open(engine: Any, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
+    from .render import chip, response
+    pid = str(value or _mcp_state(ses).get("service") or "vidiq")
+    ses["mcp"] = {"stage": "steps", "goal": _mcp_state(ses).get("goal") or "", "service": pid}
+    if engine._is_guest(ctx):
+        return engine._ask_login(ses, lang, "mcp")
+    p = _preset(pid) or {}
+    name = p.get("name") or pid
+    return response(
+        [f"Открыла {name}. {_steps_line(pid)}"],
+        [chip("Проверить подключение", "mcp_try"), chip("Повторить подключение", "open_mcp", pid)],
+        lang=lang, intent="mcp_steps",
+        ui_do={"action": "open_mcp", "value": pid})
+
+
+def mcp_try(engine: Any, ctx: dict, ses: dict, lang: str) -> dict:
+    from .render import chip, response
+    pid = str(_mcp_state(ses).get("service") or "vidiq")
+    name = (_preset(pid) or {}).get("name") or pid
+    last = next((m for m in reversed(alive_media(ses)) if m.get("kind") in ("video", "image")), None)
+    if last:
+        return response(
+            [f"{name} подключён. Попробуем на вашем последнем видео?"],
+            [chip("Проверить по трендам", "open_mcp", pid, primary=True)],
+            lang=lang, intent="mcp_connected")
+    return response(
+        [f"{name} подключён. Найти тренды по теме?"],
+        [chip("Найти тренды по теме", "mcp_topic")],
+        lang=lang, intent="mcp_connected")
+
+
+def mcp_connected(engine: Any, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
+    from .render import response
+    if isinstance(value, dict) and value.get("id"):
+        st = _mcp_state(ses)
+        st["service"] = str(value.get("id"))
+        st["stage"] = "steps"
+        ses["mcp"] = st
+    return mcp_try(engine, ctx, ses, lang)
+
+
+def mcp_failed(ses: dict, lang: str) -> dict:
+    from .render import chip, response
+    pid = str(_mcp_state(ses).get("service") or "vidiq")
+    return response(
+        ["Подключение не прошло: доступ не выдан."],
+        [chip("Повторить подключение", "open_mcp", pid, primary=True),
+         chip("Написать в поддержку", "mcp_support")],
+        lang=lang, intent="mcp")
+
+
+def mcp_support(lang: str) -> dict:
+    from .render import response
+    return response(["Напишите в поддержку из кабинета — там же видны ваши подключения."], [], lang=lang, intent="mcp")
+
+
+def mcp_show(engine: Any, ctx: dict, ses: dict, lang: str) -> dict:
+    st = _mcp_state(ses)
+    if st.get("stage") == "steps" and st.get("service"):
+        return mcp_open(engine, st["service"], ctx, ses, lang)
+    if st.get("stage") == "advise" and st.get("goal"):
+        return mcp_advise(engine, st["goal"], ctx, ses, lang)
+    if st.get("goal"):
+        return mcp_advise(engine, st["goal"], ctx, ses, lang)
+    return mcp_ask(ses, lang)
+
+
+def ui_more(lang: str) -> dict:
+    from .render import chip, response
+    return response(
+        ["Можно сменить тему или открыть панель."],
+        [chip("Тёмная тема", "set_theme", "black"),
+         chip("Светлая тема", "set_theme", "white"),
+         chip("Панель моделей", "open_panel", "models")],
+        lang=lang, intent="ui_help")
+
+
 def limit_question(ses: dict, lang: str, kind: str = "video") -> dict:
     from .render import response
     items = [m for m in alive_media(ses) if m.get("kind") == kind]

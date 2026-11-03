@@ -677,9 +677,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 <script src="/vitrina-data.js"></script>
 <script src="/vitrina-camera-moves.js?v=3"></script>
 <script src="/vitrina-aishnitsa.js?v=14"></script>
-<script src="/assistant-ui.js?v=27"></script>
+<script src="/assistant-ui.js?v=29"></script>
 <script src="/attach.js?v=2"></script>
-<script src="/aish-mcp.js?v=2"></script>
+<script src="/aish-mcp.js?v=3"></script>
 <script src="/chat-history.js?v=11"></script>
 <script>
 /* Тема общая со витриной/профилем: localStorage aish-vitrina-theme (+ theme). ?theme= перекрывает. */
@@ -1988,6 +1988,10 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
   },
   onBot: (data) => {
     if (!data) return;
+    var said = String(data.text || data.reply || '').trim();
+    var hasBlocks = data.blocks && data.blocks.length;
+    var hasChips = Array.isArray(data.chips) && data.chips.length;
+    if (!said && !hasBlocks && !hasChips && !data.switch_line) return;
     if (data.switch_line) app.push({ role: 'note', text: String(data.switch_line) });
     const chips = Array.isArray(data.chips) ? data.chips : [];
     app.push({
@@ -2098,7 +2102,8 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
       return;
     }
     if (action === 'open_mcp') {
-      if (window.AishMcp && AishMcp.studioCat) AishMcp.studioCat(String(value || 'all'));
+      if (window.AishMcp && AishMcp.focus) AishMcp.focus(String(value || ''));
+      else if (window.AishMcp && AishMcp.studioCat) AishMcp.studioCat(String(value || 'all'));
       if (window.rpShow) rpShow('mcp');
       return;
     }

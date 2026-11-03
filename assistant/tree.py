@@ -93,6 +93,25 @@ class HintTree:
                     self.vec_of[o["id"]] = (v, s)
                     first = o["steps"][0]["step"] if o.get("steps") else ""
                     self._kw[o["id"]] = _stems(o["title"]) | (_stems(first) if first.startswith("«") else set())
+        self.sub_keywords: dict[str, list[str]] = {}
+        kw_path = os.path.join(os.path.dirname(__file__), "data", "dialog_keywords.json")
+        try:
+            with open(kw_path, encoding="utf-8") as fh:
+                extra = json.load(fh)
+        except Exception:
+            extra = {}
+        for v in data.get("vectors") or []:
+            for s in v.get("subs") or []:
+                sid = s.get("id") or ""
+                raw = extra.get(sid) or []
+                extra_words = raw.get("keywords") if isinstance(raw, dict) else raw
+                if isinstance(raw, dict) and raw.get("slots") and not s.get("slots"):
+                    s["slots"] = list(raw["slots"])
+                words = [str(w).lower() for w in (s.get("keywords") or [])]
+                words += [str(w).lower() for w in (extra_words or [])]
+                if words and sid:
+                    s["keywords"] = list(dict.fromkeys(words))
+                    self.sub_keywords[sid] = s["keywords"]
         self.out_nodes = [o for o in data.get("out_of_platform") or [] if not str(o.get("id", "")).startswith("TYPE")]
         self._out_kw = [(o, _stems(o.get("request", ""))) for o in self.out_nodes]
 
@@ -130,6 +149,11 @@ class HintTree:
         st = _stems(msg)
         if not st:
             return None, 0.0
+        mcpish = bool(re.search(r"\bmcp\b|мсп|vidiq|подключ", msg or "", re.I))
+        if (not mcpish) and re.search(r"тем[аеуы]", msg or "", re.I) and re.search(r"т[её]мн|ч[её]рн|светл", msg or "", re.I):
+            for prefer in ("HLP.UI.S02", "HLP.UI.S01"):
+                if prefer in self.stories:
+                    return prefer, 5.0
         vs = self.vector_scores(msg)
         kind_vec = {"video": ("VID", "STO", "DSN"), "image": ("IMG", "DSN", "ART", "COM"), "edit": ("IMG", "EDT", "ART"),
                     "music": ("AUD",), "sfx": ("AUD",), "text": ("HLP", "MKT")}.get(kind or "", ())
@@ -148,11 +172,28 @@ class HintTree:
                 score += 1.5
             if o.get("priority") == "low" and not re.search(r"интерфейс|экран|кнопк|иконк|figma|ui\b|ux\b", msg, re.I):
                 score -= 2.0
+            mcpish = bool(re.search(r"\bmcp\b|мсп|vidiq|подключ", msg or "", re.I))
+            if mcpish and s["id"] == "INT.CONNECT":
+                score += 3.5
+            if mcpish and (s["id"] == "HLP.UI" or v["id"] == "HLP"):
+                score -= 6.0
+            if (not mcpish) and s["id"] == "HLP.UI" and re.search(r"тем[аеуы]|интерфейс|оформлен|кнопк|язык", msg or "", re.I):
+                score += 2.5
             if score > best_s:
                 best, best_s = sid, score
         if best_s < float(self.rules.get("story_min_score", 3.0)):
             return None, best_s
         return best, best_s
+
+    def match_sub(self, msg: str) -> str | None:
+        """Подвектор по keywords (синонимы, бренды). None — история не узнана."""
+        low = (msg or "").lower()
+        best, nbest = None, 0
+        for sid, words in self.sub_keywords.items():
+            n = sum(1 for w in words if w and w in low)
+            if n > nbest:
+                best, nbest = sid, n
+        return best
 
     def match_out(self, msg: str) -> dict | None:
         st = _stems(msg)
@@ -376,6 +417,12 @@ AISH_WORKS = {"invisible-dancer", "pressure-surgery", "liquid-silver-orbit", "ap
               "orange-skincare", "red-mannequin-transform", "mclaren-sky-launch", "ginger-icon-glasses"}
 
 
+def _image_already(ses: dict | None, ctx: dict | None) -> bool:
+    if (ctx or {}).get("has_image"):
+        return True
+    return any(isinstance(f, dict) and f.get("kind") == "image" for f in ((ses or {}).get("files") or []))
+
+
 def video_context(a: Any, ses: dict | None, ctx: dict | None) -> bool:
     """Помощник уже настраивает видео — движение камеры ставим кнопкой pick_camera, а не уводим на витрину."""
     if not ses:
@@ -396,6 +443,8 @@ def hint_chip(label: str, a: Any, st: dict, idx: int, lang: str, ses: dict | Non
         return chip(label, "open_topup")
     if low.startswith("войти"):
         return chip("Войти", "login")
+    if re.match(r"^(загрузить|прикрепить|attach|upload)\b", low):
+        return chip(label, "attach")
     if low.startswith("подключить "):
         return chip(label, "open_panel", "mcp")
     if low.startswith("выйти из режима"):
@@ -434,15 +483,81 @@ def hint_chip(label: str, a: Any, st: dict, idx: int, lang: str, ses: dict | Non
     return chip(label, "tree_hint", base)
 
 
+_DROP_HINT = re.compile(r"^(попробовать|ещё вопрос|еще вопрос|вернуться к задаче|готово)$", re.I)
+_FINALE = re.compile(r"финал истории", re.I)
+_MAIN_PATH = re.compile(r"^↩\s*основной путь:\s*(.+)$", re.I)
+_STEP_N = re.compile(r"^↩\s*(.+?):\s*шаг\s*\d+\s*$", re.I)
+_CONTINUE_N = re.compile(r"^↩\s*продолжить «([^»]+)» с шага\s*\d+", re.I)
+_AFTER = re.compile(r"^после «[^»]*»\.?\s*", re.I)
+_FORBIDDEN = re.compile(r"основной путь|финал истории|шаг\s*\d|\(выполнить задачу\)", re.I)
+
+
+def task_title(ses: dict | None, story_title: str = "") -> str:
+    """Название задачи словами человека, без внутренних подписей дерева."""
+    if isinstance(ses, dict):
+        flow = ses.get("flow") if isinstance(ses.get("flow"), dict) else {}
+        for src in (ses.get("idea"), flow.get("source"), flow.get("idea_user")):
+            s = str(src or "").strip().split("\n")[0]
+            if s and not _FORBIDDEN.search(s):
+                return s[:40]
+    title = (story_title or "").strip()
+    if title and not _FORBIDDEN.search(title):
+        return title[:40]
+    return "задаче"
+
+
+def present_hint(label: str, task: str = "") -> str | None:
+    """Подпись для человека. None — подсказку не показываем: нет действия или внутренние слова."""
+    raw = (label or "").strip()
+    if not raw or (raw.startswith("(") and raw.endswith(")")):
+        return None
+    if _DROP_HINT.match(raw) or _FINALE.search(raw):
+        return None
+    m = _MAIN_PATH.match(raw)
+    if m:
+        nxt = _AFTER.sub("", m.group(1)).strip("«» .")
+        if not nxt or _FINALE.search(nxt):
+            return None
+        return "↩ Дальше: " + nxt
+    m = _STEP_N.match(raw) or _CONTINUE_N.match(raw)
+    if m:
+        return f"↩ Вернуться к «{task or 'задаче'}»"
+    if _FORBIDDEN.search(raw):
+        return None
+    return raw
+
+
 def chips_for(a: Any, hints: list[str], st: dict, lang: str, ses: dict | None = None, ctx: dict | None = None) -> list[dict]:
     from .render import chip
+    story = ""
+    tree = getattr(getattr(a, "d", None), "tree", None)
+    if tree is not None and st.get("story") in getattr(tree, "stories", {}):
+        story = tree.stories[st["story"]].get("title") or ""
+    task = task_title(ses, story)
     out: list[dict] = []
     for i, h in enumerate(hints):
-        if h.lower().startswith("что не так?"):
+        low = h.lower()
+        if low.startswith("что не так?"):
             for opt in [x.strip() for x in h.split("?", 1)[1].split("·") if x.strip()]:
-                out.append(chip(opt, "tree_hint", {"s": st.get("story"), "t": st.get("step"), "i": i, "label": opt, "why": 1}))
+                shown = present_hint(opt, task)
+                if shown:
+                    out.append(chip(shown, "tree_hint", {"s": st.get("story"), "t": st.get("step"), "i": i, "label": shown, "why": 1}))
             continue
-        c = hint_chip(h, a, st, i, lang, ses, ctx)
+        if low in ("что ещё можно настроить", "что еще можно настроить"):
+            out.append(chip("Что ещё можно настроить", "ui_more"))
+            continue
+        if low == "попробовать на последнем результате":
+            out.append(chip("Попробовать на последнем результате", "mcp_try"))
+            continue
+        if low == "следующий инструмент":
+            out.append(chip("Другой сервис", "open_panel", "mcp"))
+            continue
+        shown = present_hint(h, task)
+        if not shown:
+            continue
+        if re.match(r"^(загрузить|прикрепить|attach|upload)\b", shown.lower()) and _image_already(ses, ctx):
+            continue
+        c = hint_chip(shown, a, st, i, lang, ses, ctx)
         if c:
             out.append(c)
     return out
@@ -515,6 +630,8 @@ def on_turn(a: Any, out: dict, msg: str, action: dict | None, ctx: dict, ses: di
     tree: HintTree | None = getattr(a.d, "tree", None)
     if tree is None or out.get("silent") or out.get("intent") in BLOCK_INTENTS or out.get("gate") in ("login", "topup"):
         return out
+    if str(out.get("intent") or "").startswith("mcp"):
+        return out
     st = state(ses)
     prof = profession(st, ctx)
     atype = str((action or {}).get("type") or "")
@@ -552,7 +669,13 @@ def on_turn(a: Any, out: dict, msg: str, action: dict | None, ctx: dict, ses: di
                 _log(a, ses, ctx, "atypical", story=st.get("story"), step=st.get("step"), reaction=rid,
                      label=msg[:80], profession=prof)
         else:
-            sid, _score = tree.match(msg, out.get("kind") or ses.get("kind"), prof)
+            from . import dialog as DG
+            if DG.mcp_about(msg):
+                return out
+            sid, score = tree.match(msg, out.get("kind") or ses.get("kind"), prof)
+            min_s = float(tree.rules.get("story_min_score", 3.0))
+            if sid and out.get("intent") in ("question", "ui_do", "ui_help", "question_models") and score < min_s + 1.5:
+                sid = None
             if sid:
                 _start(a, tree, st, sid, prof)
                 st["just"] = None
@@ -600,8 +723,10 @@ def on_turn(a: Any, out: dict, msg: str, action: dict | None, ctx: dict, ses: di
     steps = o.get("steps") or []
     step_name = steps[min(int(st["step"]), len(steps) - 1)]["step"] if steps else ""
     if weak and not out.get("blocks") and rid in (None, "R03", "R04"):
-        line = (f"Похоже, задача — «{o['title']}». Шаг: {step_name.strip('«»')}." if lang != "en"
-                else f"Looks like: «{o['title']}». Step: {step_name.strip('«»')}.")
+        plain = _AFTER.sub("", step_name.strip("«» ")).strip()
+        title = task_title(ses, o["title"])
+        line = (f"Похоже, задача — «{title}». {plain}." if lang != "en"
+                else f"Looks like: «{title}». {plain}.")
         out["text"] = (line + ("\n" + out["text"] if out.get("text") else "")).strip()
         out["reply"] = (line + ("\n" + out["reply"] if out.get("reply") else "")).strip()
     merge(out, tc, first=weak)
@@ -703,6 +828,30 @@ def _out_reply(a: Any, out: dict, node: dict, st: dict, lang: str) -> dict:
     return out
 
 
+def resume_step(a: Any, tree: HintTree, st: dict, ses: dict, lang: str) -> dict:
+    """Кнопка «вернуться» показывает сам шаг: вопрос и рабочие подсказки, без пустого «продолжаем»."""
+    from .render import response
+    o = tree.stories.get(st.get("story") or "")
+    if not o:
+        return response(["Не поняла, куда вернуться. Опишите задачу словами."], [], [], lang, intent="tree_resume")
+    steps = o.get("steps") or []
+    i = min(int(st.get("step") or 0), max(0, len(steps) - 1)) if steps else 0
+    step = steps[i]["step"] if steps else ""
+    plain = _AFTER.sub("", step.strip("«» ")).strip()
+    title = task_title(ses, o.get("title") or "")
+    if plain and plain.lower() not in ("старт", title.lower()):
+        line = f"«{title}». {plain}."
+    else:
+        line = f"«{title}». Выберите, что сделать дальше."
+    if lang == "en":
+        line = f"«{title}». {plain or 'Pick the next step.'}"
+    out = response([line], [], [], lang, intent="tree_resume")
+    merge(out, chips_for(a, tree.step_hints(o["id"], i), st, lang, ses), first=True)
+    if not (out.get("text") or "").strip() and not out.get("chips"):
+        out["text"] = out["reply"] = "Опишите задачу словами."
+    return out
+
+
 def hint_action(a: Any, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
     """Клик по подсказке дерева: реакция R01/R02, шаг вперёд; текст подсказки разбирает ядро как обычную фразу."""
     from .render import response
@@ -716,12 +865,19 @@ def hint_action(a: Any, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
     if v.get("s") and v.get("s") in tree.stories and v.get("s") != st.get("story"):
         _start(a, tree, st, v["s"], profession(st, ctx))
         st["just"] = None
-    if label.startswith("↩"):                  # вернуться к шагу истории — ответ дерева, ядро не нужно
+    if re.match(r"^(загрузить|прикрепить|attach|upload)\b", label.strip(), re.I):
+        from .render import chip
+        if _image_already(ses, ctx):
+            line = ("Эта картинка уже в задаче, промпт про неё. Другую можно прикрепить скрепкой."
+                    if lang != "en" else
+                    "This picture is already in the task, and the prompt is about it. Attach another with the paperclip.")
+        else:
+            line = ("Прикрепите файл скрепкой." if lang != "en" else "Attach the file with the paperclip.")
+        return response([line], [chip("Прикрепить" if lang != "en" else "Attach", "attach")],
+                        lang=lang, intent="need_file", ui_do={"action": "attach"})
+    if label.startswith("↩"):                  # вернуться к шагу — показать сам шаг, а не пустое «продолжаем»
         st["just"] = "START"
-        o = tree.stories.get(st.get("story") or "")
-        name = o["title"] if o else ""
-        out = response([f"Продолжаем «{name}»." if lang != "en" else f"Back to «{name}»."], [], [], lang, intent="tree_resume")
-        return out
+        return resume_step(a, tree, st, ses, lang)
     if label in ("Ещё…", "More…"):
         st["just"] = None
         o = tree.stories.get(st.get("story") or "")
@@ -743,12 +899,17 @@ def hint_action(a: Any, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
     ctx = dict(ctx)
     ctx["_tree_hint"] = True                   # «Тёмная тема» в истории про интерфейс — это деталь задачи, не смена темы
     out = a._message(label, ctx, ses, lang)
-    if out.get("intent") in WEAK_INTENTS and st.get("story"):
+    if out.get("intent") in WEAK_INTENTS | {"noop"} and st.get("story"):
         o = tree.stories[st["story"]]
         steps = o.get("steps") or []
         nxt = steps[min(int(st.get("step") or 0), len(steps) - 1)]["step"] if steps else ""
-        line = (f"Принято: «{label}». Дальше — {nxt.strip('«»')}. Опишите детали или выберите вариант ниже."
-                if lang != "en" else f"Got it: «{label}». Next — {nxt.strip('«»')}. Add details or pick an option below.")
+        nxt = _AFTER.sub("", nxt.strip("«» ")).strip()
+        if not nxt or _FINALE.search(nxt):
+            line = (f"Принято: «{label}». Опишите детали или выберите вариант ниже."
+                    if lang != "en" else f"Got it: «{label}». Add details or pick an option below.")
+        else:
+            line = (f"Принято: «{label}». Дальше — {nxt}. Опишите детали или выберите вариант ниже."
+                    if lang != "en" else f"Got it: «{label}». Next — {nxt}. Add details or pick an option below.")
         out["text"] = out["reply"] = line
         out["intent"] = "tree_step"
         out["degraded"] = False

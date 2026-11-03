@@ -1,0 +1,863 @@
+"""Диалог v2: сначала промпт идеи, потом путь, модели только перед запуском.
+
+Помощник не показывает стартовое меню и не спрашивает «собрать или улучшить промпт».
+Генерацию по-прежнему запускает только кнопка на итоговой карточке.
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+from functools import lru_cache
+from typing import Any
+
+from . import params as P
+from .recommend import advise
+from .render import chip, model_item, response
+
+_CAPS = os.path.join(os.path.dirname(__file__), "data", "model_capabilities.json")
+_KW = os.path.join(os.path.dirname(__file__), "data", "dialog_keywords.json")
+
+ACTIONS = {
+    "flow_slot", "idea_next", "idea_alt", "path_photos", "path_board", "path_direct",
+    "flow_next", "flow_show", "flow_skip",
+}
+
+SKIP_RX = re.compile(r"сразу\s+видео|пропусти\s+раскадров|давай\s+сразу", re.I)
+ADVISE_RX = re.compile(r"посоветуй|какая\s+лучше|какой\s+посовету|что\s+взять", re.I)
+COMPARE_RX = re.compile(r"чем\s+отлича", re.I)
+
+# Слова самой просьбы — не название товара.
+_STOP = {
+    "мне", "нужно", "надо", "сделай", "сделать", "хочу", "давай", "для", "про", "это",
+    "карточку", "карточка", "карточки", "маркетплейса", "маркетплейс", "вайлдберриз",
+    "озон", "ozon", "видео", "ролик", "рилс", "reels", "картинку", "картинка", "фото",
+    "который", "которая", "которое", "залетит", "инфографика", "инфографику", "белый",
+    "белом", "фоне", "фон", "сразу",
+}
+
+_SLOTS = {
+    "COM.CARD": [
+        ("product", "Что за товар?", [
+            ("Есть фото — прикреплю", "photo"),
+            ("Опишу словами", "words"),
+            ("Фото нет", "none"),
+        ]),
+        ("look", "Как должна выглядеть карточка?", [
+            ("Белый фон", "white"),
+            ("Инфографика", "info"),
+            ("В жизни", "life"),
+        ]),
+    ],
+    "VID.REELS": [
+        ("goal", "Для чего ролик?", [
+            ("Продажа", "sale"),
+            ("Охват", "reach"),
+            ("Личное", "personal"),
+        ]),
+        ("own", "Есть свои фото или видео?", [
+            ("Да, прикреплю", "yes"),
+            ("Нет, сгенерируем", "no"),
+        ]),
+    ],
+}
+
+_STAGE_LEFT = {
+    "slots": "осталось уточнить",
+    "idea": "дорабатываем промпт",
+    "refine": "дорабатываем промпт",
+    "path": "осталось выбрать путь",
+    "cast": "осталось собрать кадры",
+    "board": "идёт раскадровка",
+    "advise": "осталось выбрать модель",
+    "card": "осталось запустить",
+    "type": "осталось выбрать тип",
+}
+
+
+@lru_cache(maxsize=1)
+def capabilities() -> dict:
+    try:
+        with open(_CAPS, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except Exception:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+@lru_cache(maxsize=1)
+def _keywords() -> dict[str, list[str]]:
+    try:
+        with open(_KW, encoding="utf-8") as fh:
+            raw = json.load(fh)
+    except Exception:
+        return {}
+    out = {}
+    for sid, row in (raw or {}).items():
+        words = row.get("keywords") if isinstance(row, dict) else row
+        out[sid] = [str(w).lower() for w in (words or [])]
+    return out
+
+
+def meta(ses: dict) -> dict:
+    f = ses.get("flow") if isinstance(ses.get("flow"), dict) else {}
+    return {
+        "task": f.get("kind") or ses.get("kind") or "",
+        "story": f.get("story") or "",
+        "stage": f.get("stage") or "",
+        "slots": f.get("slots") or {},
+        "missing": list(f.get("missing") or []),
+        "next": f.get("next") or "",
+    }
+
+
+def guess_story(msg: str, tree: Any = None) -> str:
+    if tree is not None and hasattr(tree, "match_sub"):
+        hit = tree.match_sub(msg)
+        if hit:
+            return hit
+    low = (msg or "").lower()
+    best, nbest = "", 0
+    for sid, words in _keywords().items():
+        n = sum(1 for w in words if w and w in low)
+        if n > nbest:
+            best, nbest = sid, n
+    return best
+
+
+def active(ses: dict) -> bool:
+    return isinstance(ses.get("flow"), dict) and bool(ses["flow"].get("stage"))
+
+
+def back_chip(ses: dict) -> dict | None:
+    f = ses.get("flow") if isinstance(ses.get("flow"), dict) else None
+    if not f or not f.get("stage"):
+        return None
+    title = (f.get("idea") or f.get("source") or "задаче").strip().split("\n")[0][:32]
+    left = _STAGE_LEFT.get(f.get("stage") or "", "продолжаем")
+    return chip(f"↩ {title}: {left}", "flow_show")
+
+
+def start(engine: Any, msg: str, it: Any, ctx: dict, ses: dict, lang: str) -> dict | None:
+    if engine._is_guest(ctx):
+        return None
+    kind = getattr(it, "kind", None) or None
+    story = guess_story(msg, engine.d.tree)
+    kind = _kind_of(story, kind)
+    if not kind:
+        return ask_type(engine, msg, ctx, ses, lang)
+    _park(ses, msg)
+    _open(ses, kind, story, msg, ctx)
+    if engine.d.tree_log and not story:
+        try:
+            engine.d.tree_log({"kind": "new_story", "text": (msg or "")[:200]})
+        except Exception:
+            pass
+    return advance(engine, ctx, ses, lang)
+
+
+def start_saved(engine: Any, ctx: dict, ses: dict, lang: str) -> dict | None:
+    """После входа: идея уже лежит в сессии, диалог ещё не открыт."""
+    msg = (ses.get("idea") or "").strip()
+    if not msg:
+        return None
+    story = guess_story(msg, engine.d.tree)
+    kind = _kind_of(story, ses.get("kind"))
+    if not kind:
+        return None
+    _open(ses, kind, story, msg, ctx)
+    return advance(engine, ctx, ses, lang)
+
+
+def from_handoff(engine: Any, prompt: str, kind: str, from_name: str, took: bool,
+                 ctx: dict, ses: dict, lang: str, stay: dict) -> dict:
+    """После команды «сгенери видео по этому»: идея на правку, не сетка моделей."""
+    text = (prompt or "").strip()
+    story = guess_story(text, engine.d.tree)
+    kind = _kind_of(story, kind)
+    _park(ses, text)
+    _open(ses, kind or "video", story, text, ctx)
+    f = ses["flow"]
+    f["missing"] = []
+    f["idea"] = _compose(f)
+    ses["idea"] = f["idea"]
+    word = {"video": "видео", "image": "картинку", "music": "музыку"}.get(f["kind"], "это")
+    if took:
+        head = f"Сделаем {word}. Беру текст из ответа {from_name} — вот варианты промпта."
+    else:
+        head = f"Сделаем {word}. Вот варианты промпта."
+    out = open_prompts(engine, ctx, ses, lang, "idea")
+    out["text"] = head + "\n" + (out.get("text") or "")
+    out["reply"] = out["text"]
+    out["chips"] = list(out.get("chips") or []) + [stay]
+    out["intent"] = "model_switch"
+    return out
+
+
+def ask_type(engine: Any, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
+    _park(ses, msg)
+    ses["idea"] = (msg or "").strip()
+    ses["flow"] = {
+        "stage": "type", "kind": "", "story": "", "slots": {}, "missing": ["kind"],
+        "idea": "", "idea_user": (msg or "").strip(), "path": "", "next": "type",
+        "source": (msg or "").strip()[:500],
+    }
+    low = (msg or "").lower()
+    chips = [
+        chip("Видео", "choose_type", "video", primary=True),
+        chip("Картинка", "choose_type", "image"),
+    ]
+    if re.search(r"песн|трек|музык", low):
+        chips.append(chip("Музыка", "choose_type", "music"))
+    return response(
+        ["Это видео, картинка или что-то ещё?" if lang != "en" else "Is this a video, an image, or something else?"],
+        chips, lang=lang, intent="ask_type",
+    )
+
+
+def on_message(engine: Any, msg: str, ctx: dict, ses: dict, lang: str) -> dict | None:
+    f = ses.get("flow") if isinstance(ses.get("flow"), dict) else None
+    if not f:
+        return None
+    if COMPARE_RX.search(msg or ""):
+        return compare_from_text(engine, msg, lang)
+    other = guess_story(msg, engine.d.tree)
+    if other and other != (f.get("story") or "") and other in _SLOTS and _fresh_task(msg):
+        return start(engine, msg, _Kind(other), ctx, ses, lang)
+    if SKIP_RX.search(msg or "") and (f.get("kind") == "video" or not f.get("kind")):
+        f["kind"] = "video"
+        return _go_direct(engine, ctx, ses, lang)
+    if ADVISE_RX.search(msg or ""):
+        return _advise(engine, ctx, ses, lang, again=True)
+    stage = f.get("stage")
+    if stage == "slots":
+        _absorb(f, msg, ctx)
+        return advance(engine, ctx, ses, lang)
+    if stage in ("idea", "path", "advise", "card", "cast", "refine", "variants"):
+        _apply_edit(f, msg)
+        ses["idea"] = f.get("idea") or ses.get("idea") or ""
+        if stage == "card" and ses.get("picked"):
+            ses["prompt"] = f.get("idea") or ses.get("prompt") or ""
+            ses["prompt_base"] = ses["prompt"]
+            card = engine.d.cards.get(ses.get("picked") or "")
+            if card:
+                return engine._setup_reply(card, ses, ctx, lang, "edit_prompt", "Обновила промпт.")
+        if stage == "variants":
+            _apply_edit(f, msg)
+            ses["idea"] = f.get("idea") or ses.get("idea") or ""
+            return open_prompts(engine, ctx, ses, lang, str(f.get("prompt_for") or "idea"))
+        if stage == "refine":
+            return _refine(ses, lang, str(f.get("refine") or "photos"), "Поправила промпт.")
+        if stage == "idea":
+            return _idea_card(ses, lang, "Поправила промпт.")
+        return show(engine, ctx, ses, lang)
+    return None
+
+
+def on_action(engine: Any, kind: str, value: Any, ctx: dict, ses: dict, lang: str) -> dict | None:
+    f = ses.get("flow") if isinstance(ses.get("flow"), dict) else None
+    if kind in ACTIONS or (kind == "choose_type" and f and f.get("stage") == "type"):
+        pass
+    elif kind == "use_mine" and f and f.get("stage") == "idea":
+        pass
+    elif kind == "pick_model" and f and f.get("stage") in ("advise", "card"):
+        pass
+    elif kind == "media_add" and f:
+        pass
+    else:
+        return None
+    if not isinstance(f, dict):
+        return response(["Сначала опишите задачу."], [], lang=lang, intent="flow")
+    if kind == "flow_slot":
+        slot, val = _pair(value)
+        if slot:
+            f["slots"][slot] = val
+        return advance(engine, ctx, ses, lang)
+    if kind == "idea_next":
+        if (f.get("kind") or ses.get("kind")) == "video":
+            return _paths(engine, ses, lang)
+        return _advise(engine, ctx, ses, lang)
+    if kind == "idea_alt":
+        ses["var_round"] = int(ses.get("var_round") or 0) + 1
+        return open_prompts(engine, ctx, ses, lang, str(f.get("prompt_for") or "idea"))
+    if kind == "use_mine":
+        f["idea"] = f.get("idea_user") or f.get("idea") or ""
+        ses["idea"] = f["idea"]
+        return _idea_card(ses, lang, "Вернула ваш текст.")
+    if kind == "path_photos":
+        return open_prompts(engine, ctx, ses, lang, "photos")
+    if kind == "path_board":
+        return open_prompts(engine, ctx, ses, lang, "board")
+    if kind == "path_direct" or kind == "flow_skip":
+        return _go_direct(engine, ctx, ses, lang)
+    if kind == "flow_show":
+        return show(engine, ctx, ses, lang)
+    if kind == "flow_next":
+        return _next(engine, value, ctx, ses, lang)
+    if kind == "choose_type":
+        story = f.get("story") or ""
+        _open(ses, str(value or "image"), story, f.get("idea_user") or ses.get("idea") or "", ctx)
+        return advance(engine, ctx, ses, lang)
+    if kind == "pick_model":
+        return _launch(engine, str(value or ""), ctx, ses, lang)
+    if kind == "media_add":
+        from . import dialog as DG
+        if isinstance(value, dict) and (value.get("url") or value.get("work_id")):
+            DG.add_result(ses, value)
+        return _after_media(value if isinstance(value, dict) else {}, ses, lang)
+    return None
+
+
+def show(engine: Any, ctx: dict, ses: dict, lang: str) -> dict:
+    f = ses.get("flow") or {}
+    stage = f.get("stage")
+    if stage == "type":
+        return ask_type(engine, f.get("idea_user") or "", ctx, ses, lang)
+    if stage == "slots":
+        return advance(engine, ctx, ses, lang)
+    if stage == "path":
+        return _paths(engine, ses, lang)
+    if stage == "variants":
+        return open_prompts(engine, ctx, ses, lang, str(f.get("prompt_for") or "idea"))
+    if stage == "polish":
+        return engine._offer_polish(ses, ctx, lang, "use_variant")
+    if stage == "refine":
+        return _refine(ses, lang, str(f.get("refine") or "photos"))
+    if stage == "cast":
+        return _cast(ses, lang)
+    if stage == "board":
+        return _board(engine, ctx, ses, lang)
+    if stage == "advise":
+        return _advise(engine, ctx, ses, lang, again=True)
+    if stage == "card":
+        card = engine.d.cards.get(ses.get("picked") or "")
+        if card:
+            return engine._setup_reply(card, ses, ctx, lang, "summary", "Проверьте и запускайте.")
+    return _idea_card(ses, lang)
+
+
+def advance(engine: Any, ctx: dict, ses: dict, lang: str) -> dict:
+    f = ses["flow"]
+    _absorb(f, f.get("source") or "", ctx)
+    missing = _missing(f)
+    f["missing"] = missing
+    if missing:
+        f["stage"] = "slots"
+        f["next"] = missing[0]
+        return _ask_slots(f, missing[:1], lang)
+    if not f.get("idea"):
+        f["idea"] = _compose(f)
+        ses["idea"] = f["idea"]
+    return open_prompts(engine, ctx, ses, lang, "idea")
+
+
+def compare_from_text(engine: Any, msg: str, lang: str) -> dict:
+    low = (msg or "").lower()
+    found = []
+    for c in engine.d.cards.values():
+        title = (c.title or "").lower()
+        if title and title in low:
+            found.append(c)
+    if len(found) < 2:
+        for key, c in engine.d.cards.items():
+            token = key.split("-")[0]
+            if len(token) >= 3 and token in low and c not in found:
+                found.append(c)
+    return compare_cards(engine, found[:2], lang)
+
+
+def compare_cards(engine: Any, cards: list, lang: str) -> dict:
+    caps = capabilities()
+    if len(cards) < 2:
+        return response(["Назовите две модели — коротко сравню их."], [], lang=lang, intent="compare")
+    lines = ["Чем отличаются:"]
+    for c in cards[:2]:
+        cap = caps.get(c.id) or {}
+        bits = [c.title]
+        if cap.get("audio"):
+            bits.append("звук: " + str(cap["audio"]))
+        else:
+            bits.append("звук: не указан")
+        if cap.get("max_sec"):
+            bits.append(f"до {cap['max_sec']} с")
+        if isinstance(cap.get("text_render"), (int, float)):
+            bits.append(f"текст {cap['text_render']}")
+        note = (cap.get("note_ru") or "")[:90]
+        lines.append(" · ".join(bits) + ((" — " + note) if note else ""))
+    lines.append(f"Для задачи из диалога ближе {cards[0].title}.")
+    return response(lines, [], lang=lang, intent="compare")
+
+
+# ---------------------------------------------------------------- internals
+
+
+class _Kind:
+    def __init__(self, story: str):
+        self.kind = _kind_of(story, None)
+        self.name = "generate_task"
+
+
+def _kind_of(story: str, kind: str | None) -> str | None:
+    if story in ("COM.CARD", "IMG.COVER", "IMG.BRAND", "DSN.INTER", "MKT.PERF"):
+        return "image"
+    if story in ("VID.REELS", "VID.ANIM", "VID.PROMO", "COM.PVIDEO", "STO.SERIES"):
+        return "video"
+    if story == "AUD.SONG":
+        return "music"
+    return kind if kind in ("image", "video", "music", "text") else None
+
+
+def _open(ses: dict, kind: str, story: str, msg: str, ctx: dict) -> None:
+    text = (msg or "").strip()
+    flow = {
+        "stage": "slots",
+        "kind": kind,
+        "story": story or "",
+        "slots": {},
+        "missing": [],
+        "idea": "",
+        "idea_user": text,
+        "path": "",
+        "next": "slots",
+        "source": text[:500],
+        "shown_models": [],
+    }
+    ses["flow"] = flow
+    ses["kind"] = kind
+    ses["idea"] = text
+    ses["picked"] = None
+    ses["prompt"] = ""
+    ses["prompt_base"] = ""
+    _absorb(flow, text, ctx)
+
+
+def _park(ses: dict, new_text: str) -> None:
+    f = ses.get("flow") if isinstance(ses.get("flow"), dict) else None
+    if not f or not (f.get("idea") or f.get("source")):
+        return
+    if (f.get("source") or "")[:80] == (new_text or "")[:80]:
+        return
+    ses["parked"] = {
+        "idea": f.get("idea") or f.get("source") or "",
+        "kind": f.get("kind"),
+        "topic": (f.get("idea") or f.get("source") or "")[:40],
+        "prompt": ses.get("prompt") or "",
+        "prompt_base": ses.get("prompt_base") or "",
+        "picked": ses.get("picked"),
+        "params": dict(ses.get("params") or {}),
+        "camera": ses.get("camera"),
+        "needs": list(ses.get("needs") or []),
+        "flow": dict(f),
+    }
+    ses["_just_parked"] = True
+
+
+def _fresh_task(msg: str) -> bool:
+    return bool(re.search(r"сделай|хочу|нужно|давай|собери", msg or "", re.I))
+
+
+def _absorb(flow: dict, text: str, ctx: dict) -> None:
+    low = (text or "").lower()
+    slots = flow.setdefault("slots", {})
+    story = flow.get("story") or ""
+    if story == "COM.CARD":
+        if ctx.get("has_image") or re.search(r"прикреп|есть фото", low):
+            slots["product"] = "photo"
+        elif re.search(r"без фото|фото нет|нет фото", low):
+            slots["product"] = "none"
+        elif _subject_words(low):
+            slots.setdefault("product", "words")
+        if re.search(r"инфографик", low):
+            slots["look"] = "info"
+        elif re.search(r"лайфстайл|в жизни|в руках", low):
+            slots["look"] = "life"
+        elif re.search(r"бел\w*\s+фон", low):
+            slots["look"] = "white"
+    elif story == "VID.REELS":
+        if re.search(r"продаж|реклам", low):
+            slots["goal"] = "sale"
+        elif re.search(r"залетит|охват|вирус", low):
+            slots["goal"] = "reach"
+        elif re.search(r"личн|для себя", low):
+            slots["goal"] = "personal"
+        if re.search(r"есть фото|есть видео|своё фото|свое фото|прикреп", low) or ctx.get("has_image"):
+            slots["own"] = "yes"
+        elif re.search(r"нет фото|без фото|сгенерир", low):
+            slots["own"] = "no"
+    elif story == "IMG.COVER" and re.search(r"youtube|ютуб", low):
+        slots["format"] = "16:9"
+
+
+def _subject_words(low: str) -> list[str]:
+    return [w for w in re.findall(r"[a-zа-яё0-9]{3,}", low) if w not in _STOP]
+
+
+def _missing(flow: dict) -> list[str]:
+    need = [sid for sid, _q, _opts in _SLOTS.get(flow.get("story") or "", [])]
+    return [sid for sid in need if not (flow.get("slots") or {}).get(sid)]
+
+
+def _ask_slots(flow: dict, ids: list[str], lang: str) -> dict:
+    spec = {sid: (q, opts) for sid, q, opts in _SLOTS.get(flow.get("story") or "", [])}
+    lines, chips = [], []
+    for sid in ids:
+        q, opts = spec[sid]
+        lines.append(q)
+        for label, val in opts:
+            chips.append(chip(label, "flow_slot", {"slot": sid, "value": val}))
+    return response(lines, chips[:8], lang=lang, intent="flow_slots")
+
+
+def _compose(flow: dict) -> str:
+    src = (flow.get("idea_user") or "").strip()
+    bits = [src] if src else []
+    look = (flow.get("slots") or {}).get("look")
+    low = src.lower()
+    if look == "white" and "бел" not in low:
+        bits.append("Чистый белый фон, мягкий свет, товар по центру.")
+    if look == "info" and "инфографик" not in low:
+        bits.append("Инфографика: крупный товар и короткие подписи.")
+    if look == "life":
+        bits.append("Товар в жизни, как им пользуются.")
+    if flow.get("story") == "COM.CARD":
+        bits.append("Формат 3:4.")
+    if flow.get("story") == "VID.REELS":
+        bits.append("Вертикальное видео 9:16, около 15 секунд, со звуком.")
+    if flow.get("story") == "IMG.COVER" and (flow.get("slots") or {}).get("format") == "16:9":
+        bits.append("Обложка 16:9.")
+    text = " ".join(b for b in bits if b).strip()
+    return re.sub(r"([A-Za-zА-Яа-яЁё])\1{2,}", r"\1\1", text)
+
+
+def _apply_edit(flow: dict, msg: str) -> None:
+    low = (msg or "").lower()
+    if re.search(r"ноч", low):
+        extra = "Ночная сцена."
+    elif re.search(r"вечер", low):
+        extra = "Вечерний свет."
+    elif re.search(r"без людей", low):
+        extra = "Без людей."
+    else:
+        extra = (msg or "").strip()
+    if not extra:
+        return
+    base = (flow.get("idea") or flow.get("idea_user") or "").strip()
+    if extra.lower() in base.lower():
+        flow["idea"] = base
+        return
+    flow["idea"] = (base + " " + extra).strip()
+
+
+def _idea_card(ses: dict, lang: str, head: str | None = None) -> dict:
+    f = ses["flow"]
+    if not f.get("idea"):
+        f["idea"] = _compose(f)
+    ses["idea"] = f["idea"]
+    f["stage"] = "idea"
+    f["next"] = "idea"
+    video = (f.get("kind") or ses.get("kind")) == "video"
+    if video:
+        text = head or ("Сначала доработаем промпт основной идеи. "
+                        "Поправьте текст ниже. Когда он готов — выберем, как делать видео.")
+        ok = "Промпт готов" if lang != "en" else "Prompt is ready"
+    else:
+        text = head or "Вот идея. Дальше — как это делать."
+        ok = "Дальше" if lang != "en" else "Next"
+    block = {"type": "prompt", "label": True, "title": "Промпт" if lang != "en" else "Prompt",
+             "text": f["idea"], "note": ""}
+    chips = [
+        chip(ok, "idea_next", None, primary=True),
+        chip("Ещё вариант" if lang != "en" else "Another version", "idea_alt"),
+        chip("Вернуть мой текст" if lang != "en" else "Restore my text", "use_mine"),
+    ]
+    return response([text], chips, [block], lang=lang, intent="idea")
+
+
+def _paths(engine: Any, ses: dict, lang: str) -> dict:
+    f = ses["flow"]
+    f["stage"] = "path"
+    f["next"] = "path"
+    lines = [
+        "Как делаем видео?",
+        "Сначала фото персонажей и сцены — потом из них соберём ролик.",
+        "Раскадровка — кадры по порядку, потом видео.",
+        "Сразу видео — один ролик из идеи.",
+    ]
+    media = [m for m in (ses.get("media") or []) if isinstance(m, dict) and m.get("kind") == "image"]
+    if media or any(isinstance(a, dict) and a.get("kind") == "image" for a in (ses.get("arts") or [])):
+        lines.append("Фото уже есть — можно взять их.")
+    chips = [
+        chip("Сначала фото персонажей и сцены", "path_photos"),
+        chip("Раскадровка", "path_board"),
+        chip("Сразу видео", "path_direct", primary=True),
+    ]
+    return response(lines, chips, lang=lang, intent="flow_path")
+
+
+def open_prompts(engine: Any, ctx: dict, ses: dict, lang: str, which: str = "idea") -> dict:
+    """Несколько вариантов одного промпта. Дальше — доработка в Claude или GPT, либо «использовать этот»."""
+    f = ses["flow"]
+    f["stage"] = "variants"
+    f["prompt_for"] = which
+    f["next"] = "variants"
+    if which == "photos":
+        f["path"] = "photos"
+    elif which == "board":
+        f["path"] = "board"
+    if not f.get("idea"):
+        f["idea"] = _compose(f)
+    guide_kind = "image" if which == "photos" else (f.get("kind") or ses.get("kind") or "image")
+    ses["kind"] = guide_kind if guide_kind in ("image", "video", "music") else "image"
+    ses["idea"] = f["idea"]
+    ses["brief"] = {"q": [], "a": {}, "extra": [], "summary": "", "src": "flow", "phase": "done"}
+    ses["brief_guide"] = None
+    ses["brief_for_model"] = None
+    ses["picked"] = None
+    ses["gen_model"] = None
+    card = engine._brief_guide(ses, ctx)
+    if not card:
+        return _idea_card(ses, lang)
+    return engine._variants(card, ses, ctx, lang)
+
+
+def _refine(ses: dict, lang: str, which: str, head: str | None = None) -> dict:
+    """Один и тот же промпт дорабатываем под выбранный шаг, модели — только после «промпт готов»."""
+    f = ses["flow"]
+    f["stage"] = "refine"
+    f["path"] = which
+    f["refine"] = which
+    f["next"] = "refine"
+    if not f.get("idea"):
+        f["idea"] = _compose(f)
+    ses["idea"] = f["idea"]
+    if which == "photos":
+        title = "Промпт для фото" if lang != "en" else "Prompt for the photos"
+        lines = [head or ("Фото персонажей и сцены. Доработайте тот же промпт — по нему сделаем картинки."
+                          if lang != "en" else "Photos of the characters and the place. Refine the same prompt.")]
+        lines.append("Герой — по описанию из идеи." if lang != "en" else "Hero — from the idea.")
+        lines.append("Сцена — место из идеи." if lang != "en" else "Scene — the place from the idea.")
+        ok, val = ("Промпт готов — к картинке", "photos_go")
+    else:
+        title = "Промпт для раскадровки" if lang != "en" else "Prompt for the storyboard"
+        lines = [head or ("Раскадровка. Доработайте тот же промпт — по нему разложу кадры."
+                          if lang != "en" else "Storyboard. Refine the same prompt — the frames follow it.")]
+        ok, val = ("Промпт готов — к кадрам", "board_go")
+    block = {"type": "prompt", "label": True, "title": title, "text": f["idea"], "note": ""}
+    chips = [
+        chip(ok if lang != "en" else "Prompt is ready", "flow_next", val, primary=True),
+        chip("Ещё вариант" if lang != "en" else "Another version", "idea_alt"),
+    ]
+    return response(lines, chips, [block], lang=lang, intent="flow_refine")
+
+
+def _cast(ses: dict, lang: str) -> dict:
+    f = ses["flow"]
+    f["stage"] = "cast"
+    f["path"] = "photos"
+    f["next"] = "cast"
+    f["cast"] = [
+        {"id": "hero", "title": "Герой", "on": True},
+        {"id": "scene", "title": "Сцена", "on": True},
+    ]
+    lines = [
+        "Сначала фото.",
+        "Герой — по описанию из идеи.",
+        "Сцена — место из идеи.",
+    ]
+    chips = [chip("Дальше: картинки героев", "flow_next", "cast_images", primary=True)]
+    return response(lines, chips, lang=lang, intent="flow_cast")
+
+
+def _board(engine: Any, ctx: dict, ses: dict, lang: str) -> dict:
+    from . import storyboard as SB
+    f = ses["flow"]
+    f["stage"] = "board"
+    f["path"] = "board"
+    f["next"] = "board"
+    ses["idea"] = f.get("idea") or ses.get("idea") or ""
+    return SB.start(engine, ses, ctx, lang, text=ses["idea"])
+
+
+def _go_direct(engine: Any, ctx: dict, ses: dict, lang: str) -> dict:
+    f = ses["flow"]
+    f["path"] = "direct"
+    f["kind"] = f.get("kind") or "video"
+    ses["kind"] = f["kind"]
+    if not f.get("idea"):
+        f["idea"] = _compose(f)
+        ses["idea"] = f["idea"]
+    return _advise(engine, ctx, ses, lang)
+
+
+def _profile(engine: Any, ses: dict, ctx: dict) -> dict:
+    f = ses.get("flow") or {}
+    kind = f.get("kind") or ses.get("kind") or "image"
+    story = f.get("story") or ""
+    aspect = None
+    if story == "COM.CARD":
+        aspect = "3:4"
+    elif story == "VID.REELS" or (kind == "video" and f.get("path")):
+        aspect = "9:16"
+    elif story == "IMG.COVER" and (f.get("slots") or {}).get("format") == "16:9":
+        aspect = "16:9"
+    return {
+        "kind": "image" if f.get("stage") == "cast" or f.get("next") == "cast_images" else kind,
+        "text": story == "COM.CARD" or (f.get("slots") or {}).get("look") == "info",
+        "aspect": aspect,
+        "audio": kind == "video",
+        "needs_image": bool(ctx.get("has_image")) or any(
+            isinstance(m, dict) and m.get("kind") == "image" for m in (ses.get("media") or [])
+        ),
+        "current": str(ctx.get("selected_model_id") or ""),
+    }
+
+
+def _advise(engine: Any, ctx: dict, ses: dict, lang: str, again: bool = False) -> dict:
+    f = ses["flow"]
+    if f.get("next") == "cast_images":
+        prof_kind = "image"
+    else:
+        prof_kind = f.get("kind") or "image"
+    profile = _profile(engine, ses, ctx)
+    profile["kind"] = prof_kind
+    caps = capabilities()
+    cards = advise(engine.d.cards, caps, profile, engine._price, engine.d.health_fn, engine.d.catalog_fn)
+    ids = [c.id for c in cards]
+    if again and ids and ids == list(f.get("shown_models") or []):
+        title = cards[0].title if cards else ""
+        return response(
+            [f"Оставляю тот же совет: {title}. Можно взять её или написать, что важнее — цена, текст или качество."],
+            [chip("Взять " + title, "pick_model", cards[0].id, primary=True)] if cards else [],
+            lang=lang, intent="advise",
+        )
+    f["shown_models"] = ids
+    f["stage"] = "advise"
+    f["next"] = "advise"
+    ses["kind"] = prof_kind
+    sec = 15 if prof_kind == "video" else None
+    items = []
+    for i, c in enumerate(cards):
+        cap = caps.get(c.id) or {}
+        reason = (cap.get("note_ru") or c.text("strengths", lang) or "")[:90]
+        it = model_item(c, engine._price(c.id), lang, engine.d.vitrina_url, ses.get("topic") or "",
+                        "Советую" if i == 0 else None, sec)
+        it["why"] = reason
+        items.append(it)
+    cur = str(ctx.get("selected_model_id") or "")
+    cur_card = engine.d.cards.get(cur)
+    if cards and cur and cards[0].id == cur:
+        head = f"Делаем на {cards[0].title}."
+    elif cur_card and cards and cur not in ids:
+        head = f"{cur_card.title} сюда слабее подходит. Ближе {cards[0].title}."
+    elif cards:
+        head = f"Советую {cards[0].title}."
+    else:
+        head = "Сейчас нет подходящей модели в студии."
+    if prof_kind == "video" and cards:
+        head += " Оценка — за ролик около 15 с."
+    if cards and len(cards) > 1:
+        head += " Рядом — запасной вариант."
+    chips = [chip("Взять " + c.title, "pick_model", c.id, primary=(i == 0)) for i, c in enumerate(cards)]
+    blocks = [{"type": "models", "items": items}] if items else []
+    return response([head], chips, blocks, lang=lang, intent="advise",
+                    models=[{"id": it["id"], "title": it["title"], "price": it["price"]} for it in items])
+
+
+def _launch(engine: Any, mid: str, ctx: dict, ses: dict, lang: str) -> dict:
+    card = engine.d.cards.get(mid)
+    if not card:
+        return _advise(engine, ctx, ses, lang)
+    f = ses["flow"]
+    if not f.get("idea"):
+        f["idea"] = _compose(f)
+    prompt = f.get("idea") or ses.get("idea") or ""
+    ses["picked"] = card.id
+    ses["kind"] = card.kind if card.kind != "edit" else (f.get("kind") or "image")
+    ses["idea"] = prompt
+    ses["prompt_base"] = prompt
+    ses["prompt"] = prompt
+    params: dict[str, Any] = {}
+    aspects = card.params.get("aspect_ratio") or []
+    want = _profile(engine, ses, ctx).get("aspect")
+    if want and want in aspects:
+        params["aspect_ratio"] = want
+    if (f.get("kind") == "video" or card.kind == "video") and f.get("story") == "VID.REELS":
+        dur = _closest_duration(card, 15)
+        if dur is not None:
+            params["duration"] = dur
+    ses["params"] = P.with_defaults(card, params)
+    f["stage"] = "card"
+    f["next"] = "generate"
+    return engine._setup_reply(card, ses, ctx, lang, "summary", "Проверьте и запускайте.")
+
+
+def _closest_duration(card: Any, target: int) -> int | None:
+    nums = []
+    for o in card.params.get("duration") or []:
+        if isinstance(o, (int, float)):
+            nums.append(int(o))
+        elif isinstance(o, str) and o.strip().isdigit():
+            nums.append(int(o.strip()))
+        elif isinstance(o, dict) and str(o.get("value", "")).isdigit():
+            nums.append(int(o["value"]))
+    if not nums:
+        return None
+    return min(nums, key=lambda n: (abs(n - target), n))
+
+
+def _after_media(value: dict, ses: dict, lang: str) -> dict:
+    kind = str(value.get("kind") or "")
+    f = ses.get("flow") or {}
+    story = f.get("story") or ""
+    path = f.get("path") or ""
+    if kind == "image" and path == "board":
+        chips = [chip("Дальше: видео по раскадровке", "path_direct", primary=True)]
+    elif kind == "image" and (story == "VID.REELS" or path in ("photos", "board")):
+        chips = [
+            chip("Дальше: раскадровка", "path_board"),
+            chip("Дальше: видео из этой картинки", "path_direct"),
+        ]
+    elif kind == "video":
+        chips = [
+            chip("Ещё вариант", "idea_alt"),
+            chip("Доработать промпт", "flow_next", "reprompt"),
+            chip("Обложка", "flow_next", "cover"),
+        ]
+    else:
+        chips = [
+            chip("Ещё слайды инфографики", "flow_next", "more_slides"),
+            chip("Главное фото", "flow_next", "hero"),
+            chip("Видео товара", "flow_next", "video"),
+        ]
+    return response(["Готово. Что дальше?"], chips, lang=lang, intent="flow_next")
+
+
+def _next(engine: Any, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
+    f = ses["flow"]
+    step = value if isinstance(value, str) else ""
+    if step in ("cast_images", "photos_go"):
+        f["next"] = "cast_images"
+        f["path"] = "photos"
+        return _advise(engine, ctx, ses, lang)
+    if step == "board_go":
+        return _board(engine, ctx, ses, lang)
+    if step == "reprompt":
+        f["path"] = ""
+        f["refine"] = ""
+        f["prompt_for"] = "idea"
+        return open_prompts(engine, ctx, ses, lang, "idea")
+    if step in ("video", "cover"):
+        f["kind"] = "video" if step == "video" else "image"
+        f["story"] = "VID.REELS" if step == "video" else "IMG.COVER"
+        if not f.get("idea"):
+            f["idea"] = _compose(f)
+        if step == "video":
+            return _paths(engine, ses, lang)
+        return _advise(engine, ctx, ses, lang)
+    return _idea_card(ses, lang, "Продолжаем ту же задачу.")
+
+
+def _pair(value: Any) -> tuple[str, str]:
+    if isinstance(value, dict):
+        return str(value.get("slot") or ""), str(value.get("value") or "")
+    return "", ""
