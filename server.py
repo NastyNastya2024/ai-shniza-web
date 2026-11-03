@@ -767,6 +767,13 @@ def api_chat():
     if not messages or messages[-1]["role"] != "user":
         return jsonify({"error": "invalid"}), 400
 
+    if not data.get("stay"):
+        from assistant.switch import generation_kind, latest_line
+
+        asked = generation_kind(latest_line(messages[-1]["content"]), False)
+        if asked:
+            return jsonify({"kind": "switch", "switch": {"kind": asked}, "reply": ""})
+
     system_prompt = f"{_build_chat_system_prompt()}\n\n{_ui_model_context(data)}"
     chat_messages = [{"role": "system", "content": system_prompt}, *messages]
     http = _chat_session()
@@ -3565,6 +3572,15 @@ def _build_provider_input(
     # человек выбирает, чтобы говорить с ними напрямую, — им роль не навязываем.
     if spec.get("kind") in {"llm", "chat"} and (spec.get("id") == "assistant" or spec.get("navigator")):
         prompt = _with_assistant_persona(prompt)
+    elif spec.get("kind") in {"llm", "chat"}:
+        from assistant.switch import STUDIO_TEXT_RULES
+
+        text = (prompt or "").strip()
+        prompt = (
+            "[ПРАВИЛА СТУДИИ — соблюдай всегда]\n"
+            f"{STUDIO_TEXT_RULES}\n\n"
+            f"[СООБЩЕНИЕ ПОЛЬЗОВАТЕЛЯ]\n{text or '(пусто)'}"
+        )
     if spec.get("provider") == "omniroute":
         return {"prompt": prompt}
     return _build_replicate_input(spec, prompt, image_data_url, audio_data_url, video_data_url)
@@ -3963,8 +3979,53 @@ def _higgsfield_extract_outputs(prediction: dict, kind: str) -> list[str]:
     return urls
 
 
+def _shrink_inline_image(url: str, budget: int = 1_500_000) -> str:
+    """Data-URL картинки больше лимита тела Higgsfield (2 МБ) → JPEG, который влезает в запрос."""
+    if not isinstance(url, str) or not url.startswith("data:image") or len(url) <= budget:
+        return url
+    import base64
+    import io
+
+    from PIL import Image
+
+    _header, _, b64 = url.partition(",")
+    try:
+        im = Image.open(io.BytesIO(base64.b64decode(b64)))
+        im = im.convert("RGB")
+    except Exception:  # noqa: BLE001
+        return url
+    side = min(max(im.size) or 1, 1600)
+    quality = 82
+    for _ in range(14):
+        img = im
+        if side < max(im.size):
+            scale = side / max(im.size)
+            img = im.resize((max(1, int(im.width * scale)), max(1, int(im.height * scale))), Image.Resampling.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=quality, optimize=True)
+        out = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+        if len(out) <= budget:
+            return out
+        if quality > 48:
+            quality -= 10
+        else:
+            side = max(640, int(side * 0.8))
+    return out
+
+
+def _shrink_inline_images(node):
+    if isinstance(node, dict):
+        return {k: _shrink_inline_images(v) for k, v in node.items()}
+    if isinstance(node, list):
+        return [_shrink_inline_images(v) for v in node]
+    if isinstance(node, str) and node.startswith("data:image"):
+        return _shrink_inline_image(node)
+    return node
+
+
 def _higgsfield_submit(hf_model: str, input_payload: dict) -> dict:
     """Submit to Higgsfield queue via official SDK (server-side HF_KEY)."""
+    input_payload = _shrink_inline_images(input_payload or {})
     if not _higgsfield_key():
         return {"ok": False, "error": "not_configured", "status": 503, "phase": "submit"}
     try:
@@ -5278,6 +5339,42 @@ def _generate_job_fields(model_id: str, prompt: str, params: dict | None = None)
     }
 
 
+def _settle_generate_billing(job_id: str) -> None:
+    """После успеха списать резерв, после ошибки вернуть. Повтор ничего не меняет."""
+    try:
+        from queue_runtime.jobs import get_job
+
+        job = get_job(job_id) or {}
+    except Exception:  # noqa: BLE001
+        return
+    status = str(job.get("status") or "")
+    if status not in {"succeeded", "failed", "error"}:
+        return
+    try:
+        price = int(job.get("price_kop") or 0)
+        uid = int(job.get("owner_id") or job.get("user_id") or 0)
+    except (TypeError, ValueError):
+        return
+    bill_id = str(job.get("billing_job_id") or "")
+    if price <= 0 or uid <= 0 or not bill_id:
+        return
+    models = app.extensions.get("product_models") or {}
+    Balance, Ledger = models.get("Balance"), models.get("Ledger")
+    if Balance is None or Ledger is None:
+        return
+    import billing as _billing
+
+    model_key = str(job.get("preferred_model_id") or job.get("model_id") or job.get("model_key") or "")
+    try:
+        if status == "succeeded":
+            _billing.capture(db, Balance, Ledger, user_id=uid, amount_kop=price, job_id=bill_id, model_key=model_key)
+        else:
+            _billing.release(db, Balance, Ledger, user_id=uid, amount_kop=price, job_id=bill_id, model_key=model_key)
+    except Exception:  # noqa: BLE001
+        db.session.rollback()
+        app.logger.exception("generate billing settle failed")
+
+
 @app.route("/api/generate/jobs/<job_id>", methods=["GET"])
 def api_generate_job(job_id: str):
     if not _JOB_ID_RE.match(job_id or ""):
@@ -5296,6 +5393,8 @@ def api_generate_job(job_id: str):
         return jsonify({"error": "queue_unavailable", "detail": str(exc)}), 503
     if not public:
         return jsonify({"error": "not_found"}), 404
+    if public.get("status") in {"succeeded", "failed", "error"}:
+        _settle_generate_billing(job_id)
     # Готово → работа в «Моих работах»: неопубликованная хранится 24 часа, в чате сразу предлагаем опубликовать
     if public.get("status") == "succeeded" and owner:
         try:
@@ -5440,6 +5539,10 @@ def _generate_account() -> dict | None:
 def api_generate():
     data = request.get_json(silent=True) or {}
     model_id = (data.get("model") or "assistant").strip()
+    # Kling 3.0 в студии — карточка Higgsfield. У того аккаунта нет кредита,
+    # поэтому запрос Kling уходит в Replicate (kwaivgi/kling-v2.5-turbo-pro).
+    if model_id in {"kling-v3-0-hf", "kling-v2-5-turbo-pro-hf"}:
+        model_id = "kling-v2-5-turbo-pro"
     prompt = data.get("prompt") if isinstance(data.get("prompt"), str) else ""
     image_data_url = data.get("image") if isinstance(data.get("image"), str) else None
     audio_data_url = data.get("audio") if isinstance(data.get("audio"), str) else None
@@ -5524,6 +5627,14 @@ def api_generate():
         return jsonify(exc.to_dict()), exc.status
 
     has_media_image = bool((image_data_url or "").strip())
+
+    # «Сделай видео по этому» в чате с Claude/GPT — не отправляем в текстовую модель и не списываем.
+    if spec.get("kind") in {"llm", "chat"} and model_id != "assistant" and not spec.get("navigator") and not data.get("stay"):
+        from assistant.switch import generation_kind, latest_line
+
+        asked = generation_kind(latest_line(prompt), has_media_image)
+        if asked:
+            return jsonify({"kind": "switch", "switch": {"kind": asked, "model": model_id}}), 200
 
     # Сначала вход и баланс — до Redis/роутинга, иначе гость видит «сервис недоступен» вместо «войдите».
     acct = None
@@ -5627,6 +5738,70 @@ def api_generate():
     if not upstream_model and provider != "omniroute":
         return jsonify({"error": "bad_model", "detail": f"missing model ref for {provider}"}), 400
 
+    # Резерв на балансе до запуска. Списание — когда задание завершилось, возврат — если ошибка.
+    price_kop = int(need or 0) if (_generate_require_auth() and acct is not None) else 0
+    billing_job_id = None
+    if price_kop > 0 and session.get("user_id"):
+        import billing as _billing
+        from queue_runtime import new_job_id as _new_bill_id
+
+        billing_job_id = _new_bill_id()
+        models = app.extensions.get("product_models") or {}
+        Balance, Ledger = models.get("Balance"), models.get("Ledger")
+        if Balance is None or Ledger is None:
+            return jsonify({"error": "not_configured", "detail": "billing"}), 503
+        try:
+            _billing.hold(
+                db, Balance, Ledger,
+                user_id=int(session["user_id"]),
+                amount_kop=price_kop,
+                job_id=billing_job_id,
+                model_key=preferred_model_id,
+                snapshot={"model": preferred_model_id, "routed": model_id},
+            )
+        except _billing.InsufficientFunds as exc:
+            return jsonify({
+                "error": "insufficient_funds",
+                "need_kop": exc.need_kop,
+                "available_kop": exc.have_kop,
+            }), 402
+
+    def _release_hold() -> None:
+        if not billing_job_id:
+            return
+        import billing as _billing
+
+        models = app.extensions.get("product_models") or {}
+        try:
+            _billing.release(
+                db, models["Balance"], models["Ledger"],
+                user_id=int(session["user_id"]),
+                amount_kop=price_kop,
+                job_id=billing_job_id,
+                model_key=preferred_model_id,
+            )
+        except Exception:  # noqa: BLE001
+            db.session.rollback()
+            app.logger.exception("generate hold release failed")
+
+    def _capture_hold() -> None:
+        if not billing_job_id:
+            return
+        import billing as _billing
+
+        models = app.extensions.get("product_models") or {}
+        try:
+            _billing.capture(
+                db, models["Balance"], models["Ledger"],
+                user_id=int(session["user_id"]),
+                amount_kop=price_kop,
+                job_id=billing_job_id,
+                model_key=preferred_model_id,
+            )
+        except Exception:  # noqa: BLE001
+            db.session.rollback()
+            app.logger.exception("generate hold capture failed")
+
     use_queue = (os.getenv("GENERATE_USE_QUEUE") or "1").strip() not in {"0", "false", "no"}
     if use_queue:
         try:
@@ -5646,8 +5821,11 @@ def api_generate():
                 "prompt_source": prompt_source,   # platform — готовый промпт витрины, публиковать нельзя
                 "params": safe_params or None,
                 "route": route_meta,
+                "price_kop": price_kop,
+                "billing_job_id": billing_job_id,
             })
         except Exception as exc:  # noqa: BLE001
+            _release_hold()
             return jsonify({"error": "queue_unavailable", "detail": str(exc)}), 503
 
         # Default: async — return immediately so gunicorn workers stay free.
@@ -5670,9 +5848,19 @@ def api_generate():
         try:
             result = wait_for_result(job_id)
         except Exception as exc:  # noqa: BLE001
+            _release_hold()
             return jsonify({"error": "queue_unavailable", "detail": str(exc), "job_id": job_id}), 503
 
+        _settle_generate_billing(job_id)
         if not result.get("ok"):
+            try:
+                from queue_runtime.jobs import get_job
+
+                done = get_job(job_id) or {}
+                if str(done.get("status") or "") not in {"succeeded", "failed", "error"}:
+                    _release_hold()
+            except Exception:  # noqa: BLE001
+                _release_hold()
             code = int(result.get("status") or 502)
             return jsonify({
                 "error": result.get("error") or "upstream",
@@ -5737,6 +5925,7 @@ def api_generate():
         result = _run_replicate_prediction(upstream_model, input_payload, wait_seconds=wait)
 
     if not result.get("ok"):
+        _release_hold()
         code = int(result.get("status") or 502)
         return jsonify({
             "error": result.get("error") or "upstream",
@@ -5779,10 +5968,12 @@ def api_generate():
                 reply = str(out)
         else:
             reply = _join_text_chunks(outputs) or str(prediction.get("output") or prediction.get("text") or "")
+        _capture_hold()
         return jsonify({"kind": "text", "reply": reply, **common})
 
     media_urls = [u for u in outputs if isinstance(u, str) and u.startswith("http")]
     if kind == "image":
+        _capture_hold()
         return jsonify({
             "kind": "image",
             "urls": media_urls,
@@ -5791,6 +5982,7 @@ def api_generate():
         })
 
     if kind == "video":
+        _capture_hold()
         return jsonify({
             "kind": "video",
             "urls": media_urls,
@@ -5799,6 +5991,7 @@ def api_generate():
         })
 
     if kind == "audio":
+        _capture_hold()
         return jsonify({
             "kind": "audio",
             "urls": media_urls,
@@ -5806,6 +5999,7 @@ def api_generate():
             **common,
         })
 
+    _release_hold()
     return jsonify({"error": "unsupported_kind", "kind": kind}), 500
 
 
@@ -5871,7 +6065,8 @@ def _assist_redis():
         r.ping()
         return r
     except Exception:
-        return None  # без Redis — память в процессе (сессия ассистента не переживёт рестарт)
+        app.logger.warning("assistant: Redis недоступен — память диалога только в этом процессе и пропадёт при перезапуске или втором процессе")
+        return None
 
 
 def _assist_channel_healthy(channel: str) -> bool:

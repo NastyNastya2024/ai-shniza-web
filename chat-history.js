@@ -91,6 +91,9 @@
       if (m.jobId && /^[a-f0-9]{16,64}$/i.test(String(m.jobId))) c.jobId = String(m.jobId).toLowerCase();
       if (m.loginCta) c.loginCta = true;
       if (m.topup) c.topup = true;
+      if (m.textReply) c.textReply = true;
+      if (m.makeHints) c.makeHints = true;
+      if (m.vote === 'up' || m.vote === 'down') c.vote = m.vote;
     }
     if (!c.text && !c.files && !c.result && !c.assistant) return null;
     return c;

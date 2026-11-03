@@ -27,7 +27,8 @@
     sb_start: 1, sb_noscript: 1, sb_answer: 1, sb_edit: 1, sb_frame: 1, sb_rebuild: 1, sb_setup: 1, sb_frames_view: 1, sb_back: 1, sb_exit: 1,
     pipe_result: 1, pipe_menu: 1, pipe_stage: 1, pipe_sub: 1, pipe_dialog_save: 1, pipe_video_plain: 1, pipe_voice_model: 1, pipe_summary: 1, pipe_arts: 1,
     mode_start: 1, mode_input: 1, mode_next: 1, mode_back: 1, mode_redo: 1, mode_go: 1, mode_episode: 1, mode_exit: 1, mode_pause: 1, mode_resume: 1,
-    tree_hint: 1, tree_event: 1 };   // дерево подсказок: клик по подсказке шага истории / событие под результатом
+    tree_hint: 1, tree_event: 1, edit_prompt: 1, files_confirm: 1, media_pick: 1, resume_task: 1,
+    model_switch: 1, switch_pick: 1, text_note: 1 };   // переход между текстовой моделью и генерацией
   var PIPE_TYPE_ICON = { prompt: '✍️', videoPrompt: '🎬', speechPrompt: '🎙', style: '{ }', hero: '👤', image: '🖼', board: '🎞', video: '🎬', voiceTrack: '🔊' };
   var KIND_ICON = { prompt: '✍️', image: '🖼', video: '🎬', music: '🎵', text: '✍️', sfx: '🔊', edit: '✏️' };
 
@@ -348,13 +349,70 @@
       head.appendChild(el('span', 'aich-summary__price', bl.estimate || bl.price));
       box.appendChild(head);
       if (bl.params && bl.params.length) box.appendChild(el('div', 'aich-summary__params', bl.params.join(' · ')));
-      // Скрепка: какие файлы уйдут в генерацию и чем станут — по именам
+      if (bl.prompt) {
+        var ta = el('textarea', 'aich-summary__prompt');
+        ta.value = bl.prompt;
+        ta.rows = 4;
+        box.appendChild(ta);
+        var row = el('div', 'aich-summary__edit');
+        var save = el('button', 'aich-summary__save', L('Сохранить', 'Save'));
+        save.type = 'button';
+        save.addEventListener('click', function () {
+          post({ action: { type: 'edit_prompt', value: { text: ta.value } } }, true);
+        });
+        var back = el('button', 'aich-summary__mine', L('Вернуть мой текст', 'Restore my text'));
+        back.type = 'button';
+        back.addEventListener('click', function () {
+          post({ action: { type: 'use_mine' } }, true);
+        });
+        row.appendChild(save);
+        row.appendChild(back);
+        box.appendChild(row);
+      }
       if (bl.files && bl.files.length) {
         var fl = el('div', 'aich-summary__files');
         fl.appendChild(el('b', null, (bl.files_title || L('Файлы', 'Files')) + ': '));
         fl.appendChild(document.createTextNode(bl.files.join(' · ')));
         box.appendChild(fl);
       }
+      return box;
+    }
+
+    function renderFiles(bl) {
+      var box = el('div', 'aich-files');
+      box.appendChild(el('div', 'aich-files__title', bl.title || L('Что отправляем', 'What we send')));
+      var picked = {};
+      (bl.items || []).forEach(function (it) {
+        var row = el('label', 'aich-files__row');
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = !!it.checked;
+        if (it.checked) picked[it.id] = it.role || '';
+        cb.addEventListener('change', function () {
+          if (cb.checked) picked[it.id] = it.role || '';
+          else delete picked[it.id];
+        });
+        row.appendChild(cb);
+        var meta = el('span', 'aich-files__meta');
+        meta.appendChild(el('b', null, it.name || ''));
+        meta.appendChild(el('span', null, (it.origin ? ' · ' + it.origin : '') + (it.role ? ' · ' + it.role : '')));
+        row.appendChild(meta);
+        if (it.preview) {
+          var img = document.createElement('img');
+          img.className = 'aich-files__preview';
+          img.alt = '';
+          img.src = it.preview;
+          row.appendChild(img);
+        }
+        box.appendChild(row);
+      });
+      var ok = el('button', 'aich-summary__save', L('Подтвердить файлы', 'Confirm files'));
+      ok.type = 'button';
+      ok.addEventListener('click', function () {
+        var items = Object.keys(picked).map(function (id) { return { id: id, role: picked[id] }; });
+        post({ action: { type: 'files_confirm', value: { items: items } } }, true);
+      });
+      box.appendChild(ok);
       return box;
     }
 
@@ -818,6 +876,7 @@
         else if (bl.type === 'mode_text') col.appendChild(renderModeText(bl));
         else if (bl.type === 'params') col.appendChild(renderParams(bl));
         else if (bl.type === 'summary') col.appendChild(renderSummary(bl));
+        else if (bl.type === 'files') col.appendChild(renderFiles(bl));
         else if (bl.type === 'brief') col.appendChild(renderBrief(bl));
         else if (bl.type === 'variants') col.appendChild(renderVariants(bl));
         else if (bl.type === 'camera') col.appendChild(renderCamera(bl));
@@ -835,7 +894,7 @@
       if (data.chips && data.chips.length) col.appendChild(renderChips(data.chips));
       row.appendChild(col);
       var setup = (data.blocks || []).some(function (b) {
-        return b.type === 'params' || b.type === 'prompt' || b.type === 'brief' || b.type === 'camera' || (REEL_BLOCKS[b.type] && b.type !== 'reel_steps') || b.type === 'sb_frames';
+        return b.type === 'params' || b.type === 'prompt' || b.type === 'brief' || b.type === 'camera' || b.type === 'summary' || b.type === 'files' || (REEL_BLOCKS[b.type] && b.type !== 'reel_steps') || b.type === 'sb_frames';
       });
       if (setup) setupNode = row;
       return row;
@@ -984,6 +1043,21 @@
       pipeExpect: function () { return pipeExpect; },
       /** Событие под результатом для дерева подсказок: like · dislike · regen · error · topup_needed · download.
        *  Помощник ответит коротко и предложит следующий шаг истории (если человек в истории); иначе ответ silent. */
+      /** Команда в чате с Claude/GPT: не отвечать текстом, а перейти к видео/картинке/музыке. */
+      handoff: function (value) {
+        if (busy || !value) return Promise.resolve(null);
+        lastBody = { action: { type: 'model_switch', value: value } };
+        return post(lastBody);
+      },
+      /** Ответ текстовой модели остаётся в памяти разговора — следующий «по этому» его найдёт. */
+      noteText: function (value) {
+        if (!value || !value.text) return Promise.resolve(null);
+        return post({ action: { type: 'text_note', value: value } }, false);
+      },
+      mediaAdd: function (payload) {
+        if (!payload) return Promise.resolve(null);
+        return post({ action: { type: 'media_add', value: payload } }, false);
+      },
       treeEvent: function (name) {
         if (busy || !name) return Promise.resolve(null);
         return post({ action: { type: 'tree_event', value: { name: String(name) } } }, false);

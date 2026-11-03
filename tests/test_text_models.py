@@ -64,10 +64,12 @@ def test_text_cost_is_per_answer_not_per_million(srv):
     assert srv._generate_cost_kop("omni-auto-free", {}) == 0
 
 
-def test_text_models_get_no_navigator_persona(srv):
+def test_text_models_get_studio_rules_not_navigator_catalog(srv):
     spec = srv.INTEGRATED_MODELS["deepseek-v3-1"]
     payload = srv._build_provider_input(spec, "Напиши стих про осень", None, None, None)
-    assert payload["prompt"] == "Напиши стих про осень"
+    assert "Напиши стих про осень" in payload["prompt"]
+    assert "ПРАВИЛА СТУДИИ" in payload["prompt"]
+    assert "КАТАЛОГ LIVE" not in payload["prompt"]
     nav = srv._build_provider_input(srv.INTEGRATED_MODELS["assistant"], "привет", None, None, None)
     assert "СИСТЕМНАЯ РОЛЬ" in nav["prompt"]
 
@@ -89,6 +91,33 @@ def _gen(c, model):
     ip = "10.6.%d.%d" % (uuid.uuid4().int % 250, uuid.uuid4().int % 250)
     return c.post("/api/generate", json={"model": model, "prompt": "Привет! Как дела?"},
                   headers={"X-CSRF-Token": csrf, "X-Forwarded-For": ip})
+
+
+def test_generate_command_is_not_sent_to_claude(srv, monkeypatch):
+    import queue_runtime.jobs as jobs
+
+    def boom(payload):
+        raise AssertionError("text model must not be called")
+
+    monkeypatch.setattr(jobs, "enqueue_inbound", boom)
+    monkeypatch.setattr("queue_runtime.health.is_channel_healthy", lambda ch: True)
+    c = srv.app.test_client()
+    _login(srv, c, 100000)
+    csrf = c.get("/api/csrf").get_json()["csrf_token"]
+    r = c.post(
+        "/api/generate",
+        json={"model": "claude-sonnet-5", "prompt": "хорошо теперь сгенери видео по этому"},
+        headers={"X-CSRF-Token": csrf, "X-Forwarded-For": "10.8.4.8"},
+    )
+    body = r.get_json()
+    assert r.status_code == 200 and body["kind"] == "switch" and body["switch"]["kind"] == "video"
+    monkeypatch.setattr(jobs, "enqueue_inbound", lambda payload: "e" * 24)
+    write = c.post(
+        "/api/generate",
+        json={"model": "claude-sonnet-5", "prompt": "напиши промпт для видео про кофе"},
+        headers={"X-CSRF-Token": csrf, "X-Forwarded-For": "10.8.4.10"},
+    )
+    assert write.status_code == 202, write.get_json()
 
 
 def test_text_chat_gate(srv, monkeypatch):

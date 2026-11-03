@@ -41,6 +41,20 @@ def _stop(*_args) -> None:
     _running = False
 
 
+def _settle_billing(job_id: str | None) -> None:
+    """Списать или вернуть резерв, когда задание уже в конечном статусе."""
+    if not job_id:
+        return
+    try:
+        import server as srv
+
+        with srv.app.app_context():
+            srv._settle_generate_billing(job_id)
+            srv.db.session.remove()
+    except Exception as exc:  # noqa: BLE001
+        print(f"[worker] billing settle {job_id}: {exc}", flush=True)
+
+
 def _wait_seconds(model_id: str, kind: str) -> int:
     try:
         import server as srv
@@ -371,6 +385,7 @@ def recover_processing(channel: str) -> dict[str, int]:
                     "job_id": job_id,
                 }
             publish_result(job_id, result)
+            _settle_billing(job_id)
             r.lrem(processing, 1, raw)
             stats["resumed"] += 1
             continue
@@ -438,6 +453,7 @@ def _handle_raw_item(channel: str, raw: str, queued_at: float | None = None) -> 
                 "job_id": job_id,
             }
         publish_result(job_id, result)
+        _settle_billing(job_id)
         outcome = "succeeded" if result.get("ok") else (result.get("error") or "failed")
     finally:
         try:

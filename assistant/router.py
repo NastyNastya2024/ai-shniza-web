@@ -266,6 +266,10 @@ def route(text: str, context: dict[str, Any] | None = None, session: dict[str, A
         return Intent("generate_now")
 
     # правка уже готового промпта
+    if ses.get("prompt") and re.match(r"^(а теперь|теперь)\b", t, I):
+        k_now = detect_kind(t, has_image)
+        if not k_now or k_now == ses.get("kind"):
+            return Intent("prompt_improve", data={"change": t})
     if ses.get("prompt") and REFINE.search(t) and not (len(t.split()) > 12 and detect_kind(t, has_image)):
         return Intent("prompt_improve", data={"change": t})
     if re.search(r"улучши|перепиши|доработай|improve|rewrite", t, I) and ctx.get("selected_model_id"):

@@ -142,8 +142,8 @@ def test_more_excludes_shown(make_assistant):
 def test_ask_type_then_choose(make_assistant):
     a = make_assistant()
     r = a.handle("котик в космосе", {}, SID)
-    assert r["intent"] == "ask_type" and {c.get("value") for c in r["chips"]} >= {"prompt", "video", "image", "music"}
-    assert r["chips"][0]["value"] == "prompt"
+    kinds = [c.get("value") for c in r["chips"] if c.get("action") in ("choose_type", "pipe_stage")]
+    assert r["intent"] == "ask_type" and kinds == ["video", "image"]
     assert not any(bl.get("type") == "pipeline" for bl in r["blocks"])
     r2 = a.handle("", {}, SID, action={"type": "choose_type", "value": "image"})
     assert block(r2, "models") and "картинк" in r2["text"].lower()  # тип сразу → модели
@@ -305,13 +305,10 @@ def test_off_topic_asks_format_not_examples(make_assistant):
     a = make_assistant()
     r = a.handle("какая погода в Москве", {}, SID)
     assert r["intent"] == "off_topic"
-    assert r["chips"][0]["action"] == "pipe_stage"
-    assert {c["action"] for c in r["chips"]} == {"pipe_stage", "choose_type"}   # этапы флоу + музыка, без примеров
+    assert sum(1 for c in r["chips"] if c.get("action") in ("pipe_stage", "choose_type")) < 3
     assert "reel_start" not in {c["action"] for c in r["chips"]}
-    assert "формат" in r["text"].lower() and "генерир" in r["text"].lower()
+    assert "хотите сделать" in r["text"].lower()
     assert not any(c["action"] == "send" for c in r["chips"])
-    assert r["chips"][0]["value"] == "prompt"
-    assert {c.get("value") for c in r["chips"]} >= {"prompt", "image", "video", "music"}
     r2 = a.handle("", {}, SID, action={"type": "choose_type", "value": "video"})
     assert block(r2, "models")
     r3 = a.handle("", {}, SID, action={"type": "pick_model", "value": "seedance-2-5"})
@@ -412,10 +409,10 @@ def test_screenshot_scenario_typos_and_buttons(make_assistant):
     a = make_assistant()
     r = a.handle("привет", {}, SID)
     vals = {c["value"] for c in r["chips"] if c["action"] in ("choose_type", "pipe_stage")}
-    assert vals >= {"prompt", "image", "video", "music", "board", "voice"}
+    assert not vals and "опишите" in r["text"].lower()
     r = a.handle("надо сделать коты который жарит иишницу", {}, SID)
-    assert r["intent"] == "ask_type" and "генерир" in r["text"].lower()
-    assert [c["value"] for c in r["chips"]] == ["prompt", "image", "board", "video", "voice", "music"]  # вопрос + кнопки этапов, не «открытый»
+    assert r["intent"] == "ask_type"
+    assert [c["value"] for c in r["chips"] if c["action"] in ("choose_type", "pipe_stage")] == ["video", "image"]
     r = a.handle("карттинку", {}, SID)                                     # опечатка — понимаем
     assert block(r, "models") and all(a.d.cards[m["id"]].kind in ("image", "edit") for m in r["models"])
     r = a.handle("", {}, SID, action={"type": "pick_model", "value": "seedream-5-pro"})
@@ -445,7 +442,7 @@ def test_unclear_answer_reasks_with_buttons(make_assistant):
     a = make_assistant()
     a.handle("котик в космосе", {}, SID)
     r = a.handle("ну не знаю", {}, SID)
-    assert r["intent"] == "ask_type" and [c["value"] for c in r["chips"]] == ["prompt", "image", "board", "video", "voice", "music"]   # этапы флоу + музыка
+    assert r["intent"] == "ask_type" and [c["value"] for c in r["chips"] if c["action"] in ("choose_type", "pipe_stage")] == ["video", "image"]
     assert block(a.handle("2", {}, SID), "models")  # 2 = картинка → модели
 
 

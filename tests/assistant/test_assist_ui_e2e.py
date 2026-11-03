@@ -54,9 +54,10 @@ def say(pg, text):
 def test_flow_from_screenshot(page):
     pg, errors = page
     say(pg, "привет")
-    assert pg.locator(".aich-row:last-child .aich-chip").count() == 5
+    assert pg.locator(".aich-row:last-child .aich-chip").count() == 0
+    assert "Опишите" in pg.inner_text(".aich-row:last-child")
     say(pg, "надо сделать коты который жарит иишницу")
-    assert "картинку, видео, музыку или текст" in pg.inner_text(".aich-row:last-child")
+    assert "видео или картинка" in pg.inner_text(".aich-row:last-child")
     say(pg, "карттинку")
     last = pg.locator(".aich-row:last-child")
     assert "Поняла так" in last.inner_text() or "Уточню детали" in last.inner_text()

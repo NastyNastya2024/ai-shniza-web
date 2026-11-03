@@ -112,6 +112,55 @@ def test_generate_enough_balance_passes_gate(srv, monkeypatch):
     assert r.status_code == 202, r.get_json()
 
 
+def test_generate_holds_then_captures_and_release_is_idempotent(srv, monkeypatch):
+    """Студия списывает оценку: резерв на старте, списание после успеха, возврат после ошибки."""
+    c = srv.app.test_client()
+    user = _login(srv, c, balance_kop=50000)
+    stored = {}
+
+    def fake_enqueue(payload):
+        stored["payload"] = payload
+        return "d" * 24
+
+    monkeypatch.setattr("queue_runtime.jobs.enqueue_inbound", fake_enqueue)
+    monkeypatch.setattr("queue_runtime.health.is_channel_healthy", lambda ch: True)
+    r = _gen(c)
+    assert r.status_code == 202, r.get_json()
+    assert stored["payload"]["price_kop"] == 13600
+    assert stored["payload"]["billing_job_id"]
+
+    Balance = srv.app.extensions["product_models"]["Balance"]
+    bal = Balance.query.filter_by(user_id=user.id).one()
+    assert bal.balance_kop == 50000 and bal.held_kop == 13600
+
+    job = {
+        "status": "succeeded",
+        "price_kop": 13600,
+        "billing_job_id": stored["payload"]["billing_job_id"],
+        "owner_id": user.id,
+        "model_id": "veo-3-1",
+        "preferred_model_id": "veo-3-1",
+    }
+    monkeypatch.setattr("queue_runtime.jobs.get_job", lambda jid: job)
+    srv._settle_generate_billing("d" * 24)
+    srv._settle_generate_billing("d" * 24)
+    srv.db.session.refresh(bal)
+    assert bal.balance_kop == 50000 - 13600 and bal.held_kop == 0
+
+    # второй запуск: ошибка возвращает резерв и не списывает второй раз
+    r2 = _gen(c)
+    assert r2.status_code == 202, r2.get_json()
+    srv.db.session.refresh(bal)
+    assert bal.held_kop == 13600
+    job["status"] = "failed"
+    job["billing_job_id"] = stored["payload"]["billing_job_id"]
+    job["price_kop"] = stored["payload"]["price_kop"]
+    srv._settle_generate_billing("d" * 24)
+    srv._settle_generate_billing("d" * 24)
+    srv.db.session.refresh(bal)
+    assert bal.balance_kop == 50000 - 13600 and bal.held_kop == 0
+
+
 def test_free_model_needs_login_only(srv, monkeypatch):
     c = srv.app.test_client()
     assert _gen(c, model="ideogram-v3-turbo").status_code == 401

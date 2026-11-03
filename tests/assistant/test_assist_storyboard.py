@@ -30,7 +30,7 @@ def actions(r):
 def test_chip_in_types_and_window_right_away(make_assistant):
     a = make_assistant(llm=False)
     r = a.handle("выв", {}, SID)
-    assert {"label": "🎞 Раскадровка", "action": "pipe_stage", "value": "board"} in r["chips"]
+    assert sum(1 for c in r["chips"] if c.get("action") == "pipe_stage") < 3
     r = act(a, "sb_start")                      # без вопроса «пришлите сценарий» — сразу окно
     ch = blk(r, "choice")
     assert r["intent"] == "sb_idea" and ch and ch["custom_first"] and "сценарий" in ch["custom_label"]

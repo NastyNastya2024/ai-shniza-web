@@ -288,6 +288,8 @@ def status(assistant: Assistant, account_check: bool | None = None) -> dict[str,
         "llm_providers": chain.status() if chain else [],
         "deadline_sec": chain.deadline_sec if chain else None,
         "session_store": store, "redis": redis_ok,
+        "session_hint": None if (store == "RedisStore" and redis_ok is True) else
+        "Память диалога не в Redis: при нескольких процессах контекст теряется. Поднимите Redis и перезапустите сервер — помощник берёт тот же клиент, что и очереди.",
         "cards": len(d.cards),
         "hint_tree": getattr(d.tree, "version", None),
         "account_check": "on" if (d.account_check if account_check is None else account_check) else "off",

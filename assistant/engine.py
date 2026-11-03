@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 from . import brief as BR
+from . import dialog as DG
 from . import camera as CAM
 from . import errors as err_mod
 from . import files as F
@@ -115,7 +116,7 @@ class Assistant:
         if uid:
             ses["owner"] = uid                                   # анонимный разговор «переезжает» в аккаунт после входа
         # Скрепка: какие файлы прикреплены сейчас (имена — чтобы называть их в ответах)
-        files = F.clean_attachments(ctx.get("attachments"))
+        files = F.clean_attachments(ctx.get("attachments"), keep_id=True)
         ctx["attachments"] = files
         if any(f["kind"] == "image" for f in files):
             ctx["has_image"] = True
@@ -124,6 +125,9 @@ class Assistant:
         if files != (ses.get("files") or []):
             ses["files_told"] = False                            # набор файлов поменялся — скажем о нём снова
         ses["files"] = files
+        DG.ingest_uploads(ses, files)
+        if ctx.get("_files_changed"):
+            ses["files_ok"] = False
         msg = (message or "").strip()[:2000]
         lang = self._lang(msg, ses, ctx)
         ses["lang"] = lang
@@ -149,6 +153,18 @@ class Assistant:
         except Exception:
             log.exception("assistant tree failed")
         out = MD.decorate(out, ses, lang)   # режим «Рилс» / «Сериал» идёт — под любым ответом «↩ вернуться к шагу»
+        note = ses.pop("focus_note", None) if isinstance(ses, dict) else None
+        if note and not out.get("silent"):
+            out["text"] = note + "\n" + (out.get("text") or "")
+            out["reply"] = out["text"]
+        if ses.pop("_just_parked", None):
+            back = DG.return_chip(ses, lang)
+            if back and not any(c.get("action") == "resume_task" for c in out.get("chips") or []):
+                out["chips"] = list(out.get("chips") or []) + [back]
+        if msg:
+            DG.remember(ses, "user", msg)
+        if not out.get("silent"):
+            DG.remember(ses, "bot", out.get("text") or "")
         if not out.get("silent"):
             ses["last_chips"] = [{k: c.get(k) for k in ("label", "action", "value")} for c in out.get("chips", [])]
         pst = ses.get("pipe") if isinstance(ses.get("pipe"), dict) else {}
@@ -192,6 +208,18 @@ class Assistant:
         act = self._text_as_action(msg, ses)
         if act:
             return self._action(act[0], act[1], ctx, ses, lang)
+        if msg:
+            how, found = DG.refer(msg, ses)
+            if how == "many":
+                return DG.ask_which(found, lang)
+            if how == "dead":
+                return DG.ask_attach(lang, dead=True)
+            if how == "none":
+                return DG.ask_attach(lang)
+            if how == "one":
+                ses["focus"] = [found[0].get("id")]
+                ses["files_ok"] = True
+                ses["focus_note"] = DG.take_line(found[0], lang)
         # 1') понимание фразы (understand.py): «включи клода», вопрос-совет, «тёмная тема», режимы; шаг режима ждёт текст
         if msg:
             got = self._understand(msg, ctx, ses, lang)
@@ -221,6 +249,9 @@ class Assistant:
             if sb_on:
                 return PL.decorate(SB.message(self, ses, ctx, lang, msg), ses, lang)
             return PL.decorate(SB.start(self, ses, ctx, lang, text=msg), ses, lang)
+        switched = self._maybe_switch_message(msg, ctx, ses, lang)
+        if switched is not None:
+            return switched
         # 1б) мусор вроде «ооло» никуда не пишем — переспрашиваем по месту
         if msg and not re.fullmatch(r"\s*\d{1,2}\s*[.)]?\s*", msg) and BR.is_junk(msg):
             n = ses["junk_count"] = int(ses.get("junk_count") or 0) + 1
@@ -242,8 +273,12 @@ class Assistant:
                 return self._ask_prompt_idea(ses, lang, junk=True)
             if ses.get("kind"):
                 return self._ask_subject(ses["kind"], ses, ctx, lang, junk=True)
-            ses["await"] = "type"
-            return self._offer_types([_junk_line(n, lang)], ctx, ses, lang, "junk")
+            ses["await"] = None
+            out = DG.unclear(self, msg, lang, "junk")
+            note = _junk_line(n, lang)
+            out["text"] = note + "\n" + out["text"]
+            out["reply"] = out["text"]
+            return out
         # 1в) ждём суть идеи («о чём видео?») — любой осмысленный текст становится идеей
         if ses.get("await") == "idea" and ses.get("kind") and BR.has_subject(msg):
             it0 = route(msg, ctx, ses, self.titles)
@@ -651,6 +686,7 @@ class Assistant:
             self._llm_info["error"] = "budget"
             return None
         ses["llm_calls"] = int(ses.get("llm_calls") or 0) + 1
+        system = system + "\n\n" + DG.llm_preface(ses)
         try:
             res = llm.complete_json(system, user, validate, max_tokens=max_tokens, timeout_scale=timeout_scale, task=task)
         except LLMUnavailable as exc:
@@ -683,11 +719,24 @@ class Assistant:
         return list(chips) + [self._back_chip(lang)]
 
     def _offer_types(self, lines: list[str], ctx: dict, ses: dict, lang: str, intent: str) -> dict:
-        """Вопрос «что сделать» + кнопки: Промпт первым, затем типы генерации."""
+        """Непонятная фраза — вопрос без меню. Кнопки типа только если тип так и не ясен."""
         if self._is_guest(ctx):
             return self._ask_login(ses, lang, intent)
-        return response(list(lines) + [t("ask_type", lang)] + PL.first_note(ses, lang), self._type_chips(ctx, lang),
-                        lang=lang, intent=intent)
+        # выход из раскадровки по-прежнему предлагает этапы проекта — это не стартовое меню
+        if intent == "sb_exit":
+            return response(list(lines), self._type_chips(ctx, lang), lang=lang, intent=intent)
+        if ses.get("topic") or BR.has_subject(ses.get("idea") or ""):
+            if not DG.is_vague(ses.get("idea") or ""):
+                out = DG.type_question(ses, lang)
+            else:
+                out = DG.unclear(self, ses.get("idea") or "", lang, intent)
+        else:
+            out = DG.unclear(self, ses.get("idea") or "", lang, intent)
+        if lines:
+            out["text"] = "\n".join(x for x in lines if x) + "\n" + out["text"]
+            out["reply"] = out["text"]
+            out["intent"] = intent
+        return out
 
     def _type_chips(self, ctx: dict, lang: str) -> list[dict]:
         """Верхний ряд: Промпт → видео / картинка / музыка / звук (или правка фото)."""
@@ -723,12 +772,12 @@ class Assistant:
         ses["await"] = "type"
         ses["assist_mode"] = None
         ses["prompt_gate"] = False
-        topic = ses.get("topic") or ""
-        if not topic:
-            PL.state(ses)["on"] = True
-            return response([t("hello", lang)], self._type_chips(ctx, lang), lang=lang, intent="ask_type")
-        lines = [t("ask_type_idea", lang, topic=topic)] + PL.first_note(ses, lang)
-        return response(lines, self._type_chips(ctx, lang), lang=lang, intent="ask_type")
+        idea = ses.get("idea") or ""
+        if not idea and not ses.get("topic"):
+            return DG.greet(lang, "ask_type")
+        if DG.is_vague(idea):
+            return DG.vague_question(lang)
+        return DG.type_question(ses, lang)
 
     def _ask_has_prompt(self, ses: dict, lang: str, intent: str = "has_prompt") -> dict:
         """Спросить, нужен ли промпт. Модель уже может быть в ses['picked'] — не сбрасываем."""
@@ -950,8 +999,16 @@ class Assistant:
         if cam:
             param_lines = [t("camera_summary", lang, title=CAM.title(cam, lang))] + param_lines
         blocks.append({"type": "summary", "model_id": card.id, "title": card.title, "price": price, "estimate": est,
-                       "prompt": prompt, "params": param_lines,
+                       "prompt": prompt, "params": param_lines, "editable": True,
                        "files": F.summary_labels(fplan, lang), "files_title": F.summary_title(lang)})
+        fb = DG.files_block(card, ses, lang)
+        if fb:
+            blocks.append(fb)
+        sending = bool(ses.get("media")) and (ses.get("files_ok") or len(DG.alive_media(ses)) <= 1)
+        if sending:
+            bad = DG.incompatible(self, card, ses, ctx, lang)
+            if bad:
+                return bad
         gate = None
         if card.needs_image and not has_image:
             lines.append(t("needs_image", lang))
@@ -961,11 +1018,23 @@ class Assistant:
             gate, gate_lines, chips = self._gate(card, params, ctx, lang)
             lines += gate_lines
             ready = gate in (None, "ok", "free")
+        if fb and fb.get("need_confirm"):
+            ready = False
+            chips = [c for c in chips if c.get("action") != "generate"]
+            lines.append("Отметьте, что отправить." if lang != "en" else "Tick what to send.")
         ses["await"] = "params"
-        return response(lines, chips, blocks, lang, intent=intent, generate_model=card.id, generate_prompt=prompt,
-                        generate_params=params, ready=ready, degraded=degraded, gate=gate,
-                        generate_files=[{"kind": it["kind"], "name": it["name"]} for it in fplan if it["used"]],
-                        models=[{"id": card.id, "title": card.title, "price": price}])
+        media_files = DG.generate_files(ses) if (ses.get("media") and (ses.get("files_ok") or len(DG.alive_media(ses)) == 1)) else []
+        gen_files = media_files or [{"kind": it["kind"], "name": it["name"], **({"id": it["id"]} if it.get("id") else {})}
+                                    for it in fplan if it["used"]]
+        out = response(lines, chips, blocks, lang, intent=intent, generate_model=card.id, generate_prompt=prompt,
+                       generate_params=params, ready=ready, degraded=degraded, gate=gate,
+                       generate_files=gen_files,
+                       models=[{"id": card.id, "title": card.title, "price": price}])
+        src = (ses.get("switch_from") or "").strip()
+        if src:
+            out["switch_line"] = f"{src} → {card.title}"
+            ses["switch_from"] = ""
+        return out
 
     # ------------------------------------------- перед запуском: вход → баланс
     def _cost_kop(self, card: Card, params: dict) -> int | None:
@@ -1035,7 +1104,12 @@ class Assistant:
             ses["gen_model"] = card.id  # запомнить: после polish не спрашивать модель снова
         # текст — сразу чат с моделью, без брифа / вариантов промпта
         if card.kind == "text":
-            return self._text_chat_ready(card, ses, lang, intent)
+            out = self._text_chat_ready(card, ses, lang, intent)
+            ask = (ses.get("text_ask") or "").strip()
+            if ask:
+                out["text_ask"] = ask
+                ses["text_ask"] = ""
+            return out
         # промпт мог остаться только в polish_draft после чата с Claude/GPT
         if not ses.get("prompt") and ses.get("polish_draft"):
             base = ses["polish_draft"]
@@ -1093,7 +1167,65 @@ class Assistant:
         return self._setup_reply(card, ses, ctx, lang, intent, head, note, degraded, adj)
 
     # ============================================================== intents
+    def _edit_prompt(self, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
+        text = value.get("text") if isinstance(value, dict) else value
+        text = str(text or "").strip()[:4000]
+        card = self._current_card(ses, ctx)
+        if not card or not text:
+            return response([t("describe_idea", lang)], [], intent="edit_prompt")
+        if card.kind == "video":
+            prompt = CAM.apply(ses, text)
+        else:
+            ses["prompt_base"] = text
+            ses["prompt"] = text
+            prompt = text
+        return self._setup_reply(card, ses, ctx, lang, "edit_prompt", t("prompt_changed", lang))
+
+    def _files_confirm(self, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
+        card = self._current_card(ses, ctx)
+        if not card:
+            return self._ask_type(ses, ctx, lang)
+        problem = DG.confirm(ses, value, card.kind)
+        if problem == "limit-video":
+            return DG.limit_question(ses, lang, "video")
+        return self._setup_reply(card, ses, ctx, lang, "files_confirm", t("summary_head", lang))
+
+    def _media_pick(self, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
+        mid = str(value or "")
+        item = next((m for m in DG.alive_media(ses) if m.get("id") == mid), None)
+        if not item:
+            return DG.ask_attach(lang, dead=True)
+        ses["focus"] = [mid]
+        ses["files_ok"] = True
+        ses["focus_note"] = DG.take_line(item, lang)
+        card = self._current_card(ses, ctx)
+        if card:
+            return self._setup_reply(card, ses, ctx, lang, "media_pick", DG.take_line(item, lang))
+        if item.get("kind") == "video":
+            ses["kind"] = ses.get("kind") or "video"
+        elif item.get("kind") == "image" and not ses.get("kind"):
+            ses["kind"] = "image"
+        return self._offer_models_for_kind(ctx, ses, lang, "media_pick", mode="direct")
+
+    def _resume_task(self, ctx: dict, ses: dict, lang: str) -> dict:
+        parked = ses.get("parked") if isinstance(ses.get("parked"), dict) else None
+        if not parked:
+            return DG.greet(lang, "resume")
+        ses.update(idea=parked.get("idea") or "", kind=parked.get("kind"), picked=parked.get("picked"),
+                   prompt=parked.get("prompt") or "", prompt_base=parked.get("prompt_base") or "",
+                   params=parked.get("params") or {}, camera=parked.get("camera"),
+                   topic=parked.get("topic") or "", needs=parked.get("needs") or [])
+        ses["parked"] = None
+        card = self.d.cards.get(ses.get("picked") or "")
+        if card and ses.get("prompt"):
+            return self._setup_reply(card, ses, ctx, lang, "resume_task", t("summary_head", lang))
+        if ses.get("kind"):
+            return self._offer_models_for_kind(ctx, ses, lang, "resume_task", mode="direct")
+        return DG.greet(lang, "resume")
+
     def _new_task(self, kind: str | None, msg: str, needs: list[str], topic: str, ses: dict) -> None:
+        if DG.maybe_park(ses, msg):
+            ses["_just_parked"] = True
         ses.update(kind=kind, assist_mode=None, topic=topic, needs=needs, idea=msg, picked=None, prompt="", prompt_base="",
                    camera=None, camera_cleared=False, params={}, shown=[], gen_model=None, gen_kind=None,
                    brief=None, brief_done=False, brief_guide=None, brief_for_model=None, variants=[], var_round=0)
@@ -1460,20 +1592,21 @@ class Assistant:
         ses["await"] = "idea"
         kind = it.data.get("kind", "hello")
         if kind == "hello" and not self._is_guest(ctx):
-            PL.state(ses)["on"] = True
-            return response([t("hello", lang)], self._type_chips(ctx, lang), lang=lang, intent="smalltalk")
+            return DG.greet(lang, "smalltalk")
+        if kind == "who" and not self._is_guest(ctx):
+            return DG.capabilities(lang)
         return self._offer_types([t(kind, lang)], ctx, ses, lang, "smalltalk")
 
     def _i_off_topic(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
         # формат → содержание → модель; примеры сюжетов не подсовываем
-        ses.update({"await": "type", "assist_mode": None, "idea": "", "topic": "", "kind": None,
+        ses.update({"await": None, "assist_mode": None, "idea": "", "topic": "", "kind": None,
                     "picked": None, "prompt": "", "params": {}, "junk_count": 0})
-        return self._offer_types([t("off_topic", lang)], ctx, ses, lang, "off_topic")
+        return DG.unclear(self, msg, lang, "off_topic")
 
     def _i_injection(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
         ses.update({"await": "type", "assist_mode": None, "idea": "", "topic": "", "kind": None,
                     "picked": None, "prompt": "", "params": {}, "junk_count": 0})
-        return response([t("injection", lang)], self._type_chips(ctx, lang), intent="injection")
+        return response([t("injection", lang)], [], intent="injection")
 
     def _i_safety(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
         ses.update(prompt="")
@@ -1486,6 +1619,134 @@ class Assistant:
         return response([t("crisis", lang)], [], intent="crisis")
 
     # ============================================================== actions
+    def _maybe_switch_message(self, msg: str, ctx: dict, ses: dict, lang: str) -> dict | None:
+        """Из чата генерации — в текст, или «по этому» после ответа текстовой модели."""
+        if not msg or SB.active(ses) or PL.waiting(ses) or ses.get("assist_mode") in {"sb", "reel"}:
+            return None
+        from assistant.switch import generation_kind, refers_to_previous
+
+        if ses.get("kind") in {"video", "image", "music", "edit"} and generation_kind(msg, False) is None:
+            if re.search(r"объясни|перевед|придумай\s+текст|напиши\s+(сценарий|подпись|текст|пост)|подпись\s+для", msg, re.I):
+                return self._offer_text_for_write(msg, ses, ctx, lang)
+        kind = generation_kind(msg, bool(ctx.get("has_image")))
+        texts = [row.get("text") for row in (ses.get("texts") or []) if isinstance(row, dict) and row.get("text")]
+        if kind and refers_to_previous(msg) and texts:
+            last = (ses.get("texts") or [])[-1]
+            return self._model_switch({
+                "text": msg, "kind": kind, "replies": texts,
+                "from_name": last.get("name") or "", "from_id": last.get("model") or "",
+            }, ctx, ses, lang)
+        return None
+
+    def _remember_texts(self, ses: dict, value: dict) -> None:
+        if not isinstance(value, dict):
+            return
+        name = str(value.get("from_name") or value.get("name") or "")[:80]
+        mid = str(value.get("from_id") or value.get("model") or "")[:80]
+        items: list[str] = []
+        replies = value.get("replies")
+        if isinstance(replies, list):
+            items = [str(x).strip()[:4000] for x in replies if str(x).strip()]
+        elif str(value.get("text") or "").strip():
+            items = [str(value.get("text")).strip()[:4000]]
+        bag = [row for row in (ses.get("texts") or []) if isinstance(row, dict)]
+        for text in items:
+            bag.append({"model": mid, "name": name, "text": text})
+        ses["texts"] = bag[-8:]
+
+    def _offer_text_for_write(self, msg: str, ses: dict, ctx: dict, lang: str) -> dict:
+        ses["text_ask"] = msg[:2000]
+        pick = self._recommend("text", [], False, n=3)
+        head = "Для такого текста лучше языковая модель." if lang != "en" else "A text model is a better fit for this."
+        return self._show_models(pick, ses, lang, "switch_text", head=head)
+
+    def _model_switch(self, value: dict, ctx: dict, ses: dict, lang: str) -> dict:
+        from assistant.switch import generation_kind, prompt_candidates, refers_to_previous
+
+        text = str(value.get("text") or "")[:2000]
+        replies = [str(x).strip()[:4000] for x in (value.get("replies") or []) if str(x).strip()]
+        if not replies:
+            replies = [str(row.get("text")).strip()[:4000] for row in (ses.get("texts") or [])
+                       if isinstance(row, dict) and str(row.get("text") or "").strip()]
+        self._remember_texts(ses, value if replies and value.get("replies") else {"text": ""})
+        kind = str(value.get("kind") or "") or generation_kind(text, bool(ctx.get("has_image"))) or "video"
+        if kind == "storyboard":
+            cands = prompt_candidates(replies)
+            script = cands[0] if cands else text
+            return SB.start(self, ses, ctx, lang, text=script)
+        if kind not in {"video", "image", "music"}:
+            kind = "video"
+        from_name = str(value.get("from_name") or ("Claude" if lang != "en" else "the text model"))
+        stay = chip(
+            (f"Остаться в {from_name}" if lang != "en" else f"Stay in {from_name}"),
+            "stay_text",
+            {"text": text, "model": str(value.get("from_id") or "")},
+        )
+        cands = prompt_candidates(replies) if refers_to_previous(text) else []
+        if refers_to_previous(text) and len(cands) >= 2:
+            ses["switch_cands"] = cands[:4]
+            ses["switch_kind"] = kind
+            ses["switch_text"] = text
+            ses["switch_from"] = from_name
+            ses["switch_from_id"] = str(value.get("from_id") or "")
+            labels = []
+            for i, cand in enumerate(cands[:4]):
+                head = cand.replace("\n", " ")[:42]
+                labels.append(chip(f"{i + 1}) «{head}»", "switch_pick", i))
+            ask = "По какому тексту делаем?" if lang != "en" else "Which text should we use?"
+            return response([ask], labels + [stay], intent="switch_which", lang=lang)
+        prompt = cands[0] if cands else text
+        return self._open_switch(prompt, kind, text, from_name, bool(cands), ctx, ses, lang, stay)
+
+    def _switch_pick(self, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
+        cands = list(ses.get("switch_cands") or [])
+        try:
+            idx = int(value)
+        except (TypeError, ValueError):
+            idx = 0
+        prompt = cands[idx] if 0 <= idx < len(cands) else (cands[0] if cands else str(ses.get("switch_text") or ""))
+        kind = str(ses.get("switch_kind") or "video")
+        from_name = str(ses.get("switch_from") or "")
+        text = str(ses.get("switch_text") or "")
+        stay = chip(
+            (f"Остаться в {from_name}" if from_name else ("Остаться в чате" if lang != "en" else "Stay in chat")),
+            "stay_text",
+            {"text": text, "model": str(ses.get("switch_from_id") or "")},
+        )
+        return self._open_switch(prompt, kind, text, from_name, True, ctx, ses, lang, stay)
+
+    def _open_switch(self, prompt: str, kind: str, text: str, from_name: str, took_reply: bool,
+                     ctx: dict, ses: dict, lang: str, stay: dict) -> dict:
+        from assistant.router import detect_needs, topic_of
+
+        ses["switch_from"] = from_name
+        ses["kind"] = kind
+        ses["idea"] = (prompt or text)[:2000]
+        ses["topic"] = topic_of(prompt or text)
+        ses["prompt_base"] = (prompt or text)[:4000]
+        ses["prompt"] = ses["prompt_base"]
+        ses["assist_mode"] = "direct"
+        ses["await"] = "model"
+        has_image = bool(ctx.get("has_image")) or any(
+            isinstance(row, dict) and row.get("kind") == "image" for row in (ses.get("media") or [])
+        )
+        pick = self._recommend(kind, detect_needs(prompt or text), has_image, n=3)
+        word = {"video": "видео", "image": "картинку", "music": "музыку"}.get(kind, "это")
+        if lang == "en":
+            word = {"video": "a video", "image": "an image", "music": "music"}.get(kind, "this")
+            head = f"Let's make {word}."
+            if took_reply:
+                head = f"Let's make {word}. I'll use the prompt from {from_name} above."
+        else:
+            head = f"Сделаем {word}."
+            if took_reply:
+                head = f"Сделаем {word}. Беру промпт из ответа {from_name} выше."
+        out = self._show_models(pick, ses, lang, "model_switch", head=head)
+        out["chips"] = list(out.get("chips") or []) + [stay]
+        ids = [m.get("id") for m in out.get("models") or []]
+        out["models"] = [m for m in (out.get("models") or []) if m.get("id") in ids][:3]
+        return out
+
     def _action(self, kind: str, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
         has_image = bool(ctx.get("has_image"))
         if kind == "pipe_result":
@@ -1512,6 +1773,25 @@ class Assistant:
             ses["pipe"]["await"] = None
         if ses.get("assist_mode") == "sb" and kind not in ("send", "resume"):
             ses["assist_mode"] = None          # любая обычная кнопка — выход из раскадровки (кадры сохраняются)
+        if kind == "edit_prompt":
+            return self._edit_prompt(value, ctx, ses, lang)
+        if kind == "media_add":
+            if isinstance(value, dict) and (value.get("url") or value.get("work_id")):
+                DG.add_result(ses, value)
+            return {"text": "", "reply": "", "blocks": [], "chips": [], "silent": True, "intent": "media_add", "lang": lang}
+        if kind == "files_confirm":
+            return self._files_confirm(value, ctx, ses, lang)
+        if kind == "media_pick":
+            return self._media_pick(value, ctx, ses, lang)
+        if kind == "resume_task":
+            return self._resume_task(ctx, ses, lang)
+        if kind == "model_switch":
+            return self._model_switch(value if isinstance(value, dict) else {}, ctx, ses, lang)
+        if kind == "switch_pick":
+            return self._switch_pick(value, ctx, ses, lang)
+        if kind == "text_note":
+            self._remember_texts(ses, value if isinstance(value, dict) else {})
+            return {"text": "", "reply": "", "blocks": [], "chips": [], "silent": True, "intent": "text_note", "lang": lang}
         if kind == "pick_model":
             return self._pick(str(value or ""), ctx, ses, lang)
         if kind == "choose_type":

@@ -104,8 +104,20 @@ T: dict[str, dict[str, str]] = {
     "mode_reels_offer": {"ru": "🎬 Рилс по шагам: от идеи до публикации", "en": "🎬 Reel step by step: idea to publishing"},
     # --- служебные ответы ---
     "hello": {
-        "ru": "Здравствуйте! Здесь нейросети делают видео, картинки и музыку по вашему описанию.\nОпишите идею — подберу модель, напишу промпт и покажу цену. С чего начнём?",
-        "en": "Hello! Here AI models make videos, images and music from your description.\nDescribe the idea — I'll pick a model, write the prompt and show the price. Where do we start?",
+        "ru": "Здравствуйте! Опишите, что хотите сделать, или прикрепите файл.",
+        "en": "Hello! Describe what you want to make, or attach a file.",
+    },
+    "capabilities": {
+        "ru": "Помогаю собрать видео, картинку или музыку: уточняю задачу, подбираю модель, пишу промпт и показываю цену. Запуск — только вашей кнопкой.",
+        "en": "I help you make a video, image or track: I clarify the task, pick a model, write the prompt and show the price. Nothing runs until you press the button.",
+    },
+    "ask_open": {
+        "ru": "Что хотите сделать?",
+        "en": "What do you want to make?",
+    },
+    "ask_vague": {
+        "ru": "Уточните, что именно нужно: кто или что в кадре, где это и какой результат — картинка, видео или что-то ещё.",
+        "en": "Tell me what you need: who or what is in the frame, where it is, and whether you want an image, a video or something else.",
     },
     "thanks": {"ru": "Пожалуйста! Что ещё создадим?", "en": "You're welcome! What else shall we create?"},
     "who": {

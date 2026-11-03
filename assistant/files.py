@@ -70,8 +70,9 @@ def _clean_name(name: Any) -> str:
     return s or "файл"
 
 
-def clean_attachments(raw: Any) -> list[dict[str, str]]:
-    """Список с фронта → до MAX_FILES файлов (можно несколько одного типа), безопасные имена."""
+def clean_attachments(raw: Any, keep_id: bool = False) -> list[dict[str, str]]:
+    """Список с фронта → до MAX_FILES файлов (можно несколько одного типа), безопасные имена.
+    keep_id=True — для сессии помощника (номер upl_…). История чата вызывает без него и номер не хранит."""
     if not isinstance(raw, list):
         return []
     out: list[dict[str, str]] = []
@@ -81,7 +82,11 @@ def clean_attachments(raw: Any) -> list[dict[str, str]]:
         kind = str(item.get("kind") or "")
         if kind not in KINDS:
             continue
-        out.append({"kind": kind, "name": _clean_name(item.get("name"))})
+        row = {"kind": kind, "name": _clean_name(item.get("name"))}
+        fid = str(item.get("id") or "").strip()
+        if keep_id and fid and re.fullmatch(r"[A-Za-z0-9_\-]{1,40}", fid):
+            row["id"] = fid
+        out.append(row)
         if len(out) >= MAX_FILES:
             break
     return out

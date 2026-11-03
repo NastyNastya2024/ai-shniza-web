@@ -28,9 +28,9 @@ def test_clean_attachments_keeps_kind_and_safe_name_only():
         "junk",
         {"kind": "video", "name": "x" * 200 + ".mp4"},
     ]
-    files = clean_attachments(raw)
+    files = clean_attachments(raw, keep_id=True)
     assert [f["kind"] for f in files] == ["image", "image", "audio", "video"]
-    assert files[0] == {"kind": "image", "name": "old.png"}
+    assert files[0] == {"kind": "image", "name": "old.png", "id": "upl_x"}
     assert files[1] == {"kind": "image", "name": "C:Usersmecat script.png"}
     assert files[2]["name"] == "voice.wav"
     assert len(files[3]["name"]) <= 60 and files[3]["name"].endswith(".mp4")
