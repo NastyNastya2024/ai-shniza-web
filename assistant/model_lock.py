@@ -156,7 +156,8 @@ def parameters_if_locked(a: Any, ctx: dict, ses: dict, lang: str, kind: str) -> 
     lock = lock_of(a, ctx, ses) or _composer_pick(a, ctx)
     if lock is None:
         return None
-    if ses.get("need_ref"):
+    flow = ses.get("flow") if isinstance(ses.get("flow"), dict) else {}
+    if flow.get("need_ref") or ses.get("need_ref"):
         from . import files as F
         if not F.accepts(lock["card"], "image", getattr(a.d, "inputs_fn", None)):
             return None

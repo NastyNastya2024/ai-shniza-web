@@ -1208,6 +1208,7 @@ def _image_angles(engine: Any, ctx: dict, ses: dict, lang: str, prompt: str) -> 
     ses["need_ref"] = True
     _start_from_picture(ses, ctx, base, "image")
     f = ses["flow"]
+    f["need_ref"] = True
     f["idea"] = ses["idea"] = (base + "\n" + extra).strip()
     out = open_prompts(engine, ctx, ses, lang, "idea", extra)
     head = ("The photo stays attached. Here are prompts for other angles of the same person."
