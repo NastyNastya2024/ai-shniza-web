@@ -43,7 +43,7 @@ TYPE_RULES: list[tuple[str, re.Pattern]] = [
                   r"\bmusic\b", r"\btrack\b", r"\bsong\b", r"\bbeat\b", r"melod", r"jingle", r"soundtrack",
                   r"звуков\w* эффект", r"\bsfx\b", r"\bшум(ы)?\b", r"эмбиент", r"\bлуп\w*",
                   r"звук (дожд|ветр|шаг|моря|город|огня|прибо)", r"\bзвук\b", r"sound effect", r"ambien", r"\bloop\b", r"\bsound\b")),
-    ("video", _rx(r"видео", r"видос", r"видяшк", r"\bролик", r"мульт", r"\bгифк", r"\bgif\b", r"\bклип", r"анимац", r"анимир", r"оживи", r"оживить", r"в движени", r"трейлер", r"\breels?\b", r"рилс",
+    ("video", _rx(r"видео", r"видос", r"видяшк", r"\bролик", r"мульт(?!яш)", r"\bгифк", r"\bgif\b", r"\bклип", r"анимац", r"анимир", r"оживи", r"оживить", r"в движени", r"трейлер", r"\breels?\b", r"рилс",
                   r"шортс", r"сторис", r"tiktok", r"тикток", r"\bvideo\b", r"\banimat", r"\bmotion\b", r"\bclip\b", r"bring .* to life",
                   # готовый кино-/камерный промпт без слова «video»
                   r"\bcinematic\b", r"(launch|short|feature|promo|tesla) film\b", r"\bmusic video\b",

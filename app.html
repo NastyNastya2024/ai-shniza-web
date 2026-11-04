@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="/assets/brand/png/apple-touch-icon-180.png">
 <link rel="stylesheet" href="/assistant-ui.css?v=36">
 <link rel="stylesheet" href="/attach.css">
-<link rel="stylesheet" href="/chat-history.css?v=5">
+<link rel="stylesheet" href="/chat-history.css?v=6">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/aish-style.css?v=20">
@@ -671,16 +671,17 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 </div>
 
 
-<script src="/i18n/dict-ru.js?v=18"></script>
-<script src="/i18n/dict-en.js?v=16"></script>
+<script src="/i18n/dict-ru.js?v=20"></script>
+<script src="/i18n/dict-en.js?v=18"></script>
 <script src="/i18n/runtime.js"></script>
 <script src="/vitrina-data.js"></script>
 <script src="/vitrina-camera-moves.js?v=3"></script>
 <script src="/vitrina-aishnitsa.js?v=14"></script>
-<script src="/assistant-ui.js?v=46"></script>
-<script src="/attach.js?v=6"></script>
+<script src="/assistant-ui.js?v=48"></script>
+<script src="/model-lock.js?v=1"></script>
+<script src="/attach.js?v=7"></script>
 <script src="/aish-mcp.js?v=3"></script>
-<script src="/chat-history.js?v=11"></script>
+<script src="/chat-history.js?v=12"></script>
 <script>
 /* Тема общая со витриной/профилем: localStorage aish-vitrina-theme (+ theme). ?theme= перекрывает. */
 function readSharedTheme() {
@@ -1523,6 +1524,7 @@ class Component extends DCLogic {
         mediaUrl: url,
         mediaKind: kind === 'audio' ? 'audio' : (kind === 'video' ? 'video' : 'image'),
         job: false,
+        genPrompt: (this._lastGen && this._lastGen.prompt) || '',
         // работа в «Моих работах»: неопубликованная хранится 24 часа — под результатом сразу предлагаем опубликовать
         workId: (data && data.work_id) || '',
         published: !!(data && data.published),
@@ -1640,6 +1642,7 @@ class Component extends DCLogic {
         result: true,
         mediaUrl: url,
         mediaKind: kind,
+        genPrompt: (this._lastGen && this._lastGen.prompt) || (work && work.prompt) || '',
         workId: workId || (work && work.id),
         published: !!(work && work.status === 'published'),
         likes: work && work.likes != null ? work.likes : 0,
@@ -1762,12 +1765,13 @@ class Component extends DCLogic {
       this.textHistory = [];
       this.textDirect = false;
       this.panelLock = false;
+      if (window.AishModelLock) AishModelLock.clear();
       this._cameraSeedPending = false;
       this._shownFiles = {};
       this._keptFiles = [];
       if (window.AishAttach && AishAttach.consume) AishAttach.consume();
       lastMsgs = -1;
-      this.setState({ chat: true, msgs: [], typing: false, text: '', assist: true });
+      this.setState({ chat: true, msgs: [], typing: false, text: '', assist: true, sel: '' });
       this.syncAssistPref();
       if (!this.eggy || !this.eggy.restart) {
         this.botSay({ text: tr('studio.chat.failedRetry') }, 200);
@@ -1784,8 +1788,8 @@ class Component extends DCLogic {
       this.pendingFiles = null;
       if (!this.state.assist) this.setState({ assist: true });
       const cur = this.MODELS.find((x) => x.slug === this.state.sel);
-      // Текстовая модель подключена — любой текст сразу в неё, без сценария видео/картинки.
-      if (cur && cur.type === 'text' && (this.textDirect || !this.state.assist)) {
+      // Закреплённая человеком модель идёт через помощника: он либо отдаёт текст в неё, либо ведёт её карточку.
+      if (!(window.AishModelLock && AishModelLock.get()) && cur && cur.type === 'text' && (this.textDirect || !this.state.assist)) {
         this.textChat(cur, text, { force: !!this.textDirect });
         return;
       }
@@ -1917,6 +1921,7 @@ class Component extends DCLogic {
       } else this.speak(tr('studio.eggy.welcomeBack'));
     };
     this.logout = async () => {
+      if (window.AishModelLock) AishModelLock.clear();
       if (this.eggy && this.eggy.restart) { try { await this.eggy.restart(); } catch (_) {} }
       await api('/api/auth/logout', { method: 'POST' }); await refreshUser(); this.goHome(); this.speak(tr('studio.eggy.loggedOut'));
     };
@@ -2022,10 +2027,12 @@ class Component extends DCLogic {
       priceColor: m.cost === 0 ? 'var(--free)' : 'var(--ink)',
       pick: () => {
         const next = m.slug === st.sel ? '' : m.slug;
-        // Любая модель с панели: дальше работаем с ней, без подмены другой нейросетью.
+        if (window.AishModelLock) {
+          if (next) AishModelLock.set({ id: m.model_key || m.slug, kind: m.type || '', title: m.name || '' });
+          else AishModelLock.clear();
+        }
         this.panelLock = !!next;
-        this.textDirect = !!(next && m.type === 'text');
-        if (this.textDirect) { this.textModel = m.slug; this.pendingSel = m.slug; }
+        this.textDirect = false;
         this.setState({ sel: next });
         if (!next) return;
         M('model_pick', { model: m.slug, kind: m.type || '', src: 'panel' });
@@ -2094,6 +2101,7 @@ const app = new Component({ theme: DEFAULT_THEME });
 window.app = app;
 app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? AssistantUI.controller({
   api: api,
+  onTextModel: (text, modelId) => sendToTextModel(text, modelId),
   avatarHTML: '<span class="bot-av" style="position:relative;width:38px;height:38px"><img src="' + ORB_SRC + '" alt="" style="position:absolute;inset:0;width:100%;height:100%"></span>',
   getContext: () => {
     const m = app.MODELS.find((x) => x.slug === app.state.sel) || {};
@@ -2123,7 +2131,7 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
       profession: (app.profile && app.profile.profession) || '',
     }, app.lastJobCtx || {}, {
       lang: uiLang === 'en' ? 'en' : 'ru',   // язык ответов помощника = язык интерфейса (всегда поверх)
-    });
+    }, (window.AishModelLock && AishModelLock.ctx()) || {});
   },
   onUser: (text) => {
     // к сообщению, которое человек написал сам, — плашки с новыми файлами (каждый файл показываем один раз)
@@ -2297,6 +2305,10 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
     app.cook();
   },
   onUiAction: (action, value) => {
+    if (action === 'unlock_model') {
+      if (window.AishModelLock) AishModelLock.clear();
+      return;
+    }
     if (action === 'look_skip' || action === 'look_next') {
       app._lookSkipped = true;
       if (app._lookWait) { clearTimeout(app._lookWait); app._lookWait = 0; }
@@ -2631,20 +2643,65 @@ function pubOfferHtml(m) {
       + '</div>';
   }
   if (!m.workId) return '';
+  const picture = m.mediaKind === 'image';
   if (m.published && m.promptOpen) {
-    return '<div class="pub-done">' + esc(tr('studio.publish.bothDone')) + '</div>';
+    return '<div class="pub-done">' + esc(tr(picture ? 'studio.publish.bothDoneImage' : 'studio.publish.bothDone')) + '</div>';
   }
   let btns = '';
   if (!m.published) {
-    btns += '<button type="button" class="btn-purple pub-btn" data-publish-work="' + id + '" data-publish-kind="video">' + esc(tr('studio.publish.video')) + '</button>';
+    btns += '<button type="button" class="btn-purple pub-btn" data-publish-work="' + id + '" data-publish-kind="' + (picture ? 'image' : 'video') + '">' + esc(tr(picture ? 'studio.publish.image' : 'studio.publish.video')) + '</button>';
   }
   if (!m.promptOpen) {
     btns += '<button type="button" class="pub-open" data-publish-work="' + id + '" data-publish-kind="prompt">' + esc(tr('studio.publish.promptBtn')) + '</button>';
   }
   return '<div class="pub-offer" data-pub-box="' + id + '">'
-    + '<p class="pub-t">' + esc(m.published ? tr('studio.publish.videoDone') : tr('studio.publish.offer')) + '</p>'
+    + '<p class="pub-t">' + esc(m.published ? tr(picture ? 'studio.publish.imageDone' : 'studio.publish.videoDone') : tr('studio.publish.offer')) + '</p>'
     + '<div class="pub-row">' + btns + '</div>'
     + '<p class="pub-rules">' + tr('studio.publish.rules.html') + '</p>'
+    + '</div>';
+}
+function pinResultImage(msg) {
+  if (!msg || !window.AishAttach || !AishAttach.addFiles) return Promise.resolve();
+  const src = resultMediaSrc(msg);
+  if (!src) return Promise.resolve();
+  return fetch(src, { credentials: 'same-origin' }).then(function (res) {
+    if (!res.ok) return null;
+    return res.blob();
+  }).then(function (blob) {
+    if (!blob) return;
+    const type = blob.type && blob.type.indexOf('image/') === 0 ? blob.type : 'image/png';
+    const file = new File([blob], 'персонаж.png', { type: type });
+    AishAttach.addFiles([file]);
+    let n = 0;
+    return new Promise(function (ok) {
+      const tick = function () {
+        if (!AishAttach.busy() || n > 40) ok();
+        else { n += 1; setTimeout(tick, 200); }
+      };
+      tick();
+    });
+  }).catch(function () {});
+}
+function videoNextHtml(m) {
+  if (!m || !m.result) return '';
+  const steps = m.mediaKind === 'image'
+    ? [
+      ['image_redo', 'studio.result.imageRedo'],
+      ['image_video', 'studio.result.imageVideo'],
+      ['image_angles', 'studio.result.imageAngles'],
+    ]
+    : (m.mediaKind === 'video'
+      ? [
+        ['redo', 'studio.result.redo'],
+        ['continue', 'studio.result.continue'],
+        ['fresh', 'studio.result.fresh'],
+      ]
+      : []);
+  if (!steps.length) return '';
+  return '<div class="result-next" role="group">'
+    + steps.map(function (s) {
+      return '<button type="button" data-result-next="' + s[0] + '">' + esc(tr(s[1])) + '</button>';
+    }).join('')
     + '</div>';
 }
 /* Плеер в этом же чате. Если работа уже записана — берём её файл, а не отдельную страницу. */
@@ -2747,6 +2804,7 @@ function msgEl(m) {
     + replyToolsHtml(m)
     + media
     + pubBlock
+    + (m.result && !workGone && (m.mediaKind === 'video' || m.mediaKind === 'image') ? videoNextHtml(m) : '')
     + (likeChip ? '<div style="display:flex;flex-wrap:wrap;gap:8px">' + likeChip + '</div>' : '')
     + (m.loginCta ? '<button type="button" class="btn-login" data-cta data-login style="height:40px;padding:0 18px;border-radius:12px;font-size:14px">' + esc(tr('studio.chat.loginRun')) + '</button>' : '')
     + (m.topup ? '<a href="/account#balance" data-m-topup class="btn-purple" style="height:40px;padding:0 18px;border-radius:12px;font-size:14px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none">' + esc(tr('studio.chat.toBalance')) + '</a>' : '')
@@ -2776,10 +2834,11 @@ function msgEl(m) {
 /* Опубликовать на витрине прямо из чата (POST /api/works/<id>/publish, как в кабинете) */
 async function publishFromChat(btn) {
   const id = btn.getAttribute('data-publish-work');
-  const kind = btn.getAttribute('data-publish-kind') === 'prompt' ? 'prompt' : 'video';
+  const rawKind = btn.getAttribute('data-publish-kind') || 'video';
+  const kind = rawKind === 'prompt' ? 'prompt' : rawKind;
   const box = btn.closest('[data-pub-box]');
   const msg = (app.state.msgs || []).find((x) => String(x.workId) === String(id));
-  const label = () => tr(kind === 'prompt' ? 'studio.publish.promptBtn' : 'studio.publish.video');
+  const label = () => tr(kind === 'prompt' ? 'studio.publish.promptBtn' : (kind === 'image' ? 'studio.publish.image' : 'studio.publish.video'));
   btn.disabled = true;
   btn.textContent = tr('studio.publish.busy');
   const say = (html) => { if (box) box.querySelector('.pub-t').innerHTML = html; };
@@ -3011,6 +3070,17 @@ document.addEventListener('click', async (e) => {
   }
   const ownBtn = e.target.closest('[data-own-video]');
   if (ownBtn) { e.preventDefault(); if (app.newGeneration) app.newGeneration(); return; }
+  const nextBtn = e.target.closest('[data-result-next]');
+  if (nextBtn) {
+    e.preventDefault();
+    const row = nextBtn.closest('.msg-in');
+    const msg = row && row._msg;
+    const step = nextBtn.getAttribute('data-result-next') || '';
+    const prompt = (msg && msg.genPrompt) || (app._lastGen && app._lastGen.prompt) || '';
+    if (step === 'image_angles') await pinResultImage(msg);
+    if (app.eggy && app.eggy.chip && step) await app.eggy.chip({ action: 'flow_next', value: { step: step, prompt: prompt }, label: nextBtn.textContent });
+    return;
+  }
   const pubBtn = e.target.closest('[data-publish-work]');
   if (pubBtn) { e.preventDefault(); await publishFromChat(pubBtn); return; }
   const resumeBtn = e.target.closest('[data-history-resume]');
@@ -3372,6 +3442,17 @@ if (window.AishHistory) {
     },
     onNew: () => app.newGeneration()   // «+ Новый»: сохранить чат, сбросить сессию помощника, спросить тип заново
   });
+}
+
+function sendToTextModel(text, modelId) {
+  const ask = String(text || '').trim();
+  if (!ask) return;
+  const m = ensureTextModel(modelId);
+  app.textDirect = true;
+  app.textModel = m.slug;
+  app.pendingSel = m.slug;
+  app.setState({ sel: m.slug, chat: true });
+  app.textChat(m, ask, { force: true, resume: true });
 }
 
 function ensureTextModel(slug) {

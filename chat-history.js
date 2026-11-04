@@ -82,6 +82,7 @@
         c.result = true;
         if (m.mediaUrl && /^(https?:\/\/|\/(?!\/))/.test(String(m.mediaUrl))) c.mediaUrl = str(m.mediaUrl, 1000);
         c.mediaKind = MEDIA[m.mediaKind] ? m.mediaKind : 'image';
+        if (m.genPrompt) c.genPrompt = str(m.genPrompt, 4000);
       }
       if (m.workId) c.workId = String(m.workId);
       if (m.published) c.published = true;   // опубликованная — хранится; неопубликованная через 24 ч удаляется

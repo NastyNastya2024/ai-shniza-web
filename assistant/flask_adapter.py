@@ -31,7 +31,8 @@ CTX_SCHEMA: dict[str, tuple[type, int]] = {
     "selected_model_id": (str, 64),
     "selected_model_kind": (str, 20),   # video|image|… — тип с панели UI (Nano Banana = image)
     "selected_model_title": (str, 80),
-    "model_lock": (bool, 0),   # модель выбрана в списке: промпт идёт в неё, без подмены другой нейросетью
+    "model_lock": (bool, 0),   # старый флаг панели
+    "model_locked": (bool, 0),  # человек сам выбрал модель — она главнее потока помощника
     "has_image": (bool, 0),
     "last_error": (str, 40),
     "last_detail": (str, 200),

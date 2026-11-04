@@ -88,6 +88,9 @@ def empty_session() -> dict[str, Any]:
         "flow": None,        # диалог v2: {stage, kind, story, slots, idea, path, next}
         "prior": [],         # прошлые генерации этого чата: [{kind, prompt}] — новая задача их не стирает
         "mcp": None,         # помощь с подключением: {stage, goal, service}
+        "lock": "",          # id модели, которую человек закрепил
+        "lock_off": "",      # id, для которой уже выбрали «подобрать другую»
+        "lock_pending": None,  # {text, kind} — вопрос «остаться или подобрать» ждёт кнопку
     }
 
 

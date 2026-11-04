@@ -387,11 +387,11 @@ TITLES = {"ru": ["Как вы описали", "Ярче и живее", "Атм
 _SECTIONS = {
     "ru": {
         "video": [("Настроение", "mood"), ("Стиль", "style"), ("Камера", "camera"), ("Свет", "light"), ("Движение", "motion")],
-        "image": [("Настроение", "mood"), ("Стиль", "style"), ("Камера", "camera"), ("Свет", "light"), ("Детали", "detail")],
+        "image": [("Настроение", "mood"), ("Стиль", "style"), ("Композиция", "camera"), ("Свет", "light"), ("Детали", "detail")],
     },
     "en": {
         "video": [("Mood", "mood"), ("Style", "style"), ("Camera", "camera"), ("Light", "light"), ("Motion", "motion")],
-        "image": [("Mood", "mood"), ("Style", "style"), ("Camera", "camera"), ("Light", "light"), ("Details", "detail")],
+        "image": [("Mood", "mood"), ("Style", "style"), ("Composition", "camera"), ("Light", "light"), ("Details", "detail")],
     },
 }
 _SECTION_SLOT = {"video": {"mood": "mood", "style": "style", "shot": "camera"},
@@ -499,6 +499,29 @@ def _sentence(text: str) -> str:
     return text[0].upper() + text[1:] if text else ""
 
 
+_NAMED_STYLE = (
+    (r"мультяш|мультик|cartoon", "мультяшный стиль", "cartoon style"),
+    (r"аниме|anime", "аниме", "anime"),
+    (r"акварел", "акварель", "watercolor"),
+    (r"пиксель|pixel", "пиксельный стиль", "pixel style"),
+    (r"комикс|comic", "комикс", "comic"),
+    (r"сказоч", "сказочный стиль", "fairy-tale style"),
+    (r"фотореалист", "фотореализм", "photorealism"),
+    (r"реалист", "реализм", "realism"),
+    (r"\b3d\b|трёхмерн|трехмерн", "трёхмерный стиль", "3D style"),
+)
+
+
+def named_style(text: str, lang: str) -> str:
+    """Стиль из слов человека важнее шаблонного фотореализма."""
+    low = (text or "").lower()
+    en = lang == "en"
+    for rx, ru, eng in _NAMED_STYLE:
+        if re.search(rx, low):
+            return eng if en else ru
+    return ""
+
+
 def rule_variants(card: Card, subject: str, answers: dict[str, str], extra: list[str], lang: str,
                   round_: int = 0, questions: list[dict] | None = None) -> list[dict]:
     """Запасные варианты без LLM: связные предложения «Суть. Атмосфера: …; Время суток: …. Детали. Приём»."""
@@ -520,6 +543,10 @@ def rule_variants(card: Card, subject: str, answers: dict[str, str], extra: list
             alts = ALT.get(kind, [{}, {}])
             for k, v in alts[(i - 1 + round_) % len(alts)].items():
                 a.setdefault(k, v)
+        if kind in ("image", "edit") and not a.get("style"):
+            named = named_style(subj, L)
+            if named:
+                a["style"] = named
         parts = []
         folded = set(_SECTION_SLOT.get(kind, {}))
         for k, v in a.items():
@@ -640,7 +667,7 @@ VARIANTS_SYSTEM = (
     "Use `model.prompt_example` only as a style/structure reference — do not copy its subject.\n"
     "If structure is missing, fall back by `kind`:\n"
     "- video: subject → action → setting → camera → lighting → mood/style.\n"
-    "- image: subject → composition → background → lighting → style → palette → details.\n"
+    "- image: a still picture, no camera moves and no motion. subject → composition → background → lighting → style → palette → details.\n"
     "- music: genre → mood → tempo → instruments → arrangement → vocals or instrumental.\n"
     "- sfx: source → environment/acoustics → character → duration feel.\n"
     "- edit: what to change → what to keep → desired look.\n"
@@ -651,8 +678,9 @@ VARIANTS_SYSTEM = (
     "and do not copy the subject of prompt_example. Say only how to move or change that picture, using the person's words. "
     "Shape each prompt as labeled lines in language `lang`, not one blob. "
     "Video order: Кадр. Настроение. Стиль. Камера. Свет. Движение. "
-    "Image order: Кадр. Настроение. Стиль. Камера. Свет. Детали. "
-    "English labels: Frame. Mood. Style. Camera. Light. Motion. Image uses Details instead of Motion. "
+    "Image order: Кадр. Настроение. Стиль. Композиция. Свет. Детали. "
+    "English labels: Frame. Mood. Style. Camera. Light. Motion. Image uses Composition and Details, never Motion. "
+    "If the person named a style (cartoon, anime, watercolor), keep that style. Do not replace it with photorealism. "
     "Mood, visual style and camera type are required and concrete. "
     "Each line is one or two sentences, about 80-140 words total, no bullet symbols, "
     "no tech flags (no aspect ratio / duration numbers). "

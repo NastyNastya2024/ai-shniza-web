@@ -28,6 +28,7 @@ from . import dialog_flow as DFLOW
 from . import camera as CAM
 from . import errors as err_mod
 from . import files as F
+from . import model_lock as ML
 from . import modes as MD
 from . import params as P
 from . import pipeline as PL
@@ -198,7 +199,9 @@ class Assistant:
             if action and isinstance(action, dict) and action.get("type"):
                 if action.get("type") != "send":
                     ses["junk_count"] = 0
-                if action["type"] == "tree_hint":          # подсказка дерева: реакция + текст подсказки в ядро
+                if action["type"] in ML.ACTIONS:          # «Спросить DeepSeek» / «Подобрать модель для: …»
+                    out = ML.action(self, action["type"], action.get("value"), ctx, ses, lang)
+                elif action["type"] == "tree_hint":          # подсказка дерева: реакция + текст подсказки в ядро
                     out = TR.hint_action(self, action.get("value"), ctx, ses, lang)
                 elif action["type"] == "tree_event":       # лайк / скачал / ошибка… под результатом
                     out = TR.event_action(self, action.get("value"), ctx, ses, lang)
@@ -216,7 +219,9 @@ class Assistant:
                                 ses["idea"] = text
                     out = self._action(str(action["type"]), action.get("value"), ctx, ses, lang)
             else:
-                out = self._message(msg, ctx, ses, lang)
+                out = ML.before_message(self, msg, ctx, ses, lang) if msg else None
+                if out is None:
+                    out = self._message(msg, ctx, ses, lang)
         except Exception:
             log.exception("assistant handler failed")
             out = response([_generic_error(lang)], [std_chip("retry", "retry", lang)], intent="internal_error")
@@ -304,9 +309,6 @@ class Assistant:
     def _message(self, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
         if not (msg and BR.is_junk(msg)):
             ses["junk_count"] = 0
-        locked = self._panel_model(msg, ctx, ses, lang)
-        if locked is not None:
-            return locked
         # 1) текст совпал с кнопкой прошлого ответа или с названием модели → это клик
         act = self._text_as_action(msg, ses)
         if act:
@@ -851,38 +853,6 @@ class Assistant:
                               latency_ms=res.latency_ms)
         return res.data
 
-    def _panel_model(self, msg: str, ctx: dict, ses: dict, lang: str) -> dict | None:
-        """Модель выбрана в списке: сообщение — промпт для неё, а не повод сменить нейросеть."""
-        if not ctx.get("model_lock") or not (msg or "").strip():
-            return None
-        it = route(msg, ctx, ses, self.titles)
-        if it.name in ("crisis", "safety", "safety_person", "injection"):
-            return None
-        mid = str(ctx.get("selected_model_id") or "")
-        card = self.d.cards.get(mid)
-        if not card:
-            return None
-        named = UN.fast(msg, self.d.cards)
-        if named and named.get("intent") == "switch_model" and named.get("model") and named.get("model") != card.id:
-            return None
-        if card.kind == "text":
-            ses["text_ask"] = msg.strip()[:2000]
-            return self._text_chat_ready(card, ses, lang, "pick_model")
-        ses["picked"] = card.id
-        ses["kind"] = card.kind
-        ses["gen_kind"] = card.kind
-        ses["gen_model"] = card.id
-        ses["idea"] = msg.strip()[:2000]
-        ses["brief_done"] = True
-        ses["await"] = "card"
-        flow = ses.get("flow")
-        if isinstance(flow, dict):
-            flow["stage"] = "card"
-            flow["kind"] = card.kind
-            flow["idea"] = ses["idea"]
-            flow["path"] = "direct"
-        return self._setup_from_idea(card, ctx, ses, lang, "pick_model")
-
     def _current_card(self, ses: dict, ctx: dict) -> Card | None:
         mid = ses.get("picked") or ctx.get("selected_model_id")
         return self.d.cards.get(mid) if mid else None
@@ -1193,6 +1163,7 @@ class Assistant:
             param_lines = [t("camera_summary", lang, title=CAM.title(cam, lang))] + param_lines
         blocks.append({"type": "summary", "model_id": card.id, "title": card.title, "price": price, "estimate": est,
                        "prompt": prompt, "params": param_lines, "editable": True,
+                       "allow_file": F.accepts(card, "image", self.d.inputs_fn),
                        "files": F.summary_labels(fplan, lang), "files_title": F.summary_title(lang)})
         fb = DG.files_block(card, ses, lang)
         if fb:
@@ -1896,11 +1867,24 @@ class Assistant:
 
     def _i_generate_now(self, it: Intent, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
         card = self._current_card(ses, ctx)
+        # «сгенерируй картинку девушки…» — идея. Голое «запускай» — команда запуска.
+        rest = re.sub(
+            r"^(сгенерируй|генерируй|запусти|запускай|давай\s+генерир\w*|поехали|го|generate|run\s+it|go\s+ahead|start)\b",
+            "", msg or "", count=1, flags=re.I).strip(" \t:.-—")
+        if BR.has_subject(rest):
+            kind = detect_kind(msg, bool(ctx.get("has_image")))
+            if not kind and card:
+                kind = "image" if card.kind == "edit" else card.kind
+            task = Intent("generate_task", kind=kind or "image", needs=detect_needs(msg), topic=topic_of(msg))
+            return self._i_generate_task(task, msg, ctx, ses, lang)
         if not card:
             return self._ask_type(ses, ctx, lang)
         if not ses.get("prompt"):
             ses["prompt"] = ses.get("idea") or ctx.get("draft") or ""
         if not ses["prompt"]:
+            ses["await"] = "idea"
+            ses["kind"] = "image" if card.kind == "edit" else card.kind
+            ses["picked"] = card.id
             return response([t("describe_idea", lang)], [], intent="generate_now", generate_model=card.id)
         ses["params"] = P.with_defaults(card, P.validate(card, ses.get("params")))
         return self._setup_reply(card, ses, ctx, lang, "generate_now", t("summary_head", lang))
@@ -2280,8 +2264,8 @@ class Assistant:
                     return self._prompt_from_idea(ctx, ses, lang)
                 ses["junk_count"] = 0
                 return self._ask_prompt_idea(ses, lang)
-            # картинка: сначала суть и промпт, модели позже
-            if value == "image" and self.d.brief:
+            # картинка без нового диалога: старый бриф. В диалоге v2 промпт как у видео.
+            if value == "image" and self.d.brief and not self.d.dialog_v2:
                 if BR.has_subject(ses.get("idea") or ""):
                     return self._enter_brief(ctx, ses, lang)
                 return self._ask_subject("image", ses, ctx, lang)
@@ -2459,9 +2443,17 @@ class Assistant:
                     ses["idea"] = ses["prompt"]
                     which = flow.get("prompt_for") or "idea"
                     if which == "idea" and (flow.get("kind") or "") == "video":
+                        from . import model_lock as ML
+                        lock = ML.lock_of(self, ctx, ses)
+                        if lock and lock["kind"] in ("image", "edit"):
+                            flow["kind"] = "image"
+                            ses["kind"] = "image"
+                            return DFLOW._advise(self, ctx, ses, lang)
                         if flow.get("polished"):
                             return DFLOW._go_direct(self, ctx, ses, lang)
                         return DFLOW._paths(self, ses, lang)
+                    if which == "idea" and (flow.get("kind") or "") == "image":
+                        return DFLOW._advise(self, ctx, ses, lang)
                     flow["stage"] = "polish"
                     flow["next"] = "polish"
                     return self._offer_polish(ses, ctx, lang, "use_variant",

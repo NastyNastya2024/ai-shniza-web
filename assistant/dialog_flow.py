@@ -147,6 +147,10 @@ def start(engine: Any, msg: str, it: Any, ctx: dict, ses: dict, lang: str) -> di
     kind = getattr(it, "kind", None) or None
     story = guess_story(msg, engine.d.tree)
     kind = _kind_of(story, kind)
+    from . import model_lock as ML
+    lock = ML.lock_of(engine, ctx, ses)
+    if lock and lock["kind"] in ("image", "edit"):
+        kind = "image"
     if not kind:
         return ask_type(engine, msg, ctx, ses, lang)
     _park(ses, msg)
@@ -290,8 +294,12 @@ def on_action(engine: Any, kind: str, value: Any, ctx: dict, ses: dict, lang: st
         pass
     elif kind == "make" and f:
         pass
+    elif kind == "back" and f:
+        pass
     else:
         return None
+    if kind == "flow_next" and not isinstance(f, dict):
+        return _next(engine, value, ctx, ses, lang)
     if not isinstance(f, dict):
         return response(["Сначала опишите задачу."], [], lang=lang, intent="flow")
     if kind == "flow_slot":
@@ -327,6 +335,8 @@ def on_action(engine: Any, kind: str, value: Any, ctx: dict, ses: dict, lang: st
         return open_prompts(engine, ctx, ses, lang, "board")
     if kind == "path_direct" or kind == "flow_skip":
         return _go_direct(engine, ctx, ses, lang)
+    if kind == "back":
+        return step_back(engine, ctx, ses, lang)
     if kind == "flow_show":
         return show(engine, ctx, ses, lang)
     if kind == "flow_next":
@@ -346,6 +356,26 @@ def on_action(engine: Any, kind: str, value: Any, ctx: dict, ses: dict, lang: st
         return _after_media(value if isinstance(value, dict) else {}, ses, lang)
     if kind == "make":
         return from_prompt(engine, value, ctx, ses, lang)
+    return None
+
+
+def step_back(engine: Any, ctx: dict, ses: dict, lang: str) -> dict | None:
+    """Назад — предыдущий шаг диалога. Список моделей не подменяет возврат к промпту."""
+    f = ses.get("flow") if isinstance(ses.get("flow"), dict) else None
+    if not f or not f.get("stage"):
+        return None
+    stage = f.get("stage") or ""
+    kind = f.get("kind") or ses.get("kind") or ""
+    which = str(f.get("prompt_for") or "idea")
+    shown = [x for x in (f.get("shown_models") or []) if x]
+    if stage == "card" and len(shown) > 1:
+        return _advise(engine, ctx, ses, lang, again=True)
+    if stage in ("card", "advise", "polish", "path", "variants"):
+        if kind == "video" and stage in ("card", "advise"):
+            return _paths(engine, ses, lang)
+        return open_prompts(engine, ctx, ses, lang, which)
+    if stage in ("board", "cast", "refine"):
+        return _paths(engine, ses, lang)
     return None
 
 
@@ -388,6 +418,12 @@ def show(engine: Any, ctx: dict, ses: dict, lang: str) -> dict:
 def advance(engine: Any, ctx: dict, ses: dict, lang: str) -> dict:
     f = ses["flow"]
     _absorb(f, f.get("source") or "", ctx)
+    # картинка: промпт как у видео — сразу варианты, без опросника карточки
+    if (f.get("kind") or "") == "image":
+        if not f.get("idea"):
+            f["idea"] = _compose(f)
+            ses["idea"] = f["idea"]
+        return open_prompts(engine, ctx, ses, lang, "idea")
     missing = _missing(f)
     f["missing"] = missing
     if missing:
@@ -661,17 +697,25 @@ def open_prompts(engine: Any, ctx: dict, ses: dict, lang: str, which: str = "ide
     ses["kind"] = guide_kind if guide_kind in ("image", "video", "music") else "image"
     ses["idea"] = f["idea"]
     ses["brief"] = {"q": [], "a": {}, "extra": [change] if change else [], "summary": "", "src": "flow", "phase": "done"}
-    ses["brief_guide"] = None
     ses["brief_for_model"] = None
     ses["picked"] = None
     ses["gen_model"] = None
+    from . import model_lock as ML
+    lock = ML.lock_of(engine, ctx, ses)
+    if lock and (
+        (lock["kind"] in ("image", "edit") and guide_kind == "image")
+        or (lock["kind"] == "video" and guide_kind == "video")
+    ):
+        ses["brief_guide"] = lock["id"]
+    else:
+        ses["brief_guide"] = None
     card = engine._brief_guide(ses, ctx)
     if not card:
         return _idea_card(ses, lang)
     out = engine._variants(card, ses, ctx, lang, change)
     if out.get("intent") in ("look_photo", "look_photo_wait"):
         return out
-    if which == "idea" and (f.get("kind") or "") == "video":
+    if which == "idea" and (f.get("kind") or "") in ("video", "image"):
         out["chips"] = [chip("Доработать в Claude или GPT", "flow_polish")] + list(out.get("chips") or [])
     return out
 
@@ -774,6 +818,14 @@ def _advise(engine: Any, ctx: dict, ses: dict, lang: str, again: bool = False) -
         prof_kind = "image"
     else:
         prof_kind = f.get("kind") or "image"
+    if not again and prof_kind in ("image", "video"):
+        from . import model_lock as ML
+        jumped = ML.parameters_if_locked(engine, ctx, ses, lang, prof_kind)
+        if jumped is not None:
+            f["stage"] = "card"
+            f["next"] = "card"
+            f["shown_models"] = [str(ctx.get("selected_model_id") or "")]
+            return jumped
     profile = _profile(engine, ses, ctx)
     profile["kind"] = prof_kind
     caps = capabilities()
@@ -903,6 +955,8 @@ def _after_media(value: dict, ses: dict, lang: str) -> dict:
             chip("Image" if en else "Картинку", "make", pack("image")),
             chip("Storyboard" if en else "Раскадровку", "make", pack("storyboard")),
         ]
+    elif kind == "image":
+        return {"text": "", "reply": "", "blocks": [], "chips": [], "silent": True, "intent": "image_done", "lang": lang}
     else:
         chips = [
             chip("Ещё слайды инфографики", "flow_next", "more_slides"),
@@ -1110,9 +1164,90 @@ def _ask_fresh_detail(ses: dict, kind: str, lang: str) -> dict:
     return response(lines, [], lang=lang, intent="flow_fresh")
 
 
-def _next(engine: Any, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
+def _start_from_picture(ses: dict, ctx: dict, prompt: str, kind: str) -> None:
+    """Кнопки под готовой картинкой: тот же промпт, новый шаг (картинка или видео)."""
+    text = (prompt or _current_prompt(ses) or "").strip()
+    _open(ses, kind, "", text, ctx)
     f = ses["flow"]
-    step = value if isinstance(value, str) else ""
+    f["idea"] = ses["idea"] = ses["prompt"] = ses["prompt_base"] = text
+    f["idea_user"] = text
+    f["kind"] = ses["kind"] = kind
+    f["polished"] = False
+    f["shown_models"] = []
+    f["path"] = ""
+
+
+def _image_redo(engine: Any, ctx: dict, ses: dict, lang: str, prompt: str) -> dict:
+    """Тот же промпт картинки — снова варианты, как в начале."""
+    ses["need_ref"] = False
+    _start_from_picture(ses, ctx, prompt, "image")
+    return open_prompts(engine, ctx, ses, lang, "idea")
+
+
+def _image_to_video(engine: Any, ctx: dict, ses: dict, lang: str, prompt: str) -> dict:
+    """Видео по этой картинке: обычный видеопроцесс и полный список видеомоделей."""
+    ses["need_ref"] = False
+    _start_from_picture(ses, ctx, prompt, "video")
+    out = open_prompts(engine, ctx, ses, lang, "idea")
+    head = ("A video from this picture. First the prompt, then every video model."
+            if lang == "en" else
+            "Видео по этой картинке. Сначала промпт, потом все видеомодели.")
+    out["text"] = head + ("\n" + out["text"] if out.get("text") else "")
+    out["reply"] = out["text"]
+    return out
+
+
+def _image_angles(engine: Any, ctx: dict, ses: dict, lang: str, prompt: str) -> dict:
+    """Тот же персонаж с прикреплённого кадра, другие ракурсы."""
+    base = (prompt or _current_prompt(ses) or "").strip()
+    extra = ("Другие ракурсы того же персонажа с прикреплённой фотографии: лицо, одежда и место не меняй. "
+             "Крупный план, профиль, три четверти и вид со спины."
+             if lang != "en" else
+             "Other angles of the same person from the attached photo: keep the face, clothes and place. "
+             "Close-up, profile, three-quarter and from behind.")
+    ses["need_ref"] = True
+    _start_from_picture(ses, ctx, base, "image")
+    f = ses["flow"]
+    f["idea"] = ses["idea"] = (base + "\n" + extra).strip()
+    out = open_prompts(engine, ctx, ses, lang, "idea", extra)
+    head = ("The photo stays attached. Here are prompts for other angles of the same person."
+            if lang == "en" else
+            "Фото остаётся в закрепе. Вот промпты с другими ракурсами того же персонажа.")
+    out["text"] = head + ("\n" + out["text"] if out.get("text") else "")
+    out["reply"] = out["text"]
+    return out
+
+
+def _adopt_result(ses: dict, ctx: dict, prompt: str) -> None:
+    """Кнопки под готовым роликом работают и без открытого диалога: берём промпт результата."""
+    text = (prompt or _current_prompt(ses) or "").strip()
+    f = ses.get("flow") if isinstance(ses.get("flow"), dict) else None
+    if not f:
+        _open(ses, "video", "", text, ctx)
+        f = ses["flow"]
+    if text and not _current_prompt(ses):
+        f["idea"] = ses["idea"] = ses["prompt"] = ses["prompt_base"] = text
+        f["kind"] = ses["kind"] = "video"
+
+
+def _next(engine: Any, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
+    prompt = ""
+    if isinstance(value, dict):
+        step = str(value.get("step") or "")
+        prompt = str(value.get("prompt") or "").strip()[:4000]
+    else:
+        step = value if isinstance(value, str) else ""
+    if step in ("image_redo", "image_video", "image_angles"):
+        if step == "image_video":
+            return _image_to_video(engine, ctx, ses, lang, prompt)
+        if step == "image_angles":
+            return _image_angles(engine, ctx, ses, lang, prompt)
+        return _image_redo(engine, ctx, ses, lang, prompt)
+    if step in ("redo", "continue", "fresh"):
+        _adopt_result(ses, ctx, prompt)
+    f = ses.get("flow") if isinstance(ses.get("flow"), dict) else None
+    if not isinstance(f, dict):
+        return response(["Сначала опишите задачу."], [], lang=lang, intent="flow")
     if step in ("cast_images", "photos_go"):
         f["next"] = "cast_images"
         f["path"] = "photos"

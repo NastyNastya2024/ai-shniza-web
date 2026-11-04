@@ -28,7 +28,8 @@
     pipe_result: 1, pipe_menu: 1, pipe_stage: 1, pipe_sub: 1, pipe_dialog_save: 1, pipe_video_plain: 1, pipe_voice_model: 1, pipe_summary: 1, pipe_arts: 1,
     mode_start: 1, mode_input: 1, mode_next: 1, mode_back: 1, mode_redo: 1, mode_go: 1, mode_episode: 1, mode_exit: 1, mode_pause: 1, mode_resume: 1,
     tree_hint: 1, tree_event: 1, edit_prompt: 1, files_confirm: 1, files_drop: 1, files_sync: 1, media_pick: 1, resume_task: 1,
-    model_switch: 1, switch_pick: 1, text_note: 1, look_done: 1, look_skip: 1, look_next: 1, make: 1,   // переход между текстовой моделью и генерацией
+    model_switch: 1, switch_pick: 1, text_note: 1, look_done: 1, look_skip: 1, look_next: 1, make: 1,
+    lock_keep: 1, lock_switch: 1,
     idea_next: 1, idea_alt: 1, path_photos: 1, path_board: 1, path_direct: 1, flow_polish: 1,
     flow_slot: 1, flow_next: 1, flow_show: 1, flow_skip: 1,
     open_mcp: 1, mcp_goal: 1, mcp_compare: 1, mcp_try: 1, mcp_connected: 1, mcp_failed: 1, mcp_support: 1, mcp_topic: 1,
@@ -1016,7 +1017,7 @@
       if (summary && summary.model_id && summary.prompt && !chips.some(function (c) { return c && c.action === 'generate'; })) {
         chips.unshift({ label: L('Сгенерировать', 'Generate'), action: 'generate', value: summary.model_id, primary: true });
       }
-      if (summary && !chips.some(function (c) { return c && c.action === 'attach'; })) {
+      if (summary && summary.allow_file && !chips.some(function (c) { return c && c.action === 'attach'; })) {
         chips.push({ label: L('Прикрепить файл', 'Attach a file'), action: 'attach' });
       }
       (data.blocks || []).forEach(function (bl) {
@@ -1080,6 +1081,7 @@
           if (nModels) M('models_shown', { n: nModels, kind: data.kind || '' });
           if (data.gate === 'login' || data.gate === 'topup') M('gate', { type: data.gate, src: 'assistant' });
           if ('pipe_expect' in data) pipeExpect = data.pipe_expect || null;
+          if (root.AishModelLock && AishModelLock.handle(data, opts.onTextModel)) return data;
           if (data.silent) return data;
           if (inPlace && setupNode && setupNode.parentNode) fill(setupNode, data);   // параметры — на месте
           else opts.onBot(data);
@@ -1158,6 +1160,12 @@
         return;
       }
       if ((c.action === 'look_skip' || c.action === 'look_next') && opts.onUiAction) opts.onUiAction(c.action);
+      if (c.action === 'pick_model' && root.AishModelLock) {
+        var mid = String(c.value || '');
+        var models = (root.app && root.app.MODELS) || [];
+        var picked = models.find(function (x) { return x.model_key === mid || x.slug === mid; });
+        AishModelLock.set({ id: mid, kind: (picked && picked.type) || '', title: (picked && picked.name) || c.label || mid });
+      }
       if (SERVER[c.action]) {
         M('assist_action', { action: c.action, value: short(c.value) });
         if (c.action === 'pick_model') M('model_pick', { model: short(c.value), src: 'assistant' });

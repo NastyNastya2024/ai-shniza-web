@@ -22,12 +22,13 @@ def test_no_start_menu(make_assistant):
 
 def test_marketplace_asks_product_before_models(make_assistant):
     d = _a(make_assistant).handle("мне нужно сделать карточку для маркетплейса", session_id="m1")
-    assert d["intent"] == "flow_slots"
+    assert d["intent"] == "variants"
     assert d["dialog"]["story"] == "COM.CARD"
     assert not any(b.get("type") == "models" for b in d.get("blocks") or [])
+    assert not any(b.get("type") == "brief" for b in d.get("blocks") or [])
     assert "Собрать или улучшить" not in d["text"]
     assert "одним сообщением" not in d["text"]
-    assert d["text"].count("?") <= 2
+    assert "Что за товар" not in d["text"]
 
 
 def test_marketplace_known_slots_go_to_idea_then_models(make_assistant):
@@ -38,9 +39,6 @@ def test_marketplace_known_slots_go_to_idea_then_models(make_assistant):
     assert len(items) >= 2
     assert not any(b.get("type") == "models" for b in d["blocks"])
     d = a.handle("", session_id="m2", action={"type": "use_variant", "value": items[0]["id"]})
-    assert d["intent"] == "use_variant"
-    assert {m["id"] for m in d["models"]} & {"claude-sonnet-5", "gpt-5-4"}
-    d = a.handle("", session_id="m2", action={"type": "skip_polish"})
     assert d["intent"] == "advise"
     items = next(b["items"] for b in d["blocks"] if b["type"] == "models")
     assert any(it.get("badge") == "Советую" for it in items)
@@ -63,7 +61,7 @@ def test_initial_variant_can_be_extended(make_assistant):
     a = _a(make_assistant)
     d = a.handle("вб, инфографика, кроссовки, белый фон", session_id="add1")
     items = next(b["items"] for b in d["blocks"] if b["type"] == "variants")
-    assert "Настроение." in items[0]["text"] and "Стиль." in items[0]["text"] and "Камера." in items[0]["text"]
+    assert "Настроение." in items[0]["text"] and "Стиль." in items[0]["text"] and "Композиция." in items[0]["text"]
     extra = items[0]["text"] + "\nБлик на носке кроссовка."
     a.handle("", session_id="add1", action={"type": "use_variant", "value": items[0]["id"], "prompt": extra})
     assert "Блик на носке" in (a.d.store.get("add1").get("prompt") or "")
@@ -419,6 +417,158 @@ def test_finished_video_offers_redo_and_continuation(make_assistant):
     ses = store.get("vid")
     assert "Контекст прошлой генерации" in (ses.get("idea") or "")
     assert ses["prior"]
+
+
+def test_cartoon_picture_is_not_a_video(make_assistant):
+    from assistant.router import detect_kind
+    assert detect_kind("сделай картинку русалки в мультяшном стиле", False) == "image"
+    assert detect_kind("сделай мультик про русалку", False) == "video"
+    a = _a(make_assistant)
+    d = a.handle("сделай картинку русалки в мультяшном стиле", session_id="imgC")
+    assert d["intent"] == "variants"
+    assert d["dialog"]["task"] == "image"
+    blob = " ".join(i.get("text") or "" for b in d["blocks"] if b.get("type") == "variants" for i in b["items"])
+    assert "Движение." not in blob and "пролёт" not in blob.lower()
+    assert "мультяшный стиль" in blob.lower()
+    items = next(b["items"] for b in d["blocks"] if b["type"] == "variants")
+    nxt = a.handle("", session_id="imgC", action={"type": "use_variant", "value": items[0]["id"]})
+    assert nxt["intent"] == "advise"
+    assert "Сразу видео" not in nxt["text"]
+    a = _a(make_assistant)
+    d = a.handle("нарисуй рыжего кота на крыше", session_id="img1")
+    assert d["intent"] == "variants"
+    assert not any(b.get("type") in ("brief", "models") for b in d.get("blocks") or [])
+    assert "Что за товар" not in d["text"] and "нужен промпт" not in d["text"].lower()
+    items = next(b["items"] for b in d["blocks"] if b["type"] == "variants")
+    assert len(items) >= 2
+    d = a.handle("", session_id="img1", action={"type": "use_variant", "value": items[0]["id"]})
+    assert d["intent"] == "advise"
+    assert any(b.get("type") == "models" for b in d["blocks"])
+
+
+def test_locked_image_skips_model_choice(make_assistant):
+    a = _a(make_assistant)
+    ctx = {"model_locked": True, "selected_model_id": "gpt-image-2", "selected_model_kind": "image"}
+    d = a.handle("сделай картинку русалки в мультяшном стиле", ctx, "imgL")
+    assert d["intent"] == "variants"
+    assert d["dialog"]["task"] == "image"
+    text = d["text"] + " " + " ".join(
+        i.get("text") or "" for b in d["blocks"] if b.get("type") == "variants" for i in b.get("items") or [])
+    assert "Движение." not in text and "Сразу видео" not in text
+    assert "мультяшный стиль" in text.lower() or "мультяшн" in text.lower()
+    assert "Композиция." in text
+    items = next(b["items"] for b in d["blocks"] if b["type"] == "variants")
+    d = a.handle("", ctx, "imgL", action={"type": "use_variant", "value": items[0]["id"]})
+    assert d["intent"] != "flow_path"
+    assert any(b.get("type") == "params" for b in d["blocks"])
+    assert any(b.get("type") == "summary" and b.get("allow_file") for b in d["blocks"])
+    assert not any(b.get("type") == "models" for b in d["blocks"])
+    assert d.get("generate_model") == "gpt-image-2"
+    assert "Сразу видео" not in (d.get("text") or "")
+
+
+def test_locked_video_keeps_prompt_and_storyboard_then_parameters(make_assistant):
+    a = _a(make_assistant)
+    ctx = {"model_locked": True, "selected_model_id": "wan-3-0", "selected_model_kind": "video"}
+    d = a.handle("сделай ролик: девушка танцует на крыше вечером", ctx, "wan1")
+    assert d["intent"] in ("variants", "flow_slots")
+    assert not any(b.get("type") in ("params", "summary", "models") for b in d.get("blocks") or [])
+    while d["intent"] == "flow_slots":
+        slot = (d["chips"][0].get("value") or {})
+        d = a.handle("", ctx, "wan1", action={"type": "flow_slot", "value": slot})
+    assert d["intent"] == "variants"
+    items = next(b["items"] for b in d["blocks"] if b["type"] == "variants")
+    d = a.handle("", ctx, "wan1", action={"type": "use_variant", "value": items[0]["id"]})
+    assert d["intent"] == "flow_path"
+    actions = {c["action"] for c in d["chips"]}
+    assert "path_board" in actions and "path_photos" in actions
+    assert "Сразу видео" in d["text"]
+    d = a.handle("", ctx, "wan1", action={"type": "path_direct"})
+    assert any(b.get("type") == "params" for b in d["blocks"])
+    assert any(b.get("type") == "summary" for b in d["blocks"])
+    assert not any(b.get("type") == "models" for b in d["blocks"])
+    assert d.get("generate_model") == "wan-3-0"
+
+
+def test_locked_video_with_photo_starts_the_prompt(make_assistant):
+    a = _a(make_assistant)
+    ctx = {"model_locked": True, "selected_model_id": "wan-3-0", "selected_model_kind": "video",
+           "has_image": True, "attachments": [{"id": "upl_" + "ab" * 12, "kind": "image", "name": "model.jpg"}]}
+    d = a.handle("оживи картинку сделай так чтобы модель танцевала", ctx, "wan2")
+    assert d["intent"] in ("look_photo", "variants", "flow_slots")
+    assert not any(b.get("type") in ("params", "summary") for b in d.get("blocks") or [])
+    assert d.get("generate_model") != "wan-3-0"
+
+
+def test_result_next_steps_work_without_an_open_flow(make_assistant):
+    a = _a(make_assistant)
+    d = a.handle("", session_id="nx", action={"type": "flow_next", "value": {"step": "redo", "prompt": "Девушка танцует на крыше вечером."}})
+    assert d["intent"] == "idea"
+    assert "Девушка танцует" in str(d.get("blocks"))
+    fresh = a.handle("", session_id="nx2", action={"type": "flow_next", "value": {"step": "fresh", "prompt": "Девушка танцует на крыше вечером."}})
+    assert fresh["intent"] == "flow_fresh"
+    assert "Новая генерация" in fresh["text"]
+
+
+def test_selected_image_generate_sentence_is_the_prompt(make_assistant):
+    a = _a(make_assistant)
+    ctx = {"model_locked": True, "selected_model_id": "ideogram-v3-turbo", "selected_model_kind": "image"}
+    d = a.handle("сгенерируй картинку девушки на дорогой тачке", ctx, "ig")
+    assert "идею промпта" not in (d.get("text") or "").lower()
+    assert d["intent"] == "variants"
+    assert d["dialog"]["task"] == "image"
+    again = a.handle("сгенерируй картинку девушки на дорогой тачке", ctx, "ig")
+    assert "идею промпта" not in (again.get("text") or "").lower()
+
+
+def test_composer_image_skips_the_model_board(make_assistant):
+    a = _a(make_assistant)
+    ctx = {"selected_model_id": "ideogram-v3-turbo", "selected_model_kind": "image", "model_locked": False}
+    d = a.handle("сгенерируй картинку девушки на дорогой тачке", ctx, "ig2")
+    assert d["intent"] == "variants"
+    items = next(b["items"] for b in d["blocks"] if b["type"] == "variants")
+    d = a.handle("", ctx, "ig2", action={"type": "use_variant", "value": items[0]["id"]})
+    assert d.get("generate_model") == "ideogram-v3-turbo"
+    assert any(b.get("type") == "params" for b in d["blocks"])
+    assert not any(b.get("type") == "models" for b in d["blocks"])
+    back = a.handle("", ctx, "ig2", action={"type": "back"})
+    assert back["intent"] == "variants"
+    assert not any(b.get("type") == "models" for b in back.get("blocks") or [])
+
+
+def test_back_from_model_board_returns_to_prompts(make_assistant):
+    a = _a(make_assistant)
+    d = a.handle("сгенерируй картинку девушки на дорогой тачке", {}, "ig3")
+    items = next(b["items"] for b in d["blocks"] if b["type"] == "variants")
+    board = a.handle("", {}, "ig3", action={"type": "use_variant", "value": items[0]["id"]})
+    assert any(b.get("type") == "models" for b in board.get("blocks") or [])
+    back = a.handle("", {}, "ig3", action={"type": "back"})
+    assert back["intent"] == "variants"
+    assert not any(b.get("type") == "models" for b in back.get("blocks") or [])
+
+
+def test_finished_image_buttons_redo_video_and_angles(make_assistant):
+    a = _a(make_assistant)
+    a.handle("сгенерируй картинку девушки на дорогой тачке", {}, "pic")
+    done = a.handle("", {}, "pic", action={"type": "media_add", "value": {
+        "kind": "image", "url": "/api/works/9/media", "work_id": "9", "prompt": "Девушка за рулём дорогой машины.",
+    }})
+    assert done.get("silent") is True
+    assert not done.get("chips")
+    prompt = "Девушка за рулём дорогой машины."
+    redo = a.handle("", {}, "pic", action={"type": "flow_next", "value": {"step": "image_redo", "prompt": prompt}})
+    assert redo["intent"] == "variants" and redo["dialog"]["task"] == "image"
+    video = a.handle("", {}, "picv", action={"type": "flow_next", "value": {"step": "image_video", "prompt": prompt}})
+    assert video["intent"] == "variants" and video["dialog"]["task"] == "video"
+    assert "видеомодел" in (video.get("text") or "").lower()
+    ctx = {"model_locked": True, "selected_model_id": "ideogram-v3-turbo", "selected_model_kind": "image", "has_image": True}
+    angles = a.handle("", ctx, "pica", action={"type": "flow_next", "value": {"step": "image_angles", "prompt": prompt}})
+    assert angles["intent"] == "variants" and angles["dialog"]["task"] == "image"
+    assert "ракурс" in (angles.get("text") or "").lower()
+    items = next(b["items"] for b in angles["blocks"] if b["type"] == "variants")
+    nxt = a.handle("", ctx, "pica", action={"type": "use_variant", "value": items[0]["id"]})
+    assert any(b.get("type") == "models" for b in nxt.get("blocks") or [])
+    assert nxt.get("generate_model") != "ideogram-v3-turbo"
 
 
 def test_status_names_dialog(make_assistant):

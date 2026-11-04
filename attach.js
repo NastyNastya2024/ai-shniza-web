@@ -504,6 +504,7 @@
       });
       if (n) changed();
     },
+    addFiles: addFiles,
     consume: function () {
       S.items.forEach(function (x) {
         if (x.preview && x.preview.indexOf('blob:') === 0) { try { URL.revokeObjectURL(x.preview); } catch (_) {} }
