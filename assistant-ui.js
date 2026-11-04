@@ -27,9 +27,9 @@
     sb_start: 1, sb_noscript: 1, sb_answer: 1, sb_edit: 1, sb_frame: 1, sb_rebuild: 1, sb_setup: 1, sb_frames_view: 1, sb_back: 1, sb_exit: 1,
     pipe_result: 1, pipe_menu: 1, pipe_stage: 1, pipe_sub: 1, pipe_dialog_save: 1, pipe_video_plain: 1, pipe_voice_model: 1, pipe_summary: 1, pipe_arts: 1,
     mode_start: 1, mode_input: 1, mode_next: 1, mode_back: 1, mode_redo: 1, mode_go: 1, mode_episode: 1, mode_exit: 1, mode_pause: 1, mode_resume: 1,
-    tree_hint: 1, tree_event: 1, edit_prompt: 1, files_confirm: 1, media_pick: 1, resume_task: 1,
-    model_switch: 1, switch_pick: 1, text_note: 1,   // переход между текстовой моделью и генерацией
-    idea_next: 1, idea_alt: 1, path_photos: 1, path_board: 1, path_direct: 1,
+    tree_hint: 1, tree_event: 1, edit_prompt: 1, files_confirm: 1, files_drop: 1, files_sync: 1, media_pick: 1, resume_task: 1,
+    model_switch: 1, switch_pick: 1, text_note: 1, look_done: 1, look_skip: 1, look_next: 1, make: 1,   // переход между текстовой моделью и генерацией
+    idea_next: 1, idea_alt: 1, path_photos: 1, path_board: 1, path_direct: 1, flow_polish: 1,
     flow_slot: 1, flow_next: 1, flow_show: 1, flow_skip: 1,
     open_mcp: 1, mcp_goal: 1, mcp_compare: 1, mcp_try: 1, mcp_connected: 1, mcp_failed: 1, mcp_support: 1, mcp_topic: 1,
     ui_more: 1 };
@@ -53,6 +53,10 @@
     var busy = false;
     var lang = 'ru';
     var form = { model: null, prompt: '', params: {} };
+    var summarySaved = '';
+    var summaryDraft = null;
+    var summaryTimer = 0;
+    var summarySave = null;
     var setupNode = null;
     var lastBody = null;
     var allNodes = [];
@@ -65,7 +69,11 @@
       var btn = el('button', 'aich-chip' + (c.primary ? ' aich-chip--primary' : '') + (c.action === 'reel_start' ? ' aich-chip--reel' : '') + (c.action === 'sb_start' ? ' aich-chip--sb' : '') + (c.action === 'tree_hint' ? ' aich-chip--tree' : ''), c.label);
       btn.type = 'button';
       if (c.action === 'choose_type' && KIND_ICON[c.value]) btn.textContent = KIND_ICON[c.value] + ' ' + c.label;
-      btn.addEventListener('click', function () { onChip(c); });
+      btn.addEventListener('click', function (e) {
+        var row = e.target.closest && e.target.closest('.aich-row, .aich-block, .aich');
+        var area = row && (row.querySelector('.aich-summary__prompt') || row.querySelector('.aich-prompt__area'));
+        onChip(c, area && area.value);
+      });
       return btn;
     }
 
@@ -100,50 +108,109 @@
       return wrap.childNodes.length === 1 ? wrap.firstChild : wrap;
     }
 
+    function modelCard(it) {
+      var card = el('button', 'aich-model');
+      card.type = 'button';
+      var top = el('div', 'aich-model__top');
+      top.appendChild(el('span', 'aich-model__title', it.title));
+      if (it.badge) top.appendChild(el('span', 'aich-badge', it.badge));
+      card.appendChild(top);
+      card.appendChild(el('div', 'aich-model__why', it.why));
+      if (it.note) card.appendChild(el('div', 'aich-model__note', it.note));
+      var priceLine = it.estimate || it.price;
+      if (priceLine) card.appendChild(el('div', 'aich-model__price', priceLine));
+      if (!it.estimate && it.speed) card.appendChild(el('div', 'aich-model__sub', it.speed));
+      if (it.cta) {
+        card.appendChild(el('span', 'aich-model__cta', it.cta));
+      } else if (it.vitrina_url) {
+        var link = el('a', 'aich-model__link', L('Примеры на витрине →', 'Examples in showcase →'));
+        link.href = it.vitrina_url;
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (opts.onUiAction) opts.onUiAction('open_vitrina', it.id);
+          else location.href = it.vitrina_url;
+        });
+        card.appendChild(link);
+      }
+      card.addEventListener('click', function () { onChip({ label: it.title, action: 'pick_model', value: it.id }); });
+      return card;
+    }
+
     function renderModels(bl) {
+      var wrap = el('div', 'aich-models-wrap');
       var grid = el('div', 'aich-models');
-      bl.items.forEach(function (it) {
-        var card = el('button', 'aich-model');
-        card.type = 'button';
-        var top = el('div', 'aich-model__top');
-        top.appendChild(el('span', 'aich-model__title', it.title));
-        if (it.badge) top.appendChild(el('span', 'aich-badge', it.badge));
-        card.appendChild(top);
-        card.appendChild(el('div', 'aich-model__why', it.why));
-        // видео: только «≈ N ₽ за 5 с»; строку «₽/сек · N мин» не дублируем
-        var priceLine = it.estimate || it.price;
-        if (priceLine) card.appendChild(el('div', 'aich-model__price', priceLine));
-        if (!it.estimate && it.speed) card.appendChild(el('div', 'aich-model__sub', it.speed));
-        if (it.cta) {
-          card.appendChild(el('span', 'aich-model__cta', it.cta));
-        } else if (it.vitrina_url) {
-          var link = el('a', 'aich-model__link', L('Примеры на витрине →', 'Examples in showcase →'));
-          link.href = it.vitrina_url;
-          link.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (opts.onUiAction) opts.onUiAction('open_vitrina', it.id);
-            else location.href = it.vitrina_url;
+      var items = bl.items || [];
+      var shown = 6;
+      function paint() {
+        grid.textContent = '';
+        items.slice(0, shown).forEach(function (it) { grid.appendChild(modelCard(it)); });
+        var old = wrap.querySelector('.aich-models__more');
+        if (old) old.remove();
+        if (shown < items.length) {
+          var more = el('button', 'aich-models__more', L('Ещё модели', 'More models'));
+          more.type = 'button';
+          more.addEventListener('click', function () {
+            shown = Math.min(items.length, shown + 6);
+            paint();
           });
-          card.appendChild(link);
+          wrap.appendChild(more);
         }
-        card.addEventListener('click', function () { onChip({ label: it.title, action: 'pick_model', value: it.id }); });
-        grid.appendChild(card);
+      }
+      wrap.appendChild(grid);
+      paint();
+      return wrap;
+    }
+
+    function expandSvg(open) {
+      var d = open
+        ? 'M8 4v4H4M16 4v4h4M8 20v-4H4M16 20v-4h4'
+        : 'M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4';
+      return '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="' + d + '"></path></svg>';
+    }
+
+    /** Поле промпта: правка прямо в тексте и иконка «Развернуть». */
+    function promptExpand(ta) {
+      var open = false;
+      var btn = el('button', 'aich-prompt__expand');
+      btn.type = 'button';
+      btn.setAttribute('aria-expanded', 'false');
+      function paint() {
+        var name = open ? L('Свернуть', 'Collapse') : L('Развернуть', 'Expand');
+        btn.innerHTML = expandSvg(open);
+        btn.setAttribute('aria-label', name);
+        btn.title = name;
+      }
+      function fit() {
+        if (!open) { ta.style.height = ''; return; }
+        ta.style.height = 'auto';
+        ta.style.height = Math.max(140, ta.scrollHeight + 2) + 'px';
+      }
+      paint();
+      btn.addEventListener('click', function () {
+        open = !open;
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        ta.classList.toggle('is-open', open);
+        paint();
+        fit();
       });
-      return grid;
+      ta.addEventListener('input', fit);
+      return btn;
     }
 
     function renderPrompt(bl) {
       var box = el('div', 'aich-prompt');
       box.appendChild(el('div', 'aich-prompt__label', bl.label ? bl.title : L('Промпт для ', 'Prompt for ') + bl.title));
-      var txt = el('div', 'aich-prompt__text', bl.text);
-      txt.contentEditable = 'true';
+      var txt = el('textarea', 'aich-prompt__text aich-prompt__area');
+      txt.value = bl.text || '';
+      txt.rows = 6;
       txt.spellcheck = false;
-      txt.addEventListener('input', function () {   // правка руками — сразу в форму, без сервера
-        form.prompt = txt.textContent.trim();
+      txt.addEventListener('input', function () {
+        form.prompt = txt.value.trim();
         opts.onFillForm && opts.onFillForm({ model: form.model, prompt: form.prompt, params: form.params, ready: true });
       });
       box.appendChild(txt);
+      box.appendChild(promptExpand(txt));
       if (bl.note) box.appendChild(el('div', 'aich-prompt__note', bl.note));
       box.appendChild(el('div', 'aich-prompt__hint', L('можно исправить прямо здесь', 'you can edit it right here')));
       return box;
@@ -325,21 +392,28 @@
       return wrap;
     }
 
-    /** Варианты промпта: карточки, клик — выбрать вариант (дальше параметры и запуск). */
+    /** Варианты промпта: текст можно дописать, «Выбрать» уносит уже дополненный вариант. */
     function renderVariants(bl) {
       var list = el('div', 'aich-variants');
       bl.items.forEach(function (v, i) {
-        var card = el('button', 'aich-variant');
-        card.type = 'button';
+        var card = el('div', 'aich-variant');
         var top = el('div', 'aich-variant__top');
         top.appendChild(el('span', 'aich-variant__n', String(i + 1)));
         top.appendChild(el('span', 'aich-variant__title', v.title));
         card.appendChild(top);
-        card.appendChild(el('div', 'aich-variant__text', v.text));
-        card.appendChild(el('div', 'aich-variant__cta', L('Выбрать этот →', 'Use this →')));
-        card.addEventListener('click', function () {
-          onChip({ label: L('Вариант «', 'Option “') + v.title + L('»', '”'), action: 'use_variant', value: v.id });
+        var text = el('textarea', 'aich-variant__text');
+        text.value = v.text || '';
+        text.rows = 6;
+        text.spellcheck = false;
+        card.appendChild(text);
+        card.appendChild(promptExpand(text));
+        var cta = el('button', 'aich-variant__cta', L('Выбрать этот →', 'Use this →'));
+        cta.type = 'button';
+        cta.addEventListener('click', function () {
+          onChip({ label: L('Вариант «', 'Option “') + v.title + L('»', '”'), action: 'use_variant', value: v.id },
+                 text.value.trim());
         });
+        card.appendChild(cta);
         list.appendChild(card);
       });
       return list;
@@ -357,29 +431,65 @@
         var ta = el('textarea', 'aich-summary__prompt');
         ta.value = bl.prompt;
         ta.rows = 4;
+        ta.addEventListener('input', function () { rememberSummary(ta.value); });
         box.appendChild(ta);
-        var row = el('div', 'aich-summary__edit');
-        var save = el('button', 'aich-summary__save', L('Сохранить', 'Save'));
-        save.type = 'button';
-        save.addEventListener('click', function () {
-          post({ action: { type: 'edit_prompt', value: { text: ta.value } } }, true);
-        });
-        var back = el('button', 'aich-summary__mine', L('Вернуть мой текст', 'Restore my text'));
-        back.type = 'button';
-        back.addEventListener('click', function () {
-          post({ action: { type: 'use_mine' } }, true);
-        });
-        row.appendChild(save);
-        row.appendChild(back);
-        box.appendChild(row);
-      }
-      if (bl.files && bl.files.length) {
-        var fl = el('div', 'aich-summary__files');
-        fl.appendChild(el('b', null, (bl.files_title || L('Файлы', 'Files')) + ': '));
-        fl.appendChild(document.createTextNode(bl.files.join(' · ')));
-        box.appendChild(fl);
+        box.appendChild(promptExpand(ta));
+        summarySaved = String(bl.prompt || '').trim();
       }
       return box;
+    }
+
+    function filePreview(it) {
+      if (it.work_id) return '/api/works/' + encodeURIComponent(it.work_id) + '/media';
+      if (it.preview) return it.preview;
+      var shots = (window.AishAttach && AishAttach.shots) ? AishAttach.shots() : [];
+      var hit = shots.find(function (s) { return s.id && s.id === it.id; })
+        || shots.find(function (s) { return it.file && s.name === it.file; });
+      if (hit && hit.preview) return hit.preview;
+      return chatResultSrc(it);
+    }
+
+    function chatResultSrc(it) {
+      var kind = it.kind || '';
+      if (kind !== 'image' && kind !== 'video') return '';
+      var n = 0;
+      var mark = String(it.origin || it.name || '').match(/№\s*(\d+)/);
+      if (mark) n = parseInt(mark[1], 10) || 0;
+      var msgs = (window.app && app.state && app.state.msgs) || [];
+      var hits = [];
+      msgs.forEach(function (row) {
+        if (!row || !row.result || !(row.mediaUrl || row.workId)) return;
+        var k = row.mediaKind === 'music' ? 'audio' : (row.mediaKind || 'image');
+        if (k === kind) hits.push(row);
+      });
+      var row = (n && hits[n - 1]) || hits[hits.length - 1];
+      if (!row) return '';
+      if (row.workId) return '/api/works/' + encodeURIComponent(row.workId) + '/media';
+      return row.mediaUrl || '';
+    }
+
+    function paintPreview(row, it, src) {
+      if (!src) return;
+      var old = row.querySelector('.aich-files__preview');
+      if (old) old.remove();
+      var node;
+      if (it.kind === 'video') {
+        node = document.createElement('video');
+        node.muted = true;
+        node.playsInline = true;
+        node.preload = 'metadata';
+        node.src = src;
+      } else if (it.kind === 'audio') {
+        return;
+      } else {
+        node = document.createElement('img');
+        node.alt = '';
+        node.src = src;
+      }
+      node.className = 'aich-files__preview';
+      var meta = row.querySelector('.aich-files__meta');
+      if (meta) row.insertBefore(node, meta);
+      else row.appendChild(node);
     }
 
     function renderFiles(bl) {
@@ -387,36 +497,56 @@
       box.appendChild(el('div', 'aich-files__title', bl.title || L('Что отправляем', 'What we send')));
       var picked = {};
       (bl.items || []).forEach(function (it) {
-        var row = el('label', 'aich-files__row');
-        var cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.checked = !!it.checked;
-        if (it.checked) picked[it.id] = it.role || '';
-        cb.addEventListener('change', function () {
-          if (cb.checked) picked[it.id] = it.role || '';
-          else delete picked[it.id];
-        });
-        row.appendChild(cb);
+        var row = el('div', 'aich-files__row');
+        if (bl.need_confirm) {
+          var cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = !!it.checked;
+          if (it.checked) picked[it.id] = it.role || '';
+          cb.addEventListener('change', function () {
+            if (cb.checked) picked[it.id] = it.role || '';
+            else delete picked[it.id];
+          });
+          row.appendChild(cb);
+        }
         var meta = el('span', 'aich-files__meta');
-        meta.appendChild(el('b', null, it.name || ''));
-        meta.appendChild(el('span', null, (it.origin ? ' · ' + it.origin : '') + (it.role ? ' · ' + it.role : '')));
+        meta.appendChild(el('b', null, it.file || it.name || ''));
+        meta.appendChild(el('span', null, (it.role ? it.role : '') + (it.origin ? ' · ' + it.origin : '')));
         row.appendChild(meta);
-        if (it.preview) {
-          var img = document.createElement('img');
-          img.className = 'aich-files__preview';
-          img.alt = '';
-          img.src = it.preview;
-          row.appendChild(img);
+        var del = el('button', 'aich-files__del', L('Удалить', 'Remove'));
+        del.type = 'button';
+        del.addEventListener('click', function () {
+          if (window.AishAttach && AishAttach.removeId) AishAttach.removeId(it.id);
+          if (window.app && Array.isArray(app._keptFiles)) app._keptFiles = app._keptFiles.filter(function (f) { return !f || f.id !== it.id; });
+          post({ action: { type: 'files_drop', value: { id: it.id } } }, true);
+        });
+        row.appendChild(del);
+        paintPreview(row, it, filePreview(it));
+        if (!row.querySelector('.aich-files__preview') && /^upl_[a-f0-9]{24}$/.test(it.id || '')) {
+          fetch('/api/uploads/' + encodeURIComponent(it.id), { credentials: 'same-origin' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+              if (data && data.preview_url && row.isConnected) paintPreview(row, it, data.preview_url);
+            })
+            .catch(function () {});
         }
         box.appendChild(row);
       });
-      var ok = el('button', 'aich-summary__save', L('Подтвердить файлы', 'Confirm files'));
-      ok.type = 'button';
-      ok.addEventListener('click', function () {
-        var items = Object.keys(picked).map(function (id) { return { id: id, role: picked[id] }; });
-        post({ action: { type: 'files_confirm', value: { items: items } } }, true);
-      });
-      box.appendChild(ok);
+      var bar = el('div', 'aich-files__bar');
+      var add = el('button', 'aich-files__add', L('Прикрепить файлы', 'Attach files'));
+      add.type = 'button';
+      add.addEventListener('click', function () { opts.onUiAction && opts.onUiAction('attach'); });
+      bar.appendChild(add);
+      if (bl.need_confirm) {
+        var ok = el('button', 'aich-summary__save', L('Оставить отмеченные', 'Keep the ticked ones'));
+        ok.type = 'button';
+        ok.addEventListener('click', function () {
+          var items = Object.keys(picked).map(function (id) { return { id: id, role: picked[id] }; });
+          post({ action: { type: 'files_confirm', value: { items: items } } }, true);
+        });
+        bar.appendChild(ok);
+      }
+      box.appendChild(bar);
       return box;
     }
 
@@ -673,15 +803,17 @@
     function renderFinal(bl) {
       var box = el('div', 'aich-prompt reel-final');
       box.appendChild(el('div', 'aich-prompt__label', bl.labels.prompt + ' · ' + bl.seconds + L(' с · ', ' s · ') + bl.aspect));
-      var txt = el('div', 'aich-prompt__text reel-mono', bl.prompt);
-      txt.contentEditable = 'true';
+      var txt = el('textarea', 'aich-prompt__text aich-prompt__area reel-mono');
+      txt.value = bl.prompt || '';
+      txt.rows = 6;
       txt.spellcheck = false;
       txt.addEventListener('input', function () {
-        form.prompt = txt.innerText.trim();
+        form.prompt = txt.value.trim();
         opts.onFillForm && opts.onFillForm({ model: form.model, prompt: form.prompt, params: form.params, ready: true, files: form.files });
       });
-      txt.addEventListener('blur', function () { if (txt.innerText.trim() !== bl.prompt.trim()) reelEdit('final', txt.innerText.trim()); });
+      txt.addEventListener('blur', function () { if (txt.value.trim() !== (bl.prompt || '').trim()) reelEdit('final', txt.value.trim()); });
       box.appendChild(txt);
+      box.appendChild(promptExpand(txt));
       box.appendChild(el('div', 'aich-prompt__hint', bl.labels.hint));
       var m = el('div', 'aich-param');
       m.appendChild(el('div', 'aich-param__label', bl.labels.model));
@@ -878,6 +1010,15 @@
       var hasChips = data.chips && data.chips.length;
       if (said) col.appendChild(el('div', 'aich-bubble', said));
       else if (!hasBlocks && !hasChips) return row;
+      var chips = (data.chips || []).slice();
+      var summary = null;
+      (data.blocks || []).forEach(function (b) { if (b && b.type === 'summary') summary = b; });
+      if (summary && summary.model_id && summary.prompt && !chips.some(function (c) { return c && c.action === 'generate'; })) {
+        chips.unshift({ label: L('Сгенерировать', 'Generate'), action: 'generate', value: summary.model_id, primary: true });
+      }
+      if (summary && !chips.some(function (c) { return c && c.action === 'attach'; })) {
+        chips.push({ label: L('Прикрепить файл', 'Attach a file'), action: 'attach' });
+      }
       (data.blocks || []).forEach(function (bl) {
         if (bl.type === 'models') col.appendChild(renderModels(bl));
         else if (bl.type === 'prompt') col.appendChild(renderPrompt(bl));
@@ -899,7 +1040,7 @@
         else if (bl.type === 'pipe_json') col.appendChild(renderPipeJson(bl));
         else if (bl.type === 'pipe_method') col.appendChild(renderPipeMethod(bl));
       });
-      if (data.chips && data.chips.length) col.appendChild(renderChips(data.chips));
+      if (chips.length) col.appendChild(renderChips(chips));
       row.appendChild(col);
       var setup = (data.blocks || []).some(function (b) {
         return b.type === 'params' || b.type === 'prompt' || b.type === 'brief' || b.type === 'camera' || b.type === 'summary' || b.type === 'files' || (REEL_BLOCKS[b.type] && b.type !== 'reel_steps') || b.type === 'sb_frames';
@@ -963,11 +1104,39 @@
         });
     }
 
-    function onChip(c) {
+    function rememberSummary(text) {
+      summaryDraft = String(text || '');
+      form.prompt = summaryDraft.trim();
+      if (opts.onFillForm) opts.onFillForm({ model: form.model, prompt: form.prompt, params: form.params, ready: true, files: form.files || [] });
+      clearTimeout(summaryTimer);
+      summaryTimer = setTimeout(flushSummary, 400);
+    }
+    function flushSummary() {
+      clearTimeout(summaryTimer);
+      summaryTimer = 0;
+      if (summaryDraft == null) return summarySave || Promise.resolve();
+      var text = String(summaryDraft).trim();
+      summaryDraft = null;
+      if (!text || text === summarySaved) return summarySave || Promise.resolve();
+      summarySaved = text;
+      var body = { action: { type: 'edit_prompt', value: { text: text, quiet: true } } };
+      body.context = (opts.getContext && opts.getContext()) || {};
+      summarySave = opts.api(url, { method: 'POST', body: JSON.stringify(body) }).catch(function () {}).then(function () { summarySave = null; });
+      return summarySave;
+    }
+    function onChip(c, livePrompt) {
       if (!c || !c.action || busy) return;
+      if (summaryDraft != null || summarySave) {
+        var again = c;
+        var typed = livePrompt;
+        flushSummary().then(function () { onChip(again, typed); });
+        return;
+      }
       if (c.action === 'generate') {
         opts.onUser && opts.onUser(c.label);
-        opts.onGenerate && opts.onGenerate({ model: form.model || c.value, prompt: form.prompt, params: form.params, files: form.files || [] });
+        var prompt = (livePrompt && String(livePrompt).trim()) || form.prompt;
+        form.prompt = prompt;
+        opts.onGenerate && opts.onGenerate({ model: form.model || c.value, prompt: prompt, params: form.params, files: form.files || [] });
         return;
       }
       // «Раскадровка» по кадрам: серия картинок — приложение запускает их подряд, по одной
@@ -988,12 +1157,15 @@
         post(lastBody);
         return;
       }
+      if ((c.action === 'look_skip' || c.action === 'look_next') && opts.onUiAction) opts.onUiAction(c.action);
       if (SERVER[c.action]) {
         M('assist_action', { action: c.action, value: short(c.value) });
         if (c.action === 'pick_model') M('model_pick', { model: short(c.value), src: 'assistant' });
         if (c.action === 'tree_hint') M('tree_hint', { story: short(c.value && c.value.s), step: c.value && c.value.t, i: c.value && c.value.i });
         opts.onUser && opts.onUser(c.label);
-        lastBody = { action: { type: c.action, value: c.value } };
+        var action = { type: c.action, value: c.value };
+        if (livePrompt && String(livePrompt).trim()) action.prompt = String(livePrompt).trim().slice(0, 8000);
+        lastBody = { action: action };
         post(lastBody);
         return;
       }
@@ -1001,6 +1173,11 @@
     }
 
     function softReset() {
+      clearTimeout(summaryTimer);
+      summaryTimer = 0;
+      summaryDraft = null;
+      summarySaved = '';
+      summarySave = null;
       setupNode = null;
       pipeExpect = null;
       form = { model: null, prompt: '', params: {} };
@@ -1036,6 +1213,11 @@
       },
       /** Вернулись после входа или пополнения: сервер заново проверит вход → баланс и покажет то же место. */
       resume: function () { if (busy) return Promise.resolve(null); lastBody = { action: { type: 'resume' } }; return post(lastBody); },
+      syncFiles: function () {
+        if (busy || !document.querySelector('.aich-summary, .aich-files')) return Promise.resolve(null);
+        lastBody = { action: { type: 'files_sync' } };
+        return post(lastBody, true);
+      },
       /** Новый диалог: сбросить cookie/память на сервере и спросить тип генерации. */
       restart: function () {
         softReset();
@@ -1046,6 +1228,13 @@
         });
       },
       softReset: softReset,
+      /** Открыли сохранённый чат: вернуть модель и промпт, чтобы «Сгенерировать» сработало. */
+      revive: function (setup) {
+        if (!setup || !setup.model) return;
+        form = { model: setup.model, prompt: String(setup.prompt || ''), params: setup.params || {}, files: [], series: null };
+        summarySaved = form.prompt.trim();
+        if (opts.onFillForm) opts.onFillForm({ model: form.model, prompt: form.prompt, params: form.params, ready: true, files: [] });
+      },
       /** Генерация завершилась: если флоу ждёт результат — сообщить серверу, он сохранит артефакт и предложит шаг дальше.
        *  payload: {kind: image|video|audio|text, url, urls?, series?, model, work_id, reply?} */
       result: function (payload, tries) {
@@ -1071,6 +1260,11 @@
       noteText: function (value) {
         if (!value || !value.text) return Promise.resolve(null);
         return post({ action: { type: 'text_note', value: value } }, false);
+      },
+      /** Opus посмотрел фото — разобрать ответ в сетку действий. */
+      lookDone: function (text) {
+        lastBody = { action: { type: 'look_done', value: { text: String(text || '') } } };
+        return post(lastBody);
       },
       mediaAdd: function (payload) {
         if (!payload) return Promise.resolve(null);

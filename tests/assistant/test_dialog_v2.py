@@ -43,8 +43,11 @@ def test_marketplace_known_slots_go_to_idea_then_models(make_assistant):
     d = a.handle("", session_id="m2", action={"type": "skip_polish"})
     assert d["intent"] == "advise"
     items = next(b["items"] for b in d["blocks"] if b["type"] == "models")
-    assert items[0].get("badge") == "Советую"
-    assert len(items) <= 3
+    assert any(it.get("badge") == "Советую" for it in items)
+    assert len(items) >= 3
+    from assistant.recommend import price_value
+    prices = [price_value(it.get("price")) if price_value(it.get("price")) is not None else 1e9 for it in items]
+    assert prices == sorted(prices)
     assert "Промпт под" not in d["text"]
     d = a.handle("", session_id="m2", action={"type": "pick_model", "value": items[0]["id"]})
     assert d["generate_model"] == items[0]["id"]
@@ -54,6 +57,94 @@ def test_marketplace_known_slots_go_to_idea_then_models(make_assistant):
     caps = capabilities()
     assert all((caps.get(it["id"]) or {}).get("text_render", 0) >= 2 for it in items)
     assert "3:4" in str(d["blocks"])
+
+
+def test_initial_variant_can_be_extended(make_assistant):
+    a = _a(make_assistant)
+    d = a.handle("вб, инфографика, кроссовки, белый фон", session_id="add1")
+    items = next(b["items"] for b in d["blocks"] if b["type"] == "variants")
+    assert "Настроение." in items[0]["text"] and "Стиль." in items[0]["text"] and "Камера." in items[0]["text"]
+    extra = items[0]["text"] + "\nБлик на носке кроссовка."
+    a.handle("", session_id="add1", action={"type": "use_variant", "value": items[0]["id"], "prompt": extra})
+    assert "Блик на носке" in (a.d.store.get("add1").get("prompt") or "")
+    assert "кроссов" in (a.d.store.get("add1").get("prompt") or "").lower()
+
+
+def test_photo_grid_asks_opus_then_keeps_the_actions(make_assistant):
+    a = _a(make_assistant)
+    uid = "upl_" + "ab" * 12
+    ctx = {"has_image": True, "attachments": [{"id": uid, "kind": "image", "name": "camp.jpg"}]}
+    d = a.handle("оживи фото", ctx, "look1")
+    assert d["intent"] == "look_photo"
+    assert d["text"].strip() == "Формирую промпт через Claude, около 20 секунд — нейросеть дорабатывает детали."
+    labels = [c.get("label") for c in d.get("chips") or []]
+    assert labels[:2] == ["Быстрый промпт", "Оставить свой промпт"]
+    assert not any(c.get("primary") for c in d.get("chips") or [])
+    assert not any("Вернуться" in (c.get("label") or "") for c in d.get("chips") or [])
+    assert d["generate_model"] == "claude-opus-4-7"
+    assert "прикреплённое фото" in d["text_ask"]
+    assert "Разверни" not in (a.d.store.get("look1").get("idea") or "")
+    reply = json.dumps({"variants": [
+        {"title": "Поворот головы", "prompt": "Кадр — загруженное фото: женщина в красном пальто у окна.\nНастроение. Тихое.\nСтиль. Кино.\nКамера. Крупный план.\nСвет. Мягкий.\nДвижение. Медленно поворачивает голову к окну."},
+        {"title": "Шаг вперёд", "prompt": "Кадр — загруженное фото: женщина в красном пальто у окна.\nНастроение. Спокойное.\nСтиль. Реализм.\nКамера. Средний план.\nСвет. Дневной.\nДвижение. Делает один шаг вперёд."},
+        {"title": "Ветер", "prompt": "Кадр — загруженное фото: женщина в красном пальто у окна.\nНастроение. Живое.\nСтиль. Реализм.\nКамера. Портрет.\nСвет. Боковой.\nДвижение. Ветер поднимает край пальто."},
+    ]}, ensure_ascii=False)
+    d = a.handle("", {}, "look1", action={"type": "look_done", "value": {"text": reply}})
+    assert d["intent"] == "variants"
+    items = next(b["items"] for b in d["blocks"] if b["type"] == "variants")
+    assert [it["title"] for it in items] == ["Поворот головы", "Шаг вперёд", "Ветер"]
+    assert "красном пальто" in items[0]["text"] and "поворачивает голову" in items[0]["text"]
+    assert "Движение." in items[2]["text"]
+    d = a.handle("", {}, "look1", action={"type": "flow_polish"})
+    ids = [m["id"] for m in d["models"]]
+    assert ids[0] == "claude-opus-4-7"
+    notes = {it["id"]: it.get("note") or "" for b in d["blocks"] if b["type"] == "models" for it in b["items"]}
+    assert "Видит" in notes["claude-opus-4-7"]
+    assert "не уйдёт" in notes["claude-sonnet-5"]
+
+
+def test_skip_look_keeps_the_current_prompt(make_assistant):
+    a = _a(make_assistant)
+    uid = "upl_" + "aa" * 12
+    ctx = {"has_image": True, "attachments": [{"id": uid, "kind": "image", "name": "camp.jpg"}]}
+    d = a.handle("оживи фото, женщина у окна", ctx, "look4")
+    assert d["intent"] == "look_photo"
+    d = a.handle("", {}, "look4", action={"type": "look_next"})
+    assert d["intent"] == "flow_path"
+    assert "Сразу видео" in [c.get("label") for c in d.get("chips") or []]
+    assert "женщина у окна" in (a.d.store.get("look4").get("prompt") or "")
+    assert not any(b.get("type") == "variants" for b in d.get("blocks") or [])
+
+
+def test_skip_look_makes_a_quick_prompt(make_assistant):
+    a = _a(make_assistant)
+    uid = "upl_" + "ef" * 12
+    ctx = {"has_image": True, "attachments": [{"id": uid, "kind": "image", "name": "camp.jpg"}]}
+    d = a.handle("оживи фото", ctx, "look3")
+    assert d["intent"] == "look_photo"
+    ses = a.d.store.get("look3")
+    ses["idea"] = "Посмотри на прикреплённое фото. Опиши только то, что реально видно и верни JSON."
+    a.d.store.set("look3", ses)
+    d = a.handle("", {}, "look3", action={"type": "look_skip"})
+    assert d["intent"] == "variants"
+    assert "Быстрый промпт." in d["text"]
+    items = next(b["items"] for b in d["blocks"] if b["type"] == "variants")
+    assert len(items) >= 2
+    body = items[0]["text"]
+    assert "Посмотри на прикреплённое" not in body and "JSON" not in body
+    assert "Кадр." in body and "Настроение." in body and "Движение." in body
+
+
+def test_unreadable_look_falls_back_to_variants(make_assistant):
+    a = _a(make_assistant)
+    uid = "upl_" + "cd" * 12
+    ctx = {"has_image": True, "attachments": [{"id": uid, "kind": "image", "name": "camp.jpg"}]}
+    d = a.handle("оживи фото", ctx, "look2")
+    assert d["intent"] == "look_photo"
+    d = a.handle("", {}, "look2", action={"type": "look_done", "value": {"text": "не разобрала"}})
+    assert d["intent"] == "variants"
+    items = next(b["items"] for b in d["blocks"] if b["type"] == "variants")
+    assert len(items) >= 2
 
 
 def test_reels_path_then_direct_and_skip(make_assistant):
@@ -66,7 +157,7 @@ def test_reels_path_then_direct_and_skip(make_assistant):
     d = a.handle("", session_id="r1", action={"type": "idea_next"})
     actions = {c["action"] for c in d["chips"]}
     assert {"path_photos", "path_board", "path_direct"} <= actions
-    assert "Сначала фото" in d["text"] and "Раскадровка" in d["text"] and "Сразу видео" in d["text"]
+    assert "Добавить фото" in d["text"] and "Раскадровка" in d["text"] and "Сразу видео" in d["text"]
     d = a.handle("давай сразу видео", session_id="r2")
     # новая фраза без слотов ещё спросит цель; пропуск пути — после идеи
     a.handle("хочу сделать рилс который залетит про кофейню", session_id="r3")
@@ -74,7 +165,25 @@ def test_reels_path_then_direct_and_skip(make_assistant):
     d = a.handle("давай сразу видео", session_id="r3")
     assert d["intent"] == "advise"
     assert any(b.get("type") == "models" for b in d["blocks"])
-    assert "15" in d["text"]
+    assert "5 с" in d["text"]
+    ids = [it["id"] for b in d["blocks"] if b.get("type") == "models" for it in b["items"]]
+    assert "gemini-omni-flash" in ids and "seedance-2-5" in ids and "veo-3-1" in ids
+    if "gen4-turbo" in ids and any(i.startswith("kling") for i in ids):
+        g = ids.index("gen4-turbo")
+        last_kling = max(i for i, mid in enumerate(ids) if mid.startswith("kling"))
+        assert g == last_kling + 1 and g >= 3
+
+
+def test_photo_does_not_hide_text_only_video(make_assistant):
+    a = _a(make_assistant)
+    ctx = {"has_image": True, "attachments": [{"id": "upl_" + "ab" * 12, "kind": "image", "name": "camp.jpg"}]}
+    a.handle("хочу сделать рилс который залетит про кофейню", ctx, "gomni")
+    a.handle("", {}, "gomni", action={"type": "flow_slot", "value": {"slot": "own", "value": "no"}})
+    d = a.handle("давай сразу видео", {}, "gomni")
+    items = [it for b in d["blocks"] if b.get("type") == "models" for it in b["items"]]
+    gem = next(it for it in items if it["id"] == "gemini-omni-flash")
+    assert "не уйдёт" in (gem.get("note") or "")
+    assert len(items) >= 13
 
 
 def test_video_refines_prompt_before_each_path(make_assistant):
@@ -85,7 +194,11 @@ def test_video_refines_prompt_before_each_path(make_assistant):
     assert d["intent"] == "variants"
     assert "промпт" in d["text"].lower()
     items = next(b["items"] for b in d["blocks"] if b["type"] == "variants")
+    assert any(c.get("action") == "flow_polish" for c in d["chips"])
     d = a.handle("", session_id="pr", action={"type": "use_variant", "value": items[0]["id"]})
+    assert d["intent"] == "flow_path"
+    assert {"path_photos", "path_board", "path_direct", "flow_polish"} <= {c["action"] for c in d["chips"]}
+    d = a.handle("", session_id="pr", action={"type": "flow_polish"})
     assert {m["id"] for m in d["models"]} & {"claude-sonnet-5", "gpt-5-4"}
     d = a.handle("", session_id="pr", action={"type": "skip_polish"})
     assert d["intent"] == "flow_path"
@@ -189,10 +302,123 @@ def test_claude_handoff_shows_idea_before_models(make_assistant):
     shown = " ".join(it.get("text") or "" for b in r.get("blocks") or [] if b.get("type") == "variants" for it in b.get("items") or [])
     assert "Женщина 35 лет" in shown
     assert any(c.get("action") == "stay_text" for c in r["chips"])
+    picked = a.handle("", {}, "sw2", action={"type": "model_switch", "value": {
+        "text": "сделай видео по этому",
+        "kind": "video",
+        "from_name": "Claude Sonnet 5",
+        "from_id": "claude-sonnet-5",
+        "replies": [reply],
+    }})
+    vid = next(b["items"] for b in picked["blocks"] if b["type"] == "variants")
+    chosen = a.handle("", {}, "sw2", action={"type": "use_variant", "value": vid[0]["id"]})
+    assert chosen["intent"] == "advise"
+    assert "Промпт основной идеи готов" not in chosen["text"]
     r = a.handle("", {}, "sw", action={"type": "idea_next"})
     assert r["intent"] == "flow_path"
     r = a.handle("", {}, "sw", action={"type": "path_direct"})
     assert r["intent"] == "advise" and r["models"]
+
+
+def test_new_chat_short_phrase_does_not_open_old_models(make_assistant):
+    """После «Новый чат» короткая фраза не должна открывать старую сетку моделей."""
+    a = _a(make_assistant)
+    a.handle("", {}, "new1", action={"type": "restart"})
+    uid = "upl_" + "cd" * 12
+    d = a.handle(
+        "оживи картинку",
+        {"has_image": True, "attachments": [{"id": uid, "kind": "image", "name": "photo.jpg"}]},
+        "new1",
+    )
+    assert d["intent"] == "look_photo"
+    assert "Выберите нейросеть" not in d["text"]
+    assert not any(b.get("type") == "models" for b in d.get("blocks") or [])
+
+
+def test_stuck_idea_step_opens_prompts_not_models(make_assistant):
+    """Старый чат помнит шаг «опишите идею». Новая фраза не должна снова спрашивать модель первой."""
+    from assistant.session import empty_session
+
+    a = _a(make_assistant)
+    ses = empty_session()
+    ses["await"] = "idea"
+    ses["kind"] = "video"
+    ses["assist_mode"] = "direct"
+    a.d.store.set("old", ses)
+    d = a.handle(
+        "оживи картинку",
+        {"attachments": [{"id": "upl_" + "ab" * 12, "kind": "image", "name": "photo.jpg"}]},
+        "old",
+    )
+    assert d["intent"] == "look_photo"
+    assert d["generate_model"] == "claude-opus-4-7"
+    assert not any(b.get("type") == "models" for b in d.get("blocks") or [])
+    assert "Выберите нейросеть" not in d["text"]
+
+
+def test_text_reply_next_step_uses_card_actions(make_assistant):
+    a = _a(make_assistant)
+    a.handle("оживи картинку", session_id="tx")
+    d = a.handle("", session_id="tx", action={
+        "type": "media_add",
+        "value": {"kind": "text", "reply": "Оживи фото. Человек остаётся как на снимке."},
+    })
+    labels = [c.get("label") for c in d.get("chips") or []]
+    assert labels == ["Сделать видео по этому", "Картинку", "Раскадровку"]
+    assert "Озвучить" not in labels
+    assert "Готово" not in d["text"]
+    assert "Ещё слайды инфографики" not in labels
+    video = d["chips"][0]["value"]
+    assert video["kind"] == "video" and "Человек остаётся" in video["text"]
+    again = a.handle("", session_id="tx", action={"type": "make", "value": video})
+    assert again["intent"] == "advise"
+    assert again.get("models")
+    newer = "Второй промпт. Ветер треплет волосы, замедление на пике порыва."
+    third = a.handle("", session_id="tx", action={"type": "make", "value": {"kind": "video", "text": newer}})
+    assert third["intent"] == "advise" and third.get("models")
+
+
+def test_finished_video_offers_redo_and_continuation(make_assistant):
+    store = MemoryStore()
+    a = _a(make_assistant, store)
+    a.handle("оживи картинку, женщина у окна", session_id="vid")
+    d = a.handle("", session_id="vid", action={"type": "media_add", "value": {"kind": "video", "url": "/w/9", "name": "clip.mp4"}})
+    labels = [c.get("label") for c in d.get("chips") or []]
+    assert labels[:3] == ["Переделать", "Сделать продолжение", "Новая генерация"]
+    assert "Обложка" not in labels
+    redone = a.handle("", session_id="vid", action={"type": "flow_next", "value": "redo"})
+    assert redone["intent"] == "idea"
+    block = next(b for b in redone.get("blocks") or [] if b.get("type") == "prompt")
+    assert block.get("extend") is True
+    assert "женщина у окна" in block.get("text", "")
+    assert any(c.get("action") == "flow_polish" for c in redone.get("chips") or [])
+    cont = a.handle("", session_id="vid", action={"type": "flow_next", "value": "continue"})
+    assert cont["intent"] == "variants"
+    assert "Продолжение" in (cont.get("text") or "")
+    assert any(c.get("action") == "flow_polish" for c in cont.get("chips") or [])
+    photo = {"has_image": True, "attachments": [{"id": "upl_" + "ab" * 12, "kind": "image", "name": "photo.jpg"}]}
+    again = a.handle("", photo, "vid", action={"type": "flow_next", "value": "continue"})
+    assert again["intent"] == "variants"
+    assert "Формирую промпт" not in (again.get("text") or "")
+    labels = [c.get("label") for c in again.get("chips") or []]
+    assert "Доработать в Claude или GPT" in labels and "Ещё варианты" in labels and "Назад" in labels
+    cards = next(b["items"] for b in again["blocks"] if b["type"] == "variants")
+    assert len(cards) >= 2
+    items = next(b["items"] for b in cont["blocks"] if b["type"] == "variants")
+    assert any("Продолжение предыдущего ролика" in i.get("text", "") for i in items)
+    fresh = a.handle("", session_id="vid", action={"type": "flow_next", "value": "fresh"})
+    assert fresh["intent"] == "flow_fresh"
+    assert "Новая генерация" in fresh["text"]
+    assert "памяти" in fresh["text"]
+    assert "женщина у окна" in fresh["text"]
+    ses = store.get("vid")
+    assert ses["prior"] and "женщина у окна" in ses["prior"][-1]["prompt"]
+    asked = a.handle("", session_id="vid", action={"type": "choose_type", "value": "image"})
+    assert "Что нужно сделать" in asked["text"]
+    nxt = a.handle("ночной рынок того же героя", session_id="vid")
+    assert nxt["intent"] == "variants"
+    ses = store.get("vid")
+    assert "Контекст прошлой генерации" in (ses.get("idea") or "")
+    assert ses["prior"]
 
 
 def test_status_names_dialog(make_assistant):

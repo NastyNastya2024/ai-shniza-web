@@ -20,7 +20,7 @@ _KW = os.path.join(os.path.dirname(__file__), "data", "dialog_keywords.json")
 
 ACTIONS = {
     "flow_slot", "idea_next", "idea_alt", "path_photos", "path_board", "path_direct",
-    "flow_next", "flow_show", "flow_skip",
+    "flow_next", "flow_show", "flow_skip", "flow_polish",
 }
 
 SKIP_RX = re.compile(r"сразу\s+видео|пропусти\s+раскадров|давай\s+сразу", re.I)
@@ -72,6 +72,9 @@ _STAGE_LEFT = {
     "advise": "осталось выбрать модель",
     "card": "осталось запустить",
     "type": "осталось выбрать тип",
+    "redo": "дописываем промпт",
+    "fresh": "уточняем новую генерацию",
+    "fresh_desc": "уточняем, что сделать",
 }
 
 
@@ -187,6 +190,13 @@ def from_handoff(engine: Any, prompt: str, kind: str, from_name: str, took: bool
     else:
         head = f"Сделаем {word}. Вот варианты промпта."
     out = open_prompts(engine, ctx, ses, lang, "idea")
+    ses["flow"]["polished"] = True
+    if out.get("intent") in ("look_photo", "look_photo_wait"):
+        ses.pop("_just_parked", None)
+        if out.get("intent") == "look_photo_wait":
+            return {"text": "", "reply": "", "blocks": [], "chips": [], "silent": True,
+                    "intent": "look_photo_wait", "lang": lang}
+        return out
     out["text"] = head + "\n" + (out.get("text") or "")
     out["reply"] = out["text"]
     out["chips"] = list(out.get("chips") or []) + [stay]
@@ -233,8 +243,22 @@ def on_message(engine: Any, msg: str, ctx: dict, ses: dict, lang: str) -> dict |
     if stage == "slots":
         _absorb(f, msg, ctx)
         return advance(engine, ctx, ses, lang)
+    if stage == "fresh":
+        return start(engine, _carry_prior(ses, msg), _Kind(guess_story(msg, engine.d.tree)), ctx, ses, lang)
+    if stage == "fresh_desc":
+        carried = _carry_prior(ses, msg)
+        f["idea_user"] = carried
+        f["source"] = carried[:500]
+        f["idea"] = ""
+        f["missing"] = []
+        return advance(engine, ctx, ses, lang)
+    if stage == "redo":
+        _apply_edit(f, _carry_prior(ses, msg))
+        text = (f.get("idea") or "").strip()
+        ses["idea"] = ses["prompt"] = ses["prompt_base"] = text
+        return _redo_card(ses, lang, "Дописала в промпт." if lang != "en" else "Added to the prompt.")
     if stage in ("idea", "path", "advise", "card", "cast", "refine", "variants"):
-        _apply_edit(f, msg)
+        _apply_edit(f, _carry_prior(ses, msg))
         ses["idea"] = f.get("idea") or ses.get("idea") or ""
         if stage == "card" and ses.get("picked"):
             ses["prompt"] = f.get("idea") or ses.get("prompt") or ""
@@ -256,13 +280,15 @@ def on_message(engine: Any, msg: str, ctx: dict, ses: dict, lang: str) -> dict |
 
 def on_action(engine: Any, kind: str, value: Any, ctx: dict, ses: dict, lang: str) -> dict | None:
     f = ses.get("flow") if isinstance(ses.get("flow"), dict) else None
-    if kind in ACTIONS or (kind == "choose_type" and f and f.get("stage") == "type"):
+    if kind in ACTIONS or (kind == "choose_type" and f and f.get("stage") in ("type", "fresh")):
         pass
     elif kind == "use_mine" and f and f.get("stage") == "idea":
         pass
     elif kind == "pick_model" and f and f.get("stage") in ("advise", "card"):
         pass
     elif kind == "media_add" and f:
+        pass
+    elif kind == "make" and f:
         pass
     else:
         return None
@@ -284,6 +310,17 @@ def on_action(engine: Any, kind: str, value: Any, ctx: dict, ses: dict, lang: st
         f["idea"] = f.get("idea_user") or f.get("idea") or ""
         ses["idea"] = f["idea"]
         return _idea_card(ses, lang, "Вернула ваш текст.")
+    if kind == "flow_polish":
+        if not (ses.get("prompt") or ses.get("prompt_base")):
+            items = ses.get("variants") or []
+            if items:
+                ses["prompt"] = ses["prompt_base"] = items[0].get("text") or ""
+                f["idea"] = ses["prompt"]
+                ses["idea"] = ses["prompt"]
+        f["stage"] = "polish"
+        f["next"] = "polish"
+        return engine._offer_polish(ses, ctx, lang, "flow_polish",
+                                    head="Доработать этот промпт в Claude, GPT или другой текстовой модели.")
     if kind == "path_photos":
         return open_prompts(engine, ctx, ses, lang, "photos")
     if kind == "path_board":
@@ -295,6 +332,8 @@ def on_action(engine: Any, kind: str, value: Any, ctx: dict, ses: dict, lang: st
     if kind == "flow_next":
         return _next(engine, value, ctx, ses, lang)
     if kind == "choose_type":
+        if f.get("stage") == "fresh":
+            return _ask_fresh_detail(ses, str(value or "video"), lang)
         story = f.get("story") or ""
         _open(ses, str(value or "image"), story, f.get("idea_user") or ses.get("idea") or "", ctx)
         return advance(engine, ctx, ses, lang)
@@ -305,6 +344,8 @@ def on_action(engine: Any, kind: str, value: Any, ctx: dict, ses: dict, lang: st
         if isinstance(value, dict) and (value.get("url") or value.get("work_id")):
             DG.add_result(ses, value)
         return _after_media(value if isinstance(value, dict) else {}, ses, lang)
+    if kind == "make":
+        return from_prompt(engine, value, ctx, ses, lang)
     return None
 
 
@@ -333,6 +374,14 @@ def show(engine: Any, ctx: dict, ses: dict, lang: str) -> dict:
         card = engine.d.cards.get(ses.get("picked") or "")
         if card:
             return engine._setup_reply(card, ses, ctx, lang, "summary", "Проверьте и запускайте.")
+    if stage == "redo":
+        return _redo_card(ses, lang)
+    if stage == "fresh":
+        return _fresh_generation(engine, ctx, ses, lang)
+    if stage == "fresh_desc":
+        word = {"video": "видео", "image": "картинку", "music": "музыку"}.get(f.get("kind") or "", "это")
+        ask = (f"What should it do? Describe {word}." if lang == "en" else f"Что нужно сделать? Опишите {word}.")
+        return response([ask], [], lang=lang, intent="flow_fresh")
     return _idea_card(ses, lang)
 
 
@@ -578,23 +627,25 @@ def _paths(engine: Any, ses: dict, lang: str) -> dict:
     f["stage"] = "path"
     f["next"] = "path"
     lines = [
-        "Как делаем видео?",
-        "Сначала фото персонажей и сцены — потом из них соберём ролик.",
-        "Раскадровка — кадры по порядку, потом видео.",
-        "Сразу видео — один ролик из идеи.",
+        "Промпт основной идеи готов. Дальше можно так:",
+        "• Добавить фото персонажей и сцены — потом из них соберём ролик.",
+        "• Раскадровка — кадры сценария по порядку, потом видео.",
+        "• Доработать общий промпт в Claude, GPT или другой текстовой модели.",
+        "• Сразу видео — один ролик из идеи.",
     ]
     media = [m for m in (ses.get("media") or []) if isinstance(m, dict) and m.get("kind") == "image"]
     if media or any(isinstance(a, dict) and a.get("kind") == "image" for a in (ses.get("arts") or [])):
-        lines.append("Фото уже есть — можно взять их.")
+        lines.append("Фото уже есть — они будут добавлены автоматически.")
     chips = [
-        chip("Сначала фото персонажей и сцены", "path_photos"),
-        chip("Раскадровка", "path_board"),
+        chip("Фото персонажей и сцены", "path_photos"),
+        chip("Раскадровка сценария", "path_board"),
+        chip("Доработать в Claude или GPT", "flow_polish"),
         chip("Сразу видео", "path_direct", primary=True),
     ]
     return response(lines, chips, lang=lang, intent="flow_path")
 
 
-def open_prompts(engine: Any, ctx: dict, ses: dict, lang: str, which: str = "idea") -> dict:
+def open_prompts(engine: Any, ctx: dict, ses: dict, lang: str, which: str = "idea", change: str = "") -> dict:
     """Несколько вариантов одного промпта. Дальше — доработка в Claude или GPT, либо «использовать этот»."""
     f = ses["flow"]
     f["stage"] = "variants"
@@ -609,7 +660,7 @@ def open_prompts(engine: Any, ctx: dict, ses: dict, lang: str, which: str = "ide
     guide_kind = "image" if which == "photos" else (f.get("kind") or ses.get("kind") or "image")
     ses["kind"] = guide_kind if guide_kind in ("image", "video", "music") else "image"
     ses["idea"] = f["idea"]
-    ses["brief"] = {"q": [], "a": {}, "extra": [], "summary": "", "src": "flow", "phase": "done"}
+    ses["brief"] = {"q": [], "a": {}, "extra": [change] if change else [], "summary": "", "src": "flow", "phase": "done"}
     ses["brief_guide"] = None
     ses["brief_for_model"] = None
     ses["picked"] = None
@@ -617,7 +668,12 @@ def open_prompts(engine: Any, ctx: dict, ses: dict, lang: str, which: str = "ide
     card = engine._brief_guide(ses, ctx)
     if not card:
         return _idea_card(ses, lang)
-    return engine._variants(card, ses, ctx, lang)
+    out = engine._variants(card, ses, ctx, lang, change)
+    if out.get("intent") in ("look_photo", "look_photo_wait"):
+        return out
+    if which == "idea" and (f.get("kind") or "") == "video":
+        out["chips"] = [chip("Доработать в Claude или GPT", "flow_polish")] + list(out.get("chips") or [])
+    return out
 
 
 def _refine(ses: dict, lang: str, which: str, head: str | None = None) -> dict:
@@ -721,7 +777,8 @@ def _advise(engine: Any, ctx: dict, ses: dict, lang: str, again: bool = False) -
     profile = _profile(engine, ses, ctx)
     profile["kind"] = prof_kind
     caps = capabilities()
-    cards = advise(engine.d.cards, caps, profile, engine._price, engine.d.health_fn, engine.d.catalog_fn)
+    cards = advise(engine.d.cards, caps, profile, engine._price, engine.d.health_fn, engine.d.catalog_fn,
+                   n=None, price_order=True)
     ids = [c.id for c in cards]
     if again and ids and ids == list(f.get("shown_models") or []):
         title = cards[0].title if cards else ""
@@ -734,30 +791,41 @@ def _advise(engine: Any, ctx: dict, ses: dict, lang: str, again: bool = False) -
     f["stage"] = "advise"
     f["next"] = "advise"
     ses["kind"] = prof_kind
-    sec = 15 if prof_kind == "video" else None
+    sec = 5 if prof_kind == "video" else None
+    def fit(c: Card) -> float:
+        cap = caps.get(c.id) or {}
+        s = c.rank / 100.0
+        tr = cap.get("text_render")
+        if profile.get("text") and isinstance(tr, (int, float)):
+            s += float(tr) * 4
+        if profile.get("audio") and cap.get("audio") in ("native", "lipsync", "music"):
+            s += 6
+        return s
+
+    best = max(cards, key=fit) if cards else None
     items = []
-    for i, c in enumerate(cards):
+    for c in cards:
         cap = caps.get(c.id) or {}
         reason = (cap.get("note_ru") or c.text("strengths", lang) or "")[:90]
         it = model_item(c, engine._price(c.id), lang, engine.d.vitrina_url, ses.get("topic") or "",
-                        "Советую" if i == 0 else None, sec)
+                        "Советую" if best and c.id == best.id else None, sec)
         it["why"] = reason
+        if profile.get("needs_image") and "i2v" not in (c.modes or []) and "i2i" not in (c.modes or []):
+            it["note"] = "Фото в эту модель не уйдёт" if lang != "en" else "The photo will not be sent to this model"
         items.append(it)
     cur = str(ctx.get("selected_model_id") or "")
     cur_card = engine.d.cards.get(cur)
-    if cards and cur and cards[0].id == cur:
-        head = f"Делаем на {cards[0].title}."
+    if cards and cur and best and best.id == cur:
+        head = f"Делаем на {best.title}."
     elif cur_card and cards and cur not in ids:
-        head = f"{cur_card.title} сюда слабее подходит. Ближе {cards[0].title}."
-    elif cards:
-        head = f"Советую {cards[0].title}."
+        head = f"{cur_card.title} сюда слабее подходит. Ближе {best.title}." if best else f"{cur_card.title} сюда слабее подходит."
+    elif best:
+        head = f"Советую {best.title}. Сначала самые дешёвые, остальные — следующими партиями."
     else:
         head = "Сейчас нет подходящей модели в студии."
     if prof_kind == "video" and cards:
-        head += " Оценка — за ролик около 15 с."
-    if cards and len(cards) > 1:
-        head += " Рядом — запасной вариант."
-    chips = [chip("Взять " + c.title, "pick_model", c.id, primary=(i == 0)) for i, c in enumerate(cards)]
+        head += " Оценка — за ролик 5 с."
+    chips = []
     blocks = [{"type": "models", "items": items}] if items else []
     return response([head], chips, blocks, lang=lang, intent="advise",
                     models=[{"id": it["id"], "title": it["title"], "price": it["price"]} for it in items])
@@ -818,10 +886,22 @@ def _after_media(value: dict, ses: dict, lang: str) -> dict:
             chip("Дальше: видео из этой картинки", "path_direct"),
         ]
     elif kind == "video":
+        en = lang == "en"
         chips = [
-            chip("Ещё вариант", "idea_alt"),
-            chip("Доработать промпт", "flow_next", "reprompt"),
-            chip("Обложка", "flow_next", "cover"),
+            chip("Redo" if en else "Переделать", "flow_next", "redo", primary=True),
+            chip("Continue" if en else "Сделать продолжение", "flow_next", "continue"),
+            chip("New generation" if en else "Новая генерация", "flow_next", "fresh"),
+        ]
+        _remember_prior(ses, "video", _current_prompt(ses))
+    elif kind == "text":
+        en = lang == "en"
+        prompt = str(value.get("reply") or "")[:4000]
+        def pack(k: str) -> dict:
+            return {"kind": k, "text": prompt}
+        chips = [
+            chip("Make a video from this" if en else "Сделать видео по этому", "make", pack("video"), primary=True),
+            chip("Image" if en else "Картинку", "make", pack("image")),
+            chip("Storyboard" if en else "Раскадровку", "make", pack("storyboard")),
         ]
     else:
         chips = [
@@ -829,7 +909,205 @@ def _after_media(value: dict, ses: dict, lang: str) -> dict:
             chip("Главное фото", "flow_next", "hero"),
             chip("Видео товара", "flow_next", "video"),
         ]
-    return response(["Готово. Что дальше?"], chips, lang=lang, intent="flow_next")
+    return response([], chips, lang=lang, intent="flow_next")
+
+
+def from_prompt(engine: Any, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
+    """Кнопка под готовым текстом: этот промпт сразу идёт в видео, картинку или раскадровку."""
+    if isinstance(value, dict):
+        kind = str(value.get("kind") or "video")
+        text = str(value.get("text") or "").strip()
+    else:
+        kind = str(value or "video")
+        text = ""
+    if not text:
+        for row in reversed(ses.get("texts") or []):
+            if isinstance(row, dict) and str(row.get("text") or "").strip():
+                text = str(row["text"]).strip()
+                break
+    text = text[:4000]
+    task = "image" if kind == "image" else "video"
+    f = ses.get("flow") if isinstance(ses.get("flow"), dict) else None
+    if not f:
+        _open(ses, task, "", text, ctx)
+        f = ses["flow"]
+    if text and text != (f.get("idea") or ""):
+        f["shown_models"] = []
+    if text:
+        f["idea"] = text
+        ses["idea"] = text
+        ses["prompt"] = text
+        ses["prompt_base"] = text
+    f["polished"] = True
+    if kind == "storyboard":
+        from . import storyboard as SB
+        f["kind"] = "video"
+        ses["kind"] = "video"
+        return SB.start(engine, ses, ctx, lang, text=text or f.get("idea") or "")
+    if kind == "image":
+        f["kind"] = "image"
+        ses["kind"] = "image"
+        f["path"] = "direct"
+        return _advise(engine, ctx, ses, lang)
+    f["kind"] = "video"
+    ses["kind"] = "video"
+    return _go_direct(engine, ctx, ses, lang)
+
+
+def _same_video_card(engine: Any, ses: dict):
+    for mid in (ses.get("picked"), ses.get("gen_model"), ses.get("route_model")):
+        card = engine.d.cards.get(mid or "")
+        if card and card.kind == "video":
+            return card
+    return None
+
+
+def _current_prompt(ses: dict) -> str:
+    f = ses.get("flow") if isinstance(ses.get("flow"), dict) else {}
+    return (ses.get("prompt_base") or ses.get("prompt") or f.get("idea") or ses.get("idea") or "").strip()
+
+
+def _remember_prior(ses: dict, kind: str, prompt: str) -> None:
+    text = (prompt or "").strip()
+    if not text:
+        return
+    bag = [row for row in (ses.get("prior") or []) if isinstance(row, dict)]
+    row = {"kind": kind or "", "prompt": text[:2000]}
+    if bag and bag[-1].get("prompt") == row["prompt"] and bag[-1].get("kind") == row["kind"]:
+        ses["prior"] = bag[-8:]
+        return
+    bag.append(row)
+    ses["prior"] = bag[-8:]
+
+
+_CARRY_RX = re.compile(
+    r"прошл|предыдущ|тот же|та же|те же|того же|той же|тех же|как там|по этому|из этого|the same|last one|previous",
+    re.I,
+)
+
+
+def _carry_prior(ses: dict, msg: str) -> str:
+    text = (msg or "").strip()
+    bag = [r for r in (ses.get("prior") or []) if isinstance(r, dict) and r.get("prompt")]
+    if not text or not bag or not _CARRY_RX.search(text):
+        return text
+    prev = str(bag[-1]["prompt"]).strip()[:1500]
+    note = "Контекст прошлой генерации: " + prev
+    if note.lower() in text.lower():
+        return text
+    return (text + "\n" + note).strip()
+
+
+def _prior_line(ses: dict, lang: str) -> str:
+    bag = [r for r in (ses.get("prior") or []) if isinstance(r, dict) and r.get("prompt")]
+    if not bag:
+        return ""
+    text = str(bag[-1]["prompt"]).replace("\n", " ").strip()
+    short = text[:90] + ("…" if len(text) > 90 else "")
+    if lang == "en":
+        return "The previous generation stays in memory: " + short
+    return "Прошлое остаётся в памяти: " + short
+
+
+def _redo_card(ses: dict, lang: str, head: str | None = None) -> dict:
+    f = ses["flow"]
+    prompt = _current_prompt(ses)
+    if prompt:
+        f["idea"] = ses["idea"] = ses["prompt"] = ses["prompt_base"] = prompt
+    f["kind"] = ses["kind"] = "video"
+    f["stage"] = "redo"
+    f["next"] = "redo"
+    en = lang == "en"
+    if not head:
+        head = ("Same prompt. Add to it below, or refine it in Claude or GPT."
+                if en else
+                "Тот же промпт. Допишите его в поле ниже или доработайте в Claude или GPT.")
+    block = {"type": "prompt", "label": True, "extend": True,
+             "title": "Prompt" if en else "Промпт", "text": prompt, "note": ""}
+    chips = [
+        chip("Refine in Claude or GPT" if en else "Доработать в Claude или GPT", "flow_polish"),
+        chip("Prompt is ready" if en else "Промпт готов", "idea_next", None, primary=True),
+    ]
+    return response([head], chips, [block], lang=lang, intent="idea")
+
+
+def _redo_video(engine: Any, ctx: dict, ses: dict, lang: str) -> dict:
+    """Тот же промпт — поле, куда можно дописать, и доработка в Claude или GPT."""
+    _remember_prior(ses, "video", _current_prompt(ses))
+    return _redo_card(ses, lang)
+
+
+def _continue_video(engine: Any, ctx: dict, ses: dict, lang: str) -> dict:
+    """Как в начале: несколько сценариев продолжения, любой можно доработать в Claude или GPT."""
+    f = ses["flow"]
+    base = _current_prompt(ses)
+    _remember_prior(ses, "video", base)
+    extra = ("Continuation of the previous video: the next moment, same person, clothes, place and light. "
+             "Three different scenarios of what happens next."
+             if lang == "en" else
+             "Продолжение предыдущего ролика: следующий момент, те же герой, одежда, место и свет. "
+             "Три разных сценария того, что происходит дальше.")
+    f["idea"] = ses["idea"] = base or extra
+    f["idea_user"] = base or extra
+    f["kind"] = ses["kind"] = "video"
+    f["polished"] = False
+    f["shown_models"] = []
+    f["path"] = ""
+    out = open_prompts(engine, ctx, ses, lang, "idea", extra)
+    # Смотрение фото не создало запрос — сразу те же карточки и кнопки, что у первого промпта.
+    if out.get("intent") in ("look_photo", "look_photo_wait"):
+        out = engine._look_skip(ctx, ses, lang)
+    head = ("Continuation. Here are different scenarios for the next moment. "
+            "Any of them can be refined in Claude or GPT."
+            if lang == "en" else
+            "Продолжение. Вот разные сценарии следующего момента. "
+            "Любой можно доработать в Claude или GPT.")
+    out["text"] = head + "\n" + (out.get("text") or "")
+    out["reply"] = out["text"]
+    if not any(c.get("action") == "flow_polish" for c in out.get("chips") or []):
+        out["chips"] = [chip("Доработать в Claude или GPT" if lang != "en" else "Refine in Claude or GPT", "flow_polish")] + list(out.get("chips") or [])
+    return out
+
+
+def _fresh_generation(engine: Any, ctx: dict, ses: dict, lang: str) -> dict:
+    """Любой новый тип. Прошлые промпты остаются в памяти чата."""
+    _remember_prior(ses, str((ses.get("flow") or {}).get("kind") or ses.get("kind") or ""), _current_prompt(ses))
+    ses["flow"] = {
+        "stage": "fresh", "kind": "", "story": "", "slots": {}, "missing": ["kind"],
+        "idea": "", "idea_user": "", "path": "", "next": "fresh", "source": "", "shown_models": [],
+    }
+    ses["picked"] = None
+    ses["prompt"] = ""
+    ses["prompt_base"] = ""
+    en = lang == "en"
+    lines = ["New generation. What should we make — a video, an image, or describe it in your own words?"
+             if en else
+             "Новая генерация. Что делаем — видео, картинка или опишите своими словами?"]
+    remembered = _prior_line(ses, lang)
+    if remembered:
+        lines.append(remembered)
+    chips = [
+        chip("Video" if en else "Видео", "choose_type", "video", primary=True),
+        chip("Image" if en else "Картинка", "choose_type", "image"),
+    ]
+    return response(lines, chips, lang=lang, intent="flow_fresh")
+
+
+def _ask_fresh_detail(ses: dict, kind: str, lang: str) -> dict:
+    kind = kind if kind in ("video", "image", "music") else "video"
+    _open(ses, kind, "", "", {})
+    f = ses["flow"]
+    f["stage"] = "fresh_desc"
+    f["next"] = "fresh_desc"
+    f["kind"] = ses["kind"] = kind
+    word = {"video": ("видео", "the video"), "image": ("картинку", "the image"),
+            "music": ("музыку", "the music")}.get(kind, ("это", "it"))
+    ask = (f"What should it do? Describe {word[1]}." if lang == "en" else f"Что нужно сделать? Опишите {word[0]}.")
+    lines = [ask]
+    remembered = _prior_line(ses, lang)
+    if remembered:
+        lines.append(remembered)
+    return response(lines, [], lang=lang, intent="flow_fresh")
 
 
 def _next(engine: Any, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
@@ -841,6 +1119,12 @@ def _next(engine: Any, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
         return _advise(engine, ctx, ses, lang)
     if step == "board_go":
         return _board(engine, ctx, ses, lang)
+    if step == "redo":
+        return _redo_video(engine, ctx, ses, lang)
+    if step == "continue":
+        return _continue_video(engine, ctx, ses, lang)
+    if step == "fresh":
+        return _fresh_generation(engine, ctx, ses, lang)
     if step == "reprompt":
         f["path"] = ""
         f["refine"] = ""

@@ -216,6 +216,23 @@ def test_error_help_moderation_suggests_other_image_models(make_assistant):
     assert "Nano Banana" in r2["reply"] or "фильтр" in r2["reply"].lower()
 
 
+def test_timeout_offers_same_model_on_the_other_route(make_assistant):
+    def alt(mid, provider, has_image):
+        if mid == "veo-3-1" and provider in {"", "replicate"} and not has_image:
+            return "veo-3-1-t2v-fal"
+        return None
+
+    a = make_assistant(alt_fn=alt)
+    r = a.handle("", {"last_error": "timeout", "selected_model_id": "veo-3-1", "job_provider": "replicate"}, SID)
+    assert r["error_code"] == "timeout" and "не списаны" in r["reply"]
+    items = [it for b in r["blocks"] if b.get("type") == "models" for it in b["items"]]
+    assert items and items[0]["id"] == "veo-3-1-t2v-fal" and items[0]["title"] == "Veo 3.1"
+    assert "veo-3-1" not in {it["id"] for it in items[1:]}
+    assert len(items) >= 2
+    r2 = a.handle("", {}, SID, action={"type": "pick_model", "value": "veo-3-1-t2v-fal"})
+    assert r2.get("generate_model") == "veo-3-1-t2v-fal"
+
+
 def test_error_help_funds(make_assistant):
     a = make_assistant()
     r = a.handle("почему ошибка?", {"last_http_status": 402}, SID)

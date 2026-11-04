@@ -60,6 +60,18 @@ T = {
 }
 
 
+def _clean_preview(raw: Any) -> str:
+    """Адрес миниатюры: свой файл или http(s). blob: и прочий мусор не храним."""
+    s = str(raw or "").strip()
+    if not s or len(s) > 500 or any(c in s for c in " \n\r\t<>\"'"):
+        return ""
+    if s.startswith(("/media/", "/api/works/", "/api/uploads/")):
+        return s
+    if s.startswith(("https://", "http://")):
+        return s
+    return ""
+
+
 def _clean_name(name: Any) -> str:
     s = str(name or "").strip()
     s = re.sub(r"[\x00-\x1f\x7f<>\"«»“”\\]", "", s)
@@ -86,6 +98,9 @@ def clean_attachments(raw: Any, keep_id: bool = False) -> list[dict[str, str]]:
         fid = str(item.get("id") or "").strip()
         if keep_id and fid and re.fullmatch(r"[A-Za-z0-9_\-]{1,40}", fid):
             row["id"] = fid
+        preview = _clean_preview(item.get("preview"))
+        if preview:
+            row["preview"] = preview
         out.append(row)
         if len(out) >= MAX_FILES:
             break

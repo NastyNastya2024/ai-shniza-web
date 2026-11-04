@@ -146,10 +146,26 @@ def recommend(cards: dict[str, Card], kind: str, needs: list[str] | None = None,
     return Pick(picked, exact)
 
 
+def _gen4_after_kling(cards: list[Card]) -> list[Card]:
+    """Gen-4 Turbo не в первом ряду: сразу после последнего Kling, ближе к середине списка."""
+    gen = next((c for c in cards if c.id == "gen4-turbo"), None)
+    if gen is None:
+        return cards
+    rest = [c for c in cards if c.id != "gen4-turbo"]
+    kling_at = [i for i, c in enumerate(rest) if str(c.id).startswith("kling")]
+    if not kling_at:
+        return cards
+    insert_at = kling_at[-1] + 1
+    if insert_at < 3:
+        insert_at = min(len(rest), max(3, len(rest) // 2))
+    rest.insert(insert_at, gen)
+    return rest
+
+
 def advise(cards: dict[str, Card], caps: dict, profile: dict, price_fn: PriceFn,
             health_fn: HealthFn | None = None, catalog_fn: Callable[[str], bool] | None = None,
-            n: int = 3) -> list[Card]:
-    """2–3 модели под уже собранную задачу. Жёсткие фильтры, потом цель, потом цена.
+            n: int | None = 3, price_order: bool = False) -> list[Card]:
+    """Модели под уже собранную задачу. price_order — весь список, сначала самые дешёвые.
 
     Неизвестные оценки в caps не подставляем: null не участвует в счёте.
     """
@@ -161,7 +177,7 @@ def advise(cards: dict[str, Card], caps: dict, profile: dict, price_fn: PriceFn,
         if vis:
             pool = vis
     aspect = profile.get("aspect")
-    if aspect:
+    if aspect and not price_order:
         fitted = [c for c in pool if aspect in (c.params.get("aspect_ratio") or [])]
         if fitted:
             pool = fitted
@@ -170,7 +186,8 @@ def advise(cards: dict[str, Card], caps: dict, profile: dict, price_fn: PriceFn,
                   and (caps.get(c.id) or {})["text_render"] >= 2]
         if fitted:
             pool = fitted
-    if profile.get("needs_image"):
+    # Полный список (сначала дешёвые) не режем по фото: текстовые модели вроде Gemini тоже в каталоге.
+    if profile.get("needs_image") and not price_order:
         fitted = [c for c in pool if "i2v" in (c.modes or []) or "i2i" in (c.modes or [])]
         if fitted:
             pool = fitted
@@ -193,6 +210,10 @@ def advise(cards: dict[str, Card], caps: dict, profile: dict, price_fn: PriceFn,
             s += max(0.0, 8.0 - min(pv, 40.0) / 5.0)
         return s
 
+    if price_order:
+        ordered = sorted(pool, key=lambda c: (
+            price_value(price_fn(c.id)) if price_value(price_fn(c.id)) is not None else 1e9, c.id))
+        return _gen4_after_kling(ordered)
     ranked = sorted(pool, key=lambda c: (-score(c), c.id))
     best = ranked[0]
     best_price = price_value(price_fn(best.id))

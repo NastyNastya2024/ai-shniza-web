@@ -8,8 +8,38 @@ def _models(r):
     return [m for m in (r.get("models") or []) if m.get("id")]
 
 
+def test_rewrite_goes_to_text_not_video_or_image(make_assistant):
+    a = make_assistant(llm=False, dialog_v2=True)
+    a.handle("", {}, "rw", action={"type": "restart"})
+    r = a.handle(
+        "перепиши без ошибок короче Я ходила на свидания и мне было некомфортно с ними",
+        {"lang": "ru"}, "rw",
+    )
+    assert "видео или картинка" not in (r.get("text") or "")
+    assert str(r.get("text_ask") or "").startswith("перепиши")
+    assert r.get("generate_model")
+
+
+def test_panel_pick_keeps_the_chosen_model(make_assistant):
+    a = make_assistant(llm=False, dialog_v2=True)
+    r = a.handle("нужно озвучить текст Привет", {
+        "model_lock": True,
+        "selected_model_id": "elevenlabs-music",
+        "selected_model_kind": "music",
+        "lang": "ru",
+    }, "lock-el")
+    assert r.get("generate_model") == "elevenlabs-music"
+    assert "Claude" not in (r.get("text") or "")
+    assert "Привет" in (r.get("generate_prompt") or "")
+
+
 def test_write_stays_text_generate_switches():
+    from assistant.brief import look_ask
+    assert generation_kind(look_ask("ru", "оживи фото", "video"), True) is None
     assert generation_kind("напиши промпт для видео про кофе") is None
+    assert generation_kind(
+        "Доработай этот промпт для генерации: сохрани смысл. Верни только улучшенный промпт.\n\nОживи загруженное фото."
+    ) is None
     assert is_write_request("напиши промпт для видео про кофе")
     assert generation_kind("как снять видео про кофе") is None
     assert generation_kind("хорошо теперь сгенери видео по этому") == "video"
@@ -89,3 +119,27 @@ def test_stored_text_is_found_by_po_etomu(make_assistant):
     assert r["intent"] == "model_switch"
     shown = " ".join(b.get("text") or "" for b in r.get("blocks") or [] if b.get("type") == "prompt")
     assert "женщина в толпе" in shown
+
+
+def test_expand_instruction_is_stripped_from_the_prompt():
+    from assistant.engine import unwrap_polish
+    from assistant.switch import generation_kind
+    raw = (
+        "Разверни этот промпт для генерации до максимально подробного текста. "
+        "Верни только улучшенный промпт.\n\n"
+        "Оживи загруженное фото. Человек остаётся как на снимке."
+    )
+    assert generation_kind(raw) is None
+    assert unwrap_polish(raw) == "Оживи загруженное фото. Человек остаётся как на снимке."
+
+
+def test_polish_instruction_is_stripped_from_the_prompt():
+    from assistant.engine import unwrap_polish
+    raw = (
+        "Доработай этот промпт для генерации: сохрани смысл и движение камеры, сделай ярче и конкретнее. "
+        "Верни только улучшенный промпт.\n\n"
+        "Доработай этот промпт для генерации: сохрани смысл и движение камеры, сделай ярче и конкретнее. "
+        "Верни только улучшенный промпт.\n\n"
+        "Оживи загруженное фото. Человек остаётся как на снимке."
+    )
+    assert unwrap_polish(raw) == "Оживи загруженное фото. Человек остаётся как на снимке."

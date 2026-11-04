@@ -193,6 +193,11 @@ def detect_kind(text: str, has_image: bool) -> str | None:
 
 
 def _detect_kind(text: str, has_image: bool) -> str | None:
+    # «перепиши без ошибок…» — правка текста, не выбор видео или картинки
+    if re.match(r"^\s*(перепиши|переписать)\b", text or "", I):
+        return "text"
+    if re.match(r"^\s*(отредактируй|сократи|исправь)\b", text or "", I) and re.search(r"текст|промпт|ошиб", text or "", I):
+        return "text"
     if has_image and EDIT_RX.search(text):
         return "edit"
     for k, rx in TYPE_RULES:

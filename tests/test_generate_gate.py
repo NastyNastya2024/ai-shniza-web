@@ -161,6 +161,37 @@ def test_generate_holds_then_captures_and_release_is_idempotent(srv, monkeypatch
     assert bal.balance_kop == 50000 - 13600 and bal.held_kop == 0
 
 
+def test_empty_video_url_releases_instead_of_capture(srv, monkeypatch):
+    """Модель закончила без файла — это неудача, деньги внутри площадки не списываются."""
+    c = srv.app.test_client()
+    user = _login(srv, c, balance_kop=50000)
+    stored = {}
+
+    def fake_enqueue(payload):
+        stored["payload"] = payload
+        return "e" * 24
+
+    monkeypatch.setattr("queue_runtime.jobs.enqueue_inbound", fake_enqueue)
+    monkeypatch.setattr("queue_runtime.health.is_channel_healthy", lambda ch: True)
+    r = _gen(c)
+    assert r.status_code == 202, r.get_json()
+    job = {
+        "status": "succeeded",
+        "kind": "video",
+        "urls": [],
+        "price_kop": stored["payload"]["price_kop"],
+        "billing_job_id": stored["payload"]["billing_job_id"],
+        "owner_id": user.id,
+        "model_id": "veo-3-1",
+    }
+    monkeypatch.setattr("queue_runtime.jobs.get_job", lambda jid: job)
+    srv._settle_generate_billing("e" * 24)
+    srv._settle_generate_billing("e" * 24)
+    Balance = srv.app.extensions["product_models"]["Balance"]
+    bal = Balance.query.filter_by(user_id=user.id).one()
+    assert bal.balance_kop == 50000 and bal.held_kop == 0
+
+
 def test_free_model_needs_login_only(srv, monkeypatch):
     c = srv.app.test_client()
     assert _gen(c, model="ideogram-v3-turbo").status_code == 401

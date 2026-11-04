@@ -84,6 +84,8 @@ def family(text: str) -> str | None:
 
 
 def model_for(fam: str, text: str, cards: dict) -> str | None:
+    if fam == "claude" and re.search(r"\bopus\b|опус", text or "", I) and "claude-opus-4-7" in cards:
+        return "claude-opus-4-7"
     ids = [m for m in FAMILY_MODELS.get(fam, ()) if m in cards]
     if not ids:
         return None

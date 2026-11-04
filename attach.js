@@ -146,6 +146,7 @@
           item.id = data.id;
           item.kind = data.kind || item.kind;
           item.size = data.size || item.size;
+          if (data.preview_url) item.serverPreview = data.preview_url;
           if (!item.preview && data.preview_url && item.kind === 'image') item.preview = data.preview_url;
           announce(t('attach.announce.added', { name: item.name }));
           try { if (window.AishM) AishM.track('attach_add', { kind: item.kind }); } catch (_) {}
@@ -378,6 +379,25 @@
       return api;
     },
     open: function () { if (S.input) { syncAccept(); S.input.click(); } },
+    /* Уже загруженный файл с главной: плашка без повторной отправки. */
+    adopt: function (meta) {
+      if (!meta || !meta.id) return api;
+      if (S.items.some(function (x) { return x.id === meta.id && isUsable(x); })) return api;
+      S.items.push({
+        lid: 'a' + Date.now().toString(16),
+        kind: meta.kind || 'image',
+        name: meta.name || 'файл',
+        size: meta.size || 0,
+        status: 'ready',
+        pct: 100,
+        id: meta.id,
+        preview: meta.preview || '',
+        serverPreview: meta.preview || '',
+        error: ''
+      });
+      changed();
+      return api;
+    },
     add: addFiles,
     /* Скачать картинку/файл по URL (раскадровка с витрины) и загрузить как вложение. */
     addFromUrl: function (url, name) {
@@ -436,7 +456,19 @@
     /* Готовые файлы для ассистента: [{kind, name, id}] — он называет их по имени */
     ready: function () {
       return S.items.filter(isUsable)
-        .map(function (x) { return { kind: x.kind, name: x.name, id: x.id }; });
+        .map(function (x) {
+          var row = { kind: x.kind, name: x.name, id: x.id };
+          if (x.serverPreview) row.preview = x.serverPreview;
+          return row;
+        });
+    },
+    shots: function () {
+      return S.items.filter(isUsable)
+        .map(function (x) { return { kind: x.kind, name: x.name, id: x.id, preview: x.serverPreview || x.preview || '' }; });
+    },
+    removeId: function (id) {
+      var item = S.items.find(function (x) { return x.id === id && isUsable(x); });
+      if (item) remove(item.lid);
     },
     /* «фото «cat.png» и аудио «voice.wav»» */
     describe: function (files) {
@@ -447,16 +479,26 @@
       if (parts.length < 2) return parts.join('');
       return parts.slice(0, -1).join(', ') + t('attach.and') + parts[parts.length - 1];
     },
-    /* После отправки в чат: плашки убрать, номера файлов оставить до генерации. */
+    /* После отправки в чат: плашки убрать сразу, номера файлов оставить до генерации. */
     park: function () {
       var n = 0;
+      S.parkGen = (S.parkGen || 0) + 1;
+      var gen = S.parkGen;
       S.items.forEach(function (x) {
         if (x.status === 'ready') {
           x.status = 'parked';
-          if (x.preview && x.preview.indexOf('blob:') === 0) {
-            try { URL.revokeObjectURL(x.preview); } catch (_) {}
-            x.preview = '';
-          }
+          x._parkGen = gen;
+          n++;
+        }
+      });
+      if (n) changed();
+    },
+    unpark: function () {
+      var gen = S.parkGen || 0;
+      var n = 0;
+      S.items.forEach(function (x) {
+        if (x.status === 'parked' && x._parkGen === gen) {
+          x.status = 'ready';
           n++;
         }
       });

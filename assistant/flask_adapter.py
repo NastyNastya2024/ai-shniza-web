@@ -31,6 +31,7 @@ CTX_SCHEMA: dict[str, tuple[type, int]] = {
     "selected_model_id": (str, 64),
     "selected_model_kind": (str, 20),   # video|image|… — тип с панели UI (Nano Banana = image)
     "selected_model_title": (str, 80),
+    "model_lock": (bool, 0),   # модель выбрана в списке: промпт идёт в неё, без подмены другой нейросетью
     "has_image": (bool, 0),
     "last_error": (str, 40),
     "last_detail": (str, 200),
@@ -38,6 +39,7 @@ CTX_SCHEMA: dict[str, tuple[type, int]] = {
     "job_status": (str, 20),
     "job_age_sec": (float, 0),
     "job_failover": (bool, 0),
+    "job_provider": (str, 20),
     "draft": (str, 1000),
     "lang": (str, 2),
     # для дерева подсказок (контекст листа): телефон, подключены ли MCP, есть ли сохранённые стили, профессия из профиля
@@ -70,7 +72,7 @@ def clean_context(raw: Any) -> dict[str, Any]:
             continue
     # Скрепка: [{kind, name}] — только тип и имя (до 3 файлов), чтобы ассистент называл файлы по имени
     from .files import clean_attachments
-    files = clean_attachments(raw.get("attachments"))
+    files = clean_attachments(raw.get("attachments"), keep_id=True)
     if files:
         out["attachments"] = files
     return out

@@ -45,7 +45,7 @@ BLOCK_INTENTS = {"crisis", "safety", "safety_person", "injection", "internal_err
 QUESTION_INTENTS = {"question", "question_models", "ui_help", "price", "compare", "error_help"}
 # кнопки ядра, которые нельзя вытеснять подсказками
 FUNCTIONAL = re.compile(r"^(generate|generate_series|pick_model|param|use_variant|variants|more_variants|brief|add_prompt|"
-                        r"has_prompt|use_mine|skip_polish|pick_camera|open_topup|login|sb_|pipe_(?!stage|menu)|mode_|reel_)")
+                        r"has_prompt|use_mine|skip_polish|pick_camera|open_topup|login|make|sb_|pipe_(?!stage|menu)|mode_|reel_)")
 MAX_TREE_CHIPS = 4
 ADVANCE = ("R01", "R02", "R06", "R14", "R05")      # после этих реакций история идёт на следующий шаг
 MAX_CHIPS = 8
@@ -524,6 +524,10 @@ def present_hint(label: str, task: str = "") -> str | None:
         return f"↩ Вернуться к «{task or 'задаче'}»"
     if _FORBIDDEN.search(raw):
         return None
+    if raw.lower() == "петля бесшовно":
+        return "Ролик по кругу без скачка"
+    if raw.lower() == "петля":
+        return "Короткий повтор ролика"
     return raw
 
 
@@ -748,6 +752,9 @@ def active_flow(ses: dict, out: dict) -> str | None:
     from . import modes as MD
     from . import pipeline as PL
     from . import storyboard as SB
+    flow = ses.get("flow") if isinstance(ses.get("flow"), dict) else None
+    if flow and flow.get("stage"):
+        return "dialog"
     if SB.active(ses) or str(out.get("intent") or "").startswith("sb_"):
         return "storyboard"
     pst = ses.get("pipe") if isinstance(ses.get("pipe"), dict) else {}
@@ -884,7 +891,11 @@ def hint_action(a: Any, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
         out = response(["Ещё варианты для этого шага:" if lang != "en" else "More options for this step:"], [], [], lang,
                        intent="tree_more")
         if o:
-            merge(out, chips_for(a, tree.step_hints(o["id"], int(st.get("step") or 0)), st, lang, ses, ctx), first=True)
+            rest = tree.step_hints(o["id"], int(st.get("step") or 0))[3:]
+            if rest:
+                merge(out, chips_for(a, rest, st, lang, ses, ctx), first=True)
+            else:
+                out["text"] = out["reply"] = ("Других пунктов на этом шаге нет." if lang != "en" else "No other options on this step.")
         return out
     rid = "R07" if v.get("why") else ("R01" if idx == 0 else "R02")
     _log(a, ses, ctx, "click", story=st.get("story"), step=st.get("step"), reaction=rid, label=label,

@@ -37,15 +37,50 @@ def test_clean_attachments_keeps_kind_and_safe_name_only():
     assert clean_attachments("nope") == [] and clean_attachments(None) == []
 
 
+def test_clean_attachments_keeps_a_safe_preview():
+    raw = [
+        {"kind": "image", "name": "camp.jpg", "id": "upl_" + "ab" * 12, "preview": "/media/uploads/camp.jpg"},
+        {"kind": "video", "name": "clip.mp4", "preview": "blob:http://localhost/x"},
+    ]
+    files = clean_attachments(raw, keep_id=True)
+    assert files[0]["preview"] == "/media/uploads/camp.jpg"
+    assert "preview" not in files[1]
+
+
 def test_describe_joins_names():
     assert describe(PHOTO_AUDIO, "ru") == "фото «cat.png» и аудио «voice.wav»"
     assert describe(PHOTO, "en") == "photo “cat.png”"
+
+
+def test_photo_stays_on_the_summary_after_the_clip_is_gone(make_assistant):
+    uid = "upl_" + "ab" * 12
+    a = make_assistant(llm=False, dialog_v2=True, inputs_fn=lambda mid: INPUTS.get(mid, ["text"]))
+    a.handle("оживи картинку", {"attachments": [{"id": uid, "kind": "image", "name": "camp.jpg"}], "has_image": True}, SID)
+    r = a.handle("", {}, SID, action={"type": "pick_model", "value": "p-video"})
+    assert any(f.get("id") == uid for f in r.get("generate_files") or [])
+    assert block(r, "files") and any(it.get("id") == uid for it in block(r, "files")["items"])
+    assert any("camp.jpg" in line for line in (block(r, "summary") or {}).get("files") or [])
+
+
+def test_upload_id_is_what_generation_sends(make_assistant):
+    uid = "upl_" + "ab" * 12
+    a = _a(make_assistant)
+    a.handle("оживи фото", {"attachments": [{"id": uid, "kind": "image", "name": "camp.jpg"}], "has_image": True}, SID)
+    r = a.handle("", {}, SID, action={"type": "pick_model", "value": "p-video"})
+    if r.get("intent") == "has_prompt":
+        r = a.handle("", {}, SID, action={"type": "has_prompt", "value": "no"})
+    assert any(f.get("id") == uid and f.get("kind") == "image" for f in r.get("generate_files") or [])
+    r = a.handle("", {}, SID, action={"type": "files_drop", "value": {"id": uid}})
+    assert not any(f.get("id") == uid for f in r.get("generate_files") or [])
 
 
 def test_adapter_context_passes_attachments_and_drops_junk():
     ctx = clean_context({"attachments": PHOTO_AUDIO + [{"kind": "pdf", "name": "a.pdf"}], "has_image": False,
                          "_account": {"authed": True}})
     assert ctx["attachments"] == PHOTO_AUDIO
+    uid = "upl_" + "cd" * 12
+    kept = clean_context({"attachments": [{"id": uid, "kind": "image", "name": "a.jpg"}]})
+    assert kept["attachments"][0]["id"] == uid
     assert "_account" not in ctx
     assert "attachments" not in clean_context({"attachments": "x"})
 
@@ -146,3 +181,32 @@ def test_audio_only_attachment(make_assistant):
     a = _a(make_assistant)
     r = a.handle("сделай видео: кот прыгает в снег", {"attachments": [{"kind": "audio", "name": "beat.mp3"}]}, "u1:a2")
     assert r["reply"].splitlines()[0] == "Вижу аудио «beat.mp3»."
+
+
+def test_uploaded_photo_is_sent_even_after_a_previous_video():
+    from assistant.dialog import add_result, files_block, generate_files, ingest_uploads
+
+    class Card:
+        kind = "video"
+
+    ses = {"media": []}
+    uid = "upl_" + "ab" * 12
+    ingest_uploads(ses, [{"id": uid, "kind": "image", "name": "camp.jpg"}])
+    add_result(ses, {"kind": "video", "model": "p-video", "work_id": "7", "url": "https://cdn.example/v.mp4"})
+    assert [row["id"] for row in generate_files(ses)] == [uid]
+    block = files_block(Card(), ses, "ru")
+    assert block and not block["need_confirm"]
+
+
+def test_files_block_preview_for_upload_and_finished_video():
+    from assistant.dialog import add_result, add_upload, files_block
+
+    class Card:
+        kind = "video"
+
+    ses = {"media": []}
+    add_upload(ses, "image", "camp.jpg", "upl_" + "ab" * 12, "/media/uploads/camp.jpg")
+    add_result(ses, {"kind": "video", "url": "https://cdn.example/v.mp4", "model": "p-video", "work_id": "42"})
+    rows = {it["kind"]: it for it in files_block(Card(), ses, "ru")["items"]}
+    assert rows["image"]["preview"] == "/media/uploads/camp.jpg"
+    assert rows["video"]["preview"] == "/api/works/42/media"

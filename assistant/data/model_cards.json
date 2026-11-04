@@ -1843,6 +1843,36 @@
    "avoid": "vague one-word prompts",
    "defaults": {}
   },
+  "claude-opus-4-7": {
+   "title": "Claude Opus 4.7",
+   "kind": "text",
+   "modes": [
+    "t2t"
+   ],
+   "tags": [
+    "качество",
+    "фото",
+    "анализ"
+   ],
+   "strengths": {
+    "ru": "смотрит загруженное фото и описывает, что в кадре",
+    "en": "sees the uploaded photo and describes the frame"
+   },
+   "limits": {
+    "ru": "дороже Sonnet",
+    "en": "pricier than Sonnet"
+   },
+   "speed": {
+    "ru": "несколько секунд",
+    "en": "a few seconds"
+   },
+   "rank": 8,
+   "params": {},
+   "ask_first": [],
+   "prompt_style": "Look at the attached picture. Describe only what is visible, then write the generation prompt.",
+   "avoid": "inventing a different person, place or clothes",
+   "defaults": {}
+  },
   "claude-sonnet-5": {
    "title": "Claude Sonnet 5",
    "kind": "text",

@@ -201,14 +201,18 @@ def _next_n(ses: dict, kind: str) -> int:
     return (max(nums) if nums else 0) + 1
 
 
-def add_upload(ses: dict, kind: str, name: str, upload_id: str = "") -> dict:
+def add_upload(ses: dict, kind: str, name: str, upload_id: str = "", preview: str = "") -> dict:
     for item in ses.get("media") or []:
         if item.get("source") == "upload" and item.get("upload_id") == upload_id and upload_id:
             item["alive"] = True
             item["name"] = name or item.get("name")
+            if preview and not item.get("url"):
+                item["url"] = preview
             return item
         if item.get("source") == "upload" and not upload_id and item.get("name") == name and item.get("kind") == kind:
             item["alive"] = True
+            if preview and not item.get("url"):
+                item["url"] = preview
             return item
     item = {
         "id": upload_id or f"up-{kind}-{_next_n(ses, kind)}",
@@ -221,7 +225,7 @@ def add_upload(ses: dict, kind: str, name: str, upload_id: str = "") -> dict:
         "created_ts": time.time(),
         "upload_id": upload_id,
         "work_id": "",
-        "url": "",
+        "url": preview or "",
         "alive": True,
     }
     ses.setdefault("media", []).append(item)
@@ -230,7 +234,26 @@ def add_upload(ses: dict, kind: str, name: str, upload_id: str = "") -> dict:
 
 def ingest_uploads(ses: dict, files: list[dict]) -> None:
     for f in files or []:
-        add_upload(ses, str(f.get("kind") or ""), str(f.get("name") or ""), str(f.get("id") or ""))
+        add_upload(ses, str(f.get("kind") or ""), str(f.get("name") or ""), str(f.get("id") or ""), str(f.get("preview") or ""))
+
+
+def files_from_uploads(ses: dict) -> list[dict]:
+    """Загрузки этого диалога, которые ещё можно отправить. Пустая скрепка в новом сообщении их не стирает."""
+    out = []
+    seen = set()
+    for m in alive_media(ses):
+        if m.get("source") != "upload":
+            continue
+        fid = str(m.get("upload_id") or "")
+        if not fid or fid in seen:
+            continue
+        seen.add(fid)
+        row = {"kind": str(m.get("kind") or "image"), "name": str(m.get("name") or "файл"), "id": fid}
+        prev = str(m.get("url") or "")
+        if prev:
+            row["preview"] = prev
+        out.append(row)
+    return out
 
 
 def add_result(ses: dict, value: dict) -> dict:
@@ -392,6 +415,14 @@ def _origin(item: dict, lang: str) -> str:
     return (f"загружено {hh}" if lang != "en" else f"uploaded {hh}")
 
 
+def _preview(item: dict) -> str:
+    """Миниатюра: своя копия работы, иначе адрес файла. Загрузка без адреса добирается на клиенте по номеру upl_."""
+    wid = str(item.get("work_id") or "")
+    if wid.isdigit():
+        return f"/api/works/{wid}/media"
+    return str(item.get("url") or "")
+
+
 def _role_for(kind: str, model_kind: str, lang: str) -> str:
     ru = {
         ("image", "video"): "первый кадр",
@@ -421,17 +452,25 @@ def files_block(card: Any, ses: dict, lang: str) -> dict | None:
     for m in items:
         checked = (m.get("id") in focus) if pointed else (len(items) == 1)
         rows.append({
-            "id": m.get("id"),
+            "id": m.get("upload_id") or m.get("id"),
             "kind": m.get("kind"),
             "name": _label(m, lang),
-            "preview": m.get("url") or "",
+            "file": m.get("name") or "",
+            "preview": _preview(m),
+            "work_id": str(m.get("work_id") or ""),
             "origin": _origin(m, lang),
             "role": _role_for(m.get("kind") or "", card.kind, lang),
             "checked": bool(checked),
         })
-    need = len(items) > 1 and not ses.get("files_ok")
+    need = len(items) > 1 and not ses.get("files_ok") and _uploaded_photo(items) is None
     title = "Что отправляем" if lang != "en" else "What we send"
     return {"type": "files", "title": title, "items": rows, "need_confirm": need}
+
+
+def _uploaded_photo(items: list[dict]) -> dict | None:
+    """Одно загруженное фото. Старые результаты рядом не заменяют его."""
+    photos = [m for m in items if m.get("kind") == "image" and str(m.get("upload_id") or "").startswith("upl_")]
+    return photos[0] if len(photos) == 1 else None
 
 
 def generate_files(ses: dict) -> list[dict]:
@@ -439,15 +478,29 @@ def generate_files(ses: dict) -> list[dict]:
     items = alive_media(ses)
     if len(items) == 1 and not focus:
         focus = {items[0].get("id")}
+    photo = _uploaded_photo(items)
     out = []
     for m in items:
-        if focus and m.get("id") not in focus:
+        sent = m.get("upload_id") or m.get("id")
+        if focus and m.get("id") not in focus and sent not in focus:
             continue
-        if not ses.get("files_ok") and len(items) > 1:
+        if not ses.get("files_ok") and len(items) > 1 and m is not photo:
             continue
-        out.append({"id": m.get("id"), "role": _role_for(m.get("kind") or "", "video", "ru"),
+        out.append({"id": sent, "role": _role_for(m.get("kind") or "", "video", "ru"),
                     "kind": m.get("kind"), "name": m.get("name") or ""})
     return out
+
+
+def drop(ses: dict, mid: str) -> None:
+    """Убрать файл из того, что уйдёт в генерацию."""
+    mid = str(mid or "")
+    if not mid:
+        return
+    for item in ses.get("media") or []:
+        if item.get("id") == mid or item.get("upload_id") == mid:
+            item["alive"] = False
+    ses["focus"] = [i for i in (ses.get("focus") or []) if i != mid]
+    ses["files_ok"] = True
 
 
 def confirm(ses: dict, value: Any, card_kind: str) -> str | None:

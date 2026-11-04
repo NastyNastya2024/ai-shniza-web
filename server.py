@@ -2866,7 +2866,7 @@ def _build_replicate_input(
             "resolution": "720p",
             "aspect_ratio": "adaptive",
             "duration": 5,
-            "enable_prompt_expansion": True,
+            "enable_prompt_expansion": False if image else True,
             "negative_prompt": "",
         }
         if image:
@@ -3087,7 +3087,7 @@ def _build_replicate_input(
             "aspect_ratio": "adaptive",
             "duration": 5,
             "audio": True,
-            "enable_prompt_expansion": True,
+            "enable_prompt_expansion": False,
             "enable_safety_checker": True,
         }
         if prompt:
@@ -3308,7 +3308,7 @@ def _build_replicate_input(
             "aspect_ratio": "16:9",
             "fps": 24,
             "draft": False,
-            "prompt_upsampling": True,
+            "prompt_upsampling": False if image else True,
             "save_audio": True,
         }
         if image:
@@ -5339,6 +5339,18 @@ def _generate_job_fields(model_id: str, prompt: str, params: dict | None = None)
     }
 
 
+def _job_missing_media(job: dict) -> bool:
+    """Картинка, видео или аудио без ссылки на файл — генерация не удалась."""
+    result = job.get("result") if isinstance(job.get("result"), dict) else {}
+    kind = str(job.get("kind") or result.get("kind") or "")
+    if kind not in {"image", "video", "audio"}:
+        return False
+    urls = job.get("urls")
+    if not isinstance(urls, list):
+        urls = result.get("urls") if isinstance(result.get("urls"), list) else []
+    return not any(isinstance(u, str) and u.startswith("http") for u in urls)
+
+
 def _settle_generate_billing(job_id: str) -> None:
     """После успеха списать резерв, после ошибки вернуть. Повтор ничего не меняет."""
     try:
@@ -5365,8 +5377,10 @@ def _settle_generate_billing(job_id: str) -> None:
     import billing as _billing
 
     model_key = str(job.get("preferred_model_id") or job.get("model_id") or job.get("model_key") or "")
+    # Успех без файла (видео/картинка/аудио) — не списываем, резерв возвращается.
+    charge = status == "succeeded" and not _job_missing_media(job)
     try:
-        if status == "succeeded":
+        if charge:
             _billing.capture(db, Balance, Ledger, user_id=uid, amount_kop=price, job_id=bill_id, model_key=model_key)
         else:
             _billing.release(db, Balance, Ledger, user_id=uid, amount_kop=price, job_id=bill_id, model_key=model_key)
@@ -5972,32 +5986,28 @@ def api_generate():
         return jsonify({"kind": "text", "reply": reply, **common})
 
     media_urls = [u for u in outputs if isinstance(u, str) and u.startswith("http")]
+    if kind in {"image", "video", "audio"} and not media_urls:
+        _release_hold()
+        noun = {"image": "изображения", "video": "видео", "audio": "аудио"}[kind]
+        return jsonify({
+            "error": "empty_output",
+            "kind": kind,
+            "urls": [],
+            "reply": f"Модель завершилась без URL {noun}.",
+            **common,
+        }), 502
+
     if kind == "image":
         _capture_hold()
-        return jsonify({
-            "kind": "image",
-            "urls": media_urls,
-            "reply": "Готово." if media_urls else "Модель завершилась без URL изображения.",
-            **common,
-        })
+        return jsonify({"kind": "image", "urls": media_urls, "reply": "Готово.", **common})
 
     if kind == "video":
         _capture_hold()
-        return jsonify({
-            "kind": "video",
-            "urls": media_urls,
-            "reply": "Видео готово." if media_urls else "Модель завершилась без URL видео.",
-            **common,
-        })
+        return jsonify({"kind": "video", "urls": media_urls, "reply": "Видео готово.", **common})
 
     if kind == "audio":
         _capture_hold()
-        return jsonify({
-            "kind": "audio",
-            "urls": media_urls,
-            "reply": "Аудио готово." if media_urls else "Модель завершилась без URL аудио.",
-            **common,
-        })
+        return jsonify({"kind": "audio", "urls": media_urls, "reply": "Аудио готово.", **common})
 
     _release_hold()
     return jsonify({"error": "unsupported_kind", "kind": kind}), 500
@@ -6116,6 +6126,29 @@ def _assist_health(mid: str) -> bool:
     except Exception:
         return True
 ASSISTANT.d.health_fn = _assist_health
+
+
+def _assist_alt(mid: str, provider: str, has_image: bool) -> str | None:
+    """Та же модель на другой площадке: Replicate не ответил — Fal, и наоборот."""
+    spec = INTEGRATED_MODELS.get(mid) or {}
+    prov = (provider or spec.get("provider") or "").lower()
+    try:
+        from queue_runtime.health import is_channel_healthy
+    except Exception:
+        is_channel_healthy = lambda _ch: True  # noqa: E731
+    if prov == "fal":
+        primary = str(spec.get("backup_for") or "")
+        if primary in INTEGRATED_MODELS and is_channel_healthy("replicate"):
+            return primary
+        return None
+    if prov in {"", "replicate"}:
+        alt = _failover_target(mid, bool(has_image))
+        if alt and is_channel_healthy("fal"):
+            return alt
+    return None
+
+
+ASSISTANT.d.alt_fn = _assist_alt
 register_assistant(
     app, ASSISTANT,
     user_id_fn=lambda: session.get("user_id"),

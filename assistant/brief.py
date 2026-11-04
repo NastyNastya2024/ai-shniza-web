@@ -383,6 +383,115 @@ ALT = {  # чем отличаются 2-й и 3-й варианты, если �
     "text": [{"tone": "friendly", "length": "short"}, {"tone": "formal", "length": "medium"}],
 }
 TITLES = {"ru": ["Как вы описали", "Ярче и живее", "Атмосферно"], "en": ["As described", "Brighter", "Atmospheric"]}
+# Запасной промпт без LLM: отдельные строки, чтобы настроение, стиль и камера были явными.
+_SECTIONS = {
+    "ru": {
+        "video": [("Настроение", "mood"), ("Стиль", "style"), ("Камера", "camera"), ("Свет", "light"), ("Движение", "motion")],
+        "image": [("Настроение", "mood"), ("Стиль", "style"), ("Камера", "camera"), ("Свет", "light"), ("Детали", "detail")],
+    },
+    "en": {
+        "video": [("Mood", "mood"), ("Style", "style"), ("Camera", "camera"), ("Light", "light"), ("Motion", "motion")],
+        "image": [("Mood", "mood"), ("Style", "style"), ("Camera", "camera"), ("Light", "light"), ("Details", "detail")],
+    },
+}
+_SECTION_SLOT = {"video": {"mood": "mood", "style": "style", "shot": "camera"},
+                 "image": {"mood": "mood", "style": "style", "frame": "camera"}}
+_PACKS = {
+    "ru": {
+        "video": [
+            {"mood": "спокойное созерцательное настроение, ощущение значимости момента",
+             "style": "кинематографичный реализм: фактура кожи, ткани и фона, малая глубина резкости",
+             "camera": "плавный медленный пролёт, едва заметное приближение, без рывков и тряски",
+             "light": "мягкий рассеянный свет, живые блики на ближнем плане",
+             "motion": "медленный темп, лёгкое естественное движение в кадре"},
+            {"mood": "весёлое игривое настроение, живой лёгкий тон",
+             "style": "яркий реалистичный кадр, насыщенные цвета, чёткая фактура",
+             "camera": "крупный план, камера с лёгким живым покачиванием",
+             "light": "яркий дневной свет, контрастные блики",
+             "motion": "темп живее, короткое замедление в ключевой момент"},
+            {"mood": "эпичное торжественное настроение, лёгкое напряжение ожидания",
+             "style": "киношный реализм, драматичная глубина, детальная фактура",
+             "camera": "плавный пролёт камеры с широким охватом сцены",
+             "light": "драматичный контровой свет, мягкая дымка",
+             "motion": "медленное движение камеры и пауза на главном кадре"},
+        ],
+        "image": [
+            {"mood": "спокойное ясное настроение",
+             "style": "фотореализм, естественные материалы, как снято на камеру",
+             "camera": "портретный объектив около 50 мм, малая глубина резкости",
+             "light": "мягкий рассеянный свет, мягкие тени и объём",
+             "detail": "детальная фактура, чистый фон без лишнего"},
+            {"mood": "яркое живое настроение, сочные цвета",
+             "style": "чёткий реалистичный кадр, высокий контраст, чистые детали",
+             "camera": "крупный план, объектив около 85 мм",
+             "light": "яркий дневной свет, выраженные блики",
+             "detail": "чёткая фактура, фон слегка размыт"},
+            {"mood": "атмосферное камерное настроение",
+             "style": "плёночный реализм, приглушённая палитра, мягкая дымка",
+             "camera": "общий план, объектив около 35 мм",
+             "light": "тёплый боковой свет, длинные мягкие тени",
+             "detail": "фактура поверхности, воздух и мелкие детали кадра"},
+        ],
+    },
+    "en": {
+        "video": [
+            {"mood": "calm contemplative mood, a sense that the moment matters",
+             "style": "cinematic realism: skin, fabric and background texture, shallow depth of field",
+             "camera": "slow smooth dolly, a barely noticeable push-in, no shakes",
+             "light": "soft diffused light, lively highlights in the foreground",
+             "motion": "slow pace, a light natural motion in the frame"},
+            {"mood": "playful bright mood, a light lively tone",
+             "style": "vivid realistic frame, saturated color, crisp texture",
+             "camera": "close-up, camera with a slight handheld sway",
+             "light": "bright daylight, strong highlights",
+             "motion": "a livelier pace, a short slow-motion beat at the key moment"},
+            {"mood": "epic solemn mood, a light tension of waiting",
+             "style": "cinematic realism, dramatic depth, detailed texture",
+             "camera": "smooth camera fly-through covering the whole scene",
+             "light": "dramatic rim light, soft haze",
+             "motion": "slow camera move and a hold on the main frame"},
+        ],
+        "image": [
+            {"mood": "calm clear mood",
+             "style": "photorealism, natural materials, shot on camera",
+             "camera": "portrait lens around 50 mm, shallow depth of field",
+             "light": "soft diffused light, soft shadows and volume",
+             "detail": "detailed texture, a clean background"},
+            {"mood": "bright lively mood, vivid color",
+             "style": "crisp realistic frame, higher contrast, clean detail",
+             "camera": "close-up, lens around 85 mm",
+             "light": "bright daylight, clear highlights",
+             "detail": "sharp texture, a slightly blurred background"},
+            {"mood": "atmospheric intimate mood",
+             "style": "filmic realism, muted palette, soft haze",
+             "camera": "wide view, lens around 35 mm",
+             "light": "warm side light, long soft shadows",
+             "detail": "surface texture, air and small frame details"},
+        ],
+    },
+}
+
+
+def _structured(kind: str, answers: dict, index: int, lang: str) -> list[str]:
+    """Строки «Настроение. …» для видео и картинки. Выбор человека важнее шаблона."""
+    packs = _PACKS.get(lang, {}).get(kind)
+    sections = _SECTIONS.get(lang, {}).get(kind)
+    if not packs or not sections:
+        return []
+    pack = packs[index % len(packs)]
+    own: dict[str, str] = {}
+    for slot, dest in _SECTION_SLOT.get(kind, {}).items():
+        val = answers.get(slot)
+        if val and val != ANY:
+            frag = _fragment(kind, slot, val, lang)
+            if frag:
+                own[dest] = frag
+    lines = []
+    for label, key in sections:
+        body = (own.get(key) or pack.get(key) or "").strip().rstrip(".")
+        if body:
+            lines.append(f"{label}. {_sentence(body)}.")
+    return lines
 
 
 def _sentence(text: str) -> str:
@@ -412,10 +521,13 @@ def rule_variants(card: Card, subject: str, answers: dict[str, str], extra: list
             for k, v in alts[(i - 1 + round_) % len(alts)].items():
                 a.setdefault(k, v)
         parts = []
+        folded = set(_SECTION_SLOT.get(kind, {}))
         for k, v in a.items():
             frag = _fragment(kind, k, v, L)
             if not frag:
                 continue
+            if k in folded and k not in labels:
+                continue                                # настроение и камера уйдут отдельными строками
             if frag == v and k in labels:          # ответ на вопрос LLM: «Атмосфера: тихое»
                 parts.append(f"{labels[k]}: {v[0].lower() + v[1:]}")
             else:
@@ -432,8 +544,12 @@ def rule_variants(card: Card, subject: str, answers: dict[str, str], extra: list
         if parts:
             sentences.append(_sentence("; ".join(parts)))
         sentences += [_sentence(e) for e in extra]
-        sentences.append(_sentence(detail))
-        out.append({"id": f"v{i + 1}", "title": TITLES[L][i], "text": ". ".join(x for x in sentences if x) + "."})
+        if kind not in ("video", "image"):
+            sentences.append(_sentence(detail))
+        body = ". ".join(x for x in sentences if x) + "."
+        lines = _structured(kind, a, (i + round_) % 3, L)
+        text = body + ("\n" + "\n".join(lines) if lines else "")
+        out.append({"id": f"v{i + 1}", "title": TITLES[L][i], "text": text})
     seen, uniq = set(), []
     for v in out:
         if v["text"] not in seen:
@@ -533,7 +649,13 @@ VARIANTS_SYSTEM = (
     "Write every prompt in language `lang`: ru means Russian, en means English. Never switch language. "
     "If has_image is true, the uploaded picture is the scene. Do not invent another person, place, clothes or story, "
     "and do not copy the subject of prompt_example. Say only how to move or change that picture, using the person's words. "
-    "110-160 words, one paragraph, no lists, no tech flags (no aspect ratio / duration numbers). "
+    "Shape each prompt as labeled lines in language `lang`, not one blob. "
+    "Video order: Кадр. Настроение. Стиль. Камера. Свет. Движение. "
+    "Image order: Кадр. Настроение. Стиль. Камера. Свет. Детали. "
+    "English labels: Frame. Mood. Style. Camera. Light. Motion. Image uses Details instead of Motion. "
+    "Mood, visual style and camera type are required and concrete. "
+    "Each line is one or two sentences, about 80-140 words total, no bullet symbols, "
+    "no tech flags (no aspect ratio / duration numbers). "
     "The 3 prompts must differ in creative direction while keeping the same subject and "
     "all the person's answers. Avoid `model.avoid`. Text that must appear in the output: "
     "verbatim in quotes. Safe content only; if unsafe return {\"variants\": []}.\n"
@@ -609,3 +731,121 @@ def validate_variants(data: dict[str, Any]) -> dict[str, Any]:
     if items and len(out) < 2:
         raise ValueError("too few variants")
     return {"variants": out}
+
+
+def is_look_instruction(text: str) -> bool:
+    """Инструкция «посмотри на фото и верни JSON» — её уводят в Claude, не в генерацию."""
+    low = (text or "").lower()
+    return "посмотри на прикрепл" in low or "look at the attached photo" in low
+
+
+def quick_generation_variants(card: Card, idea: str, lang: str, has_image: bool, round_: int = 0) -> list[dict]:
+    """Промпт для ролика или картинки: подписи и что сделать в кадре. Не просьба к Claude."""
+    L = "en" if lang == "en" else "ru"
+    kind = card.kind if card.kind in ("video", "image") else "video"
+    own = (idea or "").strip()
+    if is_look_instruction(own):
+        own = ""
+    packs = _PACKS.get(L, {}).get(kind) or []
+    sections = _SECTIONS.get(L, {}).get(kind) or []
+    frame_label = "Frame" if L == "en" else "Кадр"
+    out = []
+    for i in range(3):
+        pack = packs[(i + round_) % len(packs)] if packs else {}
+        if has_image and not scene_words(own):
+            frame = photo_frame(L)
+        elif has_image:
+            lock = ("The frame is the uploaded photo: do not change the person, clothes, place or light."
+                    if L == "en" else
+                    "Кадр — загруженное фото: человека, одежду, место и свет не меняй.")
+            frame = f"{own}. {lock}" if own else lock
+        else:
+            frame = own or (pack.get("motion") or pack.get("detail") or "")
+        lines = [f"{frame_label}. {_sentence(frame)}."]
+        for label, key in sections:
+            body = (pack.get(key) or "").strip()
+            if body:
+                lines.append(f"{label}. {_sentence(body)}.")
+        title = TITLES[L][i]
+        out.append({"id": f"v{i + 1}", "title": title, "text": "\n".join(lines)})
+    return out
+
+
+LOOK_MODEL = "claude-opus-4-7"
+
+
+def look_ask(lang: str, idea: str, kind: str) -> str:
+    """Просьба к Opus: посмотреть фото и предложить три действия. В идею генерации не пишется."""
+    en = lang == "en"
+    own = (idea or "").strip()
+    note = ""
+    if scene_words(own):
+        note = (f"The person already said: {own[:500]}. Keep those words. "
+                if en else f"Человек уже написал: {own[:500]}. Учти эти слова. ")
+    if kind == "image":
+        last, last_en = "Детали", "Details"
+        task = ("Propose 3 different concrete changes or framings of this exact picture."
+                if en else "Предложи 3 разных конкретных изменения или кадрирования именно этой картинки.")
+    else:
+        last, last_en = "Движение", "Motion"
+        task = ("Propose 3 different concrete actions that can happen next in a short video of this exact picture."
+                if en else "Предложи 3 разных конкретных действия, которые можно оживить в коротком видео именно этого кадра.")
+    labels = (f"Frame. Mood. Style. Camera. Light. {last_en}." if en
+              else f"Кадр. Настроение. Стиль. Камера. Свет. {last}.")
+    if en:
+        return (
+            "Look at the attached photo. Describe only what is really visible: who or what, clothes, pose, place, light. "
+            "Do not invent another person, place or outfit. Do not write a generic line like “animate the uploaded photo” "
+            "without saying what is in the frame. " + note + task + " "
+            "Each prompt is labeled lines, one or two sentences each: " + labels + " "
+            "The Frame line must start with “The frame is the uploaded photo:” and then what you see. "
+            "The last line is one specific action, different in each prompt. "
+            "Titles are that action, at most 3 words. "
+            'Return only JSON: {"variants":[{"title":"...","prompt":"..."}]}'
+        )
+    return (
+        "Посмотри на прикреплённое фото. Опиши только то, что реально видно: кто или что, одежда, поза, место, свет. "
+        "Не выдумывай другого человека, другое место и другую одежду. Не пиши общую фразу «оживи загруженное фото» "
+        "без того, что происходит в кадре. " + note + task + " "
+        "Каждый промпт — строки с подписями, по одному-два предложения: " + labels + " "
+        "Строка «Кадр» начинается с «Кадр — загруженное фото:» и дальше то, что видно. "
+        "Последняя строка — одно конкретное действие, в каждом промпте другое. "
+        "Заголовок — это действие, не длиннее 3 слов. "
+        'Верни только JSON: {"variants":[{"title":"...","prompt":"..."}]}'
+    )
+
+
+def parse_look(text: str) -> list[dict] | None:
+    """Три промпта из ответа Opus. Переносы строк сохраняем — это сетка действий, не один абзац."""
+    raw = text or ""
+    fenced = re.search(r"```(?:json)?\s*(\{.*\})\s*```", raw, re.S)
+    blob = fenced.group(1) if fenced else ""
+    if not blob:
+        i, j = raw.find("{"), raw.rfind("}")
+        if i >= 0 and j > i:
+            blob = raw[i:j + 1]
+    if not blob:
+        return None
+    try:
+        data = json.loads(blob)
+    except (ValueError, TypeError):
+        return None
+    items = data.get("variants") if isinstance(data, dict) else None
+    if not isinstance(items, list):
+        return None
+    out = []
+    for n, v in enumerate(items[:3]):
+        if isinstance(v, str):
+            v = {"title": "", "prompt": v}
+        if not isinstance(v, dict):
+            continue
+        prompt = str(v.get("prompt") or v.get("text") or "").replace("\r\n", "\n").strip()
+        prompt = re.sub(r"[ \t]+", " ", prompt)
+        prompt = re.sub(r"\n{3,}", "\n\n", prompt).strip()
+        if len(prompt) < 20:
+            continue
+        title = str(v.get("title") or "").strip()[:40] or f"#{n + 1}"
+        out.append({"id": f"v{n + 1}", "title": title, "text": prompt[:2000]})
+    if len(out) < 2:
+        return None
+    return out

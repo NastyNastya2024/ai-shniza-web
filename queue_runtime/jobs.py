@@ -150,6 +150,14 @@ def generate_job_public(job_id: str) -> dict[str, Any] | None:
                 out["kind"] = result["kind"]
             if result.get("ok") is False and status == "succeeded":
                 out["status"] = "failed"
+        kind = str(out.get("kind") or "")
+        urls = out.get("urls") if isinstance(out.get("urls"), list) else []
+        has_file = any(isinstance(u, str) and u.startswith("http") for u in urls)
+        if status == "succeeded" and kind in {"image", "video", "audio"} and not has_file:
+            out["status"] = "failed"
+            out["ok"] = False
+            out["error"] = "empty_output"
+            status = "failed"
         if status in {"failed", "error"}:
             out.setdefault("ok", False)
             out.setdefault("error", job.get("error") or "failed")

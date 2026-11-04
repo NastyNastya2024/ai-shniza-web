@@ -82,7 +82,11 @@ def empty_session() -> dict[str, Any]:
         "switch_kind": "",
         "switch_text": "",
         "text_ask": "",      # фраза, которую отправить в текстовую модель после выбора
+        "photo_look": "",    # id фото и круг вариантов: сетка уже смотрела этот кадр через Opus
+        "alt_of": {},        # запасной id → основная карточка (та же модель, другая площадка)
+        "route_model": "",   # id, который реально уйдёт в генерацию
         "flow": None,        # диалог v2: {stage, kind, story, slots, idea, path, next}
+        "prior": [],         # прошлые генерации этого чата: [{kind, prompt}] — новая задача их не стирает
         "mcp": None,         # помощь с подключением: {stage, goal, service}
     }
 

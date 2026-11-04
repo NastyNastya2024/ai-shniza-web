@@ -261,6 +261,14 @@ a{color:var(--ink-ui)}a:hover{opacity:.82}
   flex-wrap:nowrap;
   width:100%;
 }
+.home-tray{display:flex}
+.home-tray[hidden]{display:none}
+.home-att{display:flex;align-items:center;gap:8px;max-width:100%;padding:6px 8px 6px 6px;border-radius:14px;background:rgba(80,60,160,.08)}
+.home-att img{width:40px;height:40px;object-fit:cover;border-radius:10px;flex:none;background:#111}
+.home-att__meta{display:flex;flex-direction:column;min-width:0}
+.home-att__meta b{font:700 13px/1.2 Onest,system-ui,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.home-att__meta span{font:500 12px/1.3 Onest,system-ui,sans-serif;color:#6E6888}
+.home-att__x{margin-left:auto;border:0;background:transparent;cursor:pointer;font:700 18px/1 Onest,system-ui,sans-serif;color:inherit;width:28px;height:28px}
 .btn-label{display:inline}
 .chev{opacity:.55;margin-left:2px}
 .hdr-logo .hdr-logo-lockup{display:block}
@@ -529,6 +537,7 @@ a{color:var(--ink-ui)}a:hover{opacity:.82}
         </span>
         <textarea id="prompt" class="prompt-input" rows="2" placeholder="Напишите, что хотите сгенерировать…" data-i18n-attr="placeholder:index.hero.prompt.placeholder" style="width: 100%; box-sizing: border-box; border: none; background: transparent; resize: none; font-family: 'Onest', sans-serif; font-size: 17px; line-height: 1.5; padding: 2px 0 0"></textarea>
       </div>
+      <div id="attachTray" class="home-tray" hidden></div>
       <div class="prompt-actions">
         <button type="button" id="attachBtn" class="tool-btn" aria-label="Прикрепить файл" data-i18n-attr="aria-label:common.attach" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; cursor: pointer">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg>
@@ -1121,16 +1130,134 @@ async function refreshLoginUi() {
   }
 }
 loginBtn.addEventListener('click', goAuth);
+let homeAttach = null;
+function paintHomeAttach() {
+  const tray = document.getElementById('attachTray');
+  if (!tray) return;
+  if (!homeAttach) { tray.hidden = true; tray.replaceChildren(); return; }
+  const a = homeAttach;
+  tray.hidden = false;
+  tray.replaceChildren();
+  const row = document.createElement('div');
+  row.className = 'home-att';
+  if (a.blobUrl) {
+    const img = document.createElement('img');
+    img.alt = '';
+    img.src = a.blobUrl;
+    row.appendChild(img);
+  }
+  const meta = document.createElement('span');
+  meta.className = 'home-att__meta';
+  const name = document.createElement('b');
+  name.textContent = a.name || 'фото';
+  const sub = document.createElement('span');
+  sub.textContent = a.error || (a.id ? 'Фото прикреплено' : 'Загружаю…');
+  meta.appendChild(name);
+  meta.appendChild(sub);
+  const x = document.createElement('button');
+  x.type = 'button';
+  x.className = 'home-att__x';
+  x.setAttribute('aria-label', 'Убрать файл');
+  x.textContent = '×';
+  x.addEventListener('click', () => {
+    if (homeAttach && homeAttach.blobUrl) URL.revokeObjectURL(homeAttach.blobUrl);
+    homeAttach = null;
+    paintHomeAttach();
+  });
+  row.appendChild(meta);
+  row.appendChild(x);
+  tray.appendChild(row);
+}
+function homeAttachError(file, code) {
+  if (code === 'heic') return 'HEIC не поддерживается — сохраните фото как JPG';
+  if (code === 'type') return 'Этот формат не подходит. Нужны JPG, PNG, WebP или GIF';
+  if (code === 'too_large') return 'Файл больше 20 МБ';
+  if (code === 'network') return 'Не загрузилось — проверьте интернет';
+  return 'Не получилось сохранить файл, попробуйте ещё раз';
+}
+function startHomeAttach(file) {
+  if (homeAttach && homeAttach.blobUrl) URL.revokeObjectURL(homeAttach.blobUrl);
+  const name = file.name || 'фото.jpg';
+  const type = (file.type || '').toLowerCase();
+  let error = '';
+  if (/\.(heic|heif)$/i.test(name) || /heic|heif/.test(type)) error = homeAttachError(file, 'heic');
+  else if (!(type.indexOf('image/') === 0 || /\.(jpe?g|png|webp|gif)$/i.test(name))) error = homeAttachError(file, 'type');
+  else if (file.size > 20 * 1024 * 1024) error = homeAttachError(file, 'too_large');
+  homeAttach = {
+    name: name,
+    blobUrl: (!error && window.URL) ? URL.createObjectURL(file) : '',
+    id: '',
+    preview: '',
+    error: error,
+    promise: null
+  };
+  paintHomeAttach();
+  if (error) return;
+  homeAttach.promise = ensureCsrf().then((token) => new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/uploads');
+    xhr.withCredentials = true;
+    if (token) xhr.setRequestHeader('X-CSRF-Token', token);
+    xhr.onload = () => {
+      let data = {};
+      try { data = JSON.parse(xhr.responseText || '{}'); } catch (_) {}
+      if (xhr.status === 201 || xhr.status === 200) resolve(data);
+      else reject(new Error(data.error || 'server'));
+    };
+    xhr.onerror = () => reject(new Error('network'));
+    const fd = new FormData();
+    fd.append('file', file, name);
+    xhr.send(fd);
+  })).then((data) => {
+    if (!homeAttach || homeAttach.name !== name) return;
+    homeAttach.id = data.id || '';
+    homeAttach.preview = data.preview_url || '';
+    homeAttach.error = homeAttach.id ? '' : homeAttachError(file, 'server');
+    paintHomeAttach();
+  }).catch((err) => {
+    if (!homeAttach || homeAttach.name !== name) return;
+    homeAttach.error = homeAttachError(file, err && err.message === 'network' ? 'network' : 'server');
+    paintHomeAttach();
+  });
+}
+function waitHomeAttach() {
+  const pending = homeAttach && homeAttach.promise;
+  const done = () => {
+    if (homeAttach && homeAttach.error) return false;
+    if (homeAttach && homeAttach.id) {
+      try {
+        sessionStorage.setItem('aish-pending-attach', JSON.stringify({
+          id: homeAttach.id, kind: 'image', name: homeAttach.name, preview: homeAttach.preview || ''
+        }));
+      } catch (_) {}
+    }
+    return true;
+  };
+  return pending ? pending.then(done, done) : Promise.resolve(done());
+}
 document.getElementById('modelsBtn').addEventListener('click', () => {
   const q = new URLSearchParams({ models: '1', new: '1' });
   const prompt = (app.state.text || '').trim();
   if (prompt) q.set('prompt', prompt);
-  try { app.setState({ text: '' }); } catch (_) {}
-  const ta = document.getElementById('prompt');
-  if (ta) ta.value = '';
-  location.href = '/app?' + q.toString();
+  waitHomeAttach().then((ok) => {
+    if (!ok) return;
+    try { app.setState({ text: '' }); } catch (_) {}
+    const ta = document.getElementById('prompt');
+    if (ta) ta.value = '';
+    location.href = '/app?' + q.toString();
+  });
 });
 document.getElementById('attachBtn').addEventListener('click', () => document.getElementById('attachFile').click());
+document.getElementById('attachFile').addEventListener('change', () => {
+  const input = document.getElementById('attachFile');
+  const file = input.files && input.files[0];
+  input.value = '';
+  if (file) startHomeAttach(file);
+});
+(function () {
+  const go = app.goStudio.bind(app);
+  app.goStudio = (extra) => { waitHomeAttach().then((ok) => { if (ok) go(extra); }); };
+})();
 ensureCsrf().then(refreshLoginUi);
 /* цены в карточках моделей: «20 ₽/с», «11 ₽» → по локали */
 document.querySelectorAll('.mm-foot b:not([data-i18n])').forEach((b) => {

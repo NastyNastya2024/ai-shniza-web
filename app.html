@@ -7,12 +7,12 @@
 <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/assets/brand/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/assets/brand/png/apple-touch-icon-180.png">
-<link rel="stylesheet" href="/assistant-ui.css?v=25">
+<link rel="stylesheet" href="/assistant-ui.css?v=36">
 <link rel="stylesheet" href="/attach.css">
 <link rel="stylesheet" href="/chat-history.css?v=5">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/aish-style.css?v=15">
+<link rel="stylesheet" href="/aish-style.css?v=20">
 <script src="/aish-style.js?v=9"></script>
 <script src="/aish-metrics.js?v=1"></script>
 <script src="/legal-pop.js?v=2"></script>
@@ -671,14 +671,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 </div>
 
 
-<script src="/i18n/dict-ru.js?v=9"></script>
-<script src="/i18n/dict-en.js?v=7"></script>
+<script src="/i18n/dict-ru.js?v=18"></script>
+<script src="/i18n/dict-en.js?v=16"></script>
 <script src="/i18n/runtime.js"></script>
 <script src="/vitrina-data.js"></script>
 <script src="/vitrina-camera-moves.js?v=3"></script>
 <script src="/vitrina-aishnitsa.js?v=14"></script>
-<script src="/assistant-ui.js?v=29"></script>
-<script src="/attach.js?v=2"></script>
+<script src="/assistant-ui.js?v=46"></script>
+<script src="/attach.js?v=6"></script>
 <script src="/aish-mcp.js?v=3"></script>
 <script src="/chat-history.js?v=11"></script>
 <script>
@@ -1049,7 +1049,7 @@ class Component extends DCLogic {
       copy[i] = next;
       this.state.msgs = copy;
       const row = $('msgs') && $('msgs').children[i];
-      if (row && !next.assistant && !next.result && patch.text != null && !next.textReply) {
+      if (row && !next.assistant && !next.result && patch.text != null && !next.textReply && !(Array.isArray(next.chips) && next.chips.length)) {
         row._msg = next;
         const t = row.querySelector('[data-msg-text]');
         if (t) {
@@ -1062,10 +1062,46 @@ class Component extends DCLogic {
       lastMsgs = -1;
       scheduleRender();
     };
+    this.rememberGen = (m, prompt, params) => {
+      const files = [];
+      const src = (Array.isArray(this.pendingFiles) && this.pendingFiles.length) ? this.pendingFiles : (this._keptFiles || []);
+      src.forEach((f) => { if (f && f.id && f.kind) files.push({ id: f.id, kind: f.kind, name: f.name || '' }); });
+      this._lastGen = {
+        slug: (m && (m.slug || m.model_key)) || '',
+        prompt: prompt || '',
+        params: (params && typeof params === 'object') ? params : {},
+        files: files
+      };
+    };
+    this.offerRetry = () => {
+      this.patchLastBot({
+        text: tr('studio.chat.failedRetry'),
+        job: false,
+        result: false,
+        chips: [{ label: tr('studio.chat.retrySend'), action: 'retry_gen' }]
+      });
+    };
+    this.retryLastGen = () => {
+      const g = this._lastGen;
+      if (!g || !g.slug) return;
+      const m = (this._routeStub && (this._routeStub.slug === g.slug || this._routeStub.model_key === g.slug))
+        ? this._routeStub
+        : this.MODELS.find((x) => x.slug === g.slug || x.model_key === g.slug);
+      if (!m) { this.openPanel(); this.botSay({ text: tr('studio.eggy.needModel') }, 200); return; }
+      this.pendingPrompt = g.prompt;
+      this.pendingSel = m.slug || g.slug;
+      this.pendingParams = g.params || {};
+      if (g.files && g.files.length) {
+        this.pendingFiles = g.files.slice();
+        this._keptFiles = g.files.slice();
+      }
+      this.botSay({ text: tr('studio.chat.cooking'), job: true, promptSource: this.promptSource === 'platform' ? 'platform' : 'original' }, 200);
+      this.runGenerate(m, g.prompt, g.params || {});
+    };
     this.cook = () => {
       const prompt = this.pendingPrompt;
       const sel = this.pendingSel || this.state.sel;
-      const m = this.MODELS.find((x) => x.slug === sel);
+      const m = (this._routeStub && this._routeStub.slug === sel) ? this._routeStub : this.MODELS.find((x) => x.slug === sel);
       if (!m) {
         this.openPanel();
         this.botSay({ text: tr('studio.eggy.needModel') }, 200);
@@ -1181,8 +1217,10 @@ class Component extends DCLogic {
           job_failover: !!(data && data.failover)
         };
         // текст статуса меняем только при смене фазы — без полной пересборки чата
-        if (st === 'running') this.patchLastBot({ text: tr('studio.chat.almost'), job: true });
-        else if (st === 'queued' || st === 'dispatched') this.patchLastBot({ text: tr('studio.chat.queued'), job: true });
+        if (!this._lookQuiet) {
+          if (st === 'running') this.patchLastBot({ text: tr('studio.chat.almost'), job: true });
+          else if (st === 'queued' || st === 'dispatched') this.patchLastBot({ text: tr('studio.chat.queued'), job: true });
+        }
         if (st === 'succeeded') return { res: { ok: true, status: 200 }, data: data };
         if (st === 'failed' || st === 'error') {
           return { res: { ok: false, status: (data && data.http_status) || 502 }, data: data || {} };
@@ -1233,6 +1271,15 @@ class Component extends DCLogic {
           try { await refreshUser(); } catch (_) {}
           const url = (data.urls && data.urls[0]) || '';
           const kind = data.kind || 'image';
+          const isMedia = kind === 'video' || kind === 'image' || kind === 'audio';
+          if (isMedia && !url) {
+            this.patchByJob(jobId, {
+              text: tr('studio.chat.failedRetry'), job: false, result: false,
+              chips: [{ label: tr('studio.chat.retrySend'), action: 'retry_gen' }]
+            });
+            if (window.AishHistory && AishHistory.flush) AishHistory.flush();
+            return;
+          }
           const prev = (this.state.msgs || []).find((m) => m && m.jobId === jobId);
           const src = data.prompt_source === 'platform' || data.prompt_source === 'original'
             ? data.prompt_source
@@ -1258,7 +1305,11 @@ class Component extends DCLogic {
         }
         if (st === 'failed' || st === 'error') {
           try { await refreshUser(); } catch (_) {}
-          this.patchByJob(jobId, { text: tr('studio.chat.failedRetry'), job: false, result: false });
+          const again = data && data.error === 'empty_output';
+          this.patchByJob(jobId, {
+            text: tr('studio.chat.failedRetry'), job: false, result: false,
+            chips: again ? [{ label: tr('studio.chat.retrySend'), action: 'retry_gen' }] : undefined
+          });
           if (window.AishHistory && AishHistory.flush) AishHistory.flush();
           return;
         }
@@ -1278,7 +1329,7 @@ class Component extends DCLogic {
     this.runGenerate = async (m, prompt, genParams, opts) => {
       opts = opts || {};   // opts.att — файлы скрепки, посчитанные один раз на всю серию; opts.label — «Кадр 3 из 9 · …»
       const promptSource = this.promptSource === 'platform' ? 'platform' : 'original';
-      this.patchLastBot({ text: opts.label || tr(m && m.type === 'text' ? 'studio.chat.thinking' : 'studio.chat.cooking'), job: true, promptSource: promptSource });
+      if (!opts.look) this.patchLastBot({ text: opts.label || tr(m && m.type === 'text' ? 'studio.chat.thinking' : 'studio.chat.cooking'), job: true, promptSource: promptSource });
       const body = { model: m.model_key || m.slug, prompt: prompt || '', prompt_source: promptSource };
       if (opts.stay) body.stay = true;
       if (genParams && typeof genParams === 'object' && Object.keys(genParams).length) body.params = genParams;
@@ -1287,24 +1338,26 @@ class Component extends DCLogic {
         Object.assign(body, opts.att.body);
       } else if (window.AishAttach) {
         for (let i = 0; i < 240 && AishAttach.busy(); i++) {
-          if (i === 0) this.patchLastBot({ text: tr('studio.attach.waitUpload'), job: true });
+          if (i === 0 && !opts.look) this.patchLastBot({ text: tr('studio.attach.waitUpload'), job: true });
           await new Promise((r) => setTimeout(r, 500));
         }
         const att = AishAttach.payload(m);
         Object.assign(body, att.body);
-        if (Array.isArray(this.pendingFileIds)) {
-          const allow = {};
-          this.pendingFileIds.forEach((id) => { allow[id] = 1; });
-          ['image', 'audio', 'video'].forEach((k) => { if (body[k] && !allow[body[k]]) delete body[k]; });
-          const ready = AishAttach.ready ? AishAttach.ready() : [];
-          ready.forEach((f) => { if (allow[f.id] && !body[f.kind]) body[f.kind] = f.id; });
+        // Помощник уже назвал файлы (upl_…). Они остаются на сервере, даже если плашка в поле ввода уже убрана.
+        let listed = Array.isArray(this.pendingFiles) ? this.pendingFiles.filter((f) => f && f.id && f.kind) : null;
+        if ((!listed || !listed.length) && Array.isArray(this._keptFiles)) listed = this._keptFiles.filter((f) => f && f.id && f.kind);
+        if (listed && listed.length) {
+          ['image', 'audio', 'video'].forEach((k) => {
+            const want = listed.find((f) => f.kind === k && /^upl_[a-f0-9]{24}$/.test(f.id));
+            if (want) { body[k] = want.id; return; }
+            if (body[k] && !listed.some((f) => f.id === body[k])) delete body[k];
+          });
         }
         // в сообщении о запуске — какие именно файлы ушли в генерацию
-        const shownFiles = Array.isArray(this.pendingFileIds)
-          ? att.files.filter((f) => this.pendingFileIds.indexOf(f.id) >= 0)
-          : att.files;
-        if (shownFiles.length) this.patchLastBot({ text: tr('studio.attach.cookingWith', { files: AishAttach.describe(shownFiles) }), job: true, files: shownFiles });
+        const shownFiles = (listed && listed.length) ? listed : att.files;
+        if (shownFiles.length && !opts.look) this.patchLastBot({ text: tr('studio.attach.cookingWith', { files: AishAttach.describe(shownFiles) }), job: true, files: shownFiles });
       }
+      this.rememberGen(m, prompt, genParams);
       const mt0 = Date.now();
       const mInfo = { model: m.model_key || m.slug, kind: m.type || '' };
       MP(1);
@@ -1321,7 +1374,7 @@ class Component extends DCLogic {
       if (window.AishAttach && !opts.att && (res.ok || res.status === 202) && !(data && data.kind === 'switch')) AishAttach.consume();
       if (res.status === 202 && data && data.job_id) {
         jobIdStarted = data.job_id;
-        this.patchLastBot({ text: opts.label ? opts.label + ' · ' + tr('studio.chat.queued') : tr('studio.chat.queued'), job: true, jobId: data.job_id, promptSource: promptSource });
+        if (!opts.look) this.patchLastBot({ text: opts.label ? opts.label + ' · ' + tr('studio.chat.queued') : tr('studio.chat.queued'), job: true, jobId: data.job_id, promptSource: promptSource });
         if (window.AishHistory && AishHistory.flush) AishHistory.flush(true);
         try { await refreshUser(); } catch (_) {}
         ({ res, data } = await this.pollGenerate(data.job_id, data.poll_url));
@@ -1339,7 +1392,11 @@ class Component extends DCLogic {
           last_detail: detailRaw,
           last_http_status: res.status || 0,
           job_status: 'failed',
-          job_age_sec: 0
+          job_age_sec: 0,
+          job_provider: (data && data.provider) || (m && m.provider) || '',
+          selected_model_id: (data && data.model) || (m && (m.model_key || m.slug)) || '',
+          selected_model_title: (m && m.name) || '',
+          selected_model_kind: (m && m.type) || ''
         };
         // Технические подробности (Redis, провайдер) — только в консоль, человеку — понятный текст
         if (data && (data.detail || data.error)) console.warn('[generate]', res.status, data.error, data.detail || '');
@@ -1397,16 +1454,48 @@ class Component extends DCLogic {
           this.botSay({ text: tr('studio.chat.moderation') }, 200);
           return;
         }
-        if (err === 'timeout') { this.botSay({ text: tr('studio.chat.timeout') }, 200); return; }
+        if (err === 'timeout') {
+          if (this.eggy && this.eggy.explainJob) {
+            try { await this.eggy.explainJob(); return; }
+            catch (_) {}
+          }
+          this.botSay({ text: tr('studio.chat.timeout') }, 200);
+          return;
+        }
+        if (started && (err === 'empty_output' || /без URL/.test(String((data && data.reply) || '')))) { this.offerRetry(); return; }
         this.botSay({ text: started ? tr('studio.chat.failedRetry') : tr('studio.chat.notStarted') }, 200);
         return;
       }
       if (data && data.kind === 'text') {
-        const reply = String(data.reply || '').trim() || tr('studio.chat.failedRetry');
+        if (opts.look) {
+          MP(-1);
+          try { await refreshUser(); } catch (_) {}
+          return data;
+        }
+        const reply = visiblePrompt(String(data.reply || '').trim()) || tr('studio.chat.failedRetry');
         MP(-1);
         M('gen_done', Object.assign({ ms: Date.now() - mt0 }, mInfo));
         const quiet = !!this.pendingQuiet;
         this.pendingQuiet = false;
+        if (opts.intoId) {
+          const msgs = this.state.msgs || [];
+          const at = msgs.findIndex((x) => x && x.id === opts.intoId);
+          if (at >= 0) {
+            const next = Object.assign({}, msgs[at], { text: reply, textReply: true, job: false });
+            const copy = msgs.slice();
+            copy[at] = next;
+            this.state.msgs = copy;
+            const row = $('msgs') && $('msgs').children[at];
+            if (row) {
+              row._msg = next;
+              const win = row.querySelector('[data-prompt-window]');
+              if (win) { win.value = reply; fitPromptWindow(win); }
+              savePromptWindow(row, reply, true);
+            }
+          }
+          try { await refreshUser(); } catch (_) {}
+          return data;
+        }
         this.patchLastBot({ text: quiet ? tr('studio.sb.writerDone') : reply, job: false, textReply: !quiet && !!reply, makeHints: !quiet && wantsMakeHints(reply) });
         if (quiet && this.eggy && this.eggy.chip) {
           this.eggy.chip({ action: 'pipe_result', value: { kind: 'text', reply: reply, model: (m && (m.model_key || m.slug)) || '' } });
@@ -1417,6 +1506,12 @@ class Component extends DCLogic {
       const url = (data && data.urls && data.urls[0]) || '';
       const kind = (data && data.kind) || m.type || 'image';
       MP(-1);
+      if (!url && (kind === 'video' || kind === 'image' || kind === 'audio')) {
+        M('gen_fail', Object.assign({ code: 'empty_output', http: res.status || 0, started: true, ms: Date.now() - mt0 }, mInfo));
+        try { await refreshUser(); } catch (_) {}
+        this.offerRetry();
+        return data;
+      }
       if (url) M('gen_done', Object.assign({ ms: Date.now() - mt0 }, mInfo));
       else M('gen_fail', Object.assign({ code: 'failed', http: res.status || 0, started: true, ms: Date.now() - mt0 }, mInfo));
       const replyText = String((data && data.reply) || tr('studio.chat.queued')).trim() || tr('studio.chat.queued');
@@ -1561,6 +1656,7 @@ class Component extends DCLogic {
     this.textHistory = [];
     this.textModel = '';
     this.textDirect = false;   // true — выбранная текстовая модель, сообщения идут в неё, не в помощника
+    this.panelLock = false;    // модель выбрана в списке — не подменять её другой
     this.textChat = (m, text, opts) => {
       opts = opts || {};
       if (this.textModel !== m.slug) { this.textHistory = []; this.textModel = m.slug; }
@@ -1575,23 +1671,38 @@ class Component extends DCLogic {
       if (!this.state.authed) {
         M('gate', { type: 'login', src: 'text' });
         this.botSay({ text: tr('studio.chat.needLogin'), loginCta: true }, 200);
+        if (opts.look && this.eggy && this.eggy.lookDone) this.eggy.lookDone('');
         return;
       }
-      const hist = this.textHistory.slice(-8);
+      const hist = opts.look ? [] : this.textHistory.slice(-8);
       let prompt = text;
       if (hist.length) {
         const ctx = hist.map((h) => (h.role === 'user' ? tr('studio.text.you') : tr('studio.text.model')) + ': ' + h.content).join('\n');
         prompt = tr('studio.text.context') + '\n' + ctx.slice(-6000) + '\n\n' + tr('studio.text.newMessage') + '\n' + text;
       }
-      if (!opts.resume) this.textHistory.push({ role: 'user', content: text });
-      else if (!this.textHistory.length || this.textHistory[this.textHistory.length - 1].content !== text) {
+      if (!opts.look && !opts.intoId && !opts.resume) this.textHistory.push({ role: 'user', content: text });
+      else if (!opts.look && !opts.intoId && (!this.textHistory.length || this.textHistory[this.textHistory.length - 1].content !== text)) {
         this.textHistory.push({ role: 'user', content: text });
       }
       this.pendingPrompt = prompt;
-      this.botSay({ text: tr('studio.chat.thinking'), job: true }, 200);
-      this.later('cook', 300, async () => {
-        const data = await this.runGenerate(m, prompt, {}, { stay: !!opts.force });
-        if (data && data.kind === 'switch') {
+      if (opts.look) this._lookQuiet = true;
+      if (!opts.intoId && !opts.look) this.botSay({ text: tr('studio.chat.thinking'), job: true }, 200);
+      this.later('cook', opts.intoId ? 0 : 300, async () => {
+        const data = await this.runGenerate(m, prompt, {}, { stay: !!opts.force, intoId: opts.intoId || '', look: !!opts.look });
+        if (opts.look) {
+          this._lookQuiet = false;
+          this.textDirect = false;
+          if (this._lookWait) { clearTimeout(this._lookWait); this._lookWait = 0; }
+          this._lookSettled = true;
+          const reply = data && data.kind === 'text' ? String(data.reply || '').trim() : '';
+          const next = this.state.msgs.slice();
+          while (next.length && next[next.length - 1] && next[next.length - 1].role === 'bot' && next[next.length - 1].job) next.pop();
+          this.setState({ msgs: next });
+          if (this._lookSkipped) { this._lookSkipped = false; return; }
+          if (this.eggy && this.eggy.lookDone) await this.eggy.lookDone(reply);
+          return;
+        }
+        if (data && data.kind === 'switch' && !opts.force) {
           const next = this.state.msgs.slice();
           while (next.length && next[next.length - 1].role === 'bot' && next[next.length - 1].job && !next[next.length - 1].textReply) next.pop();
           this.setState({ msgs: next });
@@ -1609,10 +1720,14 @@ class Component extends DCLogic {
           return;
         }
         if (data && data.kind === 'text' && data.reply) {
-          const reply = String(data.reply).slice(0, 4000);
-          this.textHistory.push({ role: 'assistant', content: reply });
+          const reply = visiblePrompt(String(data.reply)).slice(0, 8000);
+          if (opts.intoId) {
+            for (let i = this.textHistory.length - 1; i >= 0; i--) {
+              if (this.textHistory[i].role === 'assistant') { this.textHistory[i].content = reply; break; }
+            }
+          } else this.textHistory.push({ role: 'assistant', content: reply });
           if (this.eggy && this.eggy.noteText) await this.eggy.noteText({ model: m.model_key || m.slug, name: m.name || '', text: reply });
-          if (textRefusal(reply) && this.eggy && this.eggy.handoff) {
+          if (!opts.force && textRefusal(reply) && this.eggy && this.eggy.handoff) {
             await this.eggy.handoff({
               text: 'сделай видео по этому',
               kind: 'video',
@@ -1621,7 +1736,13 @@ class Component extends DCLogic {
               replies: [reply]
             });
           }
-        } else this.textHistory.pop();   // ответа нет — вопрос не остаётся «висеть» в истории
+        } else if (!opts.intoId) this.textHistory.pop();   // ответа нет — вопрос не остаётся «висеть» в истории
+        if (opts.intoId) {
+          const at = (this.state.msgs || []).findIndex((x) => x && x.id === opts.intoId);
+          const row = at >= 0 && $('msgs') && $('msgs').children[at];
+          const btn = row && row.querySelector('[data-prompt-refresh]');
+          if (btn) btn.disabled = false;
+        }
       });
     };
     this.syncAssistPref = () => {
@@ -1636,12 +1757,14 @@ class Component extends DCLogic {
       M('new_chat', {});
       if (window.AishHistory) await AishHistory.detach();
       clearTimeout(this.timers.bot); clearTimeout(this.timers.cook); clearTimeout(this.timers.lead); clearTimeout(this.timers.ck); clearTimeout(this.timers.intro);
-      this.pendingPrompt = ''; this.pendingSel = ''; this.pendingParams = {};
+      this.pendingPrompt = ''; this.pendingSel = ''; this.pendingParams = {}; this.pendingFiles = null;
       this.promptSource = 'original';
       this.textHistory = [];
       this.textDirect = false;
+      this.panelLock = false;
       this._cameraSeedPending = false;
       this._shownFiles = {};
+      this._keptFiles = [];
       if (window.AishAttach && AishAttach.consume) AishAttach.consume();
       lastMsgs = -1;
       this.setState({ chat: true, msgs: [], typing: false, text: '', assist: true });
@@ -1658,10 +1781,14 @@ class Component extends DCLogic {
       const text = this.state.text.trim();
       if (!text) { this.speak(tr('studio.eggy.needIdea')); return; }
       this.pendingFileIds = null;
+      this.pendingFiles = null;
       if (!this.state.assist) this.setState({ assist: true });
       const cur = this.MODELS.find((x) => x.slug === this.state.sel);
-      // Прямой чат с LLM: textDirect (после «Доработать» / выбора текста) или помощник выключен
-      if (cur && cur.type === 'text' && (this.textDirect || !this.state.assist)) { this.textChat(cur, text); return; }
+      // Текстовая модель подключена — любой текст сразу в неё, без сценария видео/картинки.
+      if (cur && cur.type === 'text' && (this.textDirect || !this.state.assist)) {
+        this.textChat(cur, text, { force: !!this.textDirect });
+        return;
+      }
       // после «поворот камеры» с витрины: правка промпта → запуск
       if (this._cameraSeedPending) {
         this.setState({ chat: true, text: '' });
@@ -1685,9 +1812,10 @@ class Component extends DCLogic {
       }
       M('prompt_sent', { len: text.length, files: window.AishAttach ? AishAttach.ready().length : 0, assist: true });
       try {
+        if (window.AishAttach && AishAttach.park) AishAttach.park();   // плашка уходит сразу, файл остаётся в запросе
         await this.eggy.send(text);
-        if (window.AishAttach && AishAttach.park) AishAttach.park();   // плашки из композера — уже в пузыре
       } catch (_) {
+        if (window.AishAttach && AishAttach.unpark) AishAttach.unpark();
         this.botSay({ text: tr('studio.chat.failedRetry') }, 200);
       }
     };
@@ -1811,11 +1939,13 @@ class Component extends DCLogic {
     this.goHome = (e) => {
       if (e && e.preventDefault) e.preventDefault();
       clearTimeout(this.timers.bot); clearTimeout(this.timers.cook); clearTimeout(this.timers.lead); clearTimeout(this.timers.ck);
-      this.pendingPrompt = ''; this.pendingSel = ''; this.pendingParams = {};
+      this.pendingPrompt = ''; this.pendingSel = ''; this.pendingParams = {}; this.pendingFiles = null;
       this.promptSource = 'original';
       this.textHistory = [];
       this.textDirect = false;
+      this.panelLock = false;
       this._shownFiles = {};
+      this._keptFiles = [];
       if (this.eggy && this.eggy.softReset) this.eggy.softReset();
       lastMsgs = -1;
       this.setState({ chat: false, msgs: [], typing: false, text: '' });
@@ -1892,6 +2022,10 @@ class Component extends DCLogic {
       priceColor: m.cost === 0 ? 'var(--free)' : 'var(--ink)',
       pick: () => {
         const next = m.slug === st.sel ? '' : m.slug;
+        // Любая модель с панели: дальше работаем с ней, без подмены другой нейросетью.
+        this.panelLock = !!next;
+        this.textDirect = !!(next && m.type === 'text');
+        if (this.textDirect) { this.textModel = m.slug; this.pendingSel = m.slug; }
         this.setState({ sel: next });
         if (!next) return;
         M('model_pick', { model: m.slug, kind: m.type || '', src: 'panel' });
@@ -1968,9 +2102,20 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
       selected_model_id: m.model_key || m.slug || '',
       selected_model_kind: m.type || '',
       selected_model_title: m.name || '',
-      has_image: !!((window.AishAttach && AishAttach.has('image')) || app.attachedImage || app.state.hasImage),
-      // скрепка: тип и имя готовых файлов — ассистент называет их по имени в ответах и сводке
-      attachments: window.AishAttach ? AishAttach.ready().map((f) => ({ id: f.id, kind: f.kind, name: f.name })) : [],
+      model_lock: !!app.panelLock,
+      has_image: !!((window.AishAttach && AishAttach.has('image')) || app.attachedImage || app.state.hasImage || (app._keptFiles || []).some((f) => f && f.kind === 'image')),
+      // скрепка: и то, что сейчас в поле, и файлы этого диалога — после «доработать в Claude» плашка пропадает, номер файла остаётся
+      attachments: (function () {
+        const live = window.AishAttach && AishAttach.ready ? AishAttach.ready() : [];
+        const bag = app._keptFiles || (app._keptFiles = []);
+        live.forEach((f) => {
+          if (!f || !f.id) return;
+          const row = { id: f.id, kind: f.kind, name: f.name, preview: f.preview || '' };
+          const at = bag.findIndex((x) => x && x.id === f.id);
+          if (at >= 0) bag[at] = row; else bag.push(row);
+        });
+        return bag.filter((f) => f && f.id).map((f) => ({ id: f.id, kind: f.kind, name: f.name, preview: f.preview || '' }));
+      })(),
       draft: app.state.text || '',
       // дерево подсказок: телефон → до 3 кнопок; нет MCP → «Подключить…»; профессия из профиля меняет порядок подсказок
       device: (window.matchMedia && matchMedia('(max-width: 760px)').matches) ? 'mobile' : 'desktop',
@@ -1994,6 +2139,12 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
     if (!said && !hasBlocks && !hasChips && !data.switch_line) return;
     if (data.switch_line) app.push({ role: 'note', text: String(data.switch_line) });
     const chips = Array.isArray(data.chips) ? data.chips : [];
+    if (chips.some((c) => c && c.action === 'make')) {
+      const prev = (app.state.msgs || []).slice().reverse().find((m) => m && m.makeHints);
+      if (prev) prev.makeHints = false;
+      const made = document.querySelectorAll('#msgs .reply-make');
+      if (made.length) made[made.length - 1].remove();
+    }
     app.push({
       role: 'bot',
       assistant: data,
@@ -2003,6 +2154,54 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
       loginCta: chips.some((c) => c && c.action === 'login'),
     });
     // «Доработать» → подключили Claude/GPT: сразу первое сообщение модели с текущим промптом
+    if (data.intent === 'look_photo' && data.generate_model && data.text_ask) {
+      const mid = data.generate_model;
+      const ask = String(data.text_ask);
+      app.later('lookPhoto', 350, () => {
+        let m = app.MODELS.find((x) => x.model_key === mid || x.slug === mid);
+        if (!m) {
+          m = app.priceModel({
+            slug: mid, model_key: mid, name: 'Claude Opus 4.7',
+            type: 'text', kind: tr('studio.kind.text'), kinds: [tr('studio.kind.text')],
+            cost: 0, rub: 0, viaGenerate: true, integrated: true,
+            inputs: ['text', 'image']
+          });
+          app.MODELS = app.MODELS.concat([m]);
+        } else if (!(m.inputs || []).includes('image')) {
+          m = Object.assign({}, m, { inputs: (m.inputs || []).concat(['image']) });
+        }
+        const kept = (app._keptFiles || []).filter((f) => f && f.id && f.kind);
+        if (kept.length) app.pendingFiles = kept;
+        app.panelLock = false;
+        app.setState({ sel: m.slug });
+        app.textChat(m, ask, { force: true, resume: true, look: true });
+      });
+      app._lookSettled = false;
+      app._lookSkipped = false;
+      if (app._lookWait) clearTimeout(app._lookWait);
+      app._lookWait = setTimeout(() => {
+        app._lookWait = 0;
+        if (app._lookSettled) return;
+        const msgs = app.state.msgs || [];
+        let i = -1;
+        for (let n = msgs.length - 1; n >= 0; n--) {
+          const row = msgs[n];
+          if (row && row.assistant && row.assistant.intent === 'look_photo') { i = n; break; }
+        }
+        if (i < 0) return;
+        const already = (msgs[i].assistant.chips || []).some((c) => c && (c.action === 'look_skip' || c.action === 'look_next'));
+        if (already) return;
+        const chips = [
+          { label: tr('studio.chat.lookSkip'), action: 'look_skip' },
+          { label: tr('studio.chat.lookPass'), action: 'look_next' }
+        ];
+        const data2 = Object.assign({}, msgs[i].assistant, { chips: chips });
+        const copy = msgs.slice();
+        copy[i] = Object.assign({}, msgs[i], { assistant: data2, chips: chips });
+        lastMsgs = -1;
+        app.setState({ msgs: copy });
+      }, 8000);
+    }
     if (data.intent === 'polish_chat' && data.generate_model) {
       app.textDirect = true;
       const mid = data.generate_model;
@@ -2021,10 +2220,10 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
         const ask = draft
           ? tr('studio.text.polishAsk', { prompt: draft })
           : tr('studio.text.placeholder');
-        app.textChat(m, ask);
+        app.textChat(m, ask, { force: true, resume: true });
       });
     }
-    if (data.text_ask && data.generate_model && data.intent !== 'polish_chat') {
+    if (data.text_ask && data.generate_model && data.intent !== 'polish_chat' && data.intent !== 'look_photo' && data.intent !== 'look_photo_wait') {
       app.textDirect = true;
       const mid = data.generate_model;
       const ask = String(data.text_ask);
@@ -2067,7 +2266,10 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
       }
       app.pendingSel = byKey.slug;
       app.setState({ sel: byKey.slug });
-      if (byKey.type === 'text') app.textDirect = !(quiet || keepAssistant);
+      if (byKey.type === 'text') {
+        app.textDirect = !(quiet || keepAssistant);
+        if (app.textDirect) app.panelLock = true;
+      }
     }
     if (prompt) app.pendingPrompt = String(prompt);
     app.pendingParams = params && typeof params === 'object' ? params : {};
@@ -2075,16 +2277,35 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
   onGenerateSeries: (job) => { app.promptSource = 'original'; app.cookSeries(job || {}); },
   onGenerate: ({ model, prompt, params, files }) => {
     app.promptSource = 'original';   // промпт собрал помощник или человек — можно публиковать
-    app.pendingFileIds = Array.isArray(files) ? files.map((f) => (f && f.id) || '').filter(Boolean) : null;
+    app.pendingFiles = Array.isArray(files) ? files.filter((f) => f && f.id) : [];
+    app.pendingFileIds = app.pendingFiles.map((f) => f.id);
     if (model) {
-      const byKey = app.MODELS.find((x) => x.model_key === model || x.slug === model);
-      if (byKey) { app.pendingSel = byKey.slug; app.setState({ sel: byKey.slug }); }
+      let byKey = app.MODELS.find((x) => x.model_key === model || x.slug === model);
+      if (!byKey) {
+        const cur = app.MODELS.find((x) => x.slug === app.state.sel || x.model_key === app.state.sel) || {};
+        byKey = {
+          slug: model, model_key: model, name: cur.name || model,
+          type: cur.type || 'video', viaGenerate: true, integrated: true, cost: 0, rub: 0
+        };
+        app._routeStub = byKey;
+      } else app._routeStub = null;
+      app.pendingSel = byKey.slug;
+      if (byKey.slug === app.state.sel || app.MODELS.some((x) => x.slug === byKey.slug)) app.setState({ sel: byKey.slug });
     }
     if (prompt) app.pendingPrompt = String(prompt);
     app.pendingParams = params && typeof params === 'object' ? params : {};
     app.cook();
   },
   onUiAction: (action, value) => {
+    if (action === 'look_skip' || action === 'look_next') {
+      app._lookSkipped = true;
+      if (app._lookWait) { clearTimeout(app._lookWait); app._lookWait = 0; }
+      const next = (app.state.msgs || []).slice();
+      while (next.length && next[next.length - 1] && next[next.length - 1].role === 'bot' && next[next.length - 1].job) next.pop();
+      lastMsgs = -1;
+      app.setState({ msgs: next });
+      return;
+    }
     if (action === 'stay_text') {
       const modelId = value && value.model;
       const ask = value && value.text ? String(value.text) : '';
@@ -2160,13 +2381,26 @@ const fmtBot = (t) => esc(t)
   .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
   .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">$1</a>')
   .replace(/```prompt\s*([\s\S]*?)```/gi, (_, body) =>
-    '<div class="prompt-card"><pre class="prompt-card__text">' + body.trim() + '</pre><div class="prompt-card__row">'
-    + '<button type="button" data-prompt-copy>' + esc(tr('studio.chat.promptCopy')) + '</button>'
-    + '<button type="button" data-make="video">' + esc(tr('studio.chat.makeVideo')) + '</button>'
-    + '<button type="button" data-make="image">' + esc(tr('studio.chat.makeImage')) + '</button>'
-    + '</div></div>')
+    '<div class="prompt-card"><pre class="prompt-card__text">' + body.trim() + '</pre></div>')
   .replace(/\n/g, '<br>');
 const wantsMakeHints = (text) => /```prompt/i.test(String(text || '')) || String(text || '').trim().length >= 80;
+function visiblePrompt(text) {
+  const raw = String(text || '').trim();
+  const fenced = raw.match(/```prompt\s*([\s\S]*?)```/i);
+  return (fenced ? fenced[1] : raw).trim();
+}
+function expandGlyph(open) {
+  const d = open
+    ? 'M8 4v4H4M16 4v4h4M8 20v-4H4M16 20v-4h4'
+    : 'M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4';
+  return '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="' + d + '"></path></svg>';
+}
+function fitPromptWindow(win) {
+  if (!win) return;
+  if (!win.classList.contains('is-open')) { win.style.height = ''; return; }
+  win.style.height = 'auto';
+  win.style.height = Math.max(140, win.scrollHeight + 2) + 'px';
+}
 const textRefusal = (text) => /не могу (сгенерир|создать|сделать|нарисовать)\w*\s*(видео|изображен|картин|ролик)|i can(?:not|'t) (generate|create)\s+(a\s+)?(video|image)|используйте\s+(sora|midjourney|runway)|\b(midjourney|runway|sora)\b/i.test(String(text || ''));
 let raf = 0, lastMsgs = -1, lastModelsKey = '', lastTabsKey = '', lastSay = null, lastDark = null, lastModal = false, lastStepCode = false;
 function scheduleRender() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
@@ -2425,7 +2659,11 @@ function replyToolsHtml(m) {
   if (!showReplyTools(m)) return '';
   const up = m.vote === 'up';
   const down = m.vote === 'down';
+  const prompt = !!(m.textReply && wantsMakeHints(m.text));
   return '<div class="reply-tools" role="group" aria-label="' + esc(tr('studio.chat.copy')) + '">'
+    + (prompt
+      ? '<button type="button" data-prompt-refresh aria-label="' + esc(tr('studio.chat.refreshPrompt')) + '" title="' + esc(tr('studio.chat.refreshPrompt')) + '"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.2-5.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M20 4.5V9h-4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'
+      : '')
     + '<button type="button" data-reply-copy aria-label="' + esc(tr('studio.chat.copy')) + '">'
     + '<svg class="is-copy" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="8.5" y="8.5" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M6.5 15.5H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8.5a2 2 0 0 1 2 2v1.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>'
     + '<svg class="is-check" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12.5 9.2 17 19 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
@@ -2454,9 +2692,11 @@ function msgEl(m) {
     }
     return n;
   }
-  if (m.assistant && app.eggy && app.eggy.render) {
+    if (m.assistant && app.eggy && app.eggy.render) {
     const node = app.eggy.render(m.assistant);
-    if (m.history) node.classList.add('is-old', 'is-history');   // из истории — карточки только для чтения
+    if (m.history) node.classList.add('is-history');
+    if (m.history && !m.revived) node.classList.add('is-old');
+    if (m.revived) node.classList.add('is-revived');
     node.classList.add('msg-in');
     node.style.cssText = 'display:flex;align-items:flex-end;gap:10px;max-width:100%';
     return node;
@@ -2498,14 +2738,13 @@ function msgEl(m) {
     ? '<button type="button" class="btn-like-work' + (m.liked ? ' is-on' : '') + '" data-like-work="' + esc(m.workId) + '" aria-pressed="' + (m.liked ? 'true' : 'false') + '" style="height:36px;padding:0 14px;border-radius:12px;border:1px solid ' + (m.liked ? '#E0457B' : 'var(--field-brd)') + ';background:' + (m.liked ? 'rgba(224,69,123,.12)' : 'var(--field)') + ';color:' + (m.liked ? '#E0457B' : 'var(--ink)') + ';font:700 13px Manrope,system-ui,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px">♥ <span data-like-n>' + (m.likes || 0) + '</span></button>'
     : '';
   el.innerHTML = '<span class="bot-av ' + m.avCls + '" style="position:relative;flex:0 0 auto;width:38px;height:38px"><img src="' + ORB_SRC + '" alt="' + esc(tr('common.brand.alt')) + '" style="position:absolute;inset:0;width:100%;height:100%;display:block"><span class="eye-p l bot-eye"><span class="eye-shape" style="box-shadow:none"></span></span><span class="eye-p r bot-eye"><span class="eye-shape" style="box-shadow:none"></span></span></span>'
-    + '<div class="glass" style="border-radius:20px 20px 20px 6px;padding:12px 16px;display:flex;flex-direction:column;gap:10px;align-items:stretch;box-shadow:0 12px 30px -20px var(--shadow);flex:1;min-width:0;width:100%;box-sizing:border-box"><span data-msg-text style="display:block;width:100%;min-width:0;font-size:15px;line-height:1.5;color:var(--ink);white-space:pre-wrap;overflow-wrap:break-word">' + fmtBot(m.text) + '</span>'
+    + '<div class="msg-bot__body">'
+    + '<div class="glass" style="border-radius:20px 20px 20px 6px;padding:12px 16px;display:flex;flex-direction:column;gap:10px;align-items:stretch;box-shadow:0 12px 30px -20px var(--shadow);min-width:0;width:100%;box-sizing:border-box">'
+    + (m.textReply && wantsMakeHints(m.text)
+      ? '<textarea class="prompt-window" data-prompt-window rows="6">' + esc(visiblePrompt(m.text)) + '</textarea>'
+        + '<button type="button" class="prompt-expand" data-prompt-expand aria-expanded="false" aria-label="' + esc(tr('studio.chat.expandPrompt')) + '" title="' + esc(tr('studio.chat.expandPrompt')) + '">' + expandGlyph(false) + '</button>'
+      : (String(m.text || '').trim() ? '<span data-msg-text style="display:block;width:100%;min-width:0;font-size:15px;line-height:1.5;color:var(--ink);white-space:pre-wrap;overflow-wrap:break-word">' + fmtBot(m.text) + '</span>' : ''))
     + replyToolsHtml(m)
-    + (m.makeHints ? '<div class="reply-make">'
-      + '<button type="button" data-make="video">' + esc(tr('studio.chat.makeVideo')) + '</button>'
-      + '<button type="button" data-make="image">' + esc(tr('studio.chat.makeImage')) + '</button>'
-      + '<button type="button" data-make="storyboard">' + esc(tr('studio.chat.makeBoard')) + '</button>'
-      + '<button type="button" data-make="voice">' + esc(tr('studio.chat.makeVoice')) + '</button>'
-      + '</div>' : '')
     + media
     + pubBlock
     + (likeChip ? '<div style="display:flex;flex-wrap:wrap;gap:8px">' + likeChip + '</div>' : '')
@@ -2516,9 +2755,16 @@ function msgEl(m) {
         + m.chips.slice(0, 5).map((c, i) => '<button type="button" class="field" data-assist-chip="' + i + '" style="height:34px;padding:0 12px;border-radius:999px;font:700 12px Onest,system-ui,sans-serif;cursor:pointer">' + esc(c.label || c.action || '') + '</button>').join('')
         + '</div>'
       : '')
+    + '</div>'
+    + (m.makeHints ? '<div class="reply-make">'
+      + '<button type="button" data-make="video">' + esc(tr('studio.chat.makeVideo')) + '</button>'
+      + '<button type="button" data-make="image">' + esc(tr('studio.chat.makeImage')) + '</button>'
+      + '<button type="button" data-make="storyboard">' + esc(tr('studio.chat.makeBoard')) + '</button>'
+      + '</div>' : '')
     + '</div>';
   if (Array.isArray(m.chips) && m.chips.length) el._assistChips = m.chips.slice(0, 5);
   el._msg = m;
+  fitPromptWindow(el.querySelector('[data-prompt-window]'));
   // генерация с файлами: имена остаются под сообщением, даже когда текст сменится на «в очереди» / «готово»
   if (Array.isArray(m.files) && m.files.length) {
     const box = el.querySelector('.glass');
@@ -2584,6 +2830,46 @@ function copyReplyText(text) {
   if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text);
   return Promise.reject();
 }
+function savePromptWindow(row, text, tell) {
+  const msg = row && row._msg;
+  if (!msg) return;
+  msg.text = text;
+  const msgs = app.state.msgs || [];
+  const at = msgs.indexOf(msg);
+  for (let j = at + 1; j < msgs.length; j++) {
+    const next = msgs[j];
+    if (!next || next.role !== 'bot') continue;
+    if (next.textReply) break;
+    if (!Array.isArray(next.chips)) continue;
+    next.chips.forEach((c) => {
+      if (c && c.action === 'make' && c.value && typeof c.value === 'object') c.value.text = text;
+    });
+    const node = $('msgs') && $('msgs').children[j];
+    if (node && node._assistChips) node._assistChips = next.chips.slice(0, 5);
+  }
+  const lastReply = msgs.slice().reverse().find((m) => m && m.textReply);
+  if (lastReply === msg && Array.isArray(app.textHistory)) {
+    for (let i = app.textHistory.length - 1; i >= 0; i--) {
+      if (app.textHistory[i].role === 'assistant') { app.textHistory[i].content = text.slice(0, 4000); break; }
+    }
+  }
+  if (tell && app.eggy && app.eggy.noteText) {
+    const cur = (app.MODELS || []).find((x) => x.slug === app.state.sel) || {};
+    app.eggy.noteText({ model: cur.model_key || cur.slug || '', name: cur.name || '', text: text });
+  }
+  if (window.AishHistory) AishHistory.watch(msgs);
+}
+document.addEventListener('input', (e) => {
+  const win = e.target.closest && e.target.closest('[data-prompt-window]');
+  if (!win) return;
+  savePromptWindow(win.closest('.msg-in'), win.value.trim());
+  fitPromptWindow(win);
+});
+document.addEventListener('focusout', (e) => {
+  const win = e.target.closest && e.target.closest('[data-prompt-window]');
+  if (!win) return;
+  savePromptWindow(win.closest('.msg-in'), win.value.trim(), true);
+});
 document.addEventListener('click', async (e) => {
   const promptCopy = e.target.closest('[data-prompt-copy]');
   if (promptCopy) {
@@ -2593,30 +2879,77 @@ document.addEventListener('click', async (e) => {
     if (text) copyReplyText(text).then(() => { promptCopy.textContent = tr('studio.chat.copied'); setTimeout(() => { promptCopy.textContent = tr('studio.chat.promptCopy'); }, 1400); }).catch(() => {});
     return;
   }
-  const makeBtn = e.target.closest('[data-make]');
-  if (makeBtn && app.eggy && app.eggy.handoff) {
+  function promptOf(row) {
+    if (!row) return '';
+    const win = row.querySelector('[data-prompt-window]');
+    if (win && win.value.trim()) return win.value.trim();
+    const pre = row.querySelector('.prompt-card__text');
+    if (pre && pre.textContent.trim()) return pre.textContent.trim();
+    return row._msg ? String(row._msg.text || '') : '';
+  }
+  function nearestPrompt(from) {
+    let node = from;
+    while (node) {
+      const text = promptOf(node);
+      if (text && node._msg && node._msg.role !== 'user' && !/^готово\b/i.test(text.trim())) return text;
+      node = node.previousElementSibling;
+    }
+    return '';
+  }
+  async function sendMake(kind, source) {
+    if (!app.eggy || !app.eggy.chip) return;
+    const value = { kind: kind || 'video', text: source || '' };
+    for (let i = 0; i < 8; i++) {
+      if (!app.eggy.isBusy || !app.eggy.isBusy()) {
+        await app.eggy.chip({ action: 'make', value: value });
+        return;
+      }
+      await new Promise((r) => setTimeout(r, 300));
+    }
+    await app.eggy.chip({ action: 'make', value: value });
+  }
+  const refreshBtn = e.target.closest('[data-prompt-refresh]');
+  if (refreshBtn) {
     e.preventDefault();
-    const kind = makeBtn.getAttribute('data-make') || 'video';
-    const card = makeBtn.closest('.prompt-card');
-    const pre = card && card.querySelector('.prompt-card__text');
+    const row = refreshBtn.closest('.msg-in');
+    const msg = row && row._msg;
+    const source = promptOf(row);
+    if (!msg || !source || !app.textChat) return;
+    let model = (app.MODELS || []).find((x) => x.slug === (app.textModel || app.state.sel) && x.type === 'text');
+    if (!model) model = (app.MODELS || []).find((x) => x.type === 'text');
+    if (!model) return;
+    refreshBtn.disabled = true;
+    app.textChat(model, tr('studio.text.expandAsk', { prompt: source }), { force: true, resume: true, intoId: msg.id });
+    return;
+  }
+  const expandBtn = e.target.closest('[data-prompt-expand]');
+  if (expandBtn) {
+    e.preventDefault();
+    const row = expandBtn.closest('.msg-in');
+    const win = row && row.querySelector('[data-prompt-window]');
+    if (!win) return;
+    const open = !win.classList.contains('is-open');
+    win.classList.toggle('is-open', open);
+    expandBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    const name = open ? tr('studio.chat.collapsePrompt') : tr('studio.chat.expandPrompt');
+    expandBtn.setAttribute('aria-label', name);
+    expandBtn.title = name;
+    expandBtn.innerHTML = expandGlyph(open);
+    fitPromptWindow(win);
+    return;
+  }
+  const makeBtn = e.target.closest('[data-make]');
+  if (makeBtn) {
+    e.preventDefault();
     const row = makeBtn.closest('.msg-in');
-    const source = pre ? pre.textContent : (row && row._msg ? String(row._msg.text || '') : '');
-    const cur = app.MODELS.find((x) => x.slug === app.state.sel) || {};
-    const ask = kind === 'storyboard' ? 'раскадровка по этому' : (kind === 'image' ? 'сделай картинку по этому' : (kind === 'voice' ? 'озвучь по этому' : 'сделай видео по этому'));
-    app.eggy.handoff({
-      text: ask,
-      kind: kind === 'voice' ? 'music' : kind,
-      from_id: cur.model_key || cur.slug || '',
-      from_name: cur.name || '',
-      replies: source ? [source] : []
-    });
+    sendMake(makeBtn.getAttribute('data-make') || 'video', promptOf(row));
     return;
   }
   const copyBtn = e.target.closest('[data-reply-copy]');
   if (copyBtn) {
     e.preventDefault();
     const row = copyBtn.closest('.msg-in');
-    const text = row && row._msg ? String(row._msg.text || '') : '';
+    const text = promptOf(row);
     if (!text) return;
     copyReplyText(text).then(() => {
       copyBtn.classList.add('is-copied');
@@ -2659,6 +2992,16 @@ document.addEventListener('click', async (e) => {
     }
     if (chip && chip.action === 'mcp_tool') {   // кнопка подключённого MCP-сервиса → форма инструмента
       if (window.AishMcp) AishMcp.open(chip.value, app);
+      return;
+    }
+    if (chip && chip.action === 'retry_gen') {
+      if (app.retryLastGen) app.retryLastGen();
+      return;
+    }
+    if (chip && chip.action === 'make') {
+      const packed = chip.value && typeof chip.value === 'object' ? chip.value : { kind: String(chip.value || 'video') };
+      const text = nearestPrompt(wrap && wrap.previousElementSibling) || String(packed.text || '').trim();
+      sendMake(packed.kind || 'video', text);
       return;
     }
     if (chip && app.eggy && app.eggy.chip) {
@@ -2965,8 +3308,44 @@ if (window.AishAttach) {
     getModel: () => app.MODELS.find((x) => x.slug === app.state.sel) || null,
     t: tr,
     csrf: ensureCsrf,
-    onChange: () => { app.attachedImage = AishAttach.has('image'); }
+    onChange: () => {
+      app.attachedImage = AishAttach.has('image');
+      const ready = AishAttach.ready ? AishAttach.ready() : [];
+      app._attSeen = app._attSeen || {};
+      const fresh = ready.some((f) => f.id && !app._attSeen[f.id]);
+      ready.forEach((f) => { if (f.id) app._attSeen[f.id] = 1; });
+      if (fresh && app.eggy && app.eggy.syncFiles) app.eggy.syncFiles();
+    }
   });
+  try {
+    const pending = sessionStorage.getItem('aish-pending-attach');
+    if (pending) {
+      sessionStorage.removeItem('aish-pending-attach');
+      const meta = JSON.parse(pending);
+      if (meta && meta.id && AishAttach.adopt) AishAttach.adopt(meta);
+    }
+  } catch (_) {}
+}
+
+function reviveSavedSetup(msgs) {
+  let setup = null;
+  let last = -1;
+  (msgs || []).forEach((m, i) => {
+    const blocks = m && m.assistant && m.assistant.blocks;
+    if (!Array.isArray(blocks)) return;
+    const summary = blocks.find((b) => b && b.type === 'summary' && b.prompt && b.model_id);
+    if (!summary) return;
+    const params = {};
+    const group = blocks.find((b) => b && b.type === 'params' && Array.isArray(b.groups));
+    if (group) group.groups.forEach((g) => {
+      const picked = (g.options || []).find((o) => o && o.selected);
+      if (g && g.name && picked && picked.value != null) params[g.name] = picked.value;
+    });
+    setup = { model: summary.model_id, prompt: summary.prompt, params: params };
+    last = i;
+  });
+  if (last >= 0) msgs[last].revived = true;
+  if (setup && app.eggy && app.eggy.revive) app.eggy.revive(setup);
 }
 
 // История: вошёл — /api/chats; гость — без сохранения. Исходные файлы не храним.
@@ -2984,8 +3363,11 @@ if (window.AishHistory) {
       app._shownFiles = {};
       app.textHistory = [];
       app.textDirect = false;
+      app.panelLock = false;
       if (app.eggy && app.eggy.softReset) app.eggy.softReset();
-      app.setState({ chat: true, typing: false, msgs: msgs.map((m) => Object.assign({ id: Date.now() + Math.random() }, m)) });
+      const copy = msgs.map((m) => Object.assign({ id: Date.now() + Math.random() }, m));
+      reviveSavedSetup(copy);
+      app.setState({ chat: true, typing: false, msgs: copy });
       if (app.resumeOpenJobs) app.resumeOpenJobs();
     },
     onNew: () => app.newGeneration()   // «+ Новый»: сохранить чат, сбросить сессию помощника, спросить тип заново

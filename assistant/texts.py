@@ -58,6 +58,19 @@ T: dict[str, dict[str, str]] = {
         "en": "{title} rejected this request (content filter). You were not charged — try another model:",
     },
     "moderation_models": {"ru": "Сгенерировать в другой модели:", "en": "Generate with another model:"},
+    "timeout_try_other": {
+        "ru": "{title} не успела за отведённое время. Деньги не списаны. Та же модель на другой площадке — первой, дальше другие нейросети:",
+        "en": "{title} ran out of time. You were not charged. The same model on another route is first, then other models:",
+    },
+    "timeout_other_only": {
+        "ru": "{title} не успела за отведённое время. Деньги не списаны. Выберите другую нейросеть:",
+        "en": "{title} ran out of time. You were not charged. Pick another model:",
+    },
+    "same_model_other_route": {
+        "ru": "Та же модель, цена другой площадки",
+        "en": "Same model, the other route’s price",
+    },
+    "other_route": {"ru": "Другая площадка", "en": "Other route"},
     "model_down": {"ru": "{title} сейчас недоступна.", "en": "{title} is unavailable right now."},
     "cheapest_head": {"ru": "Самые доступные сейчас:", "en": "Most affordable right now:"},
     "ask_type_idea": {"ru": "По идее «{topic}» — что будем генерировать?", "en": "For “{topic}” — what should we generate?"},

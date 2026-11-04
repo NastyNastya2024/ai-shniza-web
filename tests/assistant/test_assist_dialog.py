@@ -92,6 +92,9 @@ def test_ready_has_summary_and_edit_prompt(make_assistant):
     r3 = a.handle("", {}, SID, action={"type": "edit_prompt", "value": {"text": "кот на крыше, вечер"}})
     assert a.d.store.get(SID).get("camera") == cam
     assert "вечер" in (r3.get("generate_prompt") or "")
+    quiet = a.handle("", {}, SID, action={"type": "edit_prompt", "value": {"text": "кот на крыше, вечер, тихо", "quiet": True}})
+    assert quiet.get("silent") is True and not quiet.get("blocks")
+    assert "тихо" in (a.d.store.get(SID).get("prompt") or "")
     r4 = a.handle("сделай вечер теплее", {}, SID)
     assert _summary(r4) and r4.get("generate_prompt")
 

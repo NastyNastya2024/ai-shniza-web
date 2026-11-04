@@ -330,6 +330,7 @@ def test_rule_variants_are_readable_sentences(make_assistant):
                          questions=qs)[0]["text"]
     assert v.startswith("Видео с закатом.") and "Атмосфера: тихое; Время суток: вечер" in v
     assert "Закатом." not in v
+    assert "Настроение." in v and "Стиль." in v and "Камера." in v
 
 
 def test_variants_second_chance_single_prompt(make_assistant):
@@ -364,6 +365,7 @@ def test_validate_variants_tolerates_shapes():
 
 def test_variants_prompt_asks_for_rich_structure():
     assert "model.structure" in BR.VARIANTS_SYSTEM and "Use EVERY detail" in BR.VARIANTS_SYSTEM
+    assert "Настроение." in BR.VARIANTS_SYSTEM and "Камера." in BR.VARIANTS_SYSTEM
     assert "prompt_example" in BR.VARIANTS_SYSTEM and "ONE coherent scene" in BR.VARIANTS_SYSTEM
     assert "language `lang`" in BR.VARIANTS_SYSTEM and "Each prompt: English" not in BR.VARIANTS_SYSTEM
 

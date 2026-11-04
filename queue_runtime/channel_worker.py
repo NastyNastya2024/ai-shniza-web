@@ -165,27 +165,25 @@ def _format_success(job: dict[str, Any], prediction: dict[str, Any], provider: s
         return {"kind": "text", "reply": reply, **common}
 
     media_urls = [u for u in outputs if isinstance(u, str) and u.startswith("http")]
+    # Готово без файла — не успех: резерв вернётся, в чате предложим отправить ещё раз.
+    if kind in {"image", "video", "audio"} and not media_urls:
+        noun = {"image": "изображения", "video": "видео", "audio": "аудио"}[kind]
+        fail = {k: v for k, v in common.items() if k not in {"ok", "status"}}
+        return {
+            "ok": False,
+            "error": "empty_output",
+            "status": 502,
+            "kind": kind,
+            "urls": [],
+            "reply": f"Модель завершилась без URL {noun}.",
+            **fail,
+        }
     if kind == "image":
-        return {
-            "kind": "image",
-            "urls": media_urls,
-            "reply": "Готово." if media_urls else "Модель завершилась без URL изображения.",
-            **common,
-        }
+        return {"kind": "image", "urls": media_urls, "reply": "Готово.", **common}
     if kind == "video":
-        return {
-            "kind": "video",
-            "urls": media_urls,
-            "reply": "Видео готово." if media_urls else "Модель завершилась без URL видео.",
-            **common,
-        }
+        return {"kind": "video", "urls": media_urls, "reply": "Видео готово.", **common}
     if kind == "audio":
-        return {
-            "kind": "audio",
-            "urls": media_urls,
-            "reply": "Аудио готово." if media_urls else "Модель завершилась без URL аудио.",
-            **common,
-        }
+        return {"kind": "audio", "urls": media_urls, "reply": "Аудио готово.", **common}
     return {"ok": False, "error": "unsupported_kind", "kind": kind, "status": 500, **common}
 
 
