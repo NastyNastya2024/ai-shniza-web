@@ -281,10 +281,12 @@ class LLMChain:
     def available(self) -> bool:
         return bool(self.providers)
 
-    def _call(self, p: LLMProvider, messages: list[dict], timeout: float, max_tokens: int) -> tuple[str, dict]:
+    def _call(self, p: LLMProvider, messages: list[dict], timeout: float, max_tokens: int,
+              temperature: float | None = None) -> tuple[str, dict]:
         if REASONING_RX.search(p.model or ""):
             max_tokens = max(max_tokens, 1500)
-        payload: dict[str, Any] = {"model": p.model, "messages": messages, "temperature": self.temperature,
+        payload: dict[str, Any] = {"model": p.model, "messages": messages,
+                                   "temperature": self.temperature if temperature is None else temperature,
                                    "max_tokens": max_tokens, "stream": False}
         if p.json_mode:
             payload["response_format"] = {"type": "json_object"}
@@ -319,7 +321,7 @@ class LLMChain:
 
     def complete_json(self, system: str, user: str, validate: Callable[[dict], dict] | None = None,
                       max_tokens: int | None = None, deadline_sec: float | None = None,
-                      timeout_scale: float = 1.0, task: str = "") -> LLMResult:
+                      timeout_scale: float = 1.0, task: str = "", temperature: float | None = None) -> LLMResult:
         """timeout_scale — для «длинных» ответов (3 варианта промпта) провайдеру нужно больше времени."""
         if not self.providers:
             raise LLMUnavailable("no_providers")
@@ -341,7 +343,7 @@ class LLMChain:
                     raise LLMUnavailable("deadline", attempts, tin + tout)
                 a0 = self.clock()
                 try:
-                    content, usage = self._call(p, messages, min(p.timeout * timeout_scale, remaining), mt)
+                    content, usage = self._call(p, messages, min(p.timeout * timeout_scale, remaining), mt, temperature)
                 except TransportTimeout:
                     self.breaker.failure(p.name)
                     attempts.append({"provider": p.name, "error": "timeout"})

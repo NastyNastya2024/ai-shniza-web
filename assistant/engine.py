@@ -555,13 +555,16 @@ class Assistant:
             u = None                        # «Как бариста варит кофе?» на шаге «Идея» — это идея, не вопрос
         if u is None and text_step:
             return MD.on_text(self, ses, ctx, lang, msg)
-        # Свежий запрос разбирает языковая модель и сама запускает процесс.
-        # Слова из router — только если модели нет или она не ответила.
-        # Уже выбранная модель, шаг диалога и кнопки сюда не попадают.
+        # Обычный сценарий (видео, картинка, музыка, озвучка, текст) идёт своим путём.
+        # Запрос, который в него не попал, разбирает intent-router: вопрос, отказ или нужный процесс.
         from .model_lock import lock_of
         fresh = ses.get("await") in (None, "type", "gen_type") and not lock_of(self, ctx, ses)
+        if (self.d.dialog_v2 and fresh and len(msg.split()) >= 2
+                and (it0.name == "ask_type" or long_help)
+                and not PL.waiting(ses) and not SB.active(ses)):
+            return self._intent_route(msg, ctx, ses, lang)
         if (u is None and self.d.understand_llm and fresh and len(msg.split()) >= 2
-                and (it0.name in ("ask_type", "off_topic", "generate_task") or long_help)
+                and it0.name in ("ask_type", "off_topic", "generate_task")
                 and not PL.waiting(ses) and not SB.active(ses)):
             u = UN.ask_llm(self, msg, ses, ctx)
         if u is None:
@@ -846,7 +849,8 @@ class Assistant:
         return fallback_prompt(card, idea, change, prev, lang), "", True
 
     def _llm_json(self, system: str, user: str, validate: Callable, ses: dict, max_tokens: int,
-                  timeout_scale: float = 1.0, task: str = "") -> dict | None:
+                  timeout_scale: float = 1.0, task: str = "", temperature: float | None = None,
+                  deadline_sec: float | None = None) -> dict | None:
         """Один JSON-вызов LLM с учётом бюджета сессии. None — LLM нет / не ответила / бюджет кончился."""
         llm = self.d.llm
         if llm is None or not llm.available:
@@ -857,7 +861,8 @@ class Assistant:
         ses["llm_calls"] = int(ses.get("llm_calls") or 0) + 1
         system = system + "\n\n" + DG.llm_preface(ses)
         try:
-            res = llm.complete_json(system, user, validate, max_tokens=max_tokens, timeout_scale=timeout_scale, task=task)
+            res = llm.complete_json(system, user, validate, max_tokens=max_tokens, timeout_scale=timeout_scale,
+                                    task=task, temperature=temperature, deadline_sec=deadline_sec)
         except LLMUnavailable as exc:
             ses["tokens"] = int(ses.get("tokens") or 0) + exc.tokens
             self._llm_info.update(tokens=self._llm_info["tokens"] + exc.tokens, error=exc.reason, attempts=exc.attempts[-4:])
@@ -2177,7 +2182,84 @@ class Assistant:
         out["models"] = [m for m in (out.get("models") or []) if m.get("id") in ids][:3]
         return out
 
+    def _intent_route(self, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
+        """Запрос не попал в обычный сценарий: сначала категория, потом формат, потом промпт."""
+        from . import formats as FMT
+
+        ses["intent_src"] = (msg or "").strip()[:500]
+        found = FMT.match_sub(msg)
+        if found and FMT.kind_of(found) != "focus":
+            return self._format_open(found, msg, ctx, ses, lang)
+        return self._format_cats(lang)
+
+    def _format_cats(self, lang: str) -> dict:
+        from . import formats as FMT
+
+        chips = [chip(row["title"], "format_cat", row["id"]) for row in FMT.categories(lang)]
+        line = "What do you need?" if lang == "en" else "Что именно вам нужно?"
+        return response([line], chips, lang=lang, intent="intent_clarify")
+
+    def _format_subs(self, cat_id: str, lang: str) -> dict:
+        from . import formats as FMT
+
+        chips = []
+        for row in FMT.subs_of(cat_id, lang):
+            if row["kind"] == "focus":
+                chips.append(chip(row["title"], "intent_other", row["title"]))
+            else:
+                chips.append(chip(row["title"], "format_sub", row["id"]))
+        title = FMT.cat_title(cat_id, lang)
+        if lang == "en":
+            line = f"{title} — which format?"
+        else:
+            line = f"{title} — какой формат?"
+        if cat_id == "other":
+            hint = ("Describe it in your own words. For example: “a café menu in Scandinavian style”."
+                    if lang == "en" else
+                    "Свой вариант: опишите своими словами, что нужно. Например: «сделай меню для кофейни в стиле скандинавского минимализма».")
+            line = line + "\n" + hint
+        return response([line], chips, lang=lang, intent="intent_clarify")
+
+    def _format_open(self, sub_id: str, idea: str, ctx: dict, ses: dict, lang: str) -> dict:
+        from . import formats as FMT
+
+        prompt = FMT.build(sub_id, idea)
+        kind = FMT.kind_of(sub_id)
+        name = FMT.title_of(sub_id, lang)
+        ses["idea"] = prompt
+        ses["prompt"] = ses["prompt_base"] = prompt
+        ses["kind"] = kind if kind in ("image", "video", "voice", "music", "text") else ses.get("kind")
+        if kind == "text":
+            ses["prompt"] = prompt
+            send = "Send to a text model" if lang == "en" else "Отправить в текстовую модель"
+            head = (f"Prompt for “{name}”. You can edit it, then send it on."
+                    if lang == "en" else
+                    f"Промпт для «{name}». Его можно поправить и отправить дальше.")
+            return response([head, prompt], [chip(send, "format_send", sub_id, primary=True)],
+                            lang=lang, intent="format_prompt")
+        if kind == "board":
+            return PL.decorate(SB.start(self, ses, ctx, lang, text=prompt), ses, lang)
+        it = Intent("generate_task", kind=kind, needs=detect_needs(idea), topic=topic_of(idea))
+        out = self._i_generate_task(it, prompt, ctx, ses, lang)
+        if kind == "voice":
+            out["text"] = prompt + "\n\n" + (out.get("text") or "")
+            out["reply"] = out["text"]
+        return out
+
     def _action(self, kind: str, value: Any, ctx: dict, ses: dict, lang: str) -> dict:
+        if kind == "intent_option":
+            src = str(ses.get("intent_src") or "").strip()
+            option = str(value or "").strip()
+            text = f"{src}. {option}".strip(". ") if src else option
+            return self._intent_route(text, ctx, ses, lang)
+        if kind == "format_cat":
+            return self._format_subs(str(value or ""), lang)
+        if kind == "format_sub":
+            return self._format_open(str(value or ""), str(ses.get("intent_src") or ""), ctx, ses, lang)
+        if kind == "format_send":
+            text = (ses.get("prompt") or ses.get("idea") or "").strip()
+            ses["idea"] = text
+            return self._text_chat_models(ses, ctx, lang, "format_send")
         has_image = bool(ctx.get("has_image"))
         if kind == "pipe_result":
             pst = ses.get("pipe") if isinstance(ses.get("pipe"), dict) else {}

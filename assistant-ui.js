@@ -29,7 +29,7 @@
     mode_start: 1, mode_input: 1, mode_next: 1, mode_back: 1, mode_redo: 1, mode_go: 1, mode_episode: 1, mode_exit: 1, mode_pause: 1, mode_resume: 1,
     tree_hint: 1, tree_event: 1, edit_prompt: 1, files_confirm: 1, files_drop: 1, files_sync: 1, media_pick: 1, resume_task: 1,
     model_switch: 1, switch_pick: 1, text_note: 1, look_done: 1, look_skip: 1, look_next: 1, make: 1,
-    lock_keep: 1, lock_switch: 1,
+    lock_keep: 1, lock_switch: 1, intent_option: 1, format_cat: 1, format_sub: 1, format_send: 1,
     idea_next: 1, idea_alt: 1, path_photos: 1, path_board: 1, path_direct: 1, flow_polish: 1,
     flow_slot: 1, flow_next: 1, flow_show: 1, flow_skip: 1,
     open_mcp: 1, mcp_goal: 1, mcp_compare: 1, mcp_try: 1, mcp_connected: 1, mcp_failed: 1, mcp_support: 1, mcp_topic: 1,
@@ -1146,6 +1146,11 @@
     }
     function onChip(c, livePrompt) {
       if (!c || !c.action || busy) return;
+      if (c.action === 'intent_other') {
+        var box = root.document && root.document.getElementById('prompt');
+        if (box) box.focus();
+        return;
+      }
       if (summaryDraft != null || summarySave) {
         var again = c;
         var typed = livePrompt;

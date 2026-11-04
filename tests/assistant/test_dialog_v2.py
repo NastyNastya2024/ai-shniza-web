@@ -631,21 +631,20 @@ def test_back_from_a_mistaken_video_returns_to_the_picture(make_assistant):
     assert "Корпус из глянцевого пластика" in _variant_blob(back)
 
 
-def test_fallback_question_lists_every_path(make_assistant):
+def test_unclear_request_starts_with_categories(make_assistant):
     a = _a(make_assistant)
-    d = a.handle("котик в космосе", session_id="kinds")
+    d = a.handle("мне нужны маркетинговые материалы", session_id="mkt")
+    assert d["intent"] == "intent_clarify"
     assert [c.get("label") for c in d["chips"]] == [
-        "Промпт", "Рилс", "Видео", "Картинка", "Раскадровка", "Музыка", "Озвучка",
+        "Изображения", "Видео", "Подготовка к видео", "Звук", "Тексты", "Другое",
     ]
-    voice = a.handle("", session_id="kinds", action={"type": "choose_type", "value": "voice"})
-    assert voice["intent"] == "voice_form"
-    prompt = _a(make_assistant).handle("котик в космосе", session_id="pr")
-    assert prompt["intent"] == "ask_type"
-    nxt = _a(make_assistant)
-    nxt.handle("котик в космосе", session_id="pr2")
-    asked = nxt.handle("", session_id="pr2", action={"type": "choose_type", "value": "prompt"})
-    assert asked["intent"] == "choose_type"
-    assert "prompt" not in {c.get("value") for c in asked["chips"]}
+    assert not any(b.get("type") == "variants" for b in d.get("blocks") or [])
+    subs = a.handle("", session_id="mkt", action={"type": "format_cat", "value": "image"})
+    assert [c.get("label") for c in subs["chips"]][:3] == ["Картинка / фото", "Баннер", "Обложка"]
+    opened = a.handle("", session_id="mkt", action={"type": "format_sub", "value": "banner"})
+    blob = _variant_blob(opened) or opened.get("text") or ""
+    assert "Текст на баннере" in blob and "маркетинговые материалы" in blob
+    assert opened["dialog"]["task"] == "image"
 
 
 def test_a_fairy_tale_goes_to_a_text_model(make_assistant):
