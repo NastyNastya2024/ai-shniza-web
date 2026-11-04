@@ -11,8 +11,8 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable
 
 DEFAULT_PATH = os.path.join(os.path.dirname(__file__), "data", "model_cards.json")
-KINDS = {"video", "image", "edit", "music", "sfx", "text"}
-MODES = {"t2v", "i2v", "t2i", "i2i", "t2m", "t2t"}
+KINDS = {"video", "image", "edit", "music", "sfx", "text", "voice"}
+MODES = {"t2v", "i2v", "t2i", "i2i", "t2m", "t2t", "t2a"}
 
 
 @dataclass

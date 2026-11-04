@@ -97,7 +97,7 @@
 .reply-make { display: flex; flex-wrap: wrap; gap: 8px; }
 .reply-make button { all: unset; box-sizing: border-box; cursor: pointer; font: 500 14px/1 Onest, system-ui, sans-serif; padding: 9px 16px; border-radius: 999px; border: 1.5px solid var(--field-brd, rgba(80,60,160,.15)); background: var(--glass, #fff); color: var(--ink, #1E1238); }
 .reply-make button:hover { border-color: var(--accent-ink, #4B2BB8); }
-.reply-make button[data-make="video"] { border: none; font-weight: 700; color: var(--ys-on-cta, #fff); background: var(--aich-grad, linear-gradient(90deg, #FF9A3D, #F0602A)); box-shadow: var(--ys-shadow-glow, 0 4px 14px rgba(240,96,42,.35)); }
+.reply-make button.is-primary { border: none; font-weight: 700; color: var(--ys-on-cta, #fff); background: var(--aich-grad, linear-gradient(90deg, #FF9A3D, #F0602A)); box-shadow: var(--ys-shadow-glow, 0 4px 14px rgba(240,96,42,.35)); }
 .prompt-window { display: block; width: 100%; box-sizing: border-box; min-height: 140px; max-height: 180px; border: 1px solid var(--field-brd, rgba(255,255,255,.14)); border-radius: 14px; background: var(--field, rgba(255,255,255,.04)); color: var(--ink, #fff); font: 15px/1.5 Onest, system-ui, sans-serif; padding: 10px 12px; resize: vertical; overflow: auto; }
 .prompt-window.is-open { max-height: none; overflow: hidden; }
 .prompt-expand { align-self: flex-start; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 12px; background: var(--seg-bg, rgba(80,60,160,.08)); color: inherit; cursor: pointer; }

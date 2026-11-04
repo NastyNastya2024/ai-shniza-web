@@ -75,11 +75,43 @@ def refers_to_previous(text: str) -> bool:
     return bool(REFER_RX.search(text or ""))
 
 
+def kind_only(text: str) -> str | None:
+    """Короткая смена типа: «нужна картинка», «это видео». Не новая идея."""
+    m = re.match(
+        r"^\s*(?:мне\s+)?(?:нужн\w+|хочу|дай|это)?\s*(картинк\w*|фото|изображен\w*|видео|ролик)\s*[.!?]*\s*$",
+        text or "", I,
+    )
+    if not m:
+        return None
+    word = m.group(1).lower()
+    return "video" if word.startswith(("видео", "ролик")) else "image"
+
+
+def saved_prompt(ses: dict | None) -> str:
+    """Самый длинный уже написанный промпт: ответ текстовой модели или текст задачи."""
+    ses = ses or {}
+    cands: list[str] = []
+    for row in ses.get("texts") or []:
+        if isinstance(row, dict) and str(row.get("text") or "").strip():
+            cands.append(str(row["text"]).strip())
+    for key in ("prompt", "prompt_base", "idea"):
+        if str(ses.get(key) or "").strip():
+            cands.append(str(ses[key]).strip())
+    flow = ses.get("flow") if isinstance(ses.get("flow"), dict) else {}
+    if str(flow.get("idea") or "").strip():
+        cands.append(str(flow["idea"]).strip())
+    cands = [c for c in cands if len(c.split()) >= 40]
+    return max(cands, key=len)[:4000] if cands else ""
+
+
 def generation_kind(text: str, has_image: bool = False) -> str | None:
-    """video | image | music | None. None — оставить текстовой модели."""
+    """video | image | music | voice | None. None — оставить текстовой модели."""
     raw = (text or "").strip()
     if not raw or is_write_request(raw):
         return None
+    only = kind_only(raw)
+    if only:
+        return only
     if not MAKE_RX.search(raw):
         return None
     if re.search(r"\bнарисуй\b", raw, I):
@@ -87,7 +119,7 @@ def generation_kind(text: str, has_image: bool = False) -> str | None:
     if re.search(r"\bоживи\b", raw, I):
         return "video"
     if re.search(r"озвуч", raw, I):
-        return "music"
+        return "voice"
     if re.search(r"3d|трёхмер|трехмер", raw, I):
         return "image"
     kind = detect_kind(raw, has_image)

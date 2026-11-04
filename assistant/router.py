@@ -39,6 +39,7 @@ INJECTION = _rx(r"игнорир\w* (все |всё |эти |свои )?(пре�
 # --- типы задач ---
 TYPE_RULES: list[tuple[str, re.Pattern]] = [
     # музыка и звук — один тип (music); отдельные sfx-модели не предлагаем
+    ("voice", _rx(r"озвуч", r"начитк", r"диктор", r"закадр", r"voice[- ]?over", r"\btts\b")),
     ("music", _rx(r"музык", r"музон", r"\bтрек", r"песенк", r"\bпесн", r"\bбит\b", r"мелоди", r"саундтрек", r"джингл", r"вокал", r"\bспой",
                   r"\bmusic\b", r"\btrack\b", r"\bsong\b", r"\bbeat\b", r"melod", r"jingle", r"soundtrack",
                   r"звуков\w* эффект", r"\bsfx\b", r"\bшум(ы)?\b", r"эмбиент", r"\bлуп\w*",
@@ -56,6 +57,7 @@ TYPE_RULES: list[tuple[str, re.Pattern]] = [
                   r"\bposter\b", r"\blogo\b", r"\bbanner\b", r"illustrat", r"\bavatar\b", r"\bdraw\b", r"\bicon\b", r"\bsticker\b")),
     # после image: «текст на картинке» уже поймает image; иначе — текстовая генерация
     ("text", _rx(r"\bтекст\b", r"стать[яюе]", r"\bпост\b", r"письм[оае]", r"\bстих", r"эссе", r"реферат", r"сценари", r"рассказ",
+                 r"сказк", r"басн", r"притч", r"стихотворен", r"сочини", r"новелл",
                  r"копирайт", r"сочинен", r"напиши (код|программ|скрипт|функци|эссе|сочинен|реферат|письмо|пост|стать|стих)",
                  r"\bwrite (code|a program|a script|an essay|a letter|a poem|a post|an article|a story)\b",
                  r"\bessay\b", r"\bpoem\b", r"\barticle\b", r"\bletter\b", r"\bllm\b", r"языков\w* модел",

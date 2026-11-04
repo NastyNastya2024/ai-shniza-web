@@ -72,6 +72,19 @@ def test_asked_kind(msg, kind):
 
 
 # ---------------------------------------------------------------- текстовая модель
+def test_gpt_selected_in_the_composer_answers_as_text():
+    a = eng()
+    ctx = {"selected_model_id": "gpt-5-6-sol", "selected_model_kind": "text",
+           "selected_model_title": "GPT-5.6 Sol", "model_locked": True}
+    out = ML.before_message(a, "нет расскажи мне сказку", ctx, {}, "ru")
+    assert out["route"]["to"] == "text_model" and out["route"]["model_id"] == "gpt-5-6-sol"
+    ask = ML.before_message(a, "ты можешь мне сделать 3д модель", ctx, {}, "ru")
+    assert ask["route"]["to"] == "text_model" and "3д" in ask["route"]["text"]
+    plain = {"selected_model_id": "gpt-5-6-sol", "selected_model_kind": "text", "model_locked": False}
+    again = ML.before_message(a, "привет", plain, {}, "ru")
+    assert again["route"]["model_id"] == "gpt-5-6-sol"
+
+
 def test_text_model_answers_itself_even_if_video_words():
     """Баг: выбран DeepSeek, а помощник запускал поток видео. Теперь сообщение уходит в DeepSeek."""
     a, ses = eng(), {}

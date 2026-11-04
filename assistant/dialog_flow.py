@@ -75,6 +75,7 @@ _STAGE_LEFT = {
     "redo": "дописываем промпт",
     "fresh": "уточняем новую генерацию",
     "fresh_desc": "уточняем, что сделать",
+    "voice_form": "уточняем текст озвучки",
 }
 
 
@@ -144,6 +145,11 @@ def back_chip(ses: dict) -> dict | None:
 def start(engine: Any, msg: str, it: Any, ctx: dict, ses: dict, lang: str) -> dict | None:
     if engine._is_guest(ctx):
         return None
+    from .switch import kind_only, saved_prompt
+    if kind_only(msg):
+        saved = saved_prompt(ses)
+        if saved:
+            msg = saved
     kind = getattr(it, "kind", None) or None
     story = guess_story(msg, engine.d.tree)
     kind = _kind_of(story, kind)
@@ -188,7 +194,12 @@ def from_handoff(engine: Any, prompt: str, kind: str, from_name: str, took: bool
     f["missing"] = []
     f["idea"] = _compose(f)
     ses["idea"] = f["idea"]
-    word = {"video": "видео", "image": "картинку", "music": "музыку"}.get(f["kind"], "это")
+    if (f.get("kind") or kind) == "voice":
+        out = _ask_voice(ses, lang)
+        out["chips"] = list(out.get("chips") or []) + [stay]
+        out["intent"] = "model_switch"
+        return out
+    word = {"video": "видео", "image": "картинку", "music": "музыку", "voice": "озвучку"}.get(f["kind"], "это")
     if took:
         head = f"Сделаем {word}. Беру текст из ответа {from_name} — вот варианты промпта."
     else:
@@ -216,16 +227,10 @@ def ask_type(engine: Any, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
         "idea": "", "idea_user": (msg or "").strip(), "path": "", "next": "type",
         "source": (msg or "").strip()[:500],
     }
-    low = (msg or "").lower()
-    chips = [
-        chip("Видео", "choose_type", "video", primary=True),
-        chip("Картинка", "choose_type", "image"),
-    ]
-    if re.search(r"песн|трек|музык", low):
-        chips.append(chip("Музыка", "choose_type", "music"))
+    from .dialog import open_kinds
     return response(
-        ["Это видео, картинка или что-то ещё?" if lang != "en" else "Is this a video, an image, or something else?"],
-        chips, lang=lang, intent="ask_type",
+        ["Что с этим сделать?" if lang != "en" else "What should we make?"],
+        open_kinds(ses, lang), lang=lang, intent="ask_type",
     )
 
 
@@ -233,6 +238,19 @@ def on_message(engine: Any, msg: str, ctx: dict, ses: dict, lang: str) -> dict |
     f = ses.get("flow") if isinstance(ses.get("flow"), dict) else None
     if not f:
         return None
+    from .switch import kind_only, saved_prompt
+    want = kind_only(msg)
+    saved = saved_prompt(ses) if want else ""
+    if want and saved:
+        f["kind"] = want
+        ses["kind"] = want
+        f["idea"] = saved
+        f["idea_user"] = saved
+        ses["idea"] = ses["prompt"] = ses["prompt_base"] = saved
+        f.pop("return_image", None)
+        if want == "image":
+            return open_prompts(engine, ctx, ses, lang, "idea")
+        return _go_direct(engine, ctx, ses, lang)
     if COMPARE_RX.search(msg or ""):
         return compare_from_text(engine, msg, lang)
     other = guess_story(msg, engine.d.tree)
@@ -247,6 +265,14 @@ def on_message(engine: Any, msg: str, ctx: dict, ses: dict, lang: str) -> dict |
     if stage == "slots":
         _absorb(f, msg, ctx)
         return advance(engine, ctx, ses, lang)
+    if stage == "voice_form":
+        text = (msg or "").strip()
+        if len(text) > 24:
+            f["idea"] = text
+            f["idea_user"] = text
+            f["source"] = text[:500]
+            return _voice_chosen(engine, ctx, ses, lang, "script")
+        return _ask_voice(ses, lang)
     if stage == "fresh":
         return start(engine, _carry_prior(ses, msg), _Kind(guess_story(msg, engine.d.tree)), ctx, ses, lang)
     if stage == "fresh_desc":
@@ -296,6 +322,8 @@ def on_action(engine: Any, kind: str, value: Any, ctx: dict, ses: dict, lang: st
         pass
     elif kind == "back" and f:
         pass
+    elif kind == "voice_form" and f:
+        pass
     else:
         return None
     if kind == "flow_next" and not isinstance(f, dict):
@@ -341,6 +369,10 @@ def on_action(engine: Any, kind: str, value: Any, ctx: dict, ses: dict, lang: st
         return show(engine, ctx, ses, lang)
     if kind == "flow_next":
         return _next(engine, value, ctx, ses, lang)
+    if kind == "voice_form":
+        return _voice_chosen(engine, ctx, ses, lang, str(value or "script"))
+    if kind == "choose_type" and str(value or "") == "prompt":
+        return None
     if kind == "choose_type":
         if f.get("stage") == "fresh":
             return _ask_fresh_detail(ses, str(value or "video"), lang)
@@ -368,6 +400,14 @@ def step_back(engine: Any, ctx: dict, ses: dict, lang: str) -> dict | None:
     kind = f.get("kind") or ses.get("kind") or ""
     which = str(f.get("prompt_for") or "idea")
     shown = [x for x in (f.get("shown_models") or []) if x]
+    if f.get("return_image") and kind == "video" and stage in ("card", "advise", "path", "variants"):
+        prompt = str(f.pop("return_image") or f.get("idea") or "")
+        f["kind"] = "image"
+        ses["kind"] = "image"
+        if prompt:
+            f["idea"] = prompt
+            ses["idea"] = ses["prompt"] = ses["prompt_base"] = prompt
+        return open_prompts(engine, ctx, ses, lang, "idea")
     if stage == "card" and len(shown) > 1:
         return _advise(engine, ctx, ses, lang, again=True)
     if stage in ("card", "advise", "polish", "path", "variants"):
@@ -415,11 +455,57 @@ def show(engine: Any, ctx: dict, ses: dict, lang: str) -> dict:
     return _idea_card(ses, lang)
 
 
+def _ask_voice(ses: dict, lang: str) -> dict:
+    """Озвучка: посекундная раскадровка или общий сценарий. Не видеопромпт."""
+    f = ses["flow"]
+    f["stage"] = "voice_form"
+    f["next"] = "voice_form"
+    en = lang == "en"
+    lines = ["Voiceover. How should the text be written?" if en else
+             "Озвучка. Как собрать текст перед генерацией?"]
+    chips = [
+        chip("Second-by-second" if en else "Посекундная раскадровка", "voice_form", "board", primary=True),
+        chip("A full script" if en else "Общий сценарий", "voice_form", "script"),
+    ]
+    return response(lines, chips, lang=lang, intent="voice_form")
+
+
+def _voice_chosen(engine: Any, ctx: dict, ses: dict, lang: str, form: str) -> dict:
+    f = ses["flow"]
+    form = "board" if form == "board" else "script"
+    f["voice_form"] = form
+    f["kind"] = "voice"
+    ses["kind"] = "voice"
+    if not f.get("idea"):
+        f["idea"] = _compose(f) or str(f.get("idea_user") or f.get("source") or "")
+    ses["idea"] = f["idea"]
+    en = lang == "en"
+    if form == "board":
+        change = ("Second-by-second voiceover with timecodes. Spoken lines only, no camera."
+                  if en else
+                  "Посекундная раскадровка: реплики с таймкодами. Только текст для чтения, без камеры и картинки.")
+    else:
+        change = ("One narration script. Spoken text only, no camera."
+                  if en else
+                  "Общий сценарий: связный текст для начитки. Только речь, без камеры и картинки.")
+    return open_prompts(engine, ctx, ses, lang, "idea", change)
+
+
 def advance(engine: Any, ctx: dict, ses: dict, lang: str) -> dict:
     f = ses["flow"]
     _absorb(f, f.get("source") or "", ctx)
+    kind = f.get("kind") or ""
+    # озвучка: сначала форма текста, не видеопромпт с камерой
+    if kind == "voice" and not f.get("voice_form"):
+        return _ask_voice(ses, lang)
+    # музыка: описание по стилю из первой фразы, без видеошагов
+    if kind == "music":
+        if not f.get("idea"):
+            f["idea"] = _compose(f) or str(f.get("idea_user") or f.get("source") or "")
+            ses["idea"] = f["idea"]
+        return open_prompts(engine, ctx, ses, lang, "idea")
     # картинка: промпт как у видео — сразу варианты, без опросника карточки
-    if (f.get("kind") or "") == "image":
+    if kind == "image":
         if not f.get("idea"):
             f["idea"] = _compose(f)
             ses["idea"] = f["idea"]
@@ -483,13 +569,15 @@ class _Kind:
 
 
 def _kind_of(story: str, kind: str | None) -> str | None:
+    if kind in ("voice", "music"):
+        return kind
     if story in ("COM.CARD", "IMG.COVER", "IMG.BRAND", "DSN.INTER", "MKT.PERF"):
         return "image"
     if story in ("VID.REELS", "VID.ANIM", "VID.PROMO", "COM.PVIDEO", "STO.SERIES"):
         return "video"
     if story == "AUD.SONG":
         return "music"
-    return kind if kind in ("image", "video", "music", "text") else None
+    return kind if kind in ("image", "video", "music", "text", "voice") else None
 
 
 def _open(ses: dict, kind: str, story: str, msg: str, ctx: dict) -> None:
@@ -694,7 +782,7 @@ def open_prompts(engine: Any, ctx: dict, ses: dict, lang: str, which: str = "ide
     if not f.get("idea"):
         f["idea"] = _compose(f)
     guide_kind = "image" if which == "photos" else (f.get("kind") or ses.get("kind") or "image")
-    ses["kind"] = guide_kind if guide_kind in ("image", "video", "music") else "image"
+    ses["kind"] = guide_kind if guide_kind in ("image", "video", "music", "voice") else "image"
     ses["idea"] = f["idea"]
     ses["brief"] = {"q": [], "a": {}, "extra": [change] if change else [], "summary": "", "src": "flow", "phase": "done"}
     ses["brief_for_model"] = None
@@ -705,6 +793,7 @@ def open_prompts(engine: Any, ctx: dict, ses: dict, lang: str, which: str = "ide
     if lock and (
         (lock["kind"] in ("image", "edit") and guide_kind == "image")
         or (lock["kind"] == "video" and guide_kind == "video")
+        or (lock["kind"] == guide_kind and guide_kind in ("voice", "music"))
     ):
         ses["brief_guide"] = lock["id"]
     else:
@@ -818,7 +907,7 @@ def _advise(engine: Any, ctx: dict, ses: dict, lang: str, again: bool = False) -
         prof_kind = "image"
     else:
         prof_kind = f.get("kind") or "image"
-    if not again and prof_kind in ("image", "video"):
+    if not again and prof_kind in ("image", "video", "voice", "music"):
         from . import model_lock as ML
         jumped = ML.parameters_if_locked(engine, ctx, ses, lang, prof_kind)
         if jumped is not None:
@@ -938,23 +1027,20 @@ def _after_media(value: dict, ses: dict, lang: str) -> dict:
             chip("Дальше: видео из этой картинки", "path_direct"),
         ]
     elif kind == "video":
-        en = lang == "en"
-        chips = [
-            chip("Redo" if en else "Переделать", "flow_next", "redo", primary=True),
-            chip("Continue" if en else "Сделать продолжение", "flow_next", "continue"),
-            chip("New generation" if en else "Новая генерация", "flow_next", "fresh"),
-        ]
+        # Те же три шага уже на карточке результата. Второе сообщение с теми же кнопками не шлём.
         _remember_prior(ses, "video", _current_prompt(ses))
+        return {"text": "", "reply": "", "blocks": [], "chips": [], "silent": True, "intent": "video_done", "lang": lang}
     elif kind == "text":
         en = lang == "en"
         prompt = str(value.get("reply") or "")[:4000]
         def pack(k: str) -> dict:
             return {"kind": k, "text": prompt}
-        chips = [
-            chip("Make a video from this" if en else "Сделать видео по этому", "make", pack("video"), primary=True),
-            chip("Image" if en else "Картинку", "make", pack("image")),
-            chip("Storyboard" if en else "Раскадровку", "make", pack("storyboard")),
-        ]
+        image_task = (f.get("kind") == "image" or f.get("story") == "COM.CARD"
+                      or re.search(r"карточк|предметн|маркетплейс|3\s*:\s*4", prompt, re.I))
+        video_chip = chip("Make a video from this" if en else "Сделать видео по этому", "make", pack("video"), primary=not image_task)
+        image_chip = chip("Image" if en else "Картинку", "make", pack("image"), primary=bool(image_task))
+        board_chip = chip("Storyboard" if en else "Раскадровку", "make", pack("storyboard"))
+        chips = [image_chip, video_chip, board_chip] if image_task else [video_chip, image_chip, board_chip]
     elif kind == "image":
         return {"text": "", "reply": "", "blocks": [], "chips": [], "silent": True, "intent": "image_done", "lang": lang}
     else:
@@ -1002,7 +1088,11 @@ def from_prompt(engine: Any, value: Any, ctx: dict, ses: dict, lang: str) -> dic
         f["kind"] = "image"
         ses["kind"] = "image"
         f["path"] = "direct"
+        f.pop("return_image", None)
         return _advise(engine, ctx, ses, lang)
+    from .brief import is_product_card
+    if f.get("kind") == "image" or f.get("story") == "COM.CARD" or is_product_card(text or f.get("idea") or ""):
+        f["return_image"] = text or f.get("idea") or ""
     f["kind"] = "video"
     ses["kind"] = "video"
     return _go_direct(engine, ctx, ses, lang)

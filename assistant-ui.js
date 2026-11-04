@@ -869,30 +869,27 @@
       var setup = bl.step === 'setup';
       if (setup && bl.summary) wrap.appendChild(el('div', 'sb-summary', bl.summary));
       var list = el('ol', 'sb-list');
+      function sbIcon(name) {
+        var paths = {
+          up: 'M6 14l6-6 6 6',
+          down: 'M6 10l6 6 6-6',
+          del: 'M6 7h12M9 7V5h6v2M8 7l1 12h6l1-12',
+          add: 'M12 6v12M6 12h12'
+        };
+        var b = el('button', 'sb-ico sb-ico--' + name);
+        b.type = 'button';
+        b.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="' + paths[name] + '"></path></svg>';
+        return b;
+      }
       if (!setup) bl.frames.forEach(function (f) {
         var i = f.n - 1;
+        var last = i === bl.frames.length - 1;
         var li = el('li', 'sb-frame');
         var top = el('div', 'sb-frame__top');
         top.appendChild(el('span', 'sb-num', (f.n < 10 ? '0' : '') + f.n));
         top.appendChild(el('span', 'sb-time', f.time));
-        if (bl.can_del) {
-          var del = el('button', 'sb-del', '×');
-          del.type = 'button';
-          del.title = lab.del;
-          del.setAttribute('aria-label', lab.del + ' ' + f.n);
-          del.addEventListener('click', function () { sbEdit('frames.del.' + i); });
-          top.appendChild(del);
-        }
-        li.appendChild(top);
-        li.appendChild(editable('span', 'reel-edit sb-frame__title', f.title, 'frames.' + i + '.title', sbEdit));
-        li.appendChild(editable('div', 'reel-edit sb-frame__text', f.text, 'frames.' + i + '.text', sbEdit));
-        var meta = el('div', 'sb-frame__meta');
-        var shot = el('label', 'sb-meta');
-        shot.appendChild(el('span', null, lab.shot));
-        shot.appendChild(editable('span', 'reel-edit', f.shot || '—', 'frames.' + i + '.shot', sbEdit));
-        meta.appendChild(shot);
+        top.appendChild(editable('span', 'reel-edit sb-frame__title', f.title, 'frames.' + i + '.title', sbEdit));
         var cam = el('label', 'sb-meta sb-meta--cam');
-        cam.appendChild(el('span', null, lab.camera));
         var sel = el('select', 'reel-cam');
         var none = el('option', null, lab.none); none.value = ''; sel.appendChild(none);
         var groups = {};
@@ -901,30 +898,51 @@
           var o = el('option', null, m.title); o.value = m.id; groups[m.group].appendChild(o);
         });
         sel.value = f.camera || '';
+        sel.setAttribute('aria-label', lab.camera);
         sel.addEventListener('change', function () { sbEdit('frames.' + i + '.camera', sel.value); });
         cam.appendChild(sel);
-        meta.appendChild(cam);
-        li.appendChild(meta);
-        var det = el('details', 'sb-redo');
-        det.appendChild(el('summary', null, '✎ ' + lab.redo));
-        var redo = el('div', 'reel-frame__redo');
-        var inp = el('input', 'reel-frame__input');
-        inp.placeholder = lab.redo_ph;
-        var go = el('button', 'aich-opt', lab.redo);
-        go.type = 'button';
-        function send() { if (inp.value.trim()) post({ action: { type: 'sb_frame', value: { n: f.n, text: inp.value.trim() } } }, true); }
-        go.addEventListener('click', send);
-        inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); send(); } });
-        redo.appendChild(inp);
-        redo.appendChild(go);
-        det.appendChild(redo);
-        li.appendChild(det);
+        top.appendChild(cam);
+        var tools = el('div', 'sb-tools');
+        var up = sbIcon('up');
+        up.title = L('Выше', 'Move up');
+        up.setAttribute('aria-label', up.title);
+        up.disabled = i === 0;
+        up.addEventListener('click', function () { if (i > 0) sbEdit('frames.move.' + i + '.up'); });
+        var down = sbIcon('down');
+        down.title = L('Ниже', 'Move down');
+        down.setAttribute('aria-label', down.title);
+        down.disabled = last;
+        down.addEventListener('click', function () { if (!last) sbEdit('frames.move.' + i + '.down'); });
+        tools.appendChild(up);
+        tools.appendChild(down);
+        if (bl.can_del) {
+          var del = sbIcon('del');
+          del.title = lab.del;
+          del.setAttribute('aria-label', lab.del + ' ' + f.n);
+          del.addEventListener('click', function () { sbEdit('frames.del.' + i); });
+          tools.appendChild(del);
+        }
+        top.appendChild(tools);
+        li.appendChild(top);
+        var ta = el('textarea', 'aich-prompt__area sb-frame__area');
+        ta.value = f.text || '';
+        ta.rows = 4;
+        ta.spellcheck = false;
+        var was = ta.value;
+        ta.addEventListener('blur', function () {
+          var now = ta.value.trim();
+          if (now && now !== was.trim()) { was = now; sbEdit('frames.' + i + '.text', now); }
+        });
+        li.appendChild(ta);
+        li.appendChild(promptExpand(ta));
         list.appendChild(li);
       });
       if (!setup && bl.frames.length) wrap.appendChild(list);
       if (bl.can_add) {
-        var add = el('button', 'sb-add', lab.add);
-        add.type = 'button';
+        var add = sbIcon('add');
+        add.classList.add('sb-add');
+        add.title = lab.add;
+        add.setAttribute('aria-label', lab.add);
         add.addEventListener('click', function () { sbEdit('frames.add.' + bl.frames.length); });
         wrap.appendChild(add);
       }

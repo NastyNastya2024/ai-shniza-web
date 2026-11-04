@@ -103,6 +103,12 @@ def test_edits_in_place(make_assistant):
     assert "«ДИВАН С НЕБА»" in act(a, "sb_setup")["generate_prompt"]
     r = act(a, "sb_edit", {"path": "frames.1.camera", "value": "orbit-cw"})
     assert blk(r, "sb_frames")["frames"][1]["camera"] == "orbit-cw" and "Camera: " in act(a, "sb_setup")["generate_prompt"]
+    first, second = blk(r, "sb_frames")["frames"][0]["title"], blk(r, "sb_frames")["frames"][1]["title"]
+    r = act(a, "sb_edit", {"path": "frames.move.0.down"})
+    assert blk(r, "sb_frames")["frames"][0]["title"] == second
+    assert blk(r, "sb_frames")["frames"][1]["title"] == first
+    r = act(a, "sb_edit", {"path": "frames.move.1.up"})
+    assert blk(r, "sb_frames")["frames"][0]["title"] == first
     r = act(a, "sb_edit", {"path": "frames.add.5"})
     assert len(blk(r, "sb_frames")["frames"]) == 6
     r = act(a, "sb_edit", {"path": "frames.del.5"})

@@ -58,6 +58,5 @@
 .pub-note{margin:0;font-size:12.5px;color:var(--muted2)}
 .pub-done{font-size:13px;font-weight:600;color:var(--ink);padding:8px 12px;border-radius:12px;background:rgba(40,170,110,.12)}
 .pub-gone{width:260px;max-width:100%;padding:16px 14px;border-radius:16px;border:1.5px dashed var(--field-brd);background:var(--field);font-size:13px;line-height:1.45;color:var(--muted2);box-sizing:border-box}
-.result-next{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;width:100%}
-.result-next button{flex:1 1 140px;min-height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--field-brd);background:var(--field);color:var(--ink);font:700 13px 'Onest',system-ui,sans-serif;cursor:pointer}
-.result-next button:first-child{background:var(--seg-bg,#fff);border-color:transparent}
+.result-next{display:flex;flex-wrap:wrap;align-items:center;gap:8px;width:100%}
+.result-next .aich-chip{flex:0 0 auto}

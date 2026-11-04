@@ -46,6 +46,9 @@ KIND_RU = {"video": "видео", "image": "картинки", "music": "муз�
 def asked_kind(msg: str) -> str | None:
     """Какой тип результата человек явно просит СДЕЛАТЬ, а не написать текст про него.
     «сгенерируй видео по этому сценарию» → video; «напиши / сделай промпт для видео» → None; «оживи фото» → video."""
+    heard = _explicit_audio(msg)
+    if heard:
+        return heard
     low = (msg or "").lower()
     for m in GEN_VERB.finditer(low):
         if re.match(r"оживи|animate", m.group(1)):
@@ -65,17 +68,43 @@ def asked_kind(msg: str) -> str | None:
     return None
 
 
+def _explicit_audio(msg: str) -> str | None:
+    """Озвучка и музыка — не видео, даже если в фразе есть «ролик» или «видео»."""
+    low = (msg or "").lower()
+    voice = re.search(r"озвуч|начитк|диктор|voice-?over|\btts\b", low)
+    if voice:
+        earlier = TEXT_OBJ.search(low)
+        if earlier and earlier.start() < voice.start():
+            return None
+        return "voice"
+    if re.search(r"расскажи|объясни|что такое|напиши|промпт", low):
+        return None
+    if re.search(r"музык|трек|песн|джингл", low) and re.search(r"сделай|создай|сгенер|нужн|хочу|запиши", low):
+        return "music"
+    return None
+
+
+_TEXT_KINDS = {"text", "llm", "chat"}
+# Прямой приказ сделать медиа. «Ты можешь сделать 3д» — вопрос текстовой модели, не запуск генерации.
+_GEN_ORDER = re.compile(r"^(?:сгенер\w*|нарисуй|оживи\w*|создай|сделай|generate|draw|animate|render)\b", re.I)
+
+
 def lock_of(a: Any, ctx: dict, ses: dict) -> dict | None:
-    """Выбранная человеком модель или None. Модель должна быть в каталоге помощника и открыта в студии."""
+    """Выбранная человеком модель или None. Текстовая модель в поле ввода отвечает сама, даже если её нет в карточках помощника."""
+    mid = str(ctx.get("selected_model_id") or "")
+    raw = str(ctx.get("selected_model_kind") or "")
+    card = (a.d.cards or {}).get(mid) if mid else None
+    title = str(ctx.get("selected_model_title") or (getattr(card, "title", "") if card else "") or mid)
+    textish = raw in _TEXT_KINDS or (card is not None and getattr(card, "kind", "") == "text")
+    if card is None and textish and mid and (ctx.get("model_locked") or raw in _TEXT_KINDS):
+        return {"id": mid, "kind": "text", "title": title, "card": None}
     if not ctx.get("model_locked"):
         return None
-    mid = str(ctx.get("selected_model_id") or "")
-    card = (a.d.cards or {}).get(mid)
     if card is None:
         return None
     if getattr(a.d, "catalog_fn", None) and not a.d.catalog_fn(mid):
         return None
-    kind = str(getattr(card, "kind", "") or ctx.get("selected_model_kind") or "")
+    kind = str(getattr(card, "kind", "") or raw)
     return {"id": mid, "kind": kind, "title": getattr(card, "title", mid), "card": card}
 
 
@@ -84,8 +113,7 @@ def _compatible(model_kind: str, want: str | None) -> bool:
         return True
     if model_kind == want:
         return True
-    return (model_kind, want) in {("edit", "image"), ("image", "edit"), ("music", "sfx"), ("sfx", "music"),
-                                  ("voice", "music")}
+    return (model_kind, want) in {("edit", "image"), ("image", "edit"), ("music", "sfx"), ("sfx", "music")}
 
 
 def before_message(a: Any, msg: str, ctx: dict, ses: dict, lang: str) -> dict | None:
@@ -103,7 +131,10 @@ def before_message(a: Any, msg: str, ctx: dict, ses: dict, lang: str) -> dict | 
     en = str(lang).startswith("en")
 
     if lock["kind"] == "text":
-        if want and want != "text":
+        from .switch import kind_only, saved_prompt
+        if kind_only(msg) and saved_prompt(ses):
+            return None
+        if want and want != "text" and (_GEN_ORDER.match((msg or "").strip()) or want in ("voice", "music")):
             ses["lock_pending"] = {"text": msg[:2000], "kind": want}
             head = (f"Selected model is {lock['title']} (text). Make {want} instead?" if en else
                     f"Сейчас выбрана {lock['title']} — она пишет текст. Сделать {KIND_RU.get(want, want)}?")
@@ -126,7 +157,7 @@ def before_message(a: Any, msg: str, ctx: dict, ses: dict, lang: str) -> dict | 
             chip(("Pick another model" if en else f"Подобрать модель для: {KIND_RU.get(want, want)}"), "lock_switch", want),
         ], [], lang, intent="lock_ask")
     # картинка и видео: сначала обычный промпт (и для видео — раскадровка). Список моделей пропускается в конце.
-    if lock["kind"] in ("image", "edit", "video"):
+    if lock["kind"] in ("image", "edit", "video", "music", "voice"):
         ses["lock"] = lock["id"]
         return None
     if ses.get("picked") != lock["id"] or ses.get("kind") != lock["kind"]:
@@ -146,7 +177,7 @@ def _composer_pick(a: Any, ctx: dict) -> dict | None:
     if getattr(a.d, "catalog_fn", None) and not a.d.catalog_fn(mid):
         return None
     kind = str(getattr(card, "kind", "") or ctx.get("selected_model_kind") or "")
-    if kind not in ("image", "edit", "video"):
+    if kind not in ("image", "edit", "video", "music", "voice"):
         return None
     return {"id": mid, "kind": kind, "title": getattr(card, "title", mid), "card": card}
 

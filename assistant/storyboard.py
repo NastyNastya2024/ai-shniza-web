@@ -998,7 +998,9 @@ def edit(a: Any, ses: dict, ctx: dict, lang: str, value: Any) -> dict:
         if key == "camera":
             f["camera"] = _cam_id(val)
         else:
-            f[key] = _txt(val, 320 if key == "text" else 60).strip("—- ") if key == "shot" else _txt(val, 320 if key == "text" else 60)
+            limit = 2000 if key == "text" else 60
+            raw = _txt(val, limit)
+            f[key] = raw.strip("—- ") if key == "shot" else raw
             if key == "title":
                 f["title_en"] = ""             # подпись на листе = то, что написал человек
             if key == "text":
@@ -1012,6 +1014,12 @@ def edit(a: Any, ses: dict, ctx: dict, lang: str, value: Any) -> dict:
     elif (m := re.fullmatch(r"frames\.del\.(\d{1,2})", path)) and len(fr) > MIN_FRAMES and int(m.group(1)) < len(fr):
         fr.pop(int(m.group(1)))
         _fit_seconds(st)
+    elif (m := re.fullmatch(r"frames\.move\.(\d{1,2})\.(up|down)", path)):
+        i = int(m.group(1))
+        j = i - 1 if m.group(2) == "up" else i + 1
+        if 0 <= i < len(fr) and 0 <= j < len(fr):
+            fr[i], fr[j] = fr[j], fr[i]
+            _fit_seconds(st)
     elif path == "model":
         if any(c.id == val for c in models(a, st["format"])):
             st["model"] = str(val)

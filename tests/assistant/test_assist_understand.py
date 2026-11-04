@@ -211,6 +211,33 @@ def test_llm_layer_understands_what_rules_cannot(make_assistant):
     assert r["intent"] == "switch_model" and r["generate_model"] == "gemini-3-5-flash"
 
 
+def test_language_model_starts_the_process(make_assistant):
+    """Модель решает процесс. Слово «ролик» само по себе видео не запускает, если модель выбрала текст."""
+    reply = json.dumps({"intent": "generate", "kind": "text", "confidence": 0.93})
+    transport = FakeTransport(omniroute=[("ok", reply)])
+    a = make_assistant(transport=transport, understand_llm=True, dialog_v2=True)
+    r = a.handle("нужен ролик: придумай назидательную историю про исцеление обиды", {}, "disp")
+    assert transport.calls
+    assert "видео или картинка" not in (r.get("text") or "")
+    assert r.get("text_ask") and "историю" in r["text_ask"]
+    assert r.get("generate_model")
+    assert (r.get("dialog") or {}).get("task") == "text"
+
+
+def test_language_model_can_start_a_video(make_assistant):
+    reply = json.dumps({"intent": "generate", "kind": "video", "confidence": 0.9})
+    a = make_assistant(transport=FakeTransport(omniroute=[("ok", reply)]), understand_llm=True, dialog_v2=True)
+    r = a.handle("нужен ролик про кота на крыше", {}, "disp-v")
+    assert (r.get("dialog") or {}).get("task") == "video"
+    assert "видео или картинка" not in (r.get("text") or "")
+
+
+def test_without_the_language_model_words_still_route(make_assistant):
+    a = make_assistant(transport=FakeTransport(omniroute=[("http", 500)]), understand_llm=True, dialog_v2=True)
+    r = a.handle("сделай видео про кота на крыше", {}, "disp-fb")
+    assert (r.get("dialog") or {}).get("task") == "video"
+
+
 def test_llm_layer_cannot_invent_models(make_assistant):
     reply = json.dumps({"intent": "switch_model", "model": "super-gpt-99", "confidence": 0.95})
     a = make_assistant(transport=FakeTransport(omniroute=[("ok", reply)]), understand_llm=True)

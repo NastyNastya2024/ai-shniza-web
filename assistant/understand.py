@@ -1,16 +1,15 @@
 """Понимание свободного текста — слой над router.py.
 
-router.py ищет в тексте слова-признаки задачи («видео», «картинка»…). Он не знает фраз вроде
-«включи мне клода», «какая нейросеть лучше для видео», «сделай тёмный фон», «сделай сериал» и отвечает на них
-меню типов. Здесь — три слоя:
+Свежий запрос сначала читает языковая модель и сама выбирает процесс: текст, видео, картинка,
+музыка, озвучка, вопрос, смена модели. router.py — запасной путь, если модель не ответила.
 
   1. fast()  — правила, 0 ₽: переключить модель, вопрос-совет, действие в интерфейсе, запуск режима.
-  2. ask_llm() — разбор нейросетью (цепочка помощника), только если правила и router не поняли фразу.
+  2. ask_llm() — разбор нейросетью (цепочка помощника).
      Возвращает JSON {intent, model, kind, mode, ui, value, question}; всё сверяется со списками — нейросеть
      не может придумать модель, режим или действие.
-  3. Решение — в engine.py (_understood): ответить и вернуться к шагу, переключить модель, сделать действие.
+  3. Решение — в engine.py (_understood): запустить выбранный процесс.
 
-Намерения: switch_model | question | ui_do | start_mode | other.
+Намерения: switch_model | question | ui_do | start_mode | generate | other.
 """
 from __future__ import annotations
 
@@ -136,17 +135,22 @@ def fast(text: str, cards: dict | None = None) -> dict | None:
 
 # ─────────────────────────────────────────── слой 2: нейросеть
 UNDERSTAND_SYSTEM = (
-    "You route messages for the assistant of {AI}-shnitsa, a studio of generative AI models (video, images, music, "
-    "voice, text chat). Classify the user's message. Return JSON only:\n"
+    "You are the dispatcher for {AI}-shnitsa, a studio of generative models. Read the user's message and choose "
+    "which process to start. Return JSON only:\n"
     '{"intent": one of "switch_model" | "question" | "ui_do" | "start_mode" | "generate" | "other",\n'
-    ' "model": model id from MODELS or "", "kind": "video"|"image"|"music"|"text"|"", "mode": "reels"|"series"|"",\n'
+    ' "model": model id from MODELS or "", "kind": "video"|"image"|"music"|"voice"|"text"|"", '
+    '"mode": "reels"|"series"|"",\n'
     ' "ui": "theme"|"panel"|"new_chat"|"", "value": theme white|black|light|violet or panel models|mcp|vit or "",\n'
     ' "confidence": 0..1}\n'
-    "switch_model — the user wants to chat with / use a specific model (\"включи клода\", \"давай дипсик\").\n"
-    "question — asks advice or how something works (which model is better, why, how to set up the interface).\n"
-    "ui_do — wants a reversible interface change: theme, open a panel, new chat.\n"
-    "start_mode — wants a multi-step project: reels from idea to publishing, or a series with recurring heroes.\n"
-    "generate — describes something to create. other — anything else.\n"
+    "generate — the user wants something made. Set kind to the result, not to the verb:\n"
+    " text — anything to write or tell: a story, tale, poem, article, letter, script, explanation, advice. "
+    "The words generate/сделай/сгенерируй do not make it a picture or a video.\n"
+    " image — a still picture, photo, poster or product card.\n"
+    " video — a moving clip. voice — spoken narration or voiceover, even if the sentence also says video.\n"
+    " music — a track or song.\n"
+    "If the user names the medium, use that kind. If they do not, decide from what they asked to receive.\n"
+    "switch_model — chat with a named model. question — advice. ui_do — theme, panel, new chat.\n"
+    "start_mode — a reels project or a series. other — greetings and anything else.\n"
     "Use ONLY ids from MODELS. Never invent models, modes or actions."
 )
 
@@ -163,7 +167,7 @@ def _v_understand(cards: dict):
         if mid in cards:
             out["model"] = mid
         kind = str(d.get("kind") or "")
-        if kind in ("video", "image", "music", "text"):
+        if kind in ("video", "image", "music", "voice", "text"):
             out["kind"] = kind
         mode = str(d.get("mode") or "")
         if mode in MODES:
@@ -197,6 +201,8 @@ def ask_llm(a: Any, text: str, ses: dict, ctx: dict) -> dict | None:
         return None
     if res["intent"] == "question":
         res["question"] = text
+    if res["intent"] == "generate" and res.get("kind"):
+        return res
     return res if res["intent"] in INTENTS and res["intent"] != "other" else None
 
 

@@ -86,27 +86,25 @@ def is_vague(text: str) -> bool:
     return not BR.has_subject(text) or bool(_VAGUE.search(text or "") and BR.detail_level(text) <= 2)
 
 
-def narrow_types(ses: dict, lang: str) -> list[dict]:
-    """2–3 кнопки типа под конкретный запрос, не всё меню."""
-    idea = ((ses.get("idea") or "") + " " + (ses.get("topic") or "")).lower()
+def open_kinds(ses: dict, lang: str) -> list[dict]:
+    """Первый вопрос, если языковая модель не выбрала процесс: все пути, не только видео и картинка."""
     ru = lang != "en"
-    out = [
+    idea = (ses.get("idea") or ses.get("topic") or "").strip()
+    return [
+        chip("Промпт" if ru else "Prompt", "choose_type", "prompt"),
+        chip("Рилс" if ru else "Reels", "mode_start", {"id": "reels", "text": idea}),
         chip("Видео" if ru else "Video", "choose_type", "video"),
         chip("Картинка" if ru else "Image", "choose_type", "image"),
+        chip("Раскадровка" if ru else "Storyboard", "sb_start", idea),
+        chip("Музыка" if ru else "Music", "choose_type", "music"),
+        chip("Озвучка" if ru else "Voiceover", "choose_type", "voice"),
     ]
-    if re.search(r"музык|трек|песн|звук|music|song|track", idea, re.I):
-        out.append(chip("Музыка" if ru else "Music", "choose_type", "music"))
-    return out[:3]
 
 
 def type_question(ses: dict, lang: str) -> dict:
     from .render import response
-    topic = (ses.get("topic") or ses.get("idea") or "").strip()
-    if lang == "en":
-        line = f"“{topic}” — a video or an image?" if topic else "A video or an image?"
-    else:
-        line = f"«{topic}» — это видео или картинка?" if topic else "Это видео или картинка?"
-    return response([line], narrow_types(ses, lang), lang=lang, intent="ask_type")
+    line = "What should we make?" if lang == "en" else "Что с этим сделать?"
+    return response([line], open_kinds(ses, lang), lang=lang, intent="ask_type")
 
 
 def tree_guesses(engine: Any, msg: str, lang: str, limit: int = 3) -> list[dict]:

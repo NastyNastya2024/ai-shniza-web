@@ -330,7 +330,9 @@ class Assistant:
                 ses["files_ok"] = True
                 ses["focus_note"] = DG.take_line(found[0], lang)
         # 1') понимание фразы (understand.py): «включи клода», вопрос-совет, «тёмная тема», режимы; шаг режима ждёт текст
-        if msg and self.d.dialog_v2 and DFLOW.active(ses) and not DG.mcp_about(msg) and ses.get("await") not in ("polish", "chat") and ses.get("kind") != "text":
+        from .switch import kind_only as _kind_only
+        switching_kind = bool(msg and _kind_only(msg))
+        if msg and self.d.dialog_v2 and DFLOW.active(ses) and not DG.mcp_about(msg) and ses.get("await") not in ("polish", "chat") and (ses.get("kind") != "text" or switching_kind):
             it_flow = route(msg, ctx, ses, self.titles)
             if it_flow.name not in ("crisis", "safety", "safety_person", "injection", "price", "error_help", "ui_help", "generate_now"):
                 got_flow = DFLOW.on_message(self, msg, ctx, ses, lang)
@@ -542,8 +544,10 @@ class Assistant:
             u0 = UN.fast(msg, self.d.cards)
             if u0 and u0["intent"] == "ui_do":   # «открой витрину» — не объяснять, а открыть
                 return self._ui_do(u0, ctx, ses, lang)
-        if it0.name in UN.PROTECTED or (it0.name == "off_topic" and OFF_TOPIC.search(msg)):
-            return None                     # безопасность, ошибки, справки и явное «не по теме» (погода) — как раньше
+        # Длинная фраза со словом «как» или «история» — не справка по кнопкам, её читает модель.
+        long_help = it0.name == "ui_help" and len(msg.split()) >= 6
+        if (it0.name in UN.PROTECTED or (it0.name == "off_topic" and OFF_TOPIC.search(msg))) and not long_help:
+            return None                     # безопасность, ошибки, короткие справки и явное «не по теме» — как раньше
         md = MD.active(ses)
         text_step = bool(md and MD.wants_text(ses) and not PL.waiting(ses) and not SB.active(ses))
         u = UN.fast(msg, self.d.cards)
@@ -551,8 +555,14 @@ class Assistant:
             u = None                        # «Как бариста варит кофе?» на шаге «Идея» — это идея, не вопрос
         if u is None and text_step:
             return MD.on_text(self, ses, ctx, lang, msg)
-        if (u is None and self.d.understand_llm and it0.name in ("ask_type", "off_topic") and len(msg.split()) >= 2
-                and ses.get("await") in (None, "type", "gen_type") and not PL.waiting(ses) and not SB.active(ses)):
+        # Свежий запрос разбирает языковая модель и сама запускает процесс.
+        # Слова из router — только если модели нет или она не ответила.
+        # Уже выбранная модель, шаг диалога и кнопки сюда не попадают.
+        from .model_lock import lock_of
+        fresh = ses.get("await") in (None, "type", "gen_type") and not lock_of(self, ctx, ses)
+        if (u is None and self.d.understand_llm and fresh and len(msg.split()) >= 2
+                and (it0.name in ("ask_type", "off_topic", "generate_task") or long_help)
+                and not PL.waiting(ses) and not SB.active(ses)):
             u = UN.ask_llm(self, msg, ses, ctx)
         if u is None:
             return None
@@ -594,6 +604,10 @@ class Assistant:
             return MD.start(self, ses, ctx, lang, u.get("mode") or "reels", text=msg)
         if intent == "question":
             return self._answer(msg, ctx, ses, lang)
+        if intent == "generate" and u.get("kind") in ("text", "video", "image", "music", "voice"):
+            ses.pop("flow", None)
+            it = Intent("generate_task", kind=u["kind"], needs=detect_needs(msg), topic=topic_of(msg))
+            return self._i_generate_task(it, msg, ctx, ses, lang)
         return None
 
     def _ui_do(self, u: dict, ctx: dict, ses: dict, lang: str) -> dict:
@@ -1678,6 +1692,14 @@ class Assistant:
         ses["brief_guide"] = card.id
         raw_params, adj = P.fit(P.extract(idea + " " + " ".join(br.get("extra") or [])), card)
         params = P.with_defaults(card, {**P.validate(card, ses.get("params")), **raw_params})
+        # Готовый длинный текст (например после Claude) не переписываем коротким шаблоном.
+        if BR.detail_level(idea) >= 40 and card.kind in ("image", "edit", "video", "music", "voice"):
+            title = "As described" if lang == "en" else "Как вы описали"
+            ses.update(variants=[{"id": "v1", "title": title, "text": idea.strip()}],
+                       brief_done=True, params=params, picked=None)
+            lines = ["Using this text as the prompt. You can edit it in the card." if lang == "en" else
+                     "Беру этот текст как промпт. Его можно поправить прямо в карточке."]
+            return self._show_variants(card, ses, lang, lines, True)
         answers_text = self._answers_text(br)
         extra = list(br.get("extra") or [])
         if ctx.get("has_image") and not BR.scene_words(idea):
@@ -2071,12 +2093,14 @@ class Assistant:
             replies = [str(row.get("text")).strip()[:4000] for row in (ses.get("texts") or [])
                        if isinstance(row, dict) and str(row.get("text") or "").strip()]
         self._remember_texts(ses, value if replies and value.get("replies") else {"text": ""})
-        kind = str(value.get("kind") or "") or generation_kind(text, bool(ctx.get("has_image"))) or "video"
+        from assistant.switch import kind_only
+        only = kind_only(text)
+        kind = only or str(value.get("kind") or "") or generation_kind(text, bool(ctx.get("has_image"))) or "video"
         if kind == "storyboard":
             cands = prompt_candidates(replies)
             script = cands[0] if cands else text
             return SB.start(self, ses, ctx, lang, text=script)
-        if kind not in {"video", "image", "music"}:
+        if kind not in {"video", "image", "music", "voice"}:
             kind = "video"
         from_name = str(value.get("from_name") or ("Claude" if lang != "en" else "the text model"))
         stay = chip(
@@ -2085,6 +2109,8 @@ class Assistant:
             {"text": text, "model": str(value.get("from_id") or "")},
         )
         cands = prompt_candidates(replies) if refers_to_previous(text) else []
+        if only and replies:
+            cands = [max(replies, key=len)]
         if refers_to_previous(text) and len(cands) >= 2:
             ses["switch_cands"] = cands[:4]
             ses["switch_kind"] = kind
@@ -2452,7 +2478,7 @@ class Assistant:
                         if flow.get("polished"):
                             return DFLOW._go_direct(self, ctx, ses, lang)
                         return DFLOW._paths(self, ses, lang)
-                    if which == "idea" and (flow.get("kind") or "") == "image":
+                    if which == "idea" and (flow.get("kind") or "") in ("image", "voice", "music"):
                         return DFLOW._advise(self, ctx, ses, lang)
                     flow["stage"] = "polish"
                     flow["next"] = "polish"
@@ -2629,6 +2655,8 @@ class Assistant:
         if self._is_guest(ctx):
             return self._ask_login(ses, lang, kind)
         if kind == "sb_start":
+            if isinstance(value, str) and value not in ("", "new") and len(value.split()) >= 3:
+                return SB.start(self, ses, ctx, lang, text=value)
             return SB.start(self, ses, ctx, lang, value)
         if not isinstance(ses.get("sb"), dict):
             return SB.start(self, ses, ctx, lang)

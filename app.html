@@ -7,12 +7,12 @@
 <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/assets/brand/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/assets/brand/png/apple-touch-icon-180.png">
-<link rel="stylesheet" href="/assistant-ui.css?v=36">
+<link rel="stylesheet" href="/assistant-ui.css?v=38">
 <link rel="stylesheet" href="/attach.css">
-<link rel="stylesheet" href="/chat-history.css?v=6">
+<link rel="stylesheet" href="/chat-history.css?v=7">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Days+One&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/aish-style.css?v=20">
+<link rel="stylesheet" href="/aish-style.css?v=21">
 <script src="/aish-style.js?v=9"></script>
 <script src="/aish-metrics.js?v=1"></script>
 <script src="/legal-pop.js?v=2"></script>
@@ -677,7 +677,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 <script src="/vitrina-data.js"></script>
 <script src="/vitrina-camera-moves.js?v=3"></script>
 <script src="/vitrina-aishnitsa.js?v=14"></script>
-<script src="/assistant-ui.js?v=48"></script>
+<script src="/assistant-ui.js?v=49"></script>
 <script src="/model-lock.js?v=1"></script>
 <script src="/attach.js?v=7"></script>
 <script src="/aish-mcp.js?v=3"></script>
@@ -2682,6 +2682,17 @@ function pinResultImage(msg) {
     });
   }).catch(function () {});
 }
+function replyMakeHtml(text) {
+  const card = /карточк|предметн|маркетплейс|формат\s*3\s*:\s*4/i.test(String(text || ''));
+  const steps = card
+    ? [['image', 'studio.chat.makeImage'], ['video', 'studio.chat.makeVideo'], ['storyboard', 'studio.chat.makeBoard']]
+    : [['video', 'studio.chat.makeVideo'], ['image', 'studio.chat.makeImage'], ['storyboard', 'studio.chat.makeBoard']];
+  return '<div class="reply-make">'
+    + steps.map(function (s, i) {
+      return '<button type="button" data-make="' + s[0] + '"' + (i === 0 ? ' class="is-primary"' : '') + '>' + esc(tr(s[1])) + '</button>';
+    }).join('')
+    + '</div>';
+}
 function videoNextHtml(m) {
   if (!m || !m.result) return '';
   const steps = m.mediaKind === 'image'
@@ -2699,8 +2710,8 @@ function videoNextHtml(m) {
       : []);
   if (!steps.length) return '';
   return '<div class="result-next" role="group">'
-    + steps.map(function (s) {
-      return '<button type="button" data-result-next="' + s[0] + '">' + esc(tr(s[1])) + '</button>';
+    + steps.map(function (s, i) {
+      return '<button type="button" class="aich-chip' + (i === 0 ? ' aich-chip--primary' : '') + '" data-result-next="' + s[0] + '">' + esc(tr(s[1])) + '</button>';
     }).join('')
     + '</div>';
 }
@@ -2804,7 +2815,6 @@ function msgEl(m) {
     + replyToolsHtml(m)
     + media
     + pubBlock
-    + (m.result && !workGone && (m.mediaKind === 'video' || m.mediaKind === 'image') ? videoNextHtml(m) : '')
     + (likeChip ? '<div style="display:flex;flex-wrap:wrap;gap:8px">' + likeChip + '</div>' : '')
     + (m.loginCta ? '<button type="button" class="btn-login" data-cta data-login style="height:40px;padding:0 18px;border-radius:12px;font-size:14px">' + esc(tr('studio.chat.loginRun')) + '</button>' : '')
     + (m.topup ? '<a href="/account#balance" data-m-topup class="btn-purple" style="height:40px;padding:0 18px;border-radius:12px;font-size:14px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none">' + esc(tr('studio.chat.toBalance')) + '</a>' : '')
@@ -2814,11 +2824,8 @@ function msgEl(m) {
         + '</div>'
       : '')
     + '</div>'
-    + (m.makeHints ? '<div class="reply-make">'
-      + '<button type="button" data-make="video">' + esc(tr('studio.chat.makeVideo')) + '</button>'
-      + '<button type="button" data-make="image">' + esc(tr('studio.chat.makeImage')) + '</button>'
-      + '<button type="button" data-make="storyboard">' + esc(tr('studio.chat.makeBoard')) + '</button>'
-      + '</div>' : '')
+    + (m.result && !workGone && (m.mediaKind === 'video' || m.mediaKind === 'image') ? videoNextHtml(m) : '')
+    + (m.makeHints ? replyMakeHtml(m.text) : '')
     + '</div>';
   if (Array.isArray(m.chips) && m.chips.length) el._assistChips = m.chips.slice(0, 5);
   el._msg = m;

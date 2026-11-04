@@ -472,6 +472,39 @@ _PACKS = {
 }
 
 
+def _voice_text(subject: str, form: str, index: int, lang: str) -> str:
+    """Текст для озвучки: посекундные реплики или общий сценарий. Не описание кадра."""
+    topic = re.sub(
+        r"(?i)\b(мне|нужно|надо|хочу|сделай|создай|озвучить|озвучь|озвучка|видео|ролик|пожалуйста)\b",
+        " ", subject or "",
+    )
+    topic = re.sub(r"\s+", " ", topic).strip(" .,-") or ("the clip" if lang == "en" else "этот ролик")
+    if lang == "en":
+        boards = [
+            f"0:00–0:03. Introduce {topic}.\n0:03–0:07. The main point, calm voice, one sentence.\n0:07–0:10. A short closing line.",
+            f"0:00–0:02. A direct first line about {topic}.\n0:02–0:06. Two clear facts, short pauses.\n0:06–0:09. The last phrase, slightly slower.",
+            f"0:00–0:04. Set the scene in words: {topic}.\n0:04–0:08. What matters most.\n0:08–0:11. Stop on the final sentence.",
+        ]
+        scripts = [
+            f"A calm voiceover about {topic}. Short sentences. A pause between thoughts. No music and no sound effects.",
+            f"A lively voiceover about {topic}. Plain words, steady pace, one idea per sentence. Speech only.",
+            f"A quiet voiceover about {topic}. Warm tone, unhurried, the last line a little slower. Speech only.",
+        ]
+    else:
+        boards = [
+            f"0:00–0:03. Коротко представь тему: {topic}.\n0:03–0:07. Главная мысль спокойным голосом, одна фраза.\n0:07–0:10. Короткая финальная фраза.",
+            f"0:00–0:02. Прямая первая реплика про {topic}.\n0:02–0:06. Два ясных факта, паузы между ними.\n0:06–0:09. Последняя фраза чуть медленнее.",
+            f"0:00–0:04. Словами задай тему: {topic}.\n0:04–0:08. Что здесь главное.\n0:08–0:11. Остановка на финальной фразе.",
+        ]
+        scripts = [
+            f"Спокойная начитка про {topic}. Короткие фразы. Пауза между мыслями. Без музыки и шумов.",
+            f"Живая начитка про {topic}. Простые слова, ровный темп, одна мысль на фразу. Только речь.",
+            f"Тихая начитка про {topic}. Тёплый тон, без спешки, последняя фраза чуть медленнее. Только речь.",
+        ]
+    pool = boards if form == "board" else scripts
+    return pool[index % len(pool)]
+
+
 def _structured(kind: str, answers: dict, index: int, lang: str) -> list[str]:
     """Строки «Настроение. …» для видео и картинки. Выбор человека важнее шаблона."""
     packs = _PACKS.get(lang, {}).get(kind)
@@ -522,6 +555,41 @@ def named_style(text: str, lang: str) -> str:
     return ""
 
 
+def is_product_card(text: str) -> bool:
+    return bool(re.search(
+        r"карточк|маркетплейс|вайлдберриз|\bwb\b|\bozon\b|озон|предметн\w*(?:\s+\w+){0,2}\s+фото|формат\s*3\s*:\s*4",
+        text or "", re.I,
+    ))
+
+
+def _product_name(subject: str) -> str:
+    cleaned = re.sub(
+        r"(?i)\b(карточк\w*|товар\w*|маркетплейс\w*|вайлдберриз\w*|ozon|озон|формат|для|сделай|нужно|мне|фото|главн\w*|инфографик\w*|\bwb\b)\b",
+        " ", subject or "",
+    )
+    cleaned = re.sub(r"3\s*:\s*4", " ", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip(" .,-—–")
+    return cleaned or "товар"
+
+
+def _product_photo(subject: str, index: int, lang: str) -> str:
+    """Карточка товара — предметное фото, не портрет и не видеокадр."""
+    name = _product_name(subject)
+    if lang == "en":
+        shots = [
+            f"Product photo of {name} for a marketplace card, frame 3:4, vertical. The product sits in the center, slightly on the thirds. Show the real materials: surface, edges and small controls, all in focus. 50 mm lens, natural perspective, shallow depth of field, soft background. Soft light from the left and above, a gentle shadow under the product, no hard highlights. Clean neutral background, no text and no motion.",
+            f"Brighter product photo of {name}, frame 3:4. The product is centered and fully sharp. Crisp daylight, clean highlights on the material, a short soft shadow. Plain light background. Static catalog shot, no blur and no camera move.",
+            f"Quiet premium product photo of {name}, frame 3:4. Three-quarter view, slightly from above, so the top and the front are both visible. Soft window light, muted neutral background, a matte surface under the product. Every edge is sharp. No people, no movement.",
+        ]
+    else:
+        shots = [
+            f"Предметная фотография {name} для карточки товара. Кадр 3:4, вертикальный. Товар по центру, с небольшим смещением по правилу третей. Видны материал, края и мелкие детали, всё в фокусе. Объектив около 50 мм, естественная перспектива, малая глубина резкости, фон мягко размыт. Свет мягкий, слева и чуть сверху, под товаром мягкая тень, без жёстких бликов. Фон чистый, нейтральный, без надписей. Кадр статичный: никакого движения и размытия.",
+            f"Более светлая предметная фотография {name} для карточки товара, кадр 3:4. Товар по центру и целиком резкий. Яркий рассеянный свет, чистые блики на материале, короткая мягкая тень. Фон светлый и пустой. Статичный каталожный кадр, без смаза и без движения камеры.",
+            f"Спокойная предметная фотография {name} для карточки товара, кадр 3:4. Ракурс в три четверти, чуть сверху, чтобы были видны и верх, и передняя часть. Мягкий свет из окна, нейтральный фон, матовая поверхность под товаром. Края резкие. Без людей и без движения.",
+        ]
+    return shots[index % len(shots)]
+
+
 def rule_variants(card: Card, subject: str, answers: dict[str, str], extra: list[str], lang: str,
                   round_: int = 0, questions: list[dict] | None = None) -> list[dict]:
     """Запасные варианты без LLM: связные предложения «Суть. Атмосфера: …; Время суток: …. Детали. Приём»."""
@@ -530,6 +598,11 @@ def rule_variants(card: Card, subject: str, answers: dict[str, str], extra: list
     L = "en" if lang == "en" else "ru"
     subj = strip_commands(subject).strip().rstrip(".") or subject
     extra = [e.strip().rstrip(".") for e in extra if e.strip()]
+    voice_form = ""
+    if card.kind == "voice":
+        blob = " ".join(extra).lower()
+        voice_form = "board" if ("таймкод" in blob or "посекунд" in blob or "second-by-second" in blob) else "script"
+        extra = [e for e in extra if not re.search(r"таймкод|посекунд|начитк|second-by-second|narration script|без камеры|no camera", e, re.I)]
     if extra and detail_level(subj) <= 3:      # короткая идея + ответ на «кто, где, что» → ответ и есть суть
         first = extra.pop(0)
         subj = first if detail_level(first) > detail_level(subj) + 2 else f"{subj}: {first}"
@@ -538,6 +611,12 @@ def rule_variants(card: Card, subject: str, answers: dict[str, str], extra: list
     base = {k: v for k, v in answers.items() if v and v != ANY}
     out = []
     for i in range(3):
+        if kind == "voice":
+            out.append({"id": f"v{i + 1}", "title": TITLES[L][i], "text": _voice_text(subj, voice_form or "script", i, L)})
+            continue
+        if kind in ("image", "edit") and is_product_card(subj) and detail_level(subj) < 40:
+            out.append({"id": f"v{i + 1}", "title": TITLES[L][i], "text": _product_photo(subj, i + round_, L)})
+            continue
         a = dict(base)
         if i > 0:
             alts = ALT.get(kind, [{}, {}])

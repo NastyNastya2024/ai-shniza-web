@@ -143,7 +143,7 @@ def test_ask_type_then_choose(make_assistant):
     a = make_assistant()
     r = a.handle("котик в космосе", {}, SID)
     kinds = [c.get("value") for c in r["chips"] if c.get("action") in ("choose_type", "pipe_stage")]
-    assert r["intent"] == "ask_type" and kinds == ["video", "image"]
+    assert r["intent"] == "ask_type" and kinds == ["prompt", "video", "image", "music", "voice"]
     assert not any(bl.get("type") == "pipeline" for bl in r["blocks"])
     r2 = a.handle("", {}, SID, action={"type": "choose_type", "value": "image"})
     assert block(r2, "models") and "картинк" in r2["text"].lower()  # тип сразу → модели
@@ -429,7 +429,7 @@ def test_screenshot_scenario_typos_and_buttons(make_assistant):
     assert not vals and "опишите" in r["text"].lower()
     r = a.handle("надо сделать коты который жарит иишницу", {}, SID)
     assert r["intent"] == "ask_type"
-    assert [c["value"] for c in r["chips"] if c["action"] in ("choose_type", "pipe_stage")] == ["video", "image"]
+    assert [c["value"] for c in r["chips"] if c["action"] in ("choose_type", "pipe_stage")] == ["prompt", "video", "image", "music", "voice"]
     r = a.handle("карттинку", {}, SID)                                     # опечатка — понимаем
     assert block(r, "models") and all(a.d.cards[m["id"]].kind in ("image", "edit") for m in r["models"])
     r = a.handle("", {}, SID, action={"type": "pick_model", "value": "seedream-5-pro"})
@@ -459,7 +459,7 @@ def test_unclear_answer_reasks_with_buttons(make_assistant):
     a = make_assistant()
     a.handle("котик в космосе", {}, SID)
     r = a.handle("ну не знаю", {}, SID)
-    assert r["intent"] == "ask_type" and [c["value"] for c in r["chips"] if c["action"] in ("choose_type", "pipe_stage")] == ["video", "image"]
+    assert r["intent"] == "ask_type" and [c["value"] for c in r["chips"] if c["action"] in ("choose_type", "pipe_stage")] == ["prompt", "video", "image", "music", "voice"]
     assert block(a.handle("2", {}, SID), "models")  # 2 = картинка → модели
 
 

@@ -1990,6 +1990,51 @@
    "prompt_style": "Clear task in the user's language: goal, audience, tone, length, constraints.",
    "avoid": "vague one-word prompts",
    "defaults": {}
+  },
+  "elevenlabs-v3": {
+   "title": "ElevenLabs v3",
+   "kind": "voice",
+   "modes": ["t2a"],
+   "tags": ["озвучка", "голос", "диктор"],
+   "strengths": {"ru": "живая озвучка и диктор", "en": "natural voiceover"},
+   "limits": {"ru": "нужен текст, который будут читать", "en": "needs a script to read"},
+   "speed": {"ru": "секунды", "en": "seconds"},
+   "rank": 9,
+   "params": {"speed": [0.8, 1, 1.2]},
+   "ask_first": [],
+   "prompt_style": "Spoken script only: sentences a person would say. No camera, no shot list, no visual description.",
+   "avoid": "camera moves, lighting, visual scene description",
+   "defaults": {"speed": 1},
+   "clarify": {
+    "ru": ["Это посекундная раскадровка или общий текст?", "Какой голос: спокойный, живой, диктор?", "Какой темп?"],
+    "en": ["Second-by-second or one script?", "What voice: calm, lively, announcer?", "What pace?"]
+   },
+   "structure": {
+    "ru": "текст для чтения → паузы → темп. Без описания кадра.",
+    "en": "words to speak → pauses → pace. No picture description."
+   },
+   "prompt_example": "Спокойная начитка. Короткие фразы. Пауза между мыслями. Без музыки."
+  },
+  "gemini-3-1-flash-tts": {
+   "title": "Gemini 3.1 Flash TTS",
+   "kind": "voice",
+   "modes": ["t2a"],
+   "tags": ["озвучка", "голос"],
+   "strengths": {"ru": "быстрая начитка текста", "en": "fast text to speech"},
+   "limits": {"ru": "нужен готовый текст", "en": "needs finished text"},
+   "speed": {"ru": "секунды", "en": "seconds"},
+   "rank": 7,
+   "params": {"speed": [0.8, 1, 1.2]},
+   "ask_first": [],
+   "prompt_style": "Spoken script only. No camera and no visual description.",
+   "avoid": "camera moves and picture prompts",
+   "defaults": {"speed": 1},
+   "clarify": {
+    "ru": ["Какой текст читать?", "Какой темп?"],
+    "en": ["What text should be read?", "What pace?"]
+   },
+   "structure": {"ru": "текст для чтения → темп", "en": "words to speak → pace"},
+   "prompt_example": "Прочитай спокойно, короткими фразами, с паузами."
   }
  },
  "neighbors": {

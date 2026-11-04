@@ -380,9 +380,7 @@ def test_finished_video_offers_redo_and_continuation(make_assistant):
     a = _a(make_assistant, store)
     a.handle("оживи картинку, женщина у окна", session_id="vid")
     d = a.handle("", session_id="vid", action={"type": "media_add", "value": {"kind": "video", "url": "/w/9", "name": "clip.mp4"}})
-    labels = [c.get("label") for c in d.get("chips") or []]
-    assert labels[:3] == ["Переделать", "Сделать продолжение", "Новая генерация"]
-    assert "Обложка" not in labels
+    assert d.get("silent") is True and not d.get("chips")
     redone = a.handle("", session_id="vid", action={"type": "flow_next", "value": "redo"})
     assert redone["intent"] == "idea"
     block = next(b for b in redone.get("blocks") or [] if b.get("type") == "prompt")
@@ -569,6 +567,96 @@ def test_finished_image_buttons_redo_video_and_angles(make_assistant):
     nxt = a.handle("", ctx, "pica", action={"type": "use_variant", "value": items[0]["id"]})
     assert any(b.get("type") == "models" for b in nxt.get("blocks") or [])
     assert nxt.get("generate_model") != "ideogram-v3-turbo"
+
+
+def _variant_blob(d):
+    parts = [d.get("text") or ""]
+    for block in d.get("blocks") or []:
+        if block.get("type") != "variants":
+            continue
+        for item in block.get("items") or []:
+            parts.append(item.get("text") or "")
+    return "\n".join(parts)
+
+
+def test_product_card_prompt_is_a_product_photo(make_assistant):
+    d = _a(make_assistant).handle("сделай карточку товара утюг", session_id="iron")
+    blob = _variant_blob(d)
+    assert d["dialog"]["task"] == "image"
+    assert "3:4" in blob
+    assert "утюг" in blob.lower()
+    assert "Спокойное ясное настроение" not in blob
+    assert "Движение." not in blob
+
+
+def test_product_card_offers_a_picture_before_video(make_assistant):
+    a = _a(make_assistant)
+    a.handle("сделай карточку товара утюг", session_id="iron2")
+    d = a.handle("", session_id="iron2", action={
+        "type": "media_add",
+        "value": {"kind": "text", "reply": "Предметная фотография утюга, кадр 3:4."},
+    })
+    labels = [c.get("label") for c in d.get("chips") or []]
+    assert labels[0] == "Картинку"
+    assert "Сделать видео по этому" in labels
+
+
+def test_asking_for_a_picture_keeps_the_written_prompt(make_assistant):
+    a = _a(make_assistant)
+    a.handle("сделай карточку товара утюг", session_id="iron3")
+    written = (
+        "Предметная фотография утюга для карточки товара. Кадр 3:4, вертикальный. "
+        "Корпус из глянцевого пластика, подошва из стали, мягкий свет слева. "
+        "Фон светло-серый, без надписей. Кадр статичный, без движения. "
+    ) * 3
+    a.handle("", session_id="iron3", action={"type": "text_note", "value": {"text": written, "name": "Claude"}})
+    d = a.handle("нужна картинка", session_id="iron3")
+    blob = _variant_blob(d)
+    assert "Корпус из глянцевого пластика" in blob
+    assert "Спокойное ясное настроение" not in blob
+    assert d["dialog"]["task"] == "image"
+
+
+def test_back_from_a_mistaken_video_returns_to_the_picture(make_assistant):
+    a = _a(make_assistant)
+    a.handle("сделай карточку товара утюг", session_id="iron4")
+    text = (
+        "Предметная фотография утюга для карточки товара. Корпус из глянцевого пластика, "
+        "подошва из стали, ручка матовая. Свет мягкий слева, фон светло-серый, кадр статичный. "
+    ) * 3
+    video = a.handle("", session_id="iron4", action={"type": "make", "value": {"kind": "video", "text": text}})
+    assert video["dialog"]["task"] == "video"
+    back = a.handle("", session_id="iron4", action={"type": "back"})
+    assert back["dialog"]["task"] == "image"
+    assert "Корпус из глянцевого пластика" in _variant_blob(back)
+
+
+def test_fallback_question_lists_every_path(make_assistant):
+    a = _a(make_assistant)
+    d = a.handle("котик в космосе", session_id="kinds")
+    assert [c.get("label") for c in d["chips"]] == [
+        "Промпт", "Рилс", "Видео", "Картинка", "Раскадровка", "Музыка", "Озвучка",
+    ]
+    voice = a.handle("", session_id="kinds", action={"type": "choose_type", "value": "voice"})
+    assert voice["intent"] == "voice_form"
+    prompt = _a(make_assistant).handle("котик в космосе", session_id="pr")
+    assert prompt["intent"] == "ask_type"
+    nxt = _a(make_assistant)
+    nxt.handle("котик в космосе", session_id="pr2")
+    asked = nxt.handle("", session_id="pr2", action={"type": "choose_type", "value": "prompt"})
+    assert asked["intent"] == "choose_type"
+    assert "prompt" not in {c.get("value") for c in asked["chips"]}
+
+
+def test_a_fairy_tale_goes_to_a_text_model(make_assistant):
+    d = _a(make_assistant).handle(
+        "привет - мне надо сгенерить сказку назидательную про то как лечить травму отвергнутого",
+        session_id="tale",
+    )
+    assert "видео или картинка" not in (d.get("text") or "")
+    assert d.get("text_ask")
+    assert "сказку" in d["text_ask"]
+    assert d.get("generate_model")
 
 
 def test_status_names_dialog(make_assistant):

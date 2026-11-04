@@ -23,14 +23,14 @@ def test_rewrite_goes_to_text_not_video_or_image(make_assistant):
 def test_panel_pick_keeps_the_chosen_model(make_assistant):
     a = make_assistant(llm=False, dialog_v2=True)
     r = a.handle("нужно озвучить текст Привет", {
-        "model_lock": True,
-        "selected_model_id": "elevenlabs-music",
+        "model_locked": True,
+        "selected_model_id": "elevenlabs-v3",
         "selected_model_kind": "music",
         "lang": "ru",
     }, "lock-el")
-    assert r.get("generate_model") == "elevenlabs-music"
+    assert r.get("intent") == "voice_form"
     assert "Claude" not in (r.get("text") or "")
-    assert "Привет" in (r.get("generate_prompt") or "")
+    assert "Озвучка" in (r.get("text") or "")
 
 
 def test_write_stays_text_generate_switches():
@@ -44,7 +44,7 @@ def test_write_stays_text_generate_switches():
     assert generation_kind("как снять видео про кофе") is None
     assert generation_kind("хорошо теперь сгенери видео по этому") == "video"
     assert generation_kind("сделай картинку по этому") == "image"
-    assert generation_kind("озвучь по этому") == "music"
+    assert generation_kind("озвучь по этому") == "voice"
     assert is_refusal("Я не могу сгенерировать видео, используйте Sora")
 
 
