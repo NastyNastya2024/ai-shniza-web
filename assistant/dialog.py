@@ -490,7 +490,7 @@ def generate_files(ses: dict) -> list[dict]:
 
 
 def drop(ses: dict, mid: str) -> None:
-    """Убрать файл из того, что уйдёт в генерацию."""
+    """Убрать файл из того, что уйдёт в генерацию. Повторный запрос его не возвращает."""
     mid = str(mid or "")
     if not mid:
         return
@@ -498,7 +498,25 @@ def drop(ses: dict, mid: str) -> None:
         if item.get("id") == mid or item.get("upload_id") == mid:
             item["alive"] = False
     ses["focus"] = [i for i in (ses.get("focus") or []) if i != mid]
+    ses["files"] = [f for f in (ses.get("files") or []) if str(f.get("id") or "") != mid]
     ses["files_ok"] = True
+
+
+def adopt_message_files(ses: dict, files: list[dict]) -> None:
+    """Новое сообщение пришло со своими файлами: в генерацию берём только их, не кадры прошлого чата."""
+    ids = {str(f.get("id") or "") for f in files or [] if f.get("id")}
+    for item in ses.get("media") or []:
+        if not isinstance(item, dict):
+            continue
+        fid = str(item.get("upload_id") or "")
+        if item.get("source") == "upload":
+            item["alive"] = bool(fid and fid in ids)
+        elif item.get("source") == "result":
+            item["alive"] = False
+    ses["files"] = list(files or [])
+    ses["focus"] = []
+    ses["files_ok"] = len(ids) <= 1
+    ingest_uploads(ses, files or [])
 
 
 def confirm(ses: dict, value: Any, card_kind: str) -> str | None:

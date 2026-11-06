@@ -462,6 +462,15 @@
           return row;
         });
     },
+    /* Только что прикреплённые, ещё не спрятанные после отправки. Старые parked сюда не входят. */
+    fresh: function () {
+      return S.items.filter(function (x) { return x.status === 'ready' && x.id; })
+        .map(function (x) {
+          var row = { kind: x.kind, name: x.name, id: x.id };
+          if (x.serverPreview) row.preview = x.serverPreview;
+          return row;
+        });
+    },
     shots: function () {
       return S.items.filter(isUsable)
         .map(function (x) { return { kind: x.kind, name: x.name, id: x.id, preview: x.serverPreview || x.preview || '' }; });

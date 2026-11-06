@@ -940,14 +940,9 @@ class Component extends DCLogic {
     };
     this.onSubmit = (e) => {
       if (e && e.preventDefault) e.preventDefault();
-      if (!this.state.text.trim()) { this.goStudio(); return; }
-      this.setMode('cook');
-      this.speak(this.P.cook, 'cooking');
-      this.later('cook', 1600, () => {
-        this.setMode('done');
-        this.speak(this.P.done, 'done');
-        this.later('done', 700, () => this.goStudio());
-      });
+      clearTimeout(this.timers.cook);
+      clearTimeout(this.timers.done);
+      this.goStudio();
     };
     this.onPoke = () => {
       if (this.state.mode === 'cook') return;

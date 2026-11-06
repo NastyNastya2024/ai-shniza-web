@@ -14,10 +14,11 @@ def _a(make_assistant, store=None):
 
 def test_no_start_menu(make_assistant):
     d = _a(make_assistant).handle("привет", session_id="hi")
-    labels = " ".join(c.get("label") or "" for c in d.get("chips") or [])
-    assert "Раскадровка" not in labels and "Озвучка" not in labels
+    labels = [c.get("label") or "" for c in d.get("chips") or []]
+    assert "Раскадровка" not in " ".join(labels) and "Озвучка" not in " ".join(labels)
     assert not any(c.get("action") == "pipe_stage" for c in d.get("chips") or [])
     assert "Опишите" in d["text"] or "Здравствуйте" in d["text"]
+    assert labels == ["Изображения", "Видео", "Подготовка к видео", "Звук", "Тексты", "Другое"]
 
 
 def test_marketplace_asks_product_before_models(make_assistant):
@@ -74,7 +75,8 @@ def test_photo_grid_asks_opus_then_keeps_the_actions(make_assistant):
     ctx = {"has_image": True, "attachments": [{"id": uid, "kind": "image", "name": "camp.jpg"}]}
     d = a.handle("оживи фото", ctx, "look1")
     assert d["intent"] == "look_photo"
-    assert d["text"].strip() == "Формирую промпт через Claude, около 20 секунд — нейросеть дорабатывает детали."
+    assert "до 1 минуты" in d["text"]
+    assert "Чем точнее формулировка, тем ближе результат к вашей задумке." in d["text"]
     labels = [c.get("label") for c in d.get("chips") or []]
     assert labels[:2] == ["Быстрый промпт", "Оставить свой промпт"]
     assert not any(c.get("primary") for c in d.get("chips") or [])
@@ -315,6 +317,40 @@ def test_claude_handoff_shows_idea_before_models(make_assistant):
     assert r["intent"] == "flow_path"
     r = a.handle("", {}, "sw", action={"type": "path_direct"})
     assert r["intent"] == "advise" and r["models"]
+
+
+def test_animate_new_photo_drops_the_previous_prompt_and_file(make_assistant):
+    from assistant.session import empty_session
+
+    a = _a(make_assistant)
+    old = "upl_" + "11" * 12
+    new = "upl_" + "22" * 12
+    desert = " ".join(["женщина на пустыне с огнём"] * 12)
+    ses = empty_session()
+    ses["flow"] = {
+        "stage": "card", "kind": "video", "story": "", "slots": {}, "idea": desert,
+        "idea_user": desert, "path": "direct", "next": "card", "source": desert,
+    }
+    ses["prompt"] = ses["prompt_base"] = ses["idea"] = desert
+    ses["picked"] = "p-video"
+    ses["kind"] = "video"
+    ses["files"] = [{"id": old, "kind": "image", "name": "old.jpg"}]
+    ses["media"] = [{
+        "id": "m1", "source": "upload", "kind": "image", "name": "old.jpg",
+        "upload_id": old, "alive": True, "n": 1, "url": "", "work_id": "",
+    }]
+    a.d.store.set("anim", ses)
+    d = a.handle(
+        "оживи картинку",
+        {"has_image": True, "attachments": [{"id": new, "kind": "image", "name": "horse.jpg"}]},
+        "anim",
+    )
+    assert "Обновила промпт" not in (d.get("text") or "")
+    assert d["intent"] == "look_photo"
+    assert "женщина на пустыне" not in (d.get("text") or "")
+    saved = a.d.store.get("anim")
+    alive = [m.get("upload_id") for m in saved.get("media") or [] if m.get("alive")]
+    assert alive == [new]
 
 
 def test_new_chat_short_phrase_does_not_open_old_models(make_assistant):
@@ -629,6 +665,54 @@ def test_back_from_a_mistaken_video_returns_to_the_picture(make_assistant):
     back = a.handle("", session_id="iron4", action={"type": "back"})
     assert back["dialog"]["task"] == "image"
     assert "Корпус из глянцевого пластика" in _variant_blob(back)
+
+
+def test_changed_intent_leaves_the_old_format(make_assistant):
+    a = _a(make_assistant)
+    a.handle("привет", session_id="swap")
+    a.handle("", session_id="swap", action={"type": "format_cat", "value": "prep"})
+    a.handle("", session_id="swap", action={"type": "format_sub", "value": "vprompt"})
+    switched = a.handle("мне нужно изображения персонажа", session_id="swap")
+    blob = _variant_blob(switched) or switched.get("text") or ""
+    assert "Это уже не «Промпт для видео»" in blob
+    assert "Что в кадре" in blob and "персонажа" in blob
+    assert "составь промпт для генерации видео" not in blob.lower()
+    assert switched["dialog"]["task"] == "image"
+
+
+def test_after_the_prompt_a_new_format_switches(make_assistant):
+    a = _a(make_assistant)
+    a.handle("привет", session_id="later")
+    a.handle("", session_id="later", action={"type": "format_cat", "value": "prep"})
+    a.handle("", session_id="later", action={"type": "format_sub", "value": "vprompt"})
+    a.handle("герой идёт по ночному городу", session_id="later")
+    switched = a.handle("нет, нужна картинка персонажа", session_id="later")
+    blob = _variant_blob(switched) or switched.get("text") or ""
+    assert "Это уже не «Промпт для видео»" in blob
+    assert switched["dialog"]["task"] == "image"
+
+
+def test_same_format_still_takes_the_subject(make_assistant):
+    a = _a(make_assistant)
+    a.handle("привет", session_id="keep")
+    a.handle("", session_id="keep", action={"type": "format_cat", "value": "prep"})
+    a.handle("", session_id="keep", action={"type": "format_sub", "value": "vprompt"})
+    kept = a.handle("герой идёт по ночному городу", session_id="keep")
+    assert kept["intent"] == "format_prompt"
+    assert "составь промпт для генерации видео" in (kept.get("text") or "").lower()
+    assert "ночному городу" in kept["text"]
+
+
+def test_hello_category_waits_for_a_subject(make_assistant):
+    a = _a(make_assistant)
+    a.handle("привет", session_id="hi2")
+    asked = a.handle("", session_id="hi2", action={"type": "format_cat", "value": "image"})
+    opened = a.handle("", session_id="hi2", action={"type": "format_sub", "value": "photo"})
+    assert opened["intent"] == "format_idea"
+    assert "Что в кадре" not in (opened.get("text") or "")
+    built = a.handle("кофейня у окна", session_id="hi2")
+    blob = _variant_blob(built) or built.get("text") or ""
+    assert "Что в кадре" in blob and "кофейня у окна" in blob
 
 
 def test_unclear_request_starts_with_categories(make_assistant):

@@ -48,6 +48,25 @@ from .ui_help import ui_help
 
 log = logging.getLogger("assistant")
 
+_HELLO = re.compile(
+    r"(?:привет|здравствуй\w*|добрый (?:день|вечер|утро)|хай|hi|hello|hey)[!.,\s]*",
+    re.I,
+)
+
+
+def _bare_hello(text: str) -> bool:
+    return bool(_HELLO.fullmatch((text or "").strip()))
+
+
+def _switched(out: dict, old: str, new: str, lang: str) -> dict:
+    note = (f"That's no longer “{old}”. This is “{new}”."
+            if lang == "en" else
+            f"Это уже не «{old}», а «{new}».")
+    out["text"] = note + "\n" + (out.get("text") or "")
+    out["reply"] = out["text"]
+    out["keep_assistant"] = True
+    return out
+
 KINDS = ("video", "image", "edit", "music", "sfx", "text")
 # текстовые модели на шаге «улучшить промпт» после выбора варианта
 POLISH_MODELS = ("claude-sonnet-5", "gpt-5-4", "claude-4-5-haiku")
@@ -178,8 +197,11 @@ class Assistant:
         if files != (ses.get("files") or []):
             ses["files_told"] = False                            # набор файлов поменялся — скажем о нём снова
         if files:
-            ses["files"] = files
-            DG.ingest_uploads(ses, files)
+            if not action and ctx.get("_files_changed"):
+                DG.adopt_message_files(ses, files)
+            else:
+                ses["files"] = files
+                DG.ingest_uploads(ses, files)
         else:
             sticky = DG.files_from_uploads(ses)
             if sticky:
@@ -338,6 +360,15 @@ class Assistant:
                 got_flow = DFLOW.on_message(self, msg, ctx, ses, lang)
                 if got_flow is not None:
                     return got_flow
+        pending = str(ses.get("format_pending") or "")
+        if msg and pending:
+            return self._format_follow(pending, msg, ctx, ses, lang)
+        held = str(ses.get("format_id") or "")
+        if msg and held and not _bare_hello(msg):
+            from . import formats as FMT
+            found = FMT.match_sub(msg)
+            if found and found != held and FMT.kind_of(found) != "focus":
+                return self._format_follow(held, msg, ctx, ses, lang)
         if msg:
             got = self._understand(msg, ctx, ses, lang)
             if got is not None:
@@ -1677,9 +1708,11 @@ class Assistant:
         state = str(ses.get("photo_look") or "")
         if state == key:
             return None
-        head = ("Forming the prompt with Claude, about 20 seconds — the AI is polishing the details."
+        head = ("Claude is writing the prompt, up to 1 minute. "
+                "A clearer wording brings the result closer to what you have in mind."
                 if lang == "en" else
-                "Формирую промпт через Claude, около 20 секунд — нейросеть дорабатывает детали.")
+                "Claude составляет промпт, до 1 минуты. "
+                "Чем точнее формулировка, тем ближе результат к вашей задумке.")
         buttons = _look_buttons(lang)
         if state == "pending:" + key:
             return response([head], buttons, lang=lang, intent="look_photo_wait")
@@ -2021,6 +2054,14 @@ class Assistant:
         ses["await"] = "idea"
         kind = it.data.get("kind", "hello")
         if kind == "hello" and not self._is_guest(ctx):
+            if self.d.dialog_v2:
+                ses["intent_src"] = ""
+                ses["format_pending"] = ""
+                ses["await"] = None
+                out = self._format_cats(lang)
+                out["text"] = out["reply"] = t("hello", lang)
+                out["intent"] = "smalltalk"
+                return out
             return DG.greet(lang, "smalltalk")
         if kind == "who" and not self._is_guest(ctx):
             return DG.capabilities(lang)
@@ -2197,7 +2238,7 @@ class Assistant:
 
         chips = [chip(row["title"], "format_cat", row["id"]) for row in FMT.categories(lang)]
         line = "What do you need?" if lang == "en" else "Что именно вам нужно?"
-        return response([line], chips, lang=lang, intent="intent_clarify")
+        return response([line], chips, lang=lang, intent="intent_clarify", keep_assistant=True)
 
     def _format_subs(self, cat_id: str, lang: str) -> dict:
         from . import formats as FMT
@@ -2218,11 +2259,56 @@ class Assistant:
                     if lang == "en" else
                     "Свой вариант: опишите своими словами, что нужно. Например: «сделай меню для кофейни в стиле скандинавского минимализма».")
             line = line + "\n" + hint
-        return response([line], chips, lang=lang, intent="intent_clarify")
+        return response([line], chips, lang=lang, intent="intent_clarify", keep_assistant=True)
+
+    def _format_follow(self, pending: str, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
+        """Пока ждём предмет, новая фраза может сменить формат. Тогда не подставляем её в старый шаблон."""
+        from . import formats as FMT
+
+        if _bare_hello(msg):
+            return self._format_need_idea(pending, lang)
+        found = FMT.match_sub(msg)
+        if found == pending or (found and FMT.kind_of(found) == "focus"):
+            found = None
+        cat = FMT.match_cat(msg)
+        if found:
+            ses["intent_src"] = msg.strip()[:500]
+            if FMT.has_subject(msg, found):
+                ses["format_pending"] = ""
+                out = self._format_open(found, msg, ctx, ses, lang)
+                title = FMT.title_of(found, lang)
+            else:
+                ses["format_pending"] = found
+                out = self._format_need_idea(found, lang)
+                title = FMT.title_of(found, lang)
+            return _switched(out, FMT.title_of(pending, lang), title, lang)
+        if cat and cat != FMT.cat_of(pending):
+            ses["format_pending"] = ""
+            ses["format_id"] = ""
+            ses["intent_src"] = msg.strip()[:500]
+            out = self._format_subs(cat, lang)
+            return _switched(out, FMT.title_of(pending, lang), FMT.cat_title(cat, lang), lang)
+        ses["format_pending"] = ""
+        ses["intent_src"] = msg.strip()[:500]
+        return self._format_open(pending, msg, ctx, ses, lang)
+
+    def _format_need_idea(self, sub_id: str, lang: str) -> dict:
+        from . import formats as FMT
+
+        name = FMT.title_of(sub_id, lang)
+        line = (f"“{name}”. Describe what you need in one message."
+                if lang == "en" else
+                f"«{name}». Опишите одним сообщением, что нужно сделать.")
+        return response([line], [], lang=lang, intent="format_idea", keep_assistant=True)
 
     def _format_open(self, sub_id: str, idea: str, ctx: dict, ses: dict, lang: str) -> dict:
         from . import formats as FMT
 
+        if _bare_hello(idea) or not (idea or "").strip():
+            ses["format_pending"] = sub_id
+            return self._format_need_idea(sub_id, lang)
+        ses["format_pending"] = ""
+        ses["format_id"] = sub_id
         prompt = FMT.build(sub_id, idea)
         kind = FMT.kind_of(sub_id)
         name = FMT.title_of(sub_id, lang)
@@ -2236,7 +2322,7 @@ class Assistant:
                     if lang == "en" else
                     f"Промпт для «{name}». Его можно поправить и отправить дальше.")
             return response([head, prompt], [chip(send, "format_send", sub_id, primary=True)],
-                            lang=lang, intent="format_prompt")
+                            lang=lang, intent="format_prompt", keep_assistant=True)
         if kind == "board":
             return PL.decorate(SB.start(self, ses, ctx, lang, text=prompt), ses, lang)
         it = Intent("generate_task", kind=kind, needs=detect_needs(idea), topic=topic_of(idea))

@@ -234,10 +234,28 @@ def ask_type(engine: Any, msg: str, ctx: dict, ses: dict, lang: str) -> dict:
     )
 
 
+_ANIMATE = re.compile(r"ожив\w*(?:\s+\w+){0,3}\s*(картин\w*|фото|снимок\w*|кадр\w*)|анимир\w*\s+(картин\w*|фото)", re.I)
+
+
+class _VideoTask:
+    kind = "video"
+    name = "generate_task"
+
+
 def on_message(engine: Any, msg: str, ctx: dict, ses: dict, lang: str) -> dict | None:
     f = ses.get("flow") if isinstance(ses.get("flow"), dict) else None
     if not f:
         return None
+    # «оживи картинку» и новое фото — отдельная задача, а не правка прошлого промпта.
+    if _ANIMATE.search(msg or ""):
+        old = (f.get("idea") or ses.get("prompt") or "").strip()
+        for key in ("prompt", "prompt_base", "idea"):
+            ses[key] = ""
+        f["idea"] = ""
+        f["idea_user"] = ""
+        ses["texts"] = [row for row in (ses.get("texts") or [])
+                        if not (isinstance(row, dict) and (row.get("text") or "").strip() == old)]
+        return start(engine, msg, _VideoTask(), ctx, ses, lang)
     from .switch import kind_only, saved_prompt
     want = kind_only(msg)
     saved = saved_prompt(ses) if want else ""

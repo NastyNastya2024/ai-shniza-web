@@ -73,8 +73,23 @@ _SUB_RX: list[tuple[str, re.Pattern]] = [
     ("post", re.compile(r"\bпост\b", re.I)),
     ("kit", re.compile(r"комплект\s+для\s+запуск", re.I)),
     ("any_prompt", re.compile(r"промпт\s+для\s+(любой|нейросет)", re.I)),
-    ("photo", re.compile(r"картинк|фотореалист|\bфото\b", re.I)),
+    ("photo", re.compile(r"картинк|изображен|фотореалист|\bфото\b", re.I)),
 ]
+
+# Категория без точного формата: «изображения», «видео», «звук».
+_CAT_RX: list[tuple[str, re.Pattern]] = [
+    ("prep", re.compile(r"подготовк\w*\s+к\s+видео|сценари|раскадров|промпт\w*\s+для\s+видео", re.I)),
+    ("sound", re.compile(r"озвуч|\bмузык|субтитр|звуков\w*\s+эффект|\bзвук\b", re.I)),
+    ("image", re.compile(r"изображен|картинк|\bфото\b|баннер|обложк|логотип|иконк|карусел", re.I)),
+    ("video", re.compile(r"\bвидео\b|ролик|рилс|шортс|\bаватар\b", re.I)),
+    ("text", re.compile(r"\bпост\b|слоган|контент[-\s]?план|рекламн\w*\s+текст|описани\w*\s+товар", re.I)),
+    ("other", re.compile(r"комплект\s+для\s+запуск|промпт\s+для\s+(любой|нейросет)", re.I)),
+]
+
+_FILLER = re.compile(
+    r"\b(мне|нужно|нужен|нужна|нужны|хочу|сделай\w*|создай\w*|для|это|уже|нет|не|а|теперь|лучше|давай\w*|пожалуйста|просто|ещё|еще)\b",
+    re.I,
+)
 
 
 def _row(sub_id: str) -> tuple[str, str, str, str, str]:
@@ -106,6 +121,10 @@ def kind_of(sub_id: str) -> str:
     return _row(sub_id)[4]
 
 
+def cat_of(sub_id: str) -> str:
+    return _row(sub_id)[1]
+
+
 def cat_title(cat_id: str, lang: str) -> str:
     for i, ru, en in CATS:
         if i == cat_id:
@@ -119,6 +138,25 @@ def match_sub(text: str) -> str | None:
         if rx.search(raw):
             return sub_id
     return None
+
+
+def match_cat(text: str) -> str | None:
+    raw = text or ""
+    for cat_id, rx in _CAT_RX:
+        if rx.search(raw):
+            return cat_id
+    return None
+
+
+def has_subject(text: str, sub_id: str) -> bool:
+    """В фразе есть предмет, а не только название формата («изображения персонажа», не просто «изображения»)."""
+    raw = text or ""
+    rx = next((item[1] for item in _SUB_RX if item[0] == sub_id), None)
+    if rx is not None:
+        raw = rx.sub(" ", raw)
+    raw = _FILLER.sub(" ", raw)
+    words = re.findall(r"[a-zа-яё0-9-]{3,}", raw, re.I)
+    return len(words) >= 1
 
 
 def _idea(text: str) -> str:

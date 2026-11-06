@@ -679,7 +679,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 <script src="/vitrina-aishnitsa.js?v=14"></script>
 <script src="/assistant-ui.js?v=51"></script>
 <script src="/model-lock.js?v=1"></script>
-<script src="/attach.js?v=7"></script>
+<script src="/attach.js?v=8"></script>
 <script src="/aish-mcp.js?v=3"></script>
 <script src="/chat-history.js?v=12"></script>
 <script>
@@ -1344,16 +1344,14 @@ class Component extends DCLogic {
         }
         const att = AishAttach.payload(m);
         Object.assign(body, att.body);
-        // Помощник уже назвал файлы (upl_…). Они остаются на сервере, даже если плашка в поле ввода уже убрана.
+        // В генерацию — только файлы текущего задания. Старые parked из прошлого чата не подставляем.
         let listed = Array.isArray(this.pendingFiles) ? this.pendingFiles.filter((f) => f && f.id && f.kind) : null;
         if ((!listed || !listed.length) && Array.isArray(this._keptFiles)) listed = this._keptFiles.filter((f) => f && f.id && f.kind);
-        if (listed && listed.length) {
-          ['image', 'audio', 'video'].forEach((k) => {
-            const want = listed.find((f) => f.kind === k && /^upl_[a-f0-9]{24}$/.test(f.id));
-            if (want) { body[k] = want.id; return; }
-            if (body[k] && !listed.some((f) => f.id === body[k])) delete body[k];
-          });
-        }
+        ['image', 'audio', 'video'].forEach((k) => {
+          const want = (listed || []).find((f) => f.kind === k && /^upl_[a-f0-9]{24}$/.test(f.id));
+          if (want) body[k] = want.id;
+          else delete body[k];
+        });
         // в сообщении о запуске — какие именно файлы ушли в генерацию
         const shownFiles = (listed && listed.length) ? listed : att.files;
         if (shownFiles.length && !opts.look) this.patchLastBot({ text: tr('studio.attach.cookingWith', { files: AishAttach.describe(shownFiles) }), job: true, files: shownFiles });
@@ -1806,7 +1804,10 @@ class Component extends DCLogic {
       this.setState({ chat: true, text: '' });
       if (window.AishAttach) {
         this._shownFiles = this._shownFiles || {};
-        this._echoFiles = AishAttach.ready().filter((f) => !this._shownFiles[f.id]);
+        const fresh = AishAttach.fresh ? AishAttach.fresh() : AishAttach.ready();
+        this._sendFiles = fresh.slice();
+        if (fresh.length) this._keptFiles = fresh.slice();
+        this._echoFiles = fresh.filter((f) => !this._shownFiles[f.id]);
         this._echoFiles.forEach((f) => { this._shownFiles[f.id] = 1; });
       }
       if (!this.eggy) {
@@ -2114,14 +2115,13 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
       has_image: !!((window.AishAttach && AishAttach.has('image')) || app.attachedImage || app.state.hasImage || (app._keptFiles || []).some((f) => f && f.kind === 'image')),
       // скрепка: и то, что сейчас в поле, и файлы этого диалога — после «доработать в Claude» плашка пропадает, номер файла остаётся
       attachments: (function () {
-        const live = window.AishAttach && AishAttach.ready ? AishAttach.ready() : [];
-        const bag = app._keptFiles || (app._keptFiles = []);
-        live.forEach((f) => {
-          if (!f || !f.id) return;
-          const row = { id: f.id, kind: f.kind, name: f.name, preview: f.preview || '' };
-          const at = bag.findIndex((x) => x && x.id === f.id);
-          if (at >= 0) bag[at] = row; else bag.push(row);
-        });
+        if (Array.isArray(app._sendFiles)) {
+          const sent = app._sendFiles.filter((f) => f && f.id);
+          app._sendFiles = null;
+          if (sent.length) app._keptFiles = sent.slice();
+          return sent.map((f) => ({ id: f.id, kind: f.kind, name: f.name, preview: f.preview || '' }));
+        }
+        const bag = app._keptFiles || [];
         return bag.filter((f) => f && f.id).map((f) => ({ id: f.id, kind: f.kind, name: f.name, preview: f.preview || '' }));
       })(),
       draft: app.state.text || '',
@@ -2277,10 +2277,17 @@ app.eggy = (typeof AssistantUI !== 'undefined' && AssistantUI.controller) ? Assi
       if (byKey.type === 'text') {
         app.textDirect = !(quiet || keepAssistant);
         if (app.textDirect) app.panelLock = true;
+      } else {
+        app.textDirect = false;
       }
     }
     if (prompt) app.pendingPrompt = String(prompt);
     app.pendingParams = params && typeof params === 'object' ? params : {};
+    if (Array.isArray(files)) {
+      const rows = files.filter((f) => f && f.id && f.kind);
+      app.pendingFiles = rows;
+      app._keptFiles = rows.slice();
+    }
   },
   onGenerateSeries: (job) => { app.promptSource = 'original'; app.cookSeries(job || {}); },
   onGenerate: ({ model, prompt, params, files }) => {
@@ -2820,14 +2827,14 @@ function msgEl(m) {
     + (m.topup ? '<a href="/account#balance" data-m-topup class="btn-purple" style="height:40px;padding:0 18px;border-radius:12px;font-size:14px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none">' + esc(tr('studio.chat.toBalance')) + '</a>' : '')
     + (Array.isArray(m.chips) && m.chips.length
       ? '<div class="assist-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px">'
-        + m.chips.slice(0, 5).map((c, i) => '<button type="button" class="field" data-assist-chip="' + i + '" style="height:34px;padding:0 12px;border-radius:999px;font:700 12px Onest,system-ui,sans-serif;cursor:pointer">' + esc(c.label || c.action || '') + '</button>').join('')
+        + m.chips.slice(0, 8).map((c, i) => '<button type="button" class="field" data-assist-chip="' + i + '" style="height:34px;padding:0 12px;border-radius:999px;font:700 12px Onest,system-ui,sans-serif;cursor:pointer">' + esc(c.label || c.action || '') + '</button>').join('')
         + '</div>'
       : '')
     + '</div>'
     + (m.result && !workGone && (m.mediaKind === 'video' || m.mediaKind === 'image') ? videoNextHtml(m) : '')
     + (m.makeHints ? replyMakeHtml(m.text) : '')
     + '</div>';
-  if (Array.isArray(m.chips) && m.chips.length) el._assistChips = m.chips.slice(0, 5);
+  if (Array.isArray(m.chips) && m.chips.length) el._assistChips = m.chips.slice(0, 8);
   el._msg = m;
   fitPromptWindow(el.querySelector('[data-prompt-window]'));
   // генерация с файлами: имена остаются под сообщением, даже когда текст сменится на «в очереди» / «готово»
