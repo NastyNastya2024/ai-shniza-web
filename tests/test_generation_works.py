@@ -227,6 +227,7 @@ def test_own_prompt_publishes_video_then_prompt(srv, monkeypatch):
     assert video.status_code == 200
     body = video.get_json()["work"]
     assert body["status"] == "published" and body["prompt_open"] is False and "кот" in body["prompt"]
+    assert body["title"].isdigit() and len(body["title"]) == 4 and "кот" not in body["title"]
     card = next(i for i in c.get("/api/explore").get_json()["items"] if i["id"] == wid)
     assert card["prompt_open"] is False and card["prompt"] == ""
     opened = c.post(f"/api/works/{wid}/publish", json={"agree_rules": True, "open_prompt": True}, headers=_csrf(c))

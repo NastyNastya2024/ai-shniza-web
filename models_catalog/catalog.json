@@ -256,10 +256,10 @@
       "category": "video",
       "inputs": "image, video",
       "outputs": "video",
-      "price": "$0.05 per second of output video (or 20 seconds for $1)",
+      "price": "$0.05 per second of output video",
       "price_source": "replicate.com page",
       "url": "https://replicate.com/bytedance/dreamactor-m2.0",
-      "notes": "p50 $0.016"
+      "notes": "character photo + driving video"
     },
     {
       "id": "nano-banana-pro",
@@ -936,6 +936,19 @@
       "price_source": "replicate.com page",
       "url": "https://replicate.com/prunaai/p-video",
       "notes": "t2v/i2v/a2v · draft · native audio · up to 20s"
+    },
+    {
+      "id": "p-video-2-pro",
+      "name": "P-Video 2 Pro",
+      "provider": "replicate",
+      "upstream": "prunaai/p-video-2-pro",
+      "category": "video",
+      "inputs": "text, image",
+      "outputs": "video",
+      "price": "$0.035 per second of output video at 768p speed",
+      "price_source": "docs.pruna.ai p-video-2-pro, speed 768p",
+      "url": "https://replicate.com/prunaai/p-video-2-pro",
+      "notes": "t2v/i2v · first and last frame · native audio · 768p · 5–15s"
     },
     {
       "id": "pixverse-v6-t2v-fal",

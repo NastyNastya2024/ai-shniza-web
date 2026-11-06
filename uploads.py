@@ -427,6 +427,15 @@ def resolve_generate_media(spec: dict, image: Optional[str], audio: Optional[str
     return out[0], out[1], out[2]
 
 
+def resolve_image_ref(value: Optional[str]) -> Optional[str]:
+    """Второй кадр (last_image) — тот же разбор, что у поля image."""
+    v = (value or "").strip()
+    if not v:
+        return None
+    ext = _ext()
+    return resolve_media_ref(v, "image", current_owners(), ext["store"], ext["storage"])
+
+
 # ───────────────────────── маршруты ─────────────────────────
 
 def _public_meta(meta: dict, storage: Storage) -> dict:

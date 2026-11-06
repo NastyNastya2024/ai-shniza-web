@@ -877,6 +877,13 @@ window.AISH_L = {
   },
   tr: function (key, fallback, params) { return this._has(key) ? window.AISH_I18N.t(key, params) : fallback; },
   workTitle: function (w) { return w ? this.tr('works.' + w.id + '.title', w.title) : ''; },
+  /* короткий номер опубликованной работы; у демо-роликов его нет — там остаётся название */
+  indexLabel: function (w) {
+    var t = String(w && w.title || '').trim();
+    if (/^\d{4}$/.test(t)) return '#' + t;
+    if (/^#\d{4}$/.test(t)) return t;
+    return '';
+  },
   creatorName: function (c) { return c ? this.tr('creators.' + c.id + '.name', c.name) : ''; },
   creatorAbout: function (c) { return c ? this.tr('creators.' + c.id + '.about', c.about) : ''; },
   networkName: function (n) { return n ? this.tr('networks.' + n.id + '.name', n.name) : ''; },

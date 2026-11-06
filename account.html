@@ -145,13 +145,17 @@ html{scrollbar-gutter:stable}
 /* работы */
 .grid{columns:3;column-gap:14px}
 .wk{break-inside:avoid;margin:0 0 14px;padding:5px;border-radius:22px;background:var(--panel-solid);box-shadow:0 14px 30px -24px var(--shadow);position:relative}
-.wk img{display:block;width:100%;border-radius:17px}
-.wk .st{position:absolute;left:14px;bottom:14px;height:28px;padding:0 12px;border-radius:999px;border:none;background:rgba(255,255,255,.95);color:#16794C;font:800 12px inherit;display:inline-flex;align-items:center;gap:6px;cursor:pointer;z-index:2;box-shadow:0 6px 16px -10px rgba(20,12,40,.35)}
-.wk .st:hover{filter:brightness(1.05);transform:translateY(-1px)}
-.wk .st.h{background:rgba(30,18,56,.78);color:#E6E0FA}
-.wk .st:before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor;flex:0 0 auto}
-.wk .st[disabled]{opacity:.6;cursor:wait;transform:none}
-.wk .wk-exp{position:absolute;right:14px;top:14px;height:24px;padding:0 10px;border-radius:999px;background:rgba(30,18,56,.78);color:#FFE0B8;font:700 11.5px inherit;display:inline-flex;align-items:center;z-index:2}
+.wk img,.wk video{display:block;width:100%;border-radius:17px;background:#111}
+.wk video{aspect-ratio:16/9;object-fit:cover;pointer-events:none}
+.wk.is-hid img,.wk.is-hid video{filter:grayscale(.4) brightness(.72)}
+.wk-acts{position:absolute;right:12px;top:12px;z-index:3;display:flex;gap:6px}
+.wk-acts button{position:relative;width:34px;height:34px;padding:0;border:none;border-radius:999px;background:rgba(12,12,14,.72);color:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,color .15s,transform .15s}
+.wk-acts button:hover,.wk-acts button:focus-visible{transform:translateY(-1px);background:#fff;color:#111}
+.wk-acts .wk-del:hover,.wk-acts .wk-del:focus-visible{background:#E0457B;color:#fff}
+.wk-acts button[disabled]{opacity:.6;cursor:wait;transform:none}
+.wk-acts button[data-tip]::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);right:0;padding:5px 8px;border-radius:8px;background:#111;color:#fff;font:700 11px/1 Onest,system-ui,sans-serif;white-space:nowrap;opacity:0;pointer-events:none;transform:translateY(-2px);transition:opacity .15s,transform .15s}
+.wk-acts button:hover::after,.wk-acts button:focus-visible::after{opacity:1;transform:none}
+.wk .wk-exp{position:absolute;left:14px;top:14px;height:24px;padding:0 10px;border-radius:999px;background:rgba(30,18,56,.78);color:#FFE0B8;font:700 11.5px inherit;display:inline-flex;align-items:center;z-index:2}
 .wk-ttl-note{margin:0 0 14px;padding:10px 14px;border-radius:14px;background:rgba(255,162,53,.12);font-size:13.5px;line-height:1.45;color:var(--ink)}
 .empty{padding:44px 28px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
 .empty .ill{width:96px;height:96px;border-radius:28px;background:var(--card);display:flex;align-items:center;justify-content:center}
@@ -603,14 +607,37 @@ function vWorks() {
   const filters = '<div class="wk-filters" role="tablist" aria-label="Фильтр работ">'
     + '<button class="tab" type="button" role="tab" data-wfilter="pub" aria-selected="' + (filter === 'pub') + '">На витрине<small>' + nPub + '</small></button>'
     + '<button class="tab" type="button" role="tab" data-wfilter="hid" aria-selected="' + (filter === 'hid') + '">Скрытые<small>' + nHid + '</small></button>'
-    + '<span class="hint">Нажмите «На витрине / Скрыта» на карточке, чтобы изменить</span></div>';
+    + '<span class="hint">Глаз — показать или скрыть на витрине, корзина — удалить</span></div>';
   if (!list.length) {
     $('view').innerHTML = filters + '<div class="glass empty"><div class="ill">' + I.img + '</div><h3>' + (filter === 'hid' ? 'Скрытых работ нет' : 'На витрине пока пусто') + '</h3><p>' + (filter === 'hid' ? 'Скрытые с витрины работы появятся здесь.' : 'Опубликуйте работу — она появится в публичном профиле.') + '</p></div>';
     return;
   }
+  const isVideo = (w) => w.kind === 'video' || /\.(mp4|webm|mov)(\?|#|$)/i.test(w.src || '');
+  const mediaOf = (w) => {
+    if (!isVideo(w)) return '<img src="' + esc(w.src) + '" alt="' + esc(w.title) + '">';
+    const src = String(w.src || '');
+    const frame = src.indexOf('#') === -1 ? src + '#t=0.1' : src;
+    return '<video src="' + esc(frame) + '" muted playsinline preload="metadata" aria-label="' + esc(w.title) + '"></video>';
+  };
+  const eyeOn = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+  const eyeOff = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 6.1A10.4 10.4 0 0 1 12 6c6.5 0 10 6 10 6a18.2 18.2 0 0 1-3.2 3.8"></path><path d="M6.1 6.7A18.5 18.5 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 4.2-.9"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg>';
+  const trash = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>';
   $('view').innerHTML = filters
     + (hasExp ? '<p class="wk-ttl-note">Неопубликованные работы хранятся 24 часа, потом удаляются вместе с файлом. Опубликуйте на витрине — и работа останется в профиле.</p>' : '')
-    + '<div class="grid">' + list.map((w) => '<div class="wk"><img src="' + esc(w.src) + '" alt="' + esc(w.title) + '">' + (!w.pub && w.exp ? '<span class="wk-exp" title="Без публикации работа удалится">' + esc(expLeft(w.exp)) + '</span>' : '') + '<button type="button" class="st' + (w.pub ? '' : ' h') + '" data-pub="' + esc(String(w.id)) + '" aria-pressed="' + (w.pub ? 'true' : 'false') + '" title="' + (w.pub ? 'Скрыть с витрины' : 'Опубликовать на витрине') + '">' + (w.pub ? 'На витрине' : 'Скрыта') + '</button></div>').join('') + '</div>';
+    + '<div class="grid">' + list.map((w) => {
+      const eyeTip = w.pub ? 'Скрыть с витрины' : 'Показать на витрине';
+      return '<div class="wk' + (w.pub ? '' : ' is-hid') + '">' + mediaOf(w)
+        + (!w.pub && w.exp ? '<span class="wk-exp" title="Без публикации работа удалится">' + esc(expLeft(w.exp)) + '</span>' : '')
+        + '<div class="wk-acts"><button type="button" class="wk-eye" data-pub="' + esc(String(w.id)) + '" aria-pressed="' + (w.pub ? 'true' : 'false') + '" aria-label="' + eyeTip + '" data-tip="' + eyeTip + '">' + (w.pub ? eyeOn : eyeOff) + '</button>'
+        + '<button type="button" class="wk-del" data-del="' + esc(String(w.id)) + '" aria-label="Удалить работу" data-tip="Удалить">' + trash + '</button></div></div>';
+    }).join('') + '</div>';
+  $('view').querySelectorAll('.wk video').forEach((v) => {
+    const fit = () => {
+      if (v.videoWidth && v.videoHeight) v.style.aspectRatio = v.videoWidth + ' / ' + v.videoHeight;
+    };
+    if (v.readyState >= 1) fit();
+    else v.addEventListener('loadedmetadata', fit, { once: true });
+  });
 }
 async function toggleWorkPub(w, btn) {
   if (!w || w._busy) return;
@@ -620,7 +647,7 @@ async function toggleWorkPub(w, btn) {
   try {
     if (LIVE) {
       const path = next ? '/api/works/' + encodeURIComponent(w.id) + '/publish' : '/api/works/' + encodeURIComponent(w.id) + '/unpublish';
-      const body = next ? JSON.stringify({ agree_rules: true, title: w.title || '' }) : '{}';
+      const body = next ? JSON.stringify({ agree_rules: true }) : '{}';
       const { res, data } = await api(path, { method: 'POST', body });
       if (!res.ok) {
         if (data && data.error === 'handle_required') {
@@ -648,6 +675,36 @@ async function toggleWorkPub(w, btn) {
     renderSide();
     if (tab === 'works') vWorks();
     toast(next ? 'Опубликовано на витрине' : 'Скрыто с витрины');
+  } finally {
+    w._busy = false;
+    if (btn) btn.disabled = false;
+  }
+}
+async function deleteWork(w, btn) {
+  if (!w || w._busy) return;
+  const label = /^\d{4}$/.test(String(w.title || '')) ? '#' + w.title : (w.title || 'это видео');
+  if (!window.confirm('Удалить «' + label + '»? Файл тоже будет удалён, вернуть его нельзя.')) return;
+  w._busy = true;
+  if (btn) btn.disabled = true;
+  try {
+    if (LIVE) {
+      let out = await api('/api/works/' + encodeURIComponent(w.id), { method: 'DELETE' });
+      if (out.res.status === 403) {
+        await csrf(true);
+        out = await api('/api/works/' + encodeURIComponent(w.id), { method: 'DELETE' });
+      }
+      if (!out.res.ok) {
+        toast(out.data && out.data.error === 'not_found' ? 'Этой работы уже нет' : 'Не удалось удалить');
+        return;
+      }
+    }
+    D.works = D.works.filter((x) => String(x.id) !== String(w.id));
+    saveLocal();
+    renderSide();
+    if (tab === 'works') vWorks();
+    toast('Работа удалена');
+  } catch (_) {
+    toast('Не удалось удалить');
   } finally {
     w._busy = false;
     if (btn) btn.disabled = false;
@@ -830,7 +887,7 @@ function vSettings() {
   if (!u.contacts.length) u.contacts.push({ net: 'telegram', login: '', show: true });
   $('view').innerHTML = '<section class="glass sec"><h2>Профиль и контакты</h2><p class="hint" style="margin:0">Это видят посетители витрины и вашего профиля.</p>'
     + '<div class="prof-top"><div class="ph-identity"><div><label class="lbl" for="fName">Имя</label><input class="inp" id="fName" value="' + esc(u.name) + '" placeholder="Например, Мира Свет"></div>'
-    + '<div><label class="lbl" for="fNick">Ник</label><input class="inp" id="fNick" value="' + esc(u.nick) + '" placeholder="mira_svet"><div class="hint">Адрес профиля: aishnitsa.ru/@' + esc(u.nick || 'ник') + '</div></div></div>'
+    + '<div><label class="lbl" for="fNick">Ник</label><input class="inp" id="fNick" value="' + esc(u.nick) + '" placeholder="mira_svet"><div class="hint">Адрес профиля: <a href="' + (u.nick ? '/@' + encodeURIComponent(u.nick) : '/creator') + '">' + esc(location.host) + '/@' + esc(u.nick || 'ник') + '</a></div></div></div>'
     + '<div class="ph-about"><label class="lbl" for="fAbout">О себе</label><textarea class="inp" id="fAbout" maxlength="160" placeholder="Что вы создаёте и для кого. До 160 символов">' + esc(u.about) + '</textarea></div></div>'
     + '<div class="form"><div class="full contacts-block"><div class="lbl">Контакты</div><p class="hint" style="margin:-2px 0 10px">Переключатель решает, увидят ли контакт посетители. Переписка по запросам всё равно идёт во внутреннем чате.</p><div id="crows">'
     + u.contacts.map((c, i) => contactRowHtml(c, i)).join('')
@@ -842,6 +899,12 @@ function highlight(k) { const map = { avatar: '#prof .avabtn', name: '#prof h1',
 
 /* ================= события ================= */
 document.addEventListener('click', (e) => {
+  const delBtn = e.target.closest('[data-del]');
+  if (delBtn) {
+    const w = D.works.find((x) => String(x.id) === String(delBtn.dataset.del));
+    if (w) deleteWork(w, delBtn);
+    return;
+  }
   const pubBtn = e.target.closest('[data-pub]');
   if (pubBtn) {
     const w = D.works.find((x) => String(x.id) === String(pubBtn.dataset.pub));
@@ -1173,6 +1236,7 @@ async function loadLive() {
       D.works = (w.data.items || []).map((x) => ({
         id: String(x.id),
         title: x.title || x.model_key || 'Работа',
+        kind: x.kind || '',
         src: x.thumb_url || x.media_url || '/assets/bg-light.jpg',
         pub: x.status === 'published',
         likes: x.likes || 0,

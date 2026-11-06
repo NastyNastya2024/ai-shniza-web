@@ -18,7 +18,7 @@ from security import configure_security, apply_rate_limits, ensure_csrf_token
 from pricing import DEFAULT_MARKUP, TAX_FACTOR, list_pricing_public, price_rub_media, get_usd_rub_rate
 from assistant_rules import recommend as assistant_recommend
 from product_routes import register_product
-from uploads import UploadError, register_uploads, resolve_generate_media
+from uploads import UploadError, register_uploads, resolve_generate_media, resolve_image_ref
 from chat_history import register_chat_history
 from generation_works import register_generation_works
 
@@ -1191,7 +1191,7 @@ INTEGRATED_MODELS = {
         "replicate_model": "bytedance/dreamactor-m2.0",
         "inputs": ["image", "video"],
         "outputs": ["video"],
-        "notes": "image+video required",
+        "notes": "фото персонажа и видео с движением",
     },
     "nano-banana-pro": {
         "id": "nano-banana-pro",
@@ -1682,6 +1682,17 @@ INTEGRATED_MODELS = {
         "inputs": ["text", "image", "audio"],
         "outputs": ["video"],
         "notes": "t2v/i2v/a2v · draft · звук · 720p/1080p · до 20 с",
+    },
+    "p-video-2-pro": {
+        "id": "p-video-2-pro",
+        "name": "P-Video 2 Pro",
+        "provider": "replicate",
+        "kind": "video",
+        "group": "video",
+        "replicate_model": "prunaai/p-video-2-pro",
+        "inputs": ["text", "image"],
+        "outputs": ["video"],
+        "notes": "t2v/i2v · первый и последний кадр · звук в ролике · 768p · 5–15 с",
     },
     "minimax-h3": {
         "id": "minimax-h3",
@@ -2276,6 +2287,8 @@ STUDIO_ONBOARD_IDS = frozenset({
     "kling-v3-0-hf",
     "pixverse-v6",
     "p-video",
+    "p-video-2-pro",
+    "dreamactor-m2",
     "seedream-5-pro",
     "gpt-image-2",
     "gpt-image-2-5-flare",
@@ -2527,12 +2540,14 @@ def _build_replicate_input(
     image_data_url: str | None,
     audio_data_url: str | None = None,
     video_data_url: str | None = None,
+    last_image_data_url: str | None = None,
 ) -> dict:
     model_id = spec["id"]
     prompt = (prompt or "").strip()
     image = (image_data_url or "").strip() or None
     audio = (audio_data_url or "").strip() or None
     video = (video_data_url or "").strip() or None
+    last_image = (last_image_data_url or "").strip() or None
 
     if model_id in {"claude-sonnet-5", "claude-4-5-haiku"}:
         return {"prompt": prompt}
@@ -3319,6 +3334,24 @@ def _build_replicate_input(
             payload.pop("duration", None)
         return payload
 
+    if model_id == "p-video-2-pro":
+        # mode/resolution зафиксированы: каталог и холд считают speed + 768p ($0.035/с).
+        payload = {
+            "prompt": prompt,
+            "mode": "speed",
+            "resolution": "768p",
+            "duration": 5,
+            "aspect_ratio": "16:9",
+            "prompt_upsampler": "turbo",
+        }
+        if image:
+            payload["image"] = image
+            payload.pop("aspect_ratio", None)
+        if last_image:
+            payload["last_frame_image"] = last_image
+            payload.pop("aspect_ratio", None)
+        return payload
+
     if model_id == "sora-2":
         payload = {
             "prompt": prompt,
@@ -3565,6 +3598,7 @@ def _build_provider_input(
     image_data_url: str | None,
     audio_data_url: str | None = None,
     video_data_url: str | None = None,
+    last_image_data_url: str | None = None,
 ) -> dict:
     """Build provider-specific input. Replicate and fal models keep separate ids even if similar."""
     # Все ассистенты (любая LLM-модель в группе assistants) — роль Навигатора.
@@ -3583,7 +3617,9 @@ def _build_provider_input(
         )
     if spec.get("provider") == "omniroute":
         return {"prompt": prompt}
-    return _build_replicate_input(spec, prompt, image_data_url, audio_data_url, video_data_url)
+    return _build_replicate_input(
+        spec, prompt, image_data_url, audio_data_url, video_data_url, last_image_data_url
+    )
 
 
 _SENSITIVE_FAIL = re.compile(
@@ -5299,6 +5335,7 @@ def _apply_assist_params(
     safe_params: dict | None,
     *,
     has_image: bool = False,
+    model_id: str | None = None,
 ) -> dict:
     """Наложить белый список параметров ассистента на payload провайдера.
 
@@ -5312,6 +5349,16 @@ def _apply_assist_params(
         if key not in out:
             continue
         out[key] = value
+    if model_id == "p-video-2-pro":
+        # Холд считает один тариф: speed + 768p. Другие режимы и 1080p/2k/4k дороже.
+        out["mode"] = "speed"
+        out["resolution"] = "768p"
+        out["prompt_upsampler"] = "turbo"
+        try:
+            dur = int(out.get("duration") or 5)
+        except (TypeError, ValueError):
+            dur = 5
+        out["duration"] = 5 if dur < 5 else 15 if dur > 15 else dur
     return out
 
 
@@ -5327,7 +5374,7 @@ def _generate_job_fields(model_id: str, prompt: str, params: dict | None = None)
         if card is not None:
             from assistant.params import validate as _assist_params_validate
             safe = _assist_params_for_generate(_assist_params_validate(card, params))
-    payload = _apply_assist_params(payload, safe, has_image=False)
+    payload = _apply_assist_params(payload, safe, has_image=False, model_id=model_id)
     return {
         "model_id": model_id,
         "provider": spec["provider"],
@@ -5561,6 +5608,7 @@ def api_generate():
     image_data_url = data.get("image") if isinstance(data.get("image"), str) else None
     audio_data_url = data.get("audio") if isinstance(data.get("audio"), str) else None
     video_data_url = data.get("video") if isinstance(data.get("video"), str) else None
+    last_image_data_url = data.get("last_image") if isinstance(data.get("last_image"), str) else None
     raw_params = data.get("params") if isinstance(data.get("params"), dict) else None
     prompt_source = "platform" if str(data.get("prompt_source") or "").strip() == "platform" else "original"
 
@@ -5637,6 +5685,10 @@ def api_generate():
         image_data_url, audio_data_url, video_data_url = resolve_generate_media(
             preferred_spec, image_data_url, audio_data_url, video_data_url
         )
+        if model_id == "p-video-2-pro" and (last_image_data_url or "").strip():
+            last_image_data_url = resolve_image_ref(last_image_data_url)
+        else:
+            last_image_data_url = None
     except UploadError as exc:
         return jsonify(exc.to_dict()), exc.status
 
@@ -5737,7 +5789,7 @@ def api_generate():
 
     try:
         input_payload = _build_provider_input(
-            spec, prompt, image_data_url, audio_data_url, video_data_url
+            spec, prompt, image_data_url, audio_data_url, video_data_url, last_image_data_url
         )
     except ValueError as exc:
         return jsonify({"error": "bad_model", "detail": str(exc)}), 400
@@ -5746,6 +5798,7 @@ def api_generate():
         input_payload,
         safe_params,
         has_image=has_media_image,
+        model_id=spec.get("id"),
     )
 
     upstream_model = _provider_model_ref(spec, has_image=has_media_image)
@@ -6265,6 +6318,15 @@ def work_page(work_id):
 def creator_page(handle):
     ensure_csrf_token()
     return send_from_directory(BASE_DIR, "creator.html")
+
+
+@app.route("/creator/<handle>")
+def creator_public_redirect(handle):
+    """Старые ссылки /creator/ник вели в 404. Публичная страница — /@ник."""
+    target = "/@" + handle
+    if request.query_string:
+        target += "?" + request.query_string.decode()
+    return redirect(target, code=302)
 
 
 @app.route("/creator")

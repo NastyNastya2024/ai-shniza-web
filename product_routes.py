@@ -23,6 +23,9 @@ from robokassa import get_payment_provider
 from security import ensure_csrf_token, rate_limit
 
 HANDLE_RE = re.compile(r"^[a-zA-Z0-9_]{3,24}$")
+# Публичный номер работы вместо названия. Название не спрашиваем: в заголовке был промпт.
+_INDEX_RE = re.compile(r"^\d{4}$")
+_INDEX_ALPH = "23456789"
 BANNED_HANDLES = {"admin", "support", "api", "explore", "settings", "balance", "account", "root", "ai", "shnica"}
 # Простой ник из имени: кириллица → латиница, первое слово, без пробелов.
 _CYR = {
@@ -64,6 +67,42 @@ def pick_simple_nick(name: str, email: str, user_id: int, taken) -> str:
         if HANDLE_RE.match(cand) and cand not in BANNED_HANDLES and not taken(cand):
             return cand
     return f"u{user_id}x"[:24]
+
+
+def _fresh_work_index(Work) -> str:
+    """Четыре цифры, один раз на работу. Не промпт и не название."""
+    for _ in range(16):
+        code = "".join(secrets.choice(_INDEX_ALPH) for _ in range(4))
+        if not Work.query.filter_by(title=code).first():
+            return code
+    return f"{secrets.randbelow(9000) + 1000:04d}"
+
+
+def _assign_missing_indexes(db, rows, Work) -> None:
+    """Уже опубликованным роликам, у которых в названии лежит промпт, выдать номер."""
+    used: set[str] = set()
+    changed = False
+    for work in rows:
+        if getattr(work, "status", "") != "published":
+            continue
+        title = work.title or ""
+        if _INDEX_RE.match(title):
+            used.add(title)
+            continue
+        code = ""
+        for _ in range(16):
+            cand = "".join(secrets.choice(_INDEX_ALPH) for _ in range(4))
+            if cand in used or Work.query.filter_by(title=cand).first():
+                continue
+            code = cand
+            break
+        work.title = code or _fresh_work_index(Work)
+        used.add(work.title)
+        changed = True
+    if changed:
+        db.session.commit()
+
+
 CONTACT_NET_RE = re.compile(r"^[a-z][a-z0-9_]{0,23}$")
 
 
@@ -557,6 +596,7 @@ def register_product(app, db, User):
         if gw:
             gw["maybe_purge"]()   # неопубликованные старше 24 ч — удалить до того, как показать список
         rows = Work.query.filter_by(owner_id=user.id).order_by(Work.created_at.desc()).limit(100).all()
+        _assign_missing_indexes(db, rows, Work)
         return jsonify({"items": [_work_public(w, owner_view=True, viewer_id=user.id) for w in rows]})
 
     @app.post("/api/works/<int:work_id>/save")
@@ -617,11 +657,10 @@ def register_product(app, db, User):
         if (getattr(work, "prompt_source", None) or "") == "platform":
             return jsonify({"error": "platform_prompt"}), 403
         open_prompt = bool(data.get("open_prompt"))
-        title = str(data.get("title") or "").strip()[:200]
         tags = data.get("tags") if isinstance(data.get("tags"), list) else []
         tags = [str(t).strip()[:32] for t in tags[:5] if str(t).strip()]
         # stop-words light filter
-        bad = re.search(r"(убий|террор|porn|порно|suicide)", f"{title} {work.prompt}", re.I)
+        bad = re.search(r"(убий|террор|porn|порно|suicide)", work.prompt or "", re.I)
         if bad:
             return jsonify({"error": "moderation"}), 400
         # image: watermark for public; video: compress ~3× for public, keep original_url pristine
@@ -642,7 +681,8 @@ def register_product(app, db, User):
                     work.watermarked_url = work.watermarked_url or work.original_url
             except Exception:
                 work.watermarked_url = work.watermarked_url or work.original_url
-        work.title = title or (work.prompt[:80] if work.prompt else f"Работа {work.id}")
+        if not _INDEX_RE.match(work.title or ""):
+            work.title = _fresh_work_index(Work)
         work.tags = ",".join(tags)
         work.status = "published"
         work.published_at = work.published_at or datetime.utcnow()
@@ -665,6 +705,7 @@ def register_product(app, db, User):
         else:
             q = q.order_by(Work.published_at.desc())
         rows = q.limit(60).all()
+        _assign_missing_indexes(db, rows, Work)
         viewer = current_user()
         return jsonify(
             {
@@ -756,7 +797,8 @@ def register_product(app, db, User):
 
     @app.get("/api/creators/<handle>")
     def api_creator(handle):
-        prof = CreatorProfile.query.filter_by(handle=handle).first()
+        key = (handle or "").strip().lstrip("@")
+        prof = CreatorProfile.query.filter(db.func.lower(CreatorProfile.handle) == key.lower()).first()
         if not prof:
             return jsonify({"error": "not_found"}), 404
         user = User.query.get(prof.user_id)
@@ -766,6 +808,7 @@ def register_product(app, db, User):
             .limit(60)
             .all()
         )
+        _assign_missing_indexes(db, works, Work)
         contacts = {}
         if prof.show_telegram and prof.telegram:
             contacts["telegram"] = prof.telegram

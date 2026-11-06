@@ -31,6 +31,9 @@
 .aich-prompt__area{display:block;width:100%;box-sizing:border-box;min-height:140px;max-height:180px;margin:0;padding:10px 12px;border:1px solid var(--field-brd,rgba(255,255,255,.14));border-radius:14px;background:transparent;color:inherit;font:15px/1.45 inherit;resize:vertical;overflow:auto}
 .aich-prompt__area.is-open{max-height:none;overflow:hidden}
 .aich-prompt__expand{align-self:flex-start;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;margin-top:6px;padding:0;border:0;border-radius:12px;background:var(--seg-bg,rgba(80,60,160,.08));color:inherit;cursor:pointer}
+.aich-edit{position:relative}
+.aich-edit > textarea{padding-bottom:46px;resize:none}
+.aich-edit > .aich-prompt__expand{position:absolute;right:8px;bottom:8px;margin:0;z-index:1}
 .aich-prompt__add{display:flex;gap:6px;align-items:center;margin-top:8px}
 .aich-prompt__extra{flex:1;min-width:0;height:36px;box-sizing:border-box;border-radius:12px;border:1px solid var(--field-brd,rgba(255,255,255,.14));background:transparent;color:inherit;padding:0 10px;font:14px/1 inherit}
 .aich-prompt__addbtn{height:36px;padding:0 12px;border-radius:12px;border:1px solid var(--field-brd,rgba(255,255,255,.14));background:transparent;color:inherit;font:700 13px/1 inherit;cursor:pointer}

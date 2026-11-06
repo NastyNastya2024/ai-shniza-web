@@ -105,6 +105,9 @@
   "prunaai/p-video__example_video": "/assets/models/examples/p-video.mp4",
   "p-video__example": "/assets/models/examples/p-video.jpg",
   "prunaai/p-video__example": "/assets/models/examples/p-video.jpg",
+  "p-video-2-pro": "/assets/models/p-video-logo.svg",
+  "prunaai/p-video-2-pro": "/assets/models/p-video-logo.svg",
+  "p-video-2-pro__logo": "/assets/models/p-video-logo.svg",
   "flux-3": "/assets/models/flux-3.png",
   "black-forest-labs/flux-3": "/assets/models/flux-3.png",
   "flux-3__logo": "/assets/models/flux-3-logo.png",
@@ -228,5 +231,16 @@
   "elevenlabs-music-fal__example": "/assets/models/examples/elevenlabs-music-fal.jpg",
   "elevenlabs-music-fal__example_audio": "/assets/models/examples/elevenlabs-music-fal.mp3",
   "stable-audio-2-5-fal__example": "/assets/models/examples/stable-audio-2-5-fal.jpg",
-  "stable-audio-2-5-fal__example_audio": "/assets/models/examples/stable-audio-2-5-fal.mp3"
+  "stable-audio-2-5-fal__example_audio": "/assets/models/examples/stable-audio-2-5-fal.mp3",
+  "p-video-2-pro__example_video": "/assets/models/examples/p-video-2-pro.mp4",
+  "prunaai/p-video-2-pro__example_video": "/assets/models/examples/p-video-2-pro.mp4",
+  "p-video-2-pro__example": "/assets/models/examples/p-video-2-pro.jpg",
+  "prunaai/p-video-2-pro__example": "/assets/models/examples/p-video-2-pro.jpg",
+  "dreamactor-m2": "/assets/models/dreamactor-m2.svg",
+  "bytedance/dreamactor-m2.0": "/assets/models/dreamactor-m2.svg",
+  "dreamactor-m2__logo": "/assets/models/dreamactor-m2-logo.svg",
+  "dreamactor-m2__example_video": "/assets/models/examples/dreamactor-m2.mp4",
+  "bytedance/dreamactor-m2.0__example_video": "/assets/models/examples/dreamactor-m2.mp4",
+  "dreamactor-m2__example": "/assets/models/examples/dreamactor-m2.jpg",
+  "bytedance/dreamactor-m2.0__example": "/assets/models/examples/dreamactor-m2.jpg"
 }

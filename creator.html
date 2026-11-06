@@ -64,6 +64,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .card .meta{position:absolute;left:12px;right:12px;bottom:12px;display:flex;flex-direction:column;gap:8px;opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s}
 .card:hover .meta,.card:focus-visible .meta{opacity:1;transform:none}
 .card .t{font-weight:700;font-size:15px;line-height:1.25}
+.card .t.is-idx,.d-title.is-idx{font-weight:600;font-size:12px;letter-spacing:.14em;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted)}
 .who{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink)}
 .ava{flex:0 0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff}
 .badge{position:absolute;left:10px;top:10px;height:26px;padding:0 9px 0 7px;border-radius:999px;background:rgba(18,17,19,.65);backdrop-filter:blur(8px);display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700}
@@ -440,7 +441,7 @@ select.inp option{color:#121113}
 :root:not([data-theme=light]) .drawer.open{transform:none}
 }
 /* тёмная: поднятые поверхности, чтобы панели и карточки не сливались с фоном */
-:root:not([data-theme=light]) .drawer{background:linear-gradient(180deg,#342C55 0%,#2A2346 100%)!important;border:1px solid rgba(255,255,255,.14)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 40px 90px -30px rgba(0,0,0,.9),0 0 0 1px rgba(0,0,0,.25)!important}
+:root:not([data-theme=light]):not([data-style="black"]) .drawer{background:linear-gradient(180deg,#342C55 0%,#2A2346 100%)!important;border:1px solid rgba(255,255,255,.14)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 40px 90px -30px rgba(0,0,0,.9),0 0 0 1px rgba(0,0,0,.25)!important}
 :root:not([data-theme=light]) .save-row{background:#2A2346}
 :root:not([data-theme=light]) .creator,:root:not([data-theme=light]) .req,:root:not([data-theme=light]) .pubrow,:root:not([data-theme=light]) .mini-stats div{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1)}
 :root:not([data-theme=light]) .media{background:rgba(0,0,0,.22)}
@@ -555,7 +556,7 @@ html[lang=en] .pc.off::after{content:'hidden'}
   }
 })();
 </script>
-<script src="/vitrina-data.js"></script>
+<script src="/vitrina-data.js?v=5"></script>
 <script src="/vitrina-camera-moves.js?v=3"></script>
 <script src="/vitrina-aishnitsa.js?v=14"></script>
 <script>
@@ -769,7 +770,7 @@ html[lang=en] .pc.off::after{content:'hidden'}
         + (w.published ? '' : '<span class="hid-mark">' + ICON.eyeOff + '</span>')
         + '<span class="shade"></span>' + (w.type === 'video' ? WM + '<span class="badge">' + ICON.play + esc(w.dur) + '</span>' : '')
         + '<span class="likes' + (w.liked ? ' is-on' : '') + '" data-like="' + esc(w.id) + '" role="button" tabindex="0" aria-pressed="' + (w.liked ? 'true' : 'false') + '" aria-label="' + esc(tr('common.like')) + '">' + ICON.heart + '<span>' + (w.likes || 0) + '</span></span>'
-        + '<span class="meta"><span class="t">' + esc(wTitle(w)) + '</span><span class="who">' + esc(w.model) + ' · ' + esc(L.dateLabel(w)) + '</span></span></button>'
+        + '<span class="meta"><span class="t' + (L.indexLabel(w) ? ' is-idx' : '') + '">' + esc(L.indexLabel(w) || wTitle(w)) + '</span><span class="who">' + esc(w.model) + ' · ' + esc(L.dateLabel(w)) + '</span></span></button>'
         + (workApiId(w) ? '<button type="button" class="card-del" data-del-work="' + esc(w.id) + '" aria-label="' + esc(tr('creator.delete.aria')) + '">' + ICON.trash + '</button>' : '')
         + (owner() ? '<button class="pub ' + (w.published ? 'on' : 'offp') + '" data-pub="' + w.id + '" aria-pressed="' + w.published + '" aria-label="' + esc(w.published ? tr('creator.pub.aria.on') : tr('creator.pub.aria.off')) + '"><span class="dot"></span>' + esc(w.published ? tr('creator.status.published') : tr('creator.status.hidden')) + '</button>' : '')
         + '</div>';
@@ -957,7 +958,7 @@ html[lang=en] .pc.off::after{content:'hidden'}
       ? '<a class="d-gen" href="/app' + (slug ? '?model=' + encodeURIComponent(slug) : '') + '">' + esc(tr('studio.vit.generateIn', { model: w.model })) + '</a>'
       : '';
     $('dBody').innerHTML = '<div class="media">' + media + (w.type === 'video' ? WM : '') + '</div>'
-      + '<div class="d-title-row"><h2 class="d-title" id="dTitle">' + esc(wTitle(w)) + '</h2>' + likeBtn + '</div>'
+      + '<div class="d-title-row"><h2 class="d-title' + (L.indexLabel(w) ? ' is-idx' : '') + '" id="dTitle">' + esc(L.indexLabel(w) || wTitle(w)) + '</h2>' + likeBtn + '</div>'
       + metaBlock
       + (w.model ? '<div class="tags"><span class="tag model">' + esc(w.model) + '</span></div>' : '')
       + promptBox

@@ -199,6 +199,14 @@
       return btn;
     }
 
+    /** Поле и кнопка «Развернуть» в его правом нижнем углу. */
+    function editBox(ta) {
+      var wrap = el('div', 'aich-edit');
+      wrap.appendChild(ta);
+      wrap.appendChild(promptExpand(ta));
+      return wrap;
+    }
+
     function renderPrompt(bl) {
       var box = el('div', 'aich-prompt');
       box.appendChild(el('div', 'aich-prompt__label', bl.label ? bl.title : L('Промпт для ', 'Prompt for ') + bl.title));
@@ -210,8 +218,7 @@
         form.prompt = txt.value.trim();
         opts.onFillForm && opts.onFillForm({ model: form.model, prompt: form.prompt, params: form.params, ready: true });
       });
-      box.appendChild(txt);
-      box.appendChild(promptExpand(txt));
+      box.appendChild(editBox(txt));
       if (bl.note) box.appendChild(el('div', 'aich-prompt__note', bl.note));
       box.appendChild(el('div', 'aich-prompt__hint', L('можно исправить прямо здесь', 'you can edit it right here')));
       return box;
@@ -406,8 +413,7 @@
         text.value = v.text || '';
         text.rows = 6;
         text.spellcheck = false;
-        card.appendChild(text);
-        card.appendChild(promptExpand(text));
+        card.appendChild(editBox(text));
         var cta = el('button', 'aich-variant__cta', L('Выбрать этот →', 'Use this →'));
         cta.type = 'button';
         cta.addEventListener('click', function () {
@@ -433,8 +439,7 @@
         ta.value = bl.prompt;
         ta.rows = 4;
         ta.addEventListener('input', function () { rememberSummary(ta.value); });
-        box.appendChild(ta);
-        box.appendChild(promptExpand(ta));
+        box.appendChild(editBox(ta));
         summarySaved = String(bl.prompt || '').trim();
       }
       return box;
@@ -813,8 +818,7 @@
         opts.onFillForm && opts.onFillForm({ model: form.model, prompt: form.prompt, params: form.params, ready: true, files: form.files });
       });
       txt.addEventListener('blur', function () { if (txt.value.trim() !== (bl.prompt || '').trim()) reelEdit('final', txt.value.trim()); });
-      box.appendChild(txt);
-      box.appendChild(promptExpand(txt));
+      box.appendChild(editBox(txt));
       box.appendChild(el('div', 'aich-prompt__hint', bl.labels.hint));
       var m = el('div', 'aich-param');
       m.appendChild(el('div', 'aich-param__label', bl.labels.model));
@@ -933,8 +937,7 @@
           var now = ta.value.trim();
           if (now && now !== was.trim()) { was = now; sbEdit('frames.' + i + '.text', now); }
         });
-        li.appendChild(ta);
-        li.appendChild(promptExpand(ta));
+        li.appendChild(editBox(ta));
         list.appendChild(li);
       });
       if (!setup && bl.frames.length) wrap.appendChild(list);

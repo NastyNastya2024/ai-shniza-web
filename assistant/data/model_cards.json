@@ -645,6 +645,75 @@
    },
    "prompt_example": "Небольшой бумажный кораблик плывёт по тихому ручью в весеннем лесу. Вода мягко обтекает корпус, рядом проплывают опавшие лепестки. Камера движется на уровне воды вслед за корабликом. Рассеянный солнечный свет проходит сквозь листья, натуральные текстуры воды и бумаги, спокойная кинематографичная композиция, непрерывное реалистичное движение."
   },
+  "p-video-2-pro": {
+   "title": "P-Video 2 Pro",
+   "kind": "video",
+   "modes": ["t2v", "i2v"],
+   "tags": ["первый кадр", "последний кадр", "звук"],
+   "strengths": {
+    "ru": "первый и последний кадр, звук в ролике",
+    "en": "first and last frame, audio in the clip"
+   },
+   "limits": {
+    "ru": "768p, до 15 с, без своего аудио и без монтажа готового видео",
+    "en": "768p, up to 15 s, no own audio and no edit of an existing video"
+   },
+   "speed": {
+    "ru": "до 2 мин",
+    "en": "under 2 min"
+   },
+   "rank": 8,
+   "params": {
+    "aspect_ratio": ["16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "1:1"],
+    "duration": [5, 10, 15]
+   },
+   "ask_first": ["aspect_ratio"],
+   "prompt_style": "English. Scene, motion, camera, lighting, style. First attached photo is the opening frame, the second is the closing frame.",
+   "avoid": "asking for an audio file or an existing video to edit",
+   "defaults": {"aspect_ratio": "16:9", "duration": 5},
+   "clarify": {
+    "ru": ["Кто или что в кадре?", "Какое действие?", "Какая камера?", "Какой стиль?"],
+    "en": ["Who or what is in frame?", "What action?", "What camera?", "What style?"]
+   },
+   "structure": {
+    "ru": "сцена → движение → камера → свет → стиль",
+    "en": "scene → motion → camera → light → style"
+   },
+   "prompt_example": "A paper boat drifts along a quiet spring stream. Petals pass the hull, the camera stays at water level and follows the boat. Soft light through leaves, natural paper and water, one continuous shot."
+  },
+  "dreamactor-m2": {
+   "title": "DreamActor M2.0",
+   "kind": "video",
+   "modes": ["i2v"],
+   "tags": ["персонаж", "движение"],
+   "strengths": {
+    "ru": "персонаж на фото повторяет движение из видео",
+    "en": "the person in the photo copies the motion from a video"
+   },
+   "limits": {
+    "ru": "нужны фото человека и отдельное видео с движением",
+    "en": "needs a person's photo and a separate driving video"
+   },
+   "speed": {
+    "ru": "1–3 мин",
+    "en": "1–3 min"
+   },
+   "rank": 7,
+   "params": {},
+   "ask_first": [],
+   "prompt_style": "The photo is the character and the attached video is the motion. Do not invent a different action.",
+   "avoid": "a text-only video with no driving clip",
+   "defaults": {},
+   "clarify": {
+    "ru": ["Чьё фото будет персонажем?", "Какое видео задаёт движение?"],
+    "en": ["Whose photo is the character?", "Which video drives the motion?"]
+   },
+   "structure": {
+    "ru": "персонаж на фото → движение из видео",
+    "en": "person in the photo → motion from the video"
+   },
+   "prompt_example": "Человек на фото повторяет движение из прикреплённого видео."
+  },
   "hailuo-02": {
    "title": "Hailuo 02",
    "kind": "video",

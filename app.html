@@ -7,7 +7,7 @@
 <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/assets/brand/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/assets/brand/png/apple-touch-icon-180.png">
-<link rel="stylesheet" href="/assistant-ui.css?v=38">
+<link rel="stylesheet" href="/assistant-ui.css?v=39">
 <link rel="stylesheet" href="/attach.css">
 <link rel="stylesheet" href="/chat-history.css?v=7">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -265,6 +265,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .vit-pv .media{border-radius:18px;overflow:hidden;background:var(--field);position:relative}
 .vit-pv .media img,.vit-pv .media video{display:block;width:100%;height:auto;max-height:300px;object-fit:contain;background:#120f20}
 .vit-pv h4{margin:2px 4px 0;font-size:18px;font-weight:700;color:var(--ink);line-height:1.25}
+.work-idx{margin:8px 4px 0;font:600 12px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em;color:var(--muted)}
+a#userName{color:inherit;text-decoration:none}
 .vit-pv .vc-res{margin:0 4px;font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.01em;line-height:1.35}
 .vit-pv .vc-res:empty{display:none}
 .vit-pv .vc-compress{margin:4px 4px 2px;padding:0;border:0;background:none;color:var(--muted);font:600 12.5px/1.35 'Onest',system-ui,sans-serif;letter-spacing:.01em}
@@ -549,7 +551,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
         <div class="cab-row">
           <span id="userLetter" class="cab-tile" style="background:linear-gradient(135deg,var(--purple2),var(--purple));color:#FFFFFF;font-weight:700;font-size:14px">?</span>
           <span style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px">
-            <span id="userName" style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Гость</span>
+            <a id="userName" href="/account" style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none">Гость</a>
             <a id="userBalance" href="/account#balance" style="font-size:12px;color:var(--muted2);text-decoration:none">Баланс: 0 ₽</a>
           </span>
         </div>
@@ -674,10 +676,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 <script src="/i18n/dict-ru.js?v=20"></script>
 <script src="/i18n/dict-en.js?v=18"></script>
 <script src="/i18n/runtime.js"></script>
-<script src="/vitrina-data.js"></script>
+<script src="/vitrina-data.js?v=5"></script>
 <script src="/vitrina-camera-moves.js?v=3"></script>
 <script src="/vitrina-aishnitsa.js?v=14"></script>
-<script src="/assistant-ui.js?v=51"></script>
+<script src="/assistant-ui.js?v=52"></script>
 <script src="/model-lock.js?v=1"></script>
 <script src="/attach.js?v=8"></script>
 <script src="/aish-mcp.js?v=3"></script>
@@ -870,7 +872,7 @@ class Component extends DCLogic {
     this._ready = true;
     // Помощник всегда включён (кнопку выключения убрали; старый localStorage aish-assist=0 сбрасываем)
     try { localStorage.setItem('aish-assist', '1'); } catch (e) {}
-    this.state = Object.assign({ tab: 'all', query: '', sort: 'cheap', searchFocus: false, sel: '', text: URL_PROMPT || '', say: '', shown: 0, blink: false, chat: false, msgs: [], typing: false, assist: true, authed: false, leftOpen: !IS_MOBILE, rightOpen: true, dark: (this.props.theme || 'light') === 'dark', userName: '', userLetter: '?', balanceText: tr('common.balance', { amount: AISH_I18N.money(0) }), modal: null, social: null, email: '', password: '', pwMode: false, consent: false, code: '', err: '', errField: '', resendIn: 0, checking: false, shake: false, locked: false, attempts: 0, afterLogin: null }, this.state || {});
+    this.state = Object.assign({ tab: 'all', query: '', sort: 'cheap', searchFocus: false, sel: '', text: URL_PROMPT || '', say: '', shown: 0, blink: false, chat: false, msgs: [], typing: false, assist: true, authed: false, leftOpen: !IS_MOBILE, rightOpen: true, dark: (this.props.theme || 'light') === 'dark', userName: '', userHandle: '', userLetter: '?', balanceText: tr('common.balance', { amount: AISH_I18N.money(0) }), modal: null, social: null, email: '', password: '', pwMode: false, consent: false, code: '', err: '', errField: '', resendIn: 0, checking: false, shake: false, locked: false, attempts: 0, afterLogin: null }, this.state || {});
     this.state.assist = true;
     this.timers = {};
     this.pendingPrompt = '';
@@ -921,6 +923,8 @@ class Component extends DCLogic {
       { slug: 'kling-v2-5-turbo-pro', model_key: 'kling-v2-5-turbo-pro', name: 'Kling 2.5 Turbo Pro', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 65, rub: 13, perSec: true },
       { slug: 'pixverse-v6', model_key: 'pixverse-v6', name: 'PixVerse V6', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 22, rub: 4.3, perSec: true },
       { slug: 'p-video', model_key: 'p-video', name: 'P-Video', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 9, rub: 1.7, perSec: true },
+      { slug: 'p-video-2-pro', model_key: 'p-video-2-pro', name: 'P-Video 2 Pro', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 60, rub: 12, perSec: true },
+      { slug: 'dreamactor-m2', model_key: 'dreamactor-m2', name: 'DreamActor M2.0', kindKeys: ['studio.kind.imageToVideo'], type: 'video', cost: 40, rub: 8, perSec: true },
       { slug: 'gen4-turbo', model_key: 'gen4-turbo', name: 'Gen-4 Turbo', kindKeys: ['studio.kind.imageToVideo'], type: 'video', cost: 60, rub: 12, perSec: true },
       { slug: 'hailuo-02', model_key: 'hailuo-02', name: 'Hailuo 02', kindKeys: ['studio.kind.textToVideo', 'studio.kind.imageToVideo'], type: 'video', cost: 24, rub: 24 },
       { slug: 'seedream-5-pro', model_key: 'seedream-5-pro', name: 'Seedream 5.0 Pro', kindKey: 'studio.kind.image', type: 'image', cost: 4, rub: 4 },
@@ -1352,6 +1356,11 @@ class Component extends DCLogic {
           if (want) body[k] = want.id;
           else delete body[k];
         });
+        if ((m.model_key || m.slug) === 'p-video-2-pro') {
+          const frames = (listed || []).filter((f) => f && f.kind === 'image' && /^upl_[a-f0-9]{24}$/.test(f.id));
+          if (frames[1]) body.last_image = frames[1].id;
+          else delete body.last_image;
+        }
         // в сообщении о запуске — какие именно файлы ушли в генерацию
         const shownFiles = (listed && listed.length) ? listed : att.files;
         if (shownFiles.length && !opts.look) this.patchLastBot({ text: tr('studio.attach.cookingWith', { files: AishAttach.describe(shownFiles) }), job: true, files: shownFiles });
@@ -1991,7 +2000,7 @@ class Component extends DCLogic {
       items.slice(0, 8).forEach((w) => {
         this.push({
           role: 'bot',
-          text: w.title || w.model_key || tr('studio.chat.workDefault'),
+          text: (/^\d{4}$/.test(String(w.title || '')) ? '' : (w.title || '')) || w.model_key || tr('studio.chat.workDefault'),
           result: true,
           mediaUrl: w.media_url || w.thumb_url || '',
           mediaKind: w.kind || 'image',
@@ -2070,7 +2079,7 @@ class Component extends DCLogic {
         mediaUrl: m.mediaUrl || '', mediaKind: m.mediaKind || 'image', workId: m.workId || '',
         avCls: m.first ? 'av-land' : '', blink: (st.blink && i === lastBot) ? 'eye-blink' : '' })),
       authed: st.authed, guest: !st.authed, login: this.login, logout: this.logout, goHome: this.goHome,
-      userName: st.userName || tr('common.guest'), userLetter: st.userLetter || '?', balanceText: st.balanceText || tr('common.balance', { amount: moneyText(0) }),
+      userName: st.userName || tr('common.guest'), userHandle: st.userHandle || '', userLetter: st.userLetter || '?', balanceText: st.balanceText || tr('common.balance', { amount: moneyText(0) }),
       modalOpen: !!st.modal, stepEmail: st.modal === 'email', stepCode: st.modal === 'code',
       mTitle: st.modal === 'code' ? tr('auth.code.title') : '',
       mSub: st.modal === 'code' ? tr('auth.code.sub.html', { email: st.email }).replace(/<[^>]+>/g, '') : '',
@@ -2499,7 +2508,10 @@ function render() {
   if (v.authed) {
     const ul = $('userLetter'), un = $('userName'), ub = $('userBalance');
     if (ul) ul.textContent = v.userLetter;
-    if (un) un.textContent = v.userName;
+    if (un) {
+      un.textContent = v.userName;
+      un.href = v.userHandle ? '/@' + encodeURIComponent(v.userHandle) : '/account';
+    }
     if (ub) ub.textContent = v.balanceText;
   }
   // герой
@@ -2857,8 +2869,7 @@ async function publishFromChat(btn) {
   btn.textContent = tr('studio.publish.busy');
   const say = (html) => { if (box) box.querySelector('.pub-t').innerHTML = html; };
   try {
-    const title = msg && msg.prompt ? String(msg.prompt).slice(0, 80) : '';
-    const { res, data } = await api('/api/works/' + encodeURIComponent(id) + '/publish', { method: 'POST', body: JSON.stringify({ agree_rules: true, title: title, open_prompt: kind === 'prompt' }) });
+    const { res, data } = await api('/api/works/' + encodeURIComponent(id) + '/publish', { method: 'POST', body: JSON.stringify({ agree_rules: true, open_prompt: kind === 'prompt' }) });
     if (res.ok) {
       M('publish', { work: String(id), kind: kind });
       if (msg) {
@@ -2868,6 +2879,7 @@ async function publishFromChat(btn) {
       }
       if (box && msg) box.outerHTML = pubOfferHtml(msg);
       if (window.AishHistory) AishHistory.flush();
+      if (window.reloadStudioWorks) window.reloadStudioWorks();
       return;
     }
     const err = (data && data.error) || '';
@@ -3207,11 +3219,12 @@ async function refreshUser() {
     app.setState({
       authed: true,
       userName: name,
+      userHandle: (data.profile && data.profile.handle) || user.handle || '',
       userLetter: String(name).slice(0, 1).toUpperCase(),
       balanceText: tr('common.balance', { amount: formatBalance(bal) })
     });
   } else {
-    app.setState({ authed: false, userName: '', userLetter: '?', balanceText: tr('common.balance', { amount: moneyText(0) }) });
+    app.setState({ authed: false, userName: '', userHandle: '', userLetter: '?', balanceText: tr('common.balance', { amount: moneyText(0) }) });
   }
   if (window.AishHistory) AishHistory.setUser(user);   // вошли/вышли без перезагрузки: гостевая переписка → в аккаунт; выход → стереть с устройства
   return user;
@@ -3619,6 +3632,7 @@ loadIntegrations();
   const D = window.VITRINA || { works: [], creators: [] };
   const CR = Object.fromEntries((D.creators || []).map((c) => [c.id, c]));
   let WORKS = (D.works || []).filter((w) => w.published !== false);
+  let publishedWorks = [];
   const MODEL_OF = {
     'seedance-lite': 'Seedance 1.0 Lite',
     'seedream-5-lite': 'Seedream 5 Lite',
@@ -3627,6 +3641,8 @@ loadIntegrations();
     'kling-v2-5-turbo-pro': 'Kling 2.5 Turbo Pro',
     'pixverse-v6': 'PixVerse V6',
     'p-video': 'P-Video',
+    'p-video-2-pro': 'P-Video 2 Pro',
+    'dreamactor-m2': 'DreamActor M2.0',
     'gen4-turbo': 'Gen-4 Turbo',
     'hailuo-02': 'Hailuo 02',
     'wan-3-0': 'Wan 3.0',
@@ -3662,7 +3678,9 @@ loadIntegrations();
     if (/(^|[^\w-])veo-3-1($|[^\w-])/i.test(slug) && /^Veo\s*3\.1(?!\s*Fast)/i.test(wm)) return true;
     if (/kling/i.test(slug) && /^Kling/i.test(wm)) return true;
     if (/pixverse/i.test(slug) && /^PixVerse/i.test(wm)) return true;
-    if (/p-video|pvideo/i.test(slug) && /^P-?Video/i.test(wm)) return true;
+    if (/dreamactor/i.test(slug) && /DreamActor/i.test(wm)) return true;
+    if (/p-video-2-pro/i.test(slug) && /P-?Video\s*2/i.test(wm)) return true;
+    if (/(?:^|[^a-z0-9])p-video(?:$|[^a-z0-9-])/i.test(slug) && /^P-?Video(?!\s*2)/i.test(wm)) return true;
     if (/gen4-turbo/i.test(slug) && /Gen-?4\s*Turbo/i.test(wm)) return true;
     if (/hailuo-02/i.test(slug) && /Hailuo\s*0?2/i.test(wm)) return true;
     if (/ideogram-v3-turbo/i.test(slug) && /Ideogram/i.test(wm)) return true;
@@ -3679,7 +3697,11 @@ loadIntegrations();
     if (/soul-cinema/i.test(slug) && /Soul\s*Cinema/i.test(wm)) return true;
     if (/seedream/i.test(slug) && /Seedream/i.test(wm)) return true;
     const token = String(m.name || '').trim().split(/\s+/)[0];
-    if (token && token.length >= 3 && new RegExp('^' + token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(wm)) return true;
+    const tokenHit = token && token.length >= 3 && new RegExp('^' + token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(wm);
+    if (tokenHit) {
+      const other = Object.keys(MODEL_OF).some((k) => k !== slug && String(MODEL_OF[k] || '').toLowerCase() === wm.toLowerCase());
+      if (!other) return true;
+    }
     return false;
   }
   function syncExampleWorks() {
@@ -3713,7 +3735,8 @@ loadIntegrations();
         published: true
       });
     });
-    WORKS = extras.concat(base);
+    const live = publishedWorks.filter((w) => !seen.has(String(w.id)) && !base.some((b) => String(b.id) === String(w.id)));
+    WORKS = live.concat(extras).concat(base);
   }
   let open = false, preview = null, pvMode = 'view', lastKey = '', timer = 0, lastSent = null;
   let modelFilter = true, lastSel = '';
@@ -3823,10 +3846,11 @@ loadIntegrations();
     const q = vitQuery.trim().toLowerCase();
     const narrow = filtered && vitFilters.size === 0 && !q;
     let mw = [];
+    const pin = (w) => (w.apiId || /^\d+$/.test(String(w.id || ''))) ? 1 : 0;
     if (narrow) {
-      mw = WORKS.filter((w) => sameModel(w, m, mName)).sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 24);
+      mw = WORKS.filter((w) => sameModel(w, m, mName)).sort((a, b) => pin(b) - pin(a) || (b.likes || 0) - (a.likes || 0)).slice(0, 24);
     } else {
-      mw = WORKS.slice().sort((a, b) => (b.likes || 0) - (a.likes || 0));
+      mw = WORKS.slice().sort((a, b) => pin(b) - pin(a) || (b.likes || 0) - (a.likes || 0));
     }
     mw = mw.filter((w) => {
       const types = [];
@@ -3880,13 +3904,13 @@ loadIntegrations();
     const resBadge = '<p class="vc-res">' + esc2(videoMetaText(w, null)) + '</p>' + compressNoteHtml(w);
     const slug = w.model_slug
       || Object.keys(MODEL_OF).find((k) => MODEL_OF[k] === w.model)
-      || (/^Wan/i.test(w.model) ? 'wan-3-0' : /^Grok/i.test(w.model) ? 'grok-imagine-video-1-5' : /^Seedance/i.test(w.model) ? 'seedance-2-5' : /Veo\s*3\.1\s*Fast/i.test(w.model) ? 'veo-3-1-fast' : /^Veo/i.test(w.model) ? 'veo-3-1' : /^Kling/i.test(w.model) ? 'kling-v2-5-turbo-pro' : /^PixVerse/i.test(w.model) ? 'pixverse-v6' : /^P-?Video/i.test(w.model) ? 'p-video' : /Gen-?4\s*Turbo/i.test(w.model) ? 'gen4-turbo' : /Hailuo\s*0?2/i.test(w.model) ? 'hailuo-02' : /Seedream/i.test(w.model) ? 'seedream-5-pro' : /GPT\s*Image\s*2\.5\s*Flare/i.test(w.model) ? 'gpt-image-2-5-flare' : /GPT\s*Image\s*2\.5\s*Sunburst/i.test(w.model) ? 'gpt-image-2-5-sunburst' : /^GPT\s*Image\s*2(?!\.5)/i.test(w.model) ? 'gpt-image-2' : /Nano\s*Banana\s*Pro/i.test(w.model) ? 'nano-banana-pro' : /Nano\s*Banana\s*2/i.test(w.model) ? 'nano-banana-2' : /Soul\s*Cinema/i.test(w.model) ? 'soul-cinema' : /Ideogram/i.test(w.model) ? 'ideogram-v3-turbo' : /ACE-?Step/i.test(w.model) ? 'ace-step' : /ElevenLabs\s*Music/i.test(w.model) ? 'elevenlabs-music' : /Stable\s*Audio\s*2\.5/i.test(w.model) ? 'stable-audio-2-5' : null);
+      || (/^Wan/i.test(w.model) ? 'wan-3-0' : /^Grok/i.test(w.model) ? 'grok-imagine-video-1-5' : /^Seedance/i.test(w.model) ? 'seedance-2-5' : /Veo\s*3\.1\s*Fast/i.test(w.model) ? 'veo-3-1-fast' : /^Veo/i.test(w.model) ? 'veo-3-1' : /^Kling/i.test(w.model) ? 'kling-v2-5-turbo-pro' : /^PixVerse/i.test(w.model) ? 'pixverse-v6' : /DreamActor/i.test(w.model) ? 'dreamactor-m2' : /P-?Video\s*2/i.test(w.model) ? 'p-video-2-pro' : /^P-?Video/i.test(w.model) ? 'p-video' : /Gen-?4\s*Turbo/i.test(w.model) ? 'gen4-turbo' : /Hailuo\s*0?2/i.test(w.model) ? 'hailuo-02' : /Seedream/i.test(w.model) ? 'seedream-5-pro' : /GPT\s*Image\s*2\.5\s*Flare/i.test(w.model) ? 'gpt-image-2-5-flare' : /GPT\s*Image\s*2\.5\s*Sunburst/i.test(w.model) ? 'gpt-image-2-5-sunburst' : /^GPT\s*Image\s*2(?!\.5)/i.test(w.model) ? 'gpt-image-2' : /Nano\s*Banana\s*Pro/i.test(w.model) ? 'nano-banana-pro' : /Nano\s*Banana\s*2/i.test(w.model) ? 'nano-banana-2' : /Soul\s*Cinema/i.test(w.model) ? 'soul-cinema' : /Ideogram/i.test(w.model) ? 'ideogram-v3-turbo' : /ACE-?Step/i.test(w.model) ? 'ace-step' : /ElevenLabs\s*Music/i.test(w.model) ? 'elevenlabs-music' : /Stable\s*Audio\s*2\.5/i.test(w.model) ? 'stable-audio-2-5' : null);
     const slugName = slug ? (app.MODELS.find((m) => m.slug === slug) || {}).name : '';
     const handle = c.nick || c.handle || '';
     const cHref = handle
       ? '/@' + encodeURIComponent(handle.replace(/^@/, ''))
       : '/creator?c=' + encodeURIComponent(c.id || w.creator);
-    const more = (D.works || []).filter((x) => x.creator === w.creator && x.id !== w.id && x.published !== false).slice(0, 3);
+    const more = WORKS.filter((x) => x.creator === w.creator && x.id !== w.id && x.published !== false).slice(0, 3);
     const chevron = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
     const spark = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"></path></svg>';
     const check = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"></path></svg>';
@@ -3949,8 +3973,12 @@ loadIntegrations();
         + '</div></div>'
       : '';
     $('vitCtx').innerHTML = '';
+    const idx = L && L.indexLabel ? L.indexLabel(w) : '';
+    const heading = idx
+      ? '<p class="work-idx">' + esc2(idx) + '</p>'
+      : '<h4>' + esc2(wTitle(w)) + '</h4>';
     $('vitBody').innerHTML = '<div class="vit-pv"><button type="button" class="vit-back" data-vback>' + esc2(tr('studio.vit.back')) + '</button><div class="media">' + media + '</div>'
-      + '<h4>' + esc2(wTitle(w)) + '</h4>'
+      + heading
       + resBadge
       + promptBox
       + refsBox
@@ -4226,6 +4254,53 @@ loadIntegrations();
   if (mq('(min-width:980px)') && rpWasOpen !== '0') setOpen(true, true);
   if (URL_MODELS) { setTab('models'); setOpen(true, true); }
   draw();
+  function loadPublished() {
+    fetch('/api/explore?sort=new', { credentials: 'same-origin' }).then((r) => r.json()).then((data) => {
+      const items = data.items || [];
+      const grads = ['#FF8A2B,#F2668B', '#7A55FF,#5B35E0', '#4A7BEA,#5FC8E8', '#E8691C,#FFA235'];
+      Object.keys(CR).forEach((k) => { if (String(k).indexOf('api-') === 0) CR[k].works = 0; });
+      const next = [];
+      items.forEach((it, idx) => {
+        const cid = 'api-' + (it.owner_id || it.id);
+        if (!CR[cid]) {
+          CR[cid] = {
+            id: cid,
+            name: it.owner_name || it.owner_handle || '',
+            nick: it.owner_handle || '',
+            handle: it.owner_handle || '',
+            works: 0,
+            grad: grads[idx % grads.length]
+          };
+        }
+        CR[cid].works = (CR[cid].works || 0) + 1;
+        const kind = it.kind || 'image';
+        const slug = it.model_key || '';
+        next.push({
+          id: String(it.id),
+          apiId: it.id,
+          title: it.title || '',
+          type: kind === 'video' ? 'video' : (kind === 'audio' ? 'audio' : 'image'),
+          model: MODEL_OF[slug] || slug,
+          model_slug: slug,
+          src: it.thumb_url || it.media_url || '',
+          video: kind === 'video' ? (it.media_url || '') : '',
+          likes: it.likes || 0,
+          liked: !!it.liked,
+          prompt: it.prompt_open ? (it.prompt || '') : '',
+          prompt_open: !!it.prompt_open,
+          creator: cid,
+          published: true,
+          w: kind === 'video' ? 1280 : 1024,
+          h: kind === 'video' ? 720 : 1024
+        });
+      });
+      publishedWorks = next;
+      lastKey = '';
+      draw();
+    }).catch(() => {});
+  }
+  window.reloadStudioWorks = loadPublished;
+  loadPublished();
 })();
 
 </script>
